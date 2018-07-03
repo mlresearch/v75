@@ -1,0 +1,420 @@
+%!TEX root = ../main.tex
+
+
+\section{Robust Certifiability} \label{sec:robust-certifiability}
+
+The conceptual core of our results is the following \emph{robust certifiability} result: for \emph{nice} distributions (e.g., as defined in Definition \ref{def:hyperconc1})% \ref{def:hyperconc2})
+, a regression hypothesis inferred from a large enough $\epsilon$-corrupted sample has low-error over the uncorrupted distribution.
+
+\subsection{Robust Certifiability for Arbitrary Distributions}
+We begin by giving a robust certifiability claim for arbitrary distributions for L1 regression.
+
+ The error that we incur depends on the L2 squared loss of the best fitting regression hypothesis, and in particular, we do not obtain \emph{consistency} in the statistical sense: i.e, the error incurred by the regression hypothesis does not vanish even in the ``realizable'' case when, in the true uncorrupted distribution, there's a linear function that correctly computes all the labels. In Section \ref{sec:lower-bounds}, we show that if we make no further assumption on the distribution, then this is indeed inherent and that achieving consistency under adversarial corruptions is provably impossible without making further assumptions. In the following subsection, we show that assuming that the moments of the underlying uncorrupted distribution are ``bounded'' (i.e., linear functions of the distribution are hypercontractive), one can guarantee consistency even under the presence of adversarial outliers.
+
+ While the certifiability statements are independently interpretable, for the purpose of robust regression, it might be helpful to keep in mind that $D$ corresponds to uniform distribution on large enough sample from the unknown uncorrupted distribution while $D'$ corresponds to the uniform distribution on the sample that serves as the ``certificate''. %assumption on the moments of the underlying distribution
+
+
+\begin{lemma}[Robust Certifiability for L1 Regression]
+Let $\cD,\cD'$ be two distributions on $\R^{d} \times \R$ with marginals $D, D'$ on $\R^d$, respectively.
+Suppose $\|\cD-\cD'\|_{TV} \leq \eta$ and further, that the ratio of the largest to the smallest eigenvalue of the 2nd moment matrix of $D$ is at most $\kappa$. Then, for any $\ell,\ell^{*} \in \R^d$ such that $\|\ell^{*}\|_2 \geq \|\ell\|$,
+
+% Then, 
+% \[
+% \E_{D} \abs{\iprod{\ell,x} - y} \leq  \E_{D'} \abs{\iprod{\ell,x} - y} + \epsilon^{1/2} \cdot \sqrt{\E_{D} (\iprod{\ell,x} - y)^2}.
+% \]
+
+% If, in addition, $D$ has 2nd moment with condition number $\kappa$ and $\ell$ has Euclidean norm at most that of an optimal hypothesis with minimum norm, then, 
+
+% \[
+% \E_{D} \abs{\iprod{\ell,x} - y} \leq \Paren{1+ O(\kappa^{1/2} \epsilon^{1/2})}\err + O(\kappa^{1/2} \epsilon^{1/2}) \sqrt{ \E_D y^2}\mper
+% \]
+\[
+\E_{\cD} \abs{\iprod{\ell,x} - y} \leq \E_{\cD'} \abs{\iprod{\ell,x} -y} + 2\kappa^{1/2} \eta^{1/2} \sqrt{\E_{\cD} y^2} + 2 \kappa^{1/2} \eta^{1/2} \cdot \sqrt{\E_{\cD} (y - \iprod{\ell^{*},x})^2}\mper
+\]
+
+\end{lemma}
+
+
+\begin{proof}
+Let $G$ be a coupling between $\cD,\cD'$. That is, $G$ is a joint distribution on $(x,y), (x',y')$ such that the marginal on $(x',y')$ is $\cD'$ and the marginal on $(x,y)$ is $\cD$ satisfying $\Pr_G \1 \Set{ (x,y) = (x',y')} = 1-\eta.$ 
+Let $\err_{\cD'}(\ell) = \E_{\cD'} \abs{y-\iprod{\ell,x}}$.
+We have: 
+\begin{align*}
+\E_{\cD}  \abs{y-\iprod{\ell,x}} &= \E_G \1 \Set{ (x,y) = (x',y')} \abs{y-\iprod{\ell,x}} + \E_{G} \1 \Set{ (x,y) \neq (x',y')} \cdot \abs{y-\iprod{\ell,x}}\\
+&\leq \err_{\cD'}(\ell) + \sqrt{\E_{G}\1 \Set{ (x,y) \neq (x',y')}^2} \sqrt{ \E_{\cD} (y-\iprod{\ell,x})^2}\\
+&= \err_{\cD'}(\ell) + \sqrt{\eta} \sqrt{\E_{\cD} (y-\iprod{\ell,x})^2}\mper
+\end{align*}
+
+Now, we must have: $\E_{\cD} (y - \iprod{\ell,x})^2 \leq 2 \E_{\cD} y^2 + 2 \E_{\cD} \iprod{\ell,x}^2.$
+
+For any $\ell^{*}$, $\E_{\cD} \iprod{\ell^{*},x}^2 \leq 2\E_{\cD} y^2 + 2\E_{\cD} (y-\iprod{\ell^{*},x})^2.$   
+
+Since the all eigenvalues of $\E_{D} xx^{\top}$ are within $\kappa$ of each other and $\|\ell^{*}\|_2 \geq \|\ell\|$, $\E_{D} \iprod{\ell,x}^2 \leq \kappa \cdot \E_{D} \iprod{\ell^{*},x}^2$. Plugging in the above estimate gives the lemma.
+
+
+
+ % \leq 2 \E_{D} y^2 + 2 \sigma \cdot \|\ell\|_2.$ Plugging this above yields the lemma.
+
+
+% Next, for any $\ell^{*} \in \R^d$, we can write 
+% \begin{equation}
+% \E_{D}( y- \iprod{\ell,x})^2 \leq 2\E_{D} (y-\iprod{\ell^{*},x})^2 + 2\E_{D} \iprod{\ell^{*}-\ell,x}^2\mper \label{eq:minkowski-for-L1}
+% \end{equation} 
+% Let $\sigma$ be the largest eigenvalue of $\E_{D} xx^{\top}$. Then, the second term in \eqref{eq:minkowski-for-L1} is at most $\| \ell - \ell^{*}\|^2_2 \cdot \sigma$.
+
+% Let $\ell'$ be a ``true'' optimal hypothesis of minimum possible Euclidean norm. Then, $\E_D (y - \iprod{\ell,x})^2 \leq 2\E_D \iprod{\ell'-\ell,x}^2 + 2\err^2$ using the inequality $(a+b)^2 \leq 2 a^2 + 2 b^2$.
+
+% Next, $\E_D \iprod{\ell-\ell',x}^2 \leq 2 \E_D \iprod{\ell,x}^2 + 2 \E_D\iprod{\ell',x}^2.$ Since $\ell$ has the minimum possible norm $\|\ell\|_2^2 \leq \|\ell'\|_2^2.$ Since the $\E_D xx^{\top}$ has condition number $\kappa$, we must, thus have $\E_D \iprod{\ell,x}^2 \leq \kappa \E_D \iprod{\ell',x}^2.$ 
+
+% Finally, observe that by Cauchy-Schwarz and triangle inequality for Euclidean norm, $\E_D \iprod{\ell',x}^2 \leq 2\err^2 + 2\E_{D} y^2.$
+
+% Thus, from the above reasoning, $\E_D (y-\iprod{\ell,x})^2 \leq 2 \err^2 + O(\kappa) (\err^2 + \E_D y^2).$
+
+
+
+\end{proof}
+
+
+
+\subsection{Robust Certifiability for Hypercontractive Distributions}
+
+The main result of this section is the following lemma.
+\begin{lemma}[Robust Certifiability for L2 Regression]
+Let $\cD,\cD'$ be distributions on $\R^d \times \R$ such that $\|\cD-\cD'\|_{TV} \leq \epsilon$ and the marginal $\cD_X$ of $\cD$ on $x$ is $k$-certifiably $C$-hypercontractive for some $C:[k] \to \R_+$ and for some even integer $k \geq 4$.
+
+Then, for any $\ell,\ell^* \in \R^d$ and any $\eta$ such that $2 C(k/2) \eta^{1-2/k} < 0.9$, we have:
+\[
+\err_{\cD}(\ell) \leq (1+O(C(k/2)) \eta^{1-2/k}) \cdot \err_{\cD'}(\ell) + O(C(k/2))\eta^{1-2/k} \cdot \Paren{\E_\cD (y-\iprod{\ell^{*},x})^k}^{2/k}\mper\]
+%In the special ``realizable'' case where $y = \iprod{\ell^{*},x}$ for every $x$, we have that $\err_D(\ell) \leq (1+80Ck\epsilon^{1-2/k})\err_{D'}(\ell)$. 
+\label{lem:identifiability-least-squares-linear}
+
+\end{lemma}
+\begin{proof}
+Fix a vector $\ell \in \R^d$; for brevity, we write $\err_\cD$ for $\err_\cD(\ell)$ and $\err_{\cD'}$ for $\err_{\cD'}(\ell)$ in the following. 
+
+Let $G$ be a coupling between $\cD,\cD'$. That is, $G$ is a joint distribution on $(x,y), (x',y')$ such that the marginal on $(x',y')$ is $\cD'$ and the marginal on $(x,y)$ is $\cD$ satisfying $\Pr_G \1 \Set{ (x,y) = (x',y')} = 1-\eta.$ 
+
+Let $((x,y), (x',y')) \sim \cG$. Writing $1 = \1 \Set{ (x,y) = (x',y')} + \1 \Set{ (x,y) \neq (x',y')}$, we obtain:
+\begin{align}
+\E_{\cD}[(y-\iprod{\ell,x})^2] &= \E_{\cG}[ \1 \Set{ (x,y) = (x',y')} (y-\iprod{\ell,x})^2] + \E_{\cG}[ \1 \Set{ (x,y) \neq (x',y')} \cdot (y-\iprod{\ell,x})^2]\notag\\
+&= \E_{\cG} [\1 \Set{ (x,y) = (x',y')} (y' -\iprod{\ell,x'})^2 ]+  \E_{\cG}[ \1 \Set{ (x,y) \neq (x',y')} \cdot (y-\iprod{\ell,x})^2]\notag\\
+&\leq \err_{\cD'} + \Paren{\E_{\cG}[\1 \Set{ (x,y) \neq (x',y')}^{k/k-2}]}^{1-2/k} \Paren{\E_{\cD} (y-\iprod{\ell,x})^k}^{2/k}\notag\\
+&\leq \err_{\cD'}+ \eta^{1-2/k} \cdot \Paren{\E (y-\iprod{\ell,x})^k}^{2/k} \label{eq:CS-bound}\mper
+\end{align}
+
+Here, the inequality uses the H\"older's inequality for the second term and the fact that $\E_\cG \1 \Set{ (x,y) = (x',y')} (y-\iprod{\ell,x})^2 \leq \E_{\cD'} (y-\iprod{\ell,x})^2 = \err_{\cD'}(\ell)$ for the first term. 
+
+We next bound $\|y - \iprod{\ell,x}\|_k$. By Minkowski's inequality, 
+$$\|y - \iprod{\ell,x}\|_k \leq \|y - \iprod{\ell^*,x}\|_k + \|\iprod{\ell - \ell^*,x}\|_k.$$
+Now, by using hypercontractivity of $\cD_X$, we get
+\begin{equation}\label{eq:gen1}
+\|\iprod{\ell - \ell^*,x}_k \| \leq \sqrt{C(k/2)} \cdot \|\iprod{\ell - \ell^*}{x}\|_2.
+\end{equation}
+
+Further, 
+$$\|\iprod{\ell - \ell^*,x}_2 \leq \|y - \iprod{\ell^*,x}\|_2 + \|y - \iprod{\ell,x}\|_2 \leq \|y - \iprod{\ell^*,x}\|_k + \|y - \iprod{\ell,x}\|_2.$$
+
+Combining the above three inequalities, we get
+$$\|y - \iprod{\ell,x}\|_k \leq (1 + \sqrt{C(k/2)}) \|y - \iprod{\ell^*,x}\|_k + \sqrt{C(k/2)} \|y - \iprod{\ell,x}\|_2.$$
+Therefore, as $(a+b)^2 \leq 2 a^2 + 2 b^2$ and $2 (1 + \sqrt{C(k/2)})^2 \leq 8 C(k/2)$, 
+$$\|y - \iprod{\ell,x}\|_k^2  \leq 8 C(k/2)) \|y - \iprod{\ell^*,x}\|_k^2 + 2 C(k/2) \err_\cD.$$
+Substituting the above into Equation \ref{eq:CS-bound}, we get
+$$\err_{\cD} \leq \err_{\cD'} + 8 \eta^{1-2/k} C(k/2) \cdot  \|y - \iprod{\ell^*,x}\|_k^2 + 2 \eta^{1-2/k} C(k/2) \err_{\cD}.$$
+Rearranging the inequality and observing that $1/(1- 2 \eta^{1-2/k} C(k/2)) \leq 1 + O(C(k/2)) \eta^{1-2/k}$ gives us
+$$\err_{\cD} \leq (1 + O(C(k/2)) \eta^{1-2/k}) \err_{\cD'} +O(C(k/2)) \eta^{1-2/k} \cdot  \|y - \iprod{\ell^*,x}\|_k^2,$$
+proving the claim.
+\ignore{
+
+For $\ell^{*} \in \arg \min_{\ell \in \R^d} \E_D (y-\iprod{\ell,x})^2$, observe that for any $\ell \in \R^d$, 
+
+\begin{equation}
+\E_D(y-\iprod{\ell,x})^2 = \E_D (y-\iprod{\ell^{*},x})^2 + \E_D \iprod{\ell-\ell^{*},x}^2\mper \label{eq:L2-fact}
+\end{equation}
+
+On the other hand, $\E_D(y-\iprod{\ell,x})^k = 2^{k-1}\E_D (y-\iprod{\ell^{*},x})^k + 2^{k-1}\E_D \iprod{\ell-\ell^{*},x}^k$.
+Using that $D_s$ is $4$-certifiably $C$-subgaussian, we have:
+$\E_D \iprod{\ell-\ell^{*},x}^k \leq (Ck)^{k/2} \Paren{\E_D \iprod{\ell-\ell^{*},x}^2}^{k/2}$.
+
+Combining this with \eqref{eq:CS-bound}, we obtain that:
+\[
+(1-4Ck \eta^{1-2/k}) \E_D \iprod{\ell-\ell^{*},x}^2 + \E_D (y-\iprod{\ell^{*},x})^2 \leq \err_{D'} + 4\eta^{1-2/k} \Paren{\E_D (y-\iprod{\ell^{*},x})^k}^{2/k}
+\]
+Using \eqref{eq:L2-fact} again,
+\begin{multline}
+(1-4Ck\eta^{1-2/k})\E_D (y-\iprod{\ell,x})^2 \leq 4Ck \eta^{1-2/k} \E_D (y-\iprod{\ell^{*},x})^2 +\err_{D'} + 4\eta^{1-2/k} \paren{\E_D (y-\iprod{\ell^{*},x})^k}^{2/k} \\\leq \err_{D'} + 8Ck\eta^{1-2/k} \paren{\E_D (y-\iprod{\ell^{*},x})^k}^{2/k}
+\end{multline}
+Using that $8Ck\eta^{1-2/k} <0.9$, and thus, $\frac{1}{1-8Ck\eta^{1-2/k}} \leq 1+ 80Ck\eta^{1-2/k}$, we thus obtain the claim. }
+
+
+% We then have: 
+% \[
+% \E_D (y - \iprod{\ell,x})^4 \leq 8 \E_D y^4 + 8 \E_D \iprod{\ell,x}^4.
+% \]
+% Using certifiable subgaussianity of $D$, we have that: 
+% \[
+% \E_D \iprod{\ell,x}^4 \leq 2C\Paren{\E_D \iprod{\ell,x}^2}^2.
+% \]
+
+% Finally, by triangle inequality for $\ell_2$ norm, we have: 
+% \[
+% \sqrt{\E_D \iprod{\ell,x}^2} \leq \sqrt{\E_D (y-\iprod{\ell,x})^2} + \sqrt{ \E_D y^2} \leq \sqrt{\err_D} + \sqrt{\E_D y^2}.
+% \] 
+
+% Thus, combining the above estimates and using the inequality that $(a+b)^4 \leq 8a^4 + 8b^4$, we obtain that:
+% \[
+% \E_D (y-\iprod{\ell,x})^4 \leq 8 \E_D y^4 + 16C (8 \err_{D}^2 + 8(\E_D y^2)^2 ).
+% \] 
+% Or,
+
+% \[
+% (\E_D (y-\iprod{\ell,x})^4)^{1/2} \leq 4\sqrt{\E_D y^4} + 16\sqrt{C} (\err_{D} + \E_D y^2).
+% \] 
+
+% Rearranging, this yields that $(1- 16\sqrt{C\epsilon}) \err_D \leq \err_{D'} + 4 \sqrt{\epsilon} \sqrt{\E_D y^4}+ 4\sqrt{C \epsilon} \E_D y^2$. 
+
+% Thus, if $\epsilon < 1/256C$, then, 
+% \[
+% \err_D \leq (1+ 32 \sqrt{C\epsilon}) \Paren{\err_{D'} + 4 \sqrt{C \epsilon} \Paren{\E_D y^2 + \sqrt{\E_D y^4}}}\mper
+% \]
+
+% Consider now, the special, ``realizable'' case: $\err_{D'} = \E_{D'} (y' - \iprod{\ell,x'})^2 = 0$. Let $\ell'$ be any linear function that such that $\E_{D'} \iprod{\ell'-\ell,x'}^2 = 0.$ Then, using certifiable subgaussianity of $D$, 
+% \[
+% \E_{D} (y-\iprod{\ell,x})^4 = \E_{D} \iprod{\ell'-\ell,x}^4 \leq 2C(\E_{D} \iprod{\ell-\ell',x}^2)^2.
+% \] 
+
+% Using the above estimate and rearranging \eqref{eq:CS-bound} with the fact that $\epsilon < 1/16C$ implies the second corollary in the lemma. 
+\end{proof}
+
+
+The argument for the above lemma also extends straightforwardly to polynomial regression (see Appendix~\ref{sec:app-moved}):
+
+% \subsection{Parameter Estimation}
+% In this section, we show robust certifiability for the case where the linear function $\ell$ is uniquely determined by 
+% \begin{lemma}[Robust Generalization for polynomial regression]
+% Fix $k,t \in \N$ and let $\cD,\cD'$ be distributions on $\R^d \times \R$ such that $\|\cD-\cD'\|_{TV} \leq \epsilon$ and the marginal $\cD_X$ of $\cD$ on $x$ is $k$-certifiably $(C,t)$-hypercontractive for some $C:[k] \to \R_+$ and for some even integer $k \geq 4$.
+
+% Then, for any degree at most $t$ polynomials $p,p^*:\R^d \to \R$, and any $\epsilon$ such that $2 C(k/2) \epsilon^{1-2/k} < 0.9$, we have:
+% \[
+% \err_{\cD}(p) \leq (1+O(C(k/2)) \epsilon^{1-2/k}) \cdot \err_{\cD'}(p) + O(C(k/2))\epsilon^{1-2/k} \cdot \Paren{\E_\cD (y-p^*(x))^k}^{2/k}\mper\]
+% \ignore{
+% Fix integers $t,k \in \N$. Let $\cD,\cD'$ be distributions on $\R^d \times \R$ such that $\|\cD-\cD'\|_{TV} \leq \epsilon$ and the marginal $D_s$ of $D$ on $x$ is $kt$-certifiably $C$-subgaussian for some even integer $k \geq 4$. 
+
+% For any $P \in \paren{\R^{d}}^{\otimes t}$, let $\err_{D'}(P) = \E_{D'} (y'-\iprod{P,x^{\otimes t}})^2$ and $\err_D(P) = \E_D (y - \iprod{P,x^{\otimes t}})^2.$ Let $P^{*} \in \arg \min_{P \in (\R^d)^{\otimes t}} \err_D(P)$.
+
+% Then, for any $P \in \R^d$ and any $\epsilon$ such that $8\sqrt{C\epsilon} < 0.9$, we have:
+% \[
+% \err_{D}(P) \leq (1+80Ck\epsilon^{1-2/k})\err_{D'}(P) + O(Ck)\epsilon^{1-2/k}\Paren{\E_D (y-\iprod{\ell^{*},x})^k}^{2/k}\mper\]
+% In the special ``realizable'' case where $y = \iprod{\ell^{*},x}$ for every $x$, we have that $\err_D(\ell) \leq (1+80Ck\epsilon^{1-2/k})\err_{D'}(\ell)$.}
+% \begin{proof}
+% The proof of the lemma is entirely analogous to the previous lemma where we substitute $p(x), p^*(x)$ for $\iprod{\ell,x}, \iprod{\ell^*,x}$ and use definition \ref{def:hyperconc2} instead of \ref{def:hyperconc1} in the derivation of Equation \ref{eq:gen1}. We omit the details.
+% \end{proof}
+% \label{lem:identifiability-least-squares-polynomial}
+% \end{lemma}
+
+
+
+
+
+% Let $D,D'$ be distributions on $\R^d \times \R$ such that $\|D-D'\|_{TV} \leq \epsilon.$  For any $P \in \paren{\R^{d}}^{\otimes t}$, let $\err_{D'}(P) = \E_{D'} (y'-\iprod{P,x^{\otimes t}})^2$ and $\err_D(P) = \E_D (y - \iprod{P,x^{\otimes t}})^2.$
+
+% If the marginal $D_s$ of $D$ on $\R^d$ is $4t$-certifiably $(C,t)$-hypercontractive, then $\epsilon < 1/256Ct$, then 
+% \[
+% \err_{D}(P) \leq \err_{D'}(P) + O(\sqrt{Ct\epsilon}) \Paren{\err_{D'}(P) + \sqrt{\E_{D}y^4} + \E_D y^2} \mper\]
+% In the special case when $\err_{D'}(P)= 0$, so long as $\epsilon < 1/16C$, we obtain: $\err_D(P) = 0$. 
+\ignore{
+\begin{proof}
+
+The proof is entirely analogous to the case of linear regression done previously.
+
+As before, for brevity, we write $\err_D$ for $\err_D(P)$ and $\err_{D'}$ for $\err_{D'}(P)$ in the following. 
+
+Let $G$ be a coupling between $D,D'$ such that $\Pr \1 \Set{ (x,y) = (x',y')} = 1-\epsilon$.
+
+Writing $1 = \1 \Set{ (x,y) = (x',y')} + \1 \Set{ (x,y) \neq (x',y')}$, we obtain:
+\begin{align}
+\E_{G}  (y-\iprod{P,x^{\otimes t}})^2 &= \E_G \1 \Set{ (x,y) = (x',y')} (y-\iprod{P,x^{\otimes t}})^2 + \E_{G} \1 \Set{ (x,y) \neq (x',y')} \cdot (y-\iprod{P,x^{\otimes t}})^2\notag\\
+&= \E_G \1 \Set{ (x,y) = (x',y')} (y' -\iprod{P,{x'}^{\otimes t}})^2 +  \E_{G} \1 \Set{ (x,y) \neq (x',y')} \cdot (y-\iprod{P,x^{\otimes t}})^2\notag\\
+&\leq \err_{D'} + \sqrt{\E_{G}\1 \Set{ (x,y) \neq (x',y')}^2} \sqrt{ \E_{D'} (y-\iprod{P,{x'}^{\otimes t}})^4}\notag\\
+&= \err_{D'}+ \sqrt{\epsilon} \sqrt{\E_{D} (y-\iprod{P,x^{\otimes t}})^4} \label{eq:CS-bound}\mper
+\end{align}
+
+Here, the inequality uses the Cauchy-Schwarz inequality for the second term and the fact that $\E_G \1 \Set{ (x,y) = (x',y')} ( y' - \iprod{P,{x'}^{\otimes t}})^2 \leq \E_{D'} (y'-\iprod{P,{x'}^{\otimes t}})^2 = \err_{D'}$ for the first term. 
+
+Now, let us consider the case when $D$ is known to be $4$-certifiably $(C,t)$-hypercontractive. We then have: 
+\[
+\E_D (y - \iprod{P,x^{\otimes t}})^4 \leq 8 \E_D y^4 + 8 \E_D \iprod{P,x^{\otimes t}}^4.
+\]
+
+Using certifiable hypercontractivity of $D$, we have that: 
+\[
+\E_D \iprod{P,x^{\otimes t}}^4 \leq 2C\Paren{\E_D \iprod{P,x^{\otimes t}}^2}^2.
+\]
+
+Finally, by triangle inequality for $\ell_2$ norm, we have: 
+\[
+\sqrt{\E_D \iprod{P,x^{\otimes t}}^2} \leq \sqrt{\E_D (y-\iprod{P,x^{\otimes t}})^2} + \sqrt{ \E_D y^2} \leq \sqrt{\err_{D}} + \sqrt{\E_D y^2}.
+\] 
+
+
+
+Thus, combining the above estimates and using the inequality that $(a+b)^4 \leq 8a^4 + 8b^4$, we obtain that:
+\[
+\E_D (y-\iprod{P,x^{\otimes t}})^4 \leq 8 \E_D y^4 + 16Ct (8 \err_{D}^2 + 8(\E_D y^2)^2 ).
+\] 
+Or,
+
+\[
+(\E_D (y-\iprod{P,x^{\otimes t}})^4)^{1/2} \leq 4\sqrt{\E_D y^4} + 16\sqrt{Ct} (\err_{D} + \E_D y^2).
+\] 
+
+Rearranging, this yields that $(1- 16\sqrt{Ct\epsilon}) \err_D \leq \err_{D'} + 4 \sqrt{\epsilon} \sqrt{\E_D y^4}+ 4\sqrt{Ct \epsilon} \E_D y^2$. 
+
+Thus, if $\epsilon < 1/256Ct$, then, 
+\[
+\err_D \leq (1+ 32 \sqrt{Ct\epsilon}) \Paren{\err_{D'} + 4 \sqrt{Ct \epsilon} \Paren{\E_D y^2 + \sqrt{\E_D y^4}}}\mper
+\]
+
+
+
+
+This completes the proof of the first bound. 
+
+Consider now, the special ``realizable'' case: $\err_{D'} = \E_{D'} (y' - \iprod{\ell,x'})^2 = 0$. Let $P$ be any deg $t$ polynomial such that $\E_{D'} \iprod{P'-{x'}^{\otimes t}}^2 = 0.$ Then, using certifiable hypercontractivity of $D$, 
+\[
+\E_{D} (y-\iprod{P,x^{\otimes t}})^4 = \E_{D} \iprod{P'-P,x^{\otimes t}}^4 \leq 2Ct(\E_{D} \iprod{P'-P,x^{\otimes t}}^2)^2.
+\] 
+
+Using the above estimate and rearranging \eqref{eq:CS-bound} with the fact that $\epsilon < 1/16C$ implies the second corollary in the lemma. 
+\end{proof}
+}%end ignore
+
+% \subsection{Tight Robust Generalization for Gaussians}
+% When the underlying marginal distribution on examples satisfies certain stronger ``niceness'' conditions, we can greatly improve our robust generalization guarantees. Here, we study the case where the marginal distribution is Gaussian but the argument extends more generally for distributions that satisfy certain large-deviation inequalities for the convergence of the sample covariance matrix to the true covariance matrix. 
+
+
+% \subsection{Tight Robust Generalization for Gaussians}
+% 
+
+% % \begin{definition}[Nice Distributions]
+% % Fix any $\epsilon > 0$. A family of distributions $\C$ is said to be $\delta(\epsilon)$-nice if 
+% % \end{definition}
+
+
+% % %When the underlying distribution satisfies stronger ``niceness'' conditions, we can greatly improve our error guarantees with a slightly different transference proof (which will translate into a  modified algorithm). This niceness property is satisfied by gaussian distributions (with arbitrary covariances) and more generally by (affine transformations of) product distributions with subgaussian marginals. 
+
+% % The key to this improvement is the following fact that says that estimates of the covariance obtained from any large enough subsample of a i.i.d. sample are multiplicatively accurate. 
+
+% % \begin{lemma}
+% % Let $Z$ be a random variable on $\R^d$ with product distribution and $(k,C)$-subgaussian marginals, i.e., for every $i$ and for every even $k$, $\E[Z_i^k] \leq C^{k/2} \E[Z_i^2]^{k/2}$.
+
+% % Let $B$ be any symmetric $d \times d$ matrix. Let $A$ be a random variable distributed as $BZ$. 
+
+% % Let $X = x_1, x_2, \ldots x_n$ be an i.i.d. sample of $Bz$ for $n \geq n_0$ for $n_0 = \Theta(d \log{(d/\beta)}/\epsilon^2).$ 
+
+% % Then, with probability at least $1-\beta$ over the draw of $X$, for every $X' \subseteq X$ of size $n' \geq (1-\epsilon)n$, 
+
+% % \[
+% % \E_{x \sim X'} \dyad{x_i} = (1\pm \delta) \E_{x \sim X}  \dyad{x_i}\mcom 
+% % \]
+% % for $\delta = O_C(\epsilon \log{(1/\epsilon)}$.
+
+
+
+
+
+% \begin{lemma}[Robust Identifiability of Regression Hypothesis with Known Covariance]
+% Let $D,D'$ be distributions on $\R^d$ such that $\|D-D'\|_{TV} \leq \epsilon$ and $(1-\delta) \Sigma \preceq \Sigma' \preceq (1+\delta) \Sigma$
+% Let $D'$ be a reweighting of $D$ satisfying $\|D-D'\|_{TV} \leq \epsilon$.
+
+% Let $D,D'$ be distributions on $\R^d \times \R$ such that $\|D-D'\|_{TV} \leq \epsilon.$ For any $\ell \in \R^d$, let $\err_{D'}(\ell) = \E_{D'} (y'-\iprod{\ell,x'})^2$ and $\err_D(\ell) = \E_D (y - \iprod{\ell,x})^2.$
+
+% Further, suppose that the marginals $D_s, D_s'$ of $D,D'$ $\R^d$ has covariances $\Sigma, \Sigma'$ such that $(1-\delta) \Sigma \preceq \Sigma' \preceq (1+\delta) \Sigma$. 
+
+% Then, 
+% \[
+% \err_{D}(\ell) \leq (1+O(\delta))\err_{D'}(\ell) \mper\]
+
+% \label{lem:identifiability-least-squares-linear-known-covariance}
+% \end{lemma}
+
+% \begin{proof}
+
+% Observe that for every $v \in \R^d$, 
+% \[
+% \frac{1-\delta}{1+\delta} \E_{D'_s} \iprod{v,x}^2 \leq \E_{D_s} \iprod{v,x}^2 \leq \frac{1+\delta}{1-\delta} \E_{D'_s} \iprod{v,x}^2 \mper
+% \]
+
+
+% Let $G$ be a coupling between $D,D'$ such that $\Pr \1 \Set{ (x,y) = (x',y')} = 1-\epsilon.$ Let $\ell'$ be the optimal regression hypothesis for $D$. 
+
+% Then, we have: 
+% \begin{align*}
+% \E_G \1 \Set{ (x,y) \neq (x',y')} (y - \iprod{\ell,x})^2 &= \E_G \1 \Set{ (x,y) \neq (x',y')} (y - \iprod{\ell',x} + \iprod{\ell'-\ell,x})^2\\
+% &\leq 2\E_G \1 \Set{ (x,y) \neq (x',y')} (y - \iprod{\ell',x})^2 + 2\E_G \1 \Set{ (x,y) \neq (x',y')}  \iprod{\ell'-\ell,x}^2\mper
+% \end{align*}
+
+% Next, observe that 
+
+
+
+% Writing $1 = \1 \Set{ (x,y) = (x',y')} + \1 \Set{ (x,y) \neq (x',y')}$, we obtain:
+% \begin{align}
+% \E_{G}  (y-\iprod{\ell,x})^2 &= \E_G \1 \Set{ (x,y) = (x',y')} (y-\iprod{\ell,x})^2 + \E_{G} \1 \Set{ (x,y) \neq (x',y')} \cdot (y-\iprod{\ell,x})^2\notag\\
+% &= \E_G \1 \Set{ (x,y) = (x',y')} (y' -\iprod{\ell,x'})^2 +  \E_{G} \1 \Set{ (x,y) \neq (x',y')} \cdot (y-\iprod{\ell,x})^2\notag\\
+% &\leq \err_{D'} + \sqrt{\E_{G}\1 \Set{ (x,y) \neq (x',y')}^2} \sqrt{ \E_{D'} (y-\iprod{\ell,x})^4}\notag\\
+% &= \err_{D'}+ \sqrt{\epsilon} \sqrt{\E_{D} (y-\iprod{\ell,x})^4} \label{eq:CS-bound}\mper
+% \end{align}
+
+
+
+
+% \end{proof}
+
+% % \subsection{Agnostic Robust Linear Regression}
+% % \begin{lemma}[Identifiability of Robust Linear Regression Hypothesis]
+% % Let $D,D'$ be distributions on $\R^d \times \R$ such that the marginals $D_s, D'_s$ on $\R^d$ are $4$-certifiably $C$-subgaussian distributions and $\|D-D'\|_{TV} \leq \epsilon.$ 
+
+% % Suppose $\E_{D} (y-\iprod{\ell,x})^2 \leq \err$. Then,  \[
+% % \E_{D'} (y'-\iprod{\ell,x'})^2 \leq \err + 8 \sqrt{C\epsilon} \err + 4 \sqrt{C\epsilon} \E_{D'}y'^4\mper\]
+% % \end{lemma}
+
+% % \begin{proof}
+% % Let $\err = \E_D ( y-\iprod{\ell,x})^2.$ Then, $\$E_D \1 \Set{ (x,y) = (x',y')}( y-\iprod{\ell,x})^2 \leq \E_D ( y-\iprod{\ell,x})^2 = \err.$
+
+% % \begin{align*}
+% % \E_{G}  (y'-\iprod{\ell,x'})^2 &= \E_D \1 \Set{ (x,y) = (x',y')}( y-\iprod{\ell,x})^2 + \E_{D'} \1 \Set{ (x,y) \neq (x',y')} \cdot (y'-\iprod{\ell,x'})^2\\
+% % &\leq \err + \sqrt{\E_{D'}\1 \Set{ (x,y) \neq (x',y')}^2} \sqrt{ \E_{D'} (y'-\iprod{\ell,x'})^4}\\
+% % &\leq \err +  \sqrt{\epsilon} \sqrt{(16 \E_{D'} y'^4 + 16 \E_{D'} \iprod{\ell',x'}^4)}\\
+% % &\leq \err + 4 \sqrt{\epsilon} \sqrt{C} \E_{D'} \iprod{\ell',x'}^2. + 4\sqrt{C} \E_{D'} y'^4 \sqrt{\epsilon}.
+% % \end{align*}
+
+% % Rearranging and using that $\epsilon < 1/16C$, we obtain that 
+
+% % \[
+% % \E_{D'} (y'-\iprod{\ell,x'})^2 \leq \frac{1}{(1-4\sqrt{C\epsilon})} (\err + \cdot 4 \sqrt{C \epsilon} \E_{D'} y'^4) \leq \err + 8 \sqrt{C\epsilon} \err + 4 \sqrt{C\epsilon} \E_{D'}y'^4.
+% % \]
+
+
+% % \end{proof}
+
+% %   % \begin{algorithm}[Algorithm for moment estimation via sum-of-squares]
+%   %   %\label[algorithm]{alg:moment-estimation-program}\mbox{}
+%   %   \begin{description}
+
+%   %   \item[Given:]
+%   %     $\e$-corrupted sample $Y=\set{y_1, \sigma_1 ,\ldots,y_n, \sigma_n}\subseteq \R^d$ where $\sigma_i$s are the labels.
+%   %   \item[Estimate:]
+%   %     A sub-sample $X' = \{ (x_i,)} $
+%   %   \item[Operation:]\mbox{}
+%   %     \begin{enumerate}
+%   %     \item 
+%   %       find a level-$\ell$ pseudo-distribution $D'$ that satisfies $\cA_{Y,\e}$ and $\cB_{C,k,\ell}$
+%   %     \item
+%   %       output moment-estimates $\hat M_1,\ldots,\hat M_k$ with $\hat M_r = \pE_{D'(x')} \Brac{\tfrac 1 n \sum_{i=1}^n (x'_i)^{\otimes r}}$
+%   %     \end{enumerate}
+%   %   \end{description}    
+%   % \end{algorithm}
+
+
+
+

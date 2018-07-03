@@ -1,0 +1,101 @@
+%!TEX root = main.tex
+
+\subsection{Main Techniques}\label{sec:tech}
+Our results rely on the following three key ideas. To the best of our knowledge, the first two are novel, while the third one was delineated in~\citet{jin2017escape}.
+
+\textbf{Hamiltonian:}
+A major challenge in analyzing momentum-based algorithms is that the objective function does not 
+decrease monotonically as is the case for~\gd. To overcome this in the convex setting, several Lyapunov functions have been proposed~\citep{wilson2016lyapunov}. However these Lyapunov functions involve the 
+global minimum $\x^\star$, which cannot be computed by the algorithm, and is thus of limited value in
+the nonconvex setting. A key technical contribution of this paper is the design of a function 
+which is both computable and tracks the progress of~\nag. The function takes the form of a
+Hamiltonian:
+\begin{equation}\label{eqn:hamiltonian}
+	E_t \defeq f(\x_t) + \frac{1}{2\eta} \norm{\v_t}^2;
+\end{equation}
+i.e., a sum of potential energy and kinetic energy terms.  It is monotonically decreasing
+in the continuous-time setting \red{\emph{regardless of the convexity of $f(\cdot)$}}. This is \emph{not} the case in general in the discrete-time setting,
+a fact which requires us to incorporate the~\nce~step---see Section~\ref{sec:hamiltonian} for more details. \red{We note that monotonic decrease of the Hamiltonian, by itself, does not give any convergence rate, which brings us to our second key technical contribution.}
+% \red{It is monotonically decreasing for standard \nag~unless large negative curvature is observed at $\x_t$ along $\v_t$ direction}
+
+
+
+
+% \red{In the continuous time setting (i.e., when the stepsize is infinitesimally small), it is monotonically decreasing \emph{regardless of the convexity of $f(\cdot)$}. In the discrete setting however, the Hamiltonian might not decrease if $f(\cdot)$ has a large negative curvature at $x_t$ in the $v_t$ direction (formally line $8$ of Algorithm~\ref{algo:PAGD}). However, handling this situation is easy and is accomplished by the~\nce~step. The challenging case is when $f(\cdot)$ does not have large negative curvature at $x_t$ in the $v_t$ direction. Here, we have decrease of Hamiltonian but that by itself does not give improved convergence rates. This brings us to our second key technical contribution.
+% }
+
+%This is \emph{not} the case in general in the discrete-time setting,
+%a fact which requires us to incorporate the~\nce~step.
+
+\textbf{Improve or localize:}
+%Another key technical contribution of
+This paper formalizes a simple but powerful framework 
+for analyzing long-term behavior of nonconvex optimization algorithms.  This framework requires us to show that for a given algorithm, \emph{either the algorithm makes significant progress or the iterates do not move much}.
+% lie in a small ball around the starting point}. 
+We call this the~\emph{improve-or-localize}~phenomenon. For instance, when progress is measured 
+by function value, it is easy to show that for~\gd, with proper choice of learning rate, we have: 
+$$ \frac{1}{2\eta} \sum_{\tau=0}^{t-1} \norm{\x_{\tau+1} - \x_\tau}^2 \le f(\x_0) - f(\x_t).$$
+% which means either function decreases a lot, or the sum of distance square is upper-bounded. 
+For~\nag, a similar lemma can be shown by replacing the objective function with the Hamiltonian 
+(see Lemma \ref{lem:energy_nonconvex}).  Once this phenomenon is established, we can conclude 
+that if an algorithm does not make much progress, it is localized to a small ball, and we can then 
+approximate the objective function by either a linear or a quadratic function (depending on smoothness 
+assumptions) in this small local region. Moreover, an upper bound on 
+$\sum_{\tau=0}^{t-1} \norm{\x_{\tau+1} - \x_\tau}^2$ lets us conclude that iterates do not 
+oscillate much in this local region (oscillation is a unique phenomenon of momentum algorithms 
+as can be seen even in the convex case).  This gives us better control of approximation error.
+% \cnote{decide whether say with this technique it's easy to recover Lan's result of AGD here.}
+
+% \pn{Better name?} Let us illustrate this for the simple case of gradient descent,
+% \begin{align*}
+%     x_{t+1} = x_t - \eta \nabla f(x_t),
+% \end{align*}
+% where $x_t$ is the current iterate, $x_{t+1}$ is the next iterate, $\eta$ is the step size and $\nabla f(x_t)$ is the gradient of the function at $x_t$. Given that the function is $\ell$-smooth i.e., $\norm{\nabla f(x) - \nabla f(y)} \leq \ell \norm{x-y}$, we see that
+% \begin{align*}
+%     f(x_{t+1}) &= f(x_t - \eta \nabla f(x_t))
+% %   = f(x_t) - \iprod{\nabla f(\widetilde{x})}{\eta \nabla f(x_t)}
+%     \leq f(x_t) - \eta\left(1-\eta \ell\right) \norm{\nabla f({x_t})}^2,
+% \end{align*}
+% where we used mean value theorem and the smoothness of $f$. This can be written equivalently as $f(x_{t+1}) \leq f(x_{t}) - \frac{1-\eta \ell}{\eta} \norm{x_{t+1}-x_t}^2$. Taking a telescopic sum over $t$, we obtain
+% \begin{align*}
+%     f(x_{t+1}) \leq f(x_0) - \frac{1-\eta \ell}{\eta} \cdot \sum_{i=0}^{t} \norm{x_{i+1} - x_i}^2 \leq f(x_0) - \frac{1-\eta \ell}{\eta} \cdot \frac{\norm{x_{t+1} - x_0}^2}{t},
+% \end{align*}
+% where we use Cauchy-Schwartz inequality in the last step. This can be rewritten as
+% \begin{align*}
+%     {\norm{x_{t+1} - x_0}^2} \leq \frac{\eta t}{1-\eta \ell} \cdot \left(f(x_0) - f(x_{t+1})\right),
+% \end{align*}
+% establishing~\iol~phenomenon for~\gd.
+
+% Once we establish~\iol~phenomenon for a given algorithm, we can conclude that if the algorithm is not making progress in function value, it is localized to a small ball $\Bcal$ around the starting point. We then approximate the function by either a linear or quadratic (depending on smoothness assumptions) in the small local region $\Bcal$ and analyze the performance of algorithm on the linear/quadratic approximation keeping track of the approximation error as well.
+
+\textbf{Coupling sequences for escaping saddle points:} When an algorithm arrives in the neighborhood of a strict saddle point, where $\lambda_{\min}(\hess f(\x)) <0$, all we know is that there exists a direction of
+escape (the direction of the minimum eigenvector of $\hess f(\x)$); denote it by $\e_{\text{esc}}$. To avoid such points, the algorithm randomly perturbs the current iterate uniformly in a small ball, and runs~\nag~starting from this point $\tilde{\x}_0$. %sampling uniform from a ball.
+As in~\cite{jin2017escape}, we can divide this ball into a ``stuck region,'' 
+$\mathcal{X}_{\text{stuck}}$, starting from which~\nag~does not escape the saddle 
+quickly, and its complement from which~\nag~escapes quickly. In order to show 
+quick escape from a saddle point, we must show that the volume of $\mathcal{X}_{\text{stuck}}$ 
+is very small compared to that of the ball. Though $\mathcal{X}_{\text{stuck}}$ may 
+be without an analytical form, one can control the rate of escape by studying 
+two~\nag~sequences that start from two realizations of perturbation, $\tilde{\x}_0$ and $\tilde{\x}'_0$, 
+which are separated along $\e_{\text{esc}}$ by a small distance $r_0$. In this case, 
+at least one of the sequences escapes the saddle point quickly, which proves that the 
+width of $\mathcal{X}_{\text{stuck}}$ along $\e_{\text{esc}}$ can not be greater than 
+$r_0$, and hence $\mathcal{X}_{\text{stuck}}$ has small volume.
+
+
+
+%  and would like to show that with high probability, the perturbation gives us a better perturbed point $\tilde{\x}_0$, which leads to faster escaping saddle point by running AGD starting at $\tilde{\x}_0$.
+
+
+
+
+
+% The key requirement for implementing this framework is establishing~\iol~phenomenon for the given algorithm -- in our case,~\nag. One of the key technical contributions of this paper is in designing an energy function for~\nag~and using it to establish~\iol~phenomenon.
+
+% \pn{Put lemma here on energy function and~\iol}
+
+% \pn{Put some stress on novelty of energy function?}
+% Once~\iol~phenomenon is established, we approximate the function locally by a quadratic, and analyze~\nag's performance on this quadratic. Bounding approximation errors introduced here turns out to be technically quite challenging. Bulk of this paper is devoted to doing just that.
+
+% We would like to reiterate that while the~\iol~framework as well as establishing this phenomenon for~\nag~are quite simple, they are quite powerful and yield short and simple proofs of some well-known existing results e.g., convergence rate of~\nag~to first order stationary points originally proved in~\cite{ghadimi2016accelerated}. See Section~\ref{sec} for details. We believe that~\iol~is the right framework for nonconvex optimization and will help push its boundaries.\pn{Something better in the last sentence?}
+

@@ -1,0 +1,92 @@
+% !TEX root = main.tex
+
+\section{Counter Examples for Non-convex Approaches}
+\label{app:examples}
+
+In this section, we give counter-examples to some non-convex methods for matrix completion. For simplicity, we give examples for the {\em weighted} version of the non-convex objective. These examples can be translated to the semi-random adversary model using standard sampling techniques.
+
+We will give the counter-examples in a simpler setting where $\Ms$ is known to be symmetric, we have $\Ms$ is an $n\times n$ matrix that can be decomposed as $\Ms = \Us(\Us)^\top$. In this case, we optimize:
+\begin{equation}
+\label{eqn:symmetricobj}
+\min \; f(U) = \frac{1}{2}\|UU^\top - \Ms\|_W^2 + Q(U). 
+\end{equation}
+Here $Q(U)$ is the regularizer $\lambda \sum_{i=1}^n (\normtwo{U_i} - \alpha)_+^4$ (where $x_+ = \max\{x,0\}$). Parameters $\lambda, \alpha$ in the regularizer is specified later (see Lemma~\ref{lem:symmetricnormbound}).
+%
+%Here $\lambda, \alpha$ are parameters to be specified (see Lemma~\ref{lem:symmetricnormbound})% \yccomment{Where did we specify them?}
+%, $x_+ = \max\{x,0\}$. Also, let $Q(U)$ be the regularizer $\lambda \sum_{i=1}^n (\normtwo{U_i} - \alpha)_+^4$ (where $x_+ = \max\{x,0\}$). 
+Our examples also work for the asymmetric Objective~\eqref{eqn:asymmetricobj}.
+
+\paragraph{Example Where Objective~\eqref{eqn:symmetricobj} Has Spurious Local Minimum.}
+
+We first give an example where Objective~\eqref{eqn:symmetricobj} has a spurious local minimum. This is a simple rank 1 case where the intended solution $\Ms = u^\star (u^\star)^\top$ is the all ones matrix, and $u^\star = (1,1,...,1)^\top$ is the all ones vector.
+
+In this example, all vectors will be represented by two blocks of size $n/2 \times 1$, and the value within each block will be the same; similarly all matrices will be partitioned into $2\times 2$ blocks (where each block has size $n/2\times n/2$), and entries within each block are the same.
+
+For this example, we choose 
+\[
+u = \left(\begin{array}{c} \beta \\ -\beta \end{array}\right), \quad W = \left(\begin{array}{cc} \gamma J & J \\ J & \gamma J \end{array}\right),
+\]
+for any parameters $2^{-1/4} < \beta \le \frac{9}{10}$ and $\gamma = \frac{1+\beta^2}{1-\beta^2} < 10$.
+%This example fits in the semi-random model, because the adversary will reveal each entry of $\Ms$ with probability $p_{i,j} \in [p, \gamma p]$. %each entry of $\Ms$ is revealed with probability at least $\gamma$. %constant probability.
+
+\begin{lemma}
+For the setting of $\Ms$, $u$, $W$ stated above, the objective function \eqref{eqn:symmetricobj} has a local minimum at $u$.
+\end{lemma}
+
+We will prove this lemma by second-order sufficient condition: gradient is 0 and Hessian is positive definite. Clearly $u$ is incoherent, so the incoherence regularizer does not matter. We first check the gradient of $f(u)$ is 0. This is due to our choice of $\gamma$ satisfies $\gamma(\beta^2-1) + (\beta^2+1) = 0$:
+\[
+\nabla f(u) = [(W + W^\top) * (uu^\top - \Ms)] u = 2[W * (uu^\top - \Ms)] u = 0.
+\]
+Next, we consider the Hessian of $f(u)$.
+For any vector $\delta \in \R^n$, we know that
+\[
+\frac{1}{2}\delta^\top [\nabla^2 f(u)] \delta = \|\delta u^\top\|_W^2 + \inner{2uu^\top - \Ms,\delta\delta^\top}_W.
+\]
+We show this is strictly greater than 0 for all $\delta \neq 0$.
+Let $\delta = \left( \begin{array}{c} \delta_1 \\ \delta_2 \end{array} \right)$ for $\delta_1, \delta_2 \in \R^{n/2}$.
+Notice that $\|\delta u^\top\|_W^2$ is non-negative, therefore, we have
+\begin{align*}
+& \|\delta u^\top\|_W^2 + \inner{2uu^\top - \Ms,\delta\delta^\top}_W \\
+& \ge \inner{2uu^\top - \Ms,\delta\delta^\top}_W \\
+% & = 2 \sum_{i,j} W_{ij} u_i u_j \delta_i \delta_j - \sum_{i,j} W_{ij} \Ms_{ij} \delta_i \delta_j \\
+& = 2\beta^2 \left(\gamma\normone{\delta_1}^2 + \gamma\normone{\delta_2}^2 - 2 \normone{\delta_1} \normone{\delta_2} \right) - \left(\gamma\normone{\delta_1}^2 + \gamma\normone{\delta_2}^2 + 2 \normone{\delta_1} \normone{\delta_2}\right) \\
+& \ge 2\beta^2 (\gamma-1) \left(\normone{\delta_1}^2 + \normone{\delta_2}^2\right) - (\gamma+1) \left(\normone{\delta_1}^2 + \normone{\delta_2}^2\right) \\
+& = (2\beta^2 (\gamma-1) - (\gamma+1))\left(\normone{\delta_1}^2 + \normone{\delta_2}^2\right) > 0.
+\end{align*}
+
+The last step is due to $\delta \neq 0$ and our choice of $\beta$ and $\gamma$.
+%We can verify the first term is positive when $\beta \to 1$ and $\gamma \to 0$.
+
+\paragraph{Example Where SVD Initialization Gives the Wrong Subspace.}
+
+Many other non-convex methods depend on SVD to do initialization (e.g., \citep{jain2013low, hardt2014understanding}). Now we give an example where SVD cannot find the subspace correctly.
+
+This is a rank-$2$ example.
+For simplicity, all vectors are divided into blocks of size $n/4 \times 1$, and matrices are divided into blocks of size $n/4\times n/4$.
+We write these as $4 \times 2$ or $4\times 4$ matrices, and they should be interpreted as blocks (constant multiplied by $J_{n/4\times 1}$ or $J_{n/4\times n/4}$).
+The matrix $\mbox{Diag}(4,1)$ is a $2 \times 2$ diagonal matrix.
+\[
+\Ms = \left(\begin{array}{cc}1 & 1 \\ 1 & 1 \\ 1 & -1 \\ 1 & -1\end{array}\right) \mbox{Diag}(4,1)\left(\begin{array}{cccc}1 & 1 & 1 & 1 \\ 1 & 1 & -1 & -1\end{array}\right)
+\]
+
+\[
+W = \left(\begin{array}{cccc}2 & 1 & 2 & 1 \\ 1 & 2 & 1 & 2 \\2 &1 & 2 & 1  \\ 1 & 2 & 1 & 2\end{array}\right); \qquad W*\Ms =  \left(\begin{array}{cccc}10 & 5 & 6 & 3 \\ 5 & 10 & 3 & 6 \\6 &3 & 10 & 5  \\ 3 & 6 & 5 & 10\end{array}\right)
+\]
+
+\begin{lemma}
+Under the above setting for $\Ms, W$, the top two singular vectors of $W*\Ms$ are (up to normalization) $(1,1,1,1)$ and $(1,-1,1,-1)$. The principled angle between this subspace and the true subspace $\mbox{span}(\Ms)$ is 90 degrees.
+\end{lemma}
+
+This lemma is easy to verify numerically by computing the SVD of the $ 4\times 4$ matrix. The SVD of the original matrix follows the same block structure.
+
+\paragraph{Converting Weighted Examples to Semi-Random Examples.}
+In order to get counter examples in the semi-random model, pick a probability of observation $p$ (we need $p \ge \mbox{poly}(r) \log(n) /n$, and in our examples $p$ can be as large as $1/10$).
+The semi-random adversary will reveal entry $(i,j)$ with probability $p_{i,j} = p W_{i,j} \ge p$ for the $W$ given in the examples.
+This way, the expectation of the observed entries is exactly $W * \Ms$ (after scaling by $1/p$), and the expectation of the objective function is equal to $\|UU^\top - \Ms\|_W^2$.
+
+For the first example, by standard concentration results, we know that the gradient and Hessian of the objective function are close to their expectations, so there is a local minimum near $u$.
+For the second example, by standard random matrix theory, we know when $p$ is large enough the top singular space of the observed matrix is close to the top singular space of $W*\Ms$ (and thus far from the correct space).
+
+%In fact, for the counterexamples we can consider a weaker version of the semi-random adversary. This adversary looks at $\Ms$,  and is allowed to increase the reveal probabilities of the entries. After the perturbation of semi-random adversary, entry $(i,j)$ is revealed with probability $p_{i,j}$ where $p_{i,j}\ge p$ for all $(i,j)$. In this case, the expected objective function is similar to a weighted low-rank factorization problem. In particular, let $W$ be a matrix where $W_{i,j} = \frac{1}{p} p_{i,j}$, the expected objective function is going to be $\|UV^\top - \Ms\|_W^2$. All of our counter-examples work in this setting where the adversary is weaker; on the other hand our algorithm works for a stronger adversary that can also look at the actual entries that are revealed.
+
+%In order to get an example for the semi-random adversary, pick a probability of observation $p$ ($p$ needs to be larger than $\mbox{poly}(r)/d$, and in our examples $p$ can be as large as $1/2$). The semi-random adversary will reveal entry $i,j$ with probability $p W_{i,j}$. For the first example, the expectation of Objective~\eqref{eqn:symmetricobj} is exactly equal to the weighted version. By standard concentration results we know the gradient and Hessian are close to the expectation, and there is a local minimum near the given point. For the second example, the expectation of the observed entries is exactly $W*\Ms$. Therefore by standard random matrix theory, we know when $p$ is large enough the top singular space of the observed matrix is close to the top singular space of $W*\Ms$ (and thus far from the correct space).

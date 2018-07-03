@@ -1,0 +1,85 @@
+We consider the model of \emph{linear contextual
+  bandits}~\citep{Langford-www10,chu2011contextual}. Formally, there
+is a learner who serves a sequence of users over $T$ rounds, where $T$
+is the (known) time horizon.  For the user who arrives in round $t$ there are
+(at most) $K$ actions available, with each action
+$a\in \{1, \ldots , K\}$ associated with a \emph{context vector}
+$x_{a,t} \in \R^d$. Each context vector may contain a mix of features
+of the action, features of the user, and features of both.  We assume
+that the tuple of context vectors for each round $t$ is drawn
+independently from a fixed distribution.  The learner observes the set
+of contexts and selects an action $a_t$ for the user. The user then
+experiences a reward $r_t$ which is visible to the learner. We assume
+that the expected reward is linear in the chosen context vector. More
+precisely, we let $r_{a,t}$ be the reward of action $a$ if this action
+is chosen in round $t$ (so that $r_t = r_{a_t,t}$), and assume that
+there exists an unknown vector $\theta\in\R^d$ such that
+$\E{r_{a, t}\mid x_{a, t}} = \theta\tran x_{a, t}$ for any round $t$
+and action $a$. Throughout most of the paper, the realized rewards are
+either in $\{0,1\}$ or are the expectation plus independent Gaussian
+noise of variance at most $1$. We sometimes consider a Bayesian
+version, in which the latent vector $\theta$ is initially drawn from some
+known prior $\prior$. \looseness=-1
+
+A standard goal for the learner is to maximize the expected total
+reward over $T$ rounds, or $\sum_{t=1}^T \theta\tran x_{a, t}$. This
+is equivalent to minimizing the learner's \emph{regret}, defined as 
+\begin{align}\label{eq:regret-def}
+\text{Regret}(T) = \textstyle
+    \sum_{t=1}^T \theta\tran x_t^* -
+\theta\tran x_{a_t, t} 
+\end{align}
+ where $x^*_{t} = \argmax_{x \in
+\{x_{1,t}, \cdots, x_{K,t}\}} \theta\tran x$ denotes the
+context vector associated with the best action at round $t$. We are mainly
+interested in \emph{expected regret}, where the expectation is taken over the
+context vectors, the rewards, and the algorithm's random seed, and
+\emph{Bayesian regret}, where the expectation is taken over all of the above and
+the prior over $\theta$.
+
+We introduce some notation in order to describe and
+analyze algorithms in this model. We write $x_t$ for $x_{a_t,t}$, the context vector chosen at time $t$. Let $X_t\in \R^{t\times d}$ be the \emph{context matrix} at time
+$t$, a matrix whose rows are vectors $x_1 \LDOTS x_t\in \R^d $.
+A $d\times d$ matrix
+    $Z_t :=\sum_{\tau=1}^t x_\tau x_\tau\tran = X_t\tran X_t$,
+called the \emph{empirical covariance} matrix, is an important concept in some of the prior work on linear contextual bandits
+\citep[\eg][]{abbasi2011improved,kannan2018smoothed}, as well as in this paper.
+
+\xhdr{Optimism under uncertainty.}  Optimism under uncertainty is a
+common paradigm in problems with an explore-exploit
+tradeoff~\citep{Bubeck-survey12}. The idea is to evaluate each action
+``optimistically"---assuming the best-case scenario for this
+action---and then choose an action with the best optimistic
+evaluation. When applied to the basic multi-armed bandit setting, it
+leads to a well-known algorithm called UCB1 \citep{bandits-ucb1},
+which chooses the action with the highest upper confidence bound (henceforth,
+UCB) on its mean reward. The UCB is computed as the sample average of
+the reward for this action plus a term which captures the amount of
+uncertainty.
+
+Optimism under uncertainty has been extended to linear contextual
+bandits in the LinUCB
+algorithm~\citep{chu2011contextual,abbasi2011improved}. The high-level
+idea is to compute a confidence region
+$\Theta_t \subset \R^d$ in each round $t$ such that $\theta\in \Theta_t$ with high
+probability, and choose an action $a$ which maximizes the optimistic
+reward estimate $\sup_{\theta \in \Theta_t} x_{a,t}\tran \theta$.
+Concretely, one uses regression to form an empirical estimate
+$\thetahatt$ for $\theta$.  Concentration techniques lead to
+high-probability bounds of the form
+$|x\tran (\theta -\thetahatt)| \leq f(t) \sqrt{x\tran Z_t^{-1}x}$, where
+the \emph{interval width function} $f(t)$ may depend on hyperparameters and features of
+the instance. LinUCB simply chooses an action
+\begin{equation}
+  a_t^{LinUCB} := \argmax_a x_{a,t}\tran \thetahatt + f(t) \sqrt{x_{a,t}\tran Z_t^{-1}
+  x_{a,t}}.
+  \label{eq:linucb_def}
+\end{equation}
+Among other results, \citet{abbasi2011improved} use
+\begin{equation}
+  f(t) = S+\sqrt{d c_0\log (T+tTL^2)},
+  \label{eq:Abbasi-f}
+\end{equation}
+where $L$ and $S$ are known upper bounds on $\|x_{a,t}\|_2$ and $\|\theta\|_2$, respectively, and $c_0$ is a parameter. For any $c_0\geq 1$, they obtain regret
+    $\tilde{O}(dS\sqrt{c_0\, K\,T})$,
+with only a $\polylog$ dependence on $TL/d$.

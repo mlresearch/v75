@@ -1,0 +1,114 @@
+%!TEX root = LWM.tex
+\section{Specialized Analysis in Scalar Linear Systems}
+\label{sec:1d_appendix}
+
+In this appendix, we present specialized upper and lower bounds in the case of scalar systems. Specifically, we consider $x_{t+1} = \ast x_t + \noise_t$, where $\noise_t \sim \mathcal{N}(0,\sigma^2)$, and $x_0 = 0$. Our upper bound has sharp, explicit constants, and captures the correct qualitative behavior for unstable scalar systems:
+\begin{thm}\label{thm:one_d_thm}
+Let $\epsilon \in (0,1)$ and $\delta \in (0, 1/2)$. Then $\Pr[|\als(T) - \ast | \leq \epsilon] \ge 1-\delta$ as long as
+\begin{align*}
+T \geq \begin{cases}\frac{8}{\epsilon}\log\left(\frac{2}{\delta}\right) + \frac{4}{\epsilon^2}(1 - (|\ast| - \epsilon)^2)\log\left(\frac{2}{\delta}\right) & \ast \le 1 + \epsilon \\
+\max\left\{\frac{8}{(|\ast| - \epsilon)^2 - 1}\log\left(\frac{2}{\delta}\right), \frac{4\log(\frac{1}{\epsilon})}{\log(|\ast| - \epsilon)} + 8\log\left(\frac{2}{\delta}\right)\right\} & \ast > 1 + \epsilon~.
+\end{cases}
+\end{align*}
+\end{thm}
+We match the upper bound with a lower bound which shows that our rates are optimal. Unlike the $d$-dimension case, our lower bound considers ``local alternatives'' rather than scaled orthogonal matrices\footnote{In one dimension, the orthogonal matrices are just the set $\{-1,1\}$, and this precludes packing `nearby' orthogonal matrices as in the $d$-dimensional case}:
+\begin{thm}[1-D Lower Bound]\label{thm:info_lb_1d}  Fix an $\ast \in \R$, and define $\Gramm_T := \sum_{t=1}^{T}\ast^{2t}$. Fix an alternative $a' \in \{\ast - 2\epsilon,\ast + 2\epsilon\}$, and $\delta \in (0,1/4)$. Then for any estimator $\widehat{a}$,
+\begin{eqnarray*}
+\sup_{a \in \{a^*,a'\}}\Pr_{a}\left[\left|\widehat{a}(T) - \ast\right| \ge \epsilon\right] \ge \delta \; \text{ for any } T \text{ such that }\; T \Gramm_T \le \frac{\log (1/2\delta)}{8\epsilon^2}. 
+\end{eqnarray*}
+\end{thm}
+Theorem~\ref{thm:one_d_thm} is proven in Section~\ref{sec:proof_one_d} below, and Theorem~\ref{thm:info_lb_1d} is proven in Section~\ref{sec:lb_proofs}.
+
+\section{Proof of Theorem~\ref{thm:one_d_thm}\label{sec:proof_one_d}}
+To prove Theorem~\ref{thm:one_d_thm}, we write the error $E = \hat a - a = \frac{\sum_{t = 0}^{T - 1}x_t \noise_{t}}{\sum_{t = 0}^{T - 1}x_t^2}$. Since are interested in upper bounding the probability that $|E| > \epsilon$  it suffices to to show that the following two probabilities are small:
+\begin{align*}
+\Pr\left(\epsilon \sum_{t = 0}^{T - 1} x_t^2 - \sum_{t = 0}^{T - 1} x_t \noise_t < 0\right) \quad \text{and} \quad \Pr\left(\epsilon \sum_{t = 0}^{T - 1} x_t^2 + \sum_{t 0}^{T - 1} x_t \noise_t < 0\right).
+\end{align*}
+These probabilities are upper bounded by a standard Chernoff bound
+\begin{align}
+\label{eq:mgf_1d}
+\Pr\left(\epsilon \sum_{t = 0}^{T - 1} x_t^2 \pm \sum_{t = 0}^{T - 1} x_t \noise_t < 0\right) \leq \inf_{\lambda \leq 0}\Exp \exp\left(\lambda \epsilon \sum_{t = 0}^{T - 1} x_t^2 \pm \lambda \sum_{t = 0}^{T - 1} x_t \noise_t\right).
+\end{align}
+We will apply this equation with $\lambda = -\epsilon$, controlling its magnitude with following lemma, proved in Section~\ref{sec:lem_one_step_1d} below:
+\begin{lemma}
+\label{lem:one_step_1d_mgf}
+Let $a$, $\nu$, $\mu$, and $x$ be real numbers with $\nu < 1$ and let $\noise \sim \calN(0, 1)$. Then
+
+$\Exp_\noise \exp \left(\frac{\nu}{2} (ax + \noise)^2 + \mu x \noise\right) = \frac{\exp\left(x^2\frac{\nu a^2 + 2\nu a \mu + \mu^2}{2(1- \nu)}\right)}{\sqrt{1 - \nu}}$.
+\end{lemma}
+With this lemma in hand, we can construct a recursive sequence which upper bounds $|a-\widehat{a}|$ with high probability:
+\begin{prop}\label{prop:1d_mgf_bound}
+Let $a$ be a real number and for $\alpha \in \R_{+}$ and $\epsilon \in (0,1)$ define recursively the sequence $\rho_t$ by $\rho_{T - 1} = 1$ and
+\begin{align*}
+\rho_{t} =
+\begin{cases}
+1 + r\rho_{t+ 1} & \rho_{t + 1} \leq \alpha/\epsilon^2,\\
+\alpha/\epsilon^2 & \rho_{t + 1} > \alpha / \epsilon^2.
+\end{cases}
+\quad \text{ where } r = \frac{(|a| - \epsilon)^2}{1 + \alpha}.
+\end{align*}
+With this notation, $\Pr\left(|\widehat a - a| \leq \epsilon \right) \leq 2\exp \left(-\frac{\epsilon^2}{2(1 + \alpha)}\sum_{t = 1}^{T - 1}\rho_t\right).$
+\end{prop}
+\begin{proof}
+The proof of this result is similar to the proof of the Azuma-Hoeffding inequality. It requires upper-bounding the MGF introduced in \eqref{eq:mgf_1d} by inductively applying the tower property of conditional expectation. We detail the proof in Section~\ref{proof:1d_mgf}.
+\end{proof}
+
+
+The proof of Theorem~\ref{thm:one_d_thm} is concluded in Section~\ref{sec:one_d_thm}, where we upper bound the sum $\sum_{t = 1}^{T - 1}\rho_t$, and solve for $T$.
+
+
+
+\subsection{Proof of Lemma~\ref{lem:one_step_1d_mgf}\label{sec:lem_one_step_1d}}
+\begin{align*}
+&\Exp_\noise \exp \left(\frac{\nu}{2} (ax + \noise)^2 + \mu x \noise\right) = e^{\frac{\nu}{2} a^2 x^2} \Exp_\noise e^{\frac{\nu}{2} \noise^2 + \noise x(\nu a + \mu)}\\
+&= \frac{e^{\frac{\nu}{2} a^2 x^2} }{\sqrt{2\pi}}\int_{-\infty}^\infty e^{\frac{\nu - 1}{2} \noise^2 + \noise x(\nu a + \mu)} d\noise = e^{\frac{\nu}{2} a^2 x^2} \frac{e^{x^2\frac{(\nu a + \mu)^2}{2(1 - \nu)}}}{\sqrt{1 - \nu}} = \frac{\exp\left(x^2\frac{\nu a^2 + 2\nu a \mu + \mu^2}{2(1 - \nu)}\right)}{\sqrt{1 - \nu}}.
+\end{align*}
+
+\subsection{Proof of Theorem~\ref{thm:one_d_thm}\label{sec:one_d_thm}}
+Once again we let $a \geq 0$ for simplicity and recall from Proposition~\ref{prop:1d_mgf_bound} that we denote $r = (a - \epsilon)^2/(1 + \alpha)$. We study the case $a \leq 1$ first. Let us consider the sequence $\rho_t$ introduced in Proposition~\ref{prop:1d_mgf_bound} with $\alpha = 2\epsilon$ and note that
+\begin{align*}
+1 + r + \ldots + r^{t} \leq 1 + (1 + 2\epsilon)^{-1} + \ldots + (1 + 2\epsilon)^{-t} \leq \frac{1}{1 - (1 + 2\epsilon)^{-1}} \leq \frac{2}{\epsilon},
+\end{align*}
+which shows that for all $t$ we have $\rho_{T - 1 - t} = 1 + r + \ldots + r^t$ and hence $\sum_{t = 1}^{T - 1}\rho_t = \sum_{t = 1}^{T - 1} \frac{1 - r^{t}}{1 - r} = \frac{T}{1 - r} - \frac{\sum_{t = 0}^{T - 1} r^t}{1 - r}.$
+Since $T/2 \geq 1 + r + r^2 + \ldots + r^{T - 1}$ when $T \geq 6/\epsilon$, we obtain that $\sum_{T = 1}^{T - 1} \rho_t \geq \frac{T}{2(1 - r)}, $, which, together with Proposition~\ref{prop:1d_mgf_bound}, it implies that
+\begin{align*}
+\Pr(|\widehat a -  a| \leq \epsilon) \leq 2\exp\left(-\frac{\epsilon^2T}{4(1 + 2\epsilon)(1 - r)}\right) = 2\exp\left(-\frac{\epsilon^2T}{4(1 + 2\epsilon - (a - \epsilon)^2)}\right).
+\end{align*}
+The first part of the corollary follows immediately.
+
+We turn to the case $|a| > 1 + \epsilon$. Once again we assume $a > 0$ for simplicity. Recall that we have the freedom to choose any $\alpha \in \R_{+}$ for defining the sequence $\rho_t$.
+Since $a > 1 + \epsilon$, if we choose $\alpha < (a - \epsilon)^2 - 1$ we guarantee that $r > 1$. To satisfy this inequality we choose $\alpha = ((a - \epsilon)^2 - 1)/2$.
+Then, with this choice of $\alpha$, the sequence $\rho_t$ grows exponentially to $\alpha/\epsilon^2$. More precisely, by construction, since
+\begin{align*}
+\left[\frac{(a - \epsilon)^2}{1 + \alpha}\right]^{T - 2} = \left[\frac{2(a - \epsilon)^2}{1 + (a - \epsilon)^2}\right]^{T - 2} \geq (a - \epsilon)^{T - 2},
+\end{align*}
+$\rho_{1}$ is guaranteed to be equal to $\alpha/\epsilon^2$ as long as $(a - \epsilon)^{T - 2} \geq \alpha/\epsilon^2$. This last inequality holds when $T \geq \frac{\log\left(\frac{(a - \epsilon)^2 - 1}{2\epsilon^2}\right)}{\log(a - \epsilon)} + 2.$ In particular, if we choose $T$ to be at least double the right-hand side of the previous expression, then at least half of the terms $\rho_t$ are equal to $\alpha/\epsilon^2$, implying
+\begin{align*}
+\Pr(|\widehat a -  a| \leq \epsilon) \leq 2\exp\left(-\frac{\alpha T}{4(1 + \alpha)}\right).
+\end{align*}
+The conclusion now follows easily.
+
+
+\subsection{Proof of Proposition~\ref{prop:1d_mgf_bound}}
+\label{proof:1d_mgf}
+We restrict ourselves to the case $a \geq 0$ (the case $a < 0$ can be analyzed analogously), and hence $r = (a - \epsilon)^2/(1 + \alpha)$. We  upper bound the MGF~\eqref{eq:mgf_1d} when $\lambda = -\epsilon$. Note that
+\begin{align*}
+\Exp \exp\left(- \epsilon^2 \sum_{t = 0}^{T - 1} x_t^2 \pm \epsilon \sum_{t = 0}^{T - 1} x_t \noise_t\right) &= \Exp \left[e^{ - \epsilon^2 \sum_{t = 0}^{T - 1} x_t^2 \pm \epsilon \sum_{t = 0}^{T - 2} x_t \noise_t}\Exp_{\noise_{T - 1}} \left[e^{\pm\epsilon x_{T - 1} \noise_{T - 1}}\left|\calF_{T - 1}\right.\right]\right]\\
+&= \Exp \left[e^{ - \epsilon^2 \sum_{t = 0}^{T - 2} x_t^2 \pm \epsilon \sum_{t = 0}^{T - 3} x_t \noise_t}\Exp\left[ e^{-\frac{\epsilon^2}{2} x_{T - 1}^2 \pm \epsilon x_{T - 2} \noise_{T - 2}}\left| \calF_{T - 2}\right.\right]\right] \:.
+\end{align*}
+
+Then, from Lemma~\ref{lem:one_step_1d_mgf} we can upper bound the MGF by induction on $k$ by
+\begin{align*}
+\Exp \left[e^{ - \epsilon^2 \sum_{t = 0}^{T - k - 1} x_t^2 - \epsilon \sum_{t = 0}^{T - k - 2} x_t \noise_t}\Exp\left[ e^{-\frac{\epsilon^2\beta_{T - k}}{2} x_{T - k}^2 - \epsilon x_{T - k - 1} \noise_{T - k - 1}}\left| \calF_{T - k - 1}\right.\right]\right] \prod_{j = T - k + 1}^{T - 1} (1 + \epsilon^2 \beta_j)^{-1/2},
+\end{align*}
+where $\beta_t$ is any positive sequence such that $\beta_{T - 1} = 1$ and for $1 \leq t < T - 1$ it satisfies $\beta_t \leq 1 + \frac{\beta_{t +1}(a - \epsilon)^2}{1 + \epsilon^2 \beta_{t + 1}}$. It is straightforward to check that the sequence $\rho_t$ defined in the proposition statement above satisfies this
+recursive inequality for any $\alpha \in (0,1)$. Therefore, we obtain the upper bound
+\begin{align*}
+\Exp \exp\left(- \epsilon^2 \sum_{t = 0}^{T - 1} x_t^2 - \epsilon \sum_{t = 0}^{T - 1} x_t \noise_t\right) &\leq \prod_{t = 1}^{T - 1}(1 + \epsilon^2 \rho_t)^{-1/2} = \exp\left(\sum_{t = 1}^{T - 1}-\frac{1}{2}\log (1 + \epsilon^2 \rho_t)\right) \\
+&\leq \exp\left(\sum_{t = 1}^{T - 1}-\frac{\epsilon^2 \rho_t}{2(1 + \epsilon^2 \rho_t)}\right) \leq \exp\left(-\frac{\epsilon^2}{2(1 + \alpha)} \sum_{t = 1}^{T - 1}\rho_t\right) \:.
+\end{align*}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

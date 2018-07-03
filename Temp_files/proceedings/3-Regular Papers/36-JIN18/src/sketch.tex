@@ -1,0 +1,183 @@
+%!TEX root = main.tex
+
+\section{Overview of Analysis}
+In this section, we will present an overview of the proof of Theorem~\ref{thm:main}. Section~\ref{sec:hamiltonian} presents the Hamiltonian for~\nag~and its key property of monotonic decrease. Section~\ref{sec:imp_local} presents \emph{improve-or-localize} lemma, as well as the main intuition behind acceleration. Section~\ref{sec:framework} demonstrates how to apply these tools to prove Theorem~\ref{thm:main}.
+% in the proof presents the main framework of the proof. 
+Complete details can be found in the appendix.
+
+\subsection{Hamiltonian}\label{sec:hamiltonian}
+While~\gd~guarantees decrease of function value in every step (even for nonconvex problems), the biggest stumbling block to analyzing~\nag~is that it is less clear
+how to keep track of ``progress.'' Known Lyapunov functions 
+for~\nag~\citep{wilson2016lyapunov} are restricted to the convex setting and furthermore are not computable by the algorithm (as they depend on $\x^\star$). %, and also is only limited to convex setting.
+
+To deepen the understanding of AGD in a nonconvex setting, we inspect it from a dynamical
+systems perspective, where we fix the ratio $\tilde{\theta} = \theta / \sqrt{\eta}$ to be a 
+constant, while letting $\eta \rightarrow 0$. This leads to an ODE which is the continuous 
+limit of AGD~\citep{su2016differential}:
+\vspace{-0.15cm}
+\begin{equation}\label{eq:ODE}
+\ddot{\x} + \tilde{\theta}\dot{\x} + \grad f(\x) = 0,
+\end{equation}
+\vspace{-0.5cm}
+
+\noindent where $\ddot{\x}$ and $\dot{\x}$ are derivatives with respect to time $t$. 
+This equation is a second-order dynamical equation with \emph{dissipative forces} 
+$-\tilde{\theta}\dot{\x}$. Integrating both sides, we obtain:
+\vspace{-0.15cm}
+\begin{equation}
+f(\x(t_2)) + \frac{1}{2}\dot{\x}(t_2)^2 = f(\x(t_1)) + \frac{1}{2}\dot{\x}(t_1)^2 - \tilde{\theta}\int_{t_1}^{t_2}\dot{\x}(t)^2\mathrm{d}t.
+\label{eq:energy_ODE}
+\end{equation}
+\vspace{-0.5cm}
+
+\noindent
+Using physical language, $f(\x)$ is a \emph{potential energy} while $\dot{\x}^2/2$ is a
+\emph{kinetic energy}, and the sum is a \emph{Hamiltonian}.  The integral shows that
+the Hamiltonian decreases monotonically with time $t$, and the decrease is given by 
+the \emph{dissipation} term, $\tilde{\theta}\int_{t_1}^{t_2}\dot{\x}(t)^2\mathrm{d}t$. 
+Note that~\eqref{eq:energy_ODE} holds regardless of the convexity of $f(\cdot)$. 
+This monotonic decrease of the Hamiltonian can in fact be extended to the discretized 
+version of AGD when the function is convex, or mildly nonconvex:
+% As AGD can be viewed as a discretization of Eq.\eqref{eq:ODE}, we can indeed also show a discretized version of its integrated form Eq.\eqref{eq:energy_ODE}:
+
+
+% \begin{equation}
+%     f(\x_{t+1}) + \frac{1}{2\eta}\norm{\x_{t+1} - \x_t}^2 \le f(\x_{t}) + \frac{1}{2\eta}\norm{\x_{t}- \x_{t-1}}^2 - \frac{\theta}{2\eta}\norm{\x_{t}- \x_{t-1}}^2.
+% \label{eq:energy_discrete}
+% \end{equation}
+
+
+
+
+% \begin{lemma}\label{lem:energy_convex}
+%   Assume that the function $f(\cdot)$ is $\ell$-smooth and at most $\gamma$-nonconvex i.e.,
+%   \begin{align*}
+%       f(\y) \geq f(\x) + \iprod{\nabla f(\x)}{\y-\x} - \frac{\gamma}{2} \norm{\y - \x}^2.
+%   \end{align*}
+%   then, ~\nag~(algorithm \ref{algo:AGD}) with learning rate $\eta \le \frac{1}{2\ell}$, $\theta\in [2\eta \gamma,1]$ satisfies following:
+%   \begin{equation*}
+%   E_{t+1} \le E_t - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2.
+%   \end{equation*}
+% \end{lemma}
+
+
+\begin{lemma}[Hamiltonian decreases monotonically]\label{lem:energy_nonconvex}
+  Assume that the function $f(\cdot)$ is $\ell$-smooth, the learning rate $\eta \le \frac{1}{2\ell}$, and $\theta\in [2\eta \gamma,\frac{1}{2}]$ in ~\nag~(Algorithm \ref{algo:AGD}). Then, for every iteration $t$ where~\eqref{eq:certificate} does not hold, we have:
+	\vspace{-0.15cm}
+  \begin{equation}\label{eq:energy_discrete}
+  f(\x_{t+1}) + \frac{1}{2\eta}\norm{\v_{t+1}}^2 \le f(\x_{t}) + \frac{1}{2\eta}\norm{\v_{t}}^2- \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2.
+  \end{equation}
+  % \begin{equation*}
+  % E_{t+1} \le E_t - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2.
+  % \end{equation*}
+\end{lemma}
+\vspace{-0.2cm}
+Denote the discrete Hamiltonian as $E_t \defeq f(\x_{t}) + \frac{1}{2\eta}\norm{\v_{t}}^2$, and note that in AGD, $\v_t = \x_{t} - \x_{t-1}$. Lemma~\ref{lem:energy_nonconvex} tolerates nonconvexity with curvature at most $\gamma = \Theta(\theta/\eta)$. Unfortunately, when the function has large negative curvature between current iterates $\x_t$ and $\y_t$ (so that~\eqref{eq:certificate} holds), the analogy between the continuous and discretized versions breaks and~\eqref{eq:energy_discrete} no longer holds. In fact, standard AGD can even increase the Hamiltonian in this regime (see Appendix \ref{sec:counterex} for more details). \red{However, we also note condition~\eqref{eq:certificate}~is indeed an easy case, since it is in general challenging to efficiently find a negative curvature direction, but straightforward to exploit it when we observe one.} This motivates us to modify the algorithm by adding the~\nce~step, which addresses this issue. We have the following simple result about~\nce:
+
+% \red{In the continuous time setting (i.e., when the stepsize is infinitesimally small), it is monotonically decreasing \emph{regardless of the convexity of $f(\cdot)$}. In the discrete setting however, the Hamiltonian might not decrease if $f(\cdot)$ has a large negative curvature at $x_t$ in the $v_t$ direction (formally line $8$ of Algorithm~\ref{algo:PAGD}). However, handling this situation is easy and is accomplished by the~\nce~step. The challenging case is when $f(\cdot)$ does not have large negative curvature at $x_t$ in the $v_t$ direction. Here, we have decrease of Hamiltonian but that by itself does not give improved convergence rates. This brings us to our second key technical contribution.}
+
+
+% \begin{lemma}[Hamiltonian decreases monotonically]\label{lem:energy_nonconvex}
+% %Assume that $f(\cdot)$ is $\ell$-smooth and $\rho$-Hessian Lipschitz. Then, we have for Algorithm \ref{algo:PAGD} with learning rate $\eta \le \frac{1}{2\ell}$, $\theta\in [2\eta \gamma,1]$ satisfies energy function monotonically decreasing. More specifically:
+% Assume that $f(\cdot)$ is $\ell$-smooth and $\rho$-Hessian Lipschitz. Then, Algorithm~\ref{algo:PAGD} without perturbation, with $\eta \le \frac{1}{2\ell}$, and $\theta\in [2\eta \gamma, \frac{1}{2}]$ 
+% % monotonically decreases Hamiltonian~\eqref{eqn:hamiltonian}. More specifically:
+% satisfies:
+% \begin{equation*}
+% E_{t+1}
+% \le 
+% \begin{dcases}
+% E_t -\min\{\frac{s^2}{2\eta},  \frac{1}{2}(\gamma - 2\rho s) s^2\}
+% & \mbox{\quad~if NCE is triggered}\\
+% E_t - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2
+% & \mbox{\quad~otherwise}.
+% \end{dcases}
+% \end{equation*}
+% % \cnote{maybe put the exact formulation in appendix, here only says $\sqrt{\frac{\epsilon^3}{\rho}}$}
+% \end{lemma}
+
+
+
+\begin{lemma}\label{lem:energy_NCE}
+Assume that $f(\cdot)$ is $\ell$-smooth and $\rho$-Hessian Lipschitz. For every iteration $t$ of Algorithm~\ref{algo:PAGD} where~\eqref{eq:certificate} holds (thus running NCE), we have:
+\vspace{-0.15cm}
+\begin{equation*}
+E_{t+1}\le E_t -\min\{\frac{s^2}{2\eta},  \frac{1}{2}(\gamma - 2\rho s) s^2\}.
+\end{equation*}
+% \cnote{maybe put the exact formulation in appendix, here only says $\sqrt{\frac{\epsilon^3}{\rho}}$}
+\end{lemma}
+\vspace{-0.15cm}
+
+Lemmas~\ref{lem:energy_nonconvex} and~\ref{lem:energy_NCE} jointly assert that the Hamiltonian decreases monotonically in all situations, and are the main tools in the proof of Theorem~\ref{thm:main}. They not only give us a way of tracking progress, but also quantitatively measure the amount of progress.
+%The main proof of this paper will based keep track of energy function decrease. Energy function not only gave a criteria to track progress, but also restrict our consideration to a local region where function is approximately quadratic.
+
+
+
+
+
+
+% Note above equation does not require $f(\cdot)$ to be convex.
+
+% In contrast, for the $\alpha-$strongly convex setting, a Lyapunov function that keeps track of progress made by~\nag~is well known.\cnote{cite Mike paper and check if this is exactly correct}\pn{Perhaps~\cite{nesterov2012efficiency} is a better reference?} 
+% \begin{equation*}
+% f(\x_t) - f(\x^\star) + \frac{\alpha}{2} \norm{\x_t - \x^\star + \frac{1}{\theta}(\x_t - \x_{t-1})}^2
+% \end{equation*}
+% Unfortunately however, this Lyapunov function depends on the optimal point $\xstar$, which does not make sense for nonconvex problems.
+% %which involves $\x^\star$ clearly not applies in nonconvex setting.
+
+% In this paper, we take a direct approach and consider the Hamiltonian (or total energy) of the~\nag~update when looked at from a Physics, dynamical systems point of view.
+% %In this paper, we take a more direct approach and look at energy function which is directly analog of dynamics in physics, where energy
+% Here Hamiltonian, $E_t$, is defined as the sum of potential energy and kinetic energy.
+% \begin{equation}
+% E_t = f(\x_{t}) + \frac{1}{2\eta}\norm{\v_{t}}^2,
+% \label{eqn:hamiltonian}
+% \end{equation}
+% where we recall the variables $\x_t$ and $\v_t$ from Algorithm~\ref{algo:}. It turns out that~\nag~trades function value (potential energy) with velocity (kinetic energy) and monotonically decreases the Hamiltonian. In the limit of infinitesimally small step sizes, this can be seen from an ordinary differential equation (ODE) perspective, since it is well known that~\nag~is a discretization of the following ODE~\cite{su2016differential}:
+% \begin{equation*}
+% \ddot{\x} + \tilde{\theta}\dot{\x} + \grad f(\x) = 0,
+% \end{equation*}
+% where $\tilde{\theta} = \theta / \sqrt{\eta}$. By integrating over $\int_{t_1}^{t_2} \mathrm{d}\x = \int_{t_1}^{t_2} \dot{\x}\mathrm{d} t$, we have:
+% \begin{align*}
+% \int_{t_1}^{t_2} \ddot{\x}\cdot\dot{\x}\mathrm{d}t + \tilde{\theta}\int_{t_1}^{t_2}(\dot{\x})^2\mathrm{d}t + \int_{t_1}^{t_2}\grad f(\x)\mathrm{d}\x = 0,
+% \end{align*}
+% which implies
+% \begin{equation}
+% f(\x(t_2)) + \frac{1}{2}\dot{\x}(t_2)^2 = f(\x(t_1)) + \frac{1}{2}\dot{\x}(t_1)^2 - \tilde{\theta}\int_{t_1}^{t_2}\dot{\x}(t)^2\mathrm{d}t.
+% \label{eq:energy_ODE}
+% \end{equation}
+% Comparing this with~\eqref{eqn:hamiltonian}, we see that, $f(\x(t))$ is the potential energy while $\frac{1}{2\eta}\norm{\v_{t}}^2 \sim \frac{1}{2}\dot{\x}(t)^2$ is the kinetic energy.
+% %Make analog to physics terminology, we call $f(\x(t))$ \emph{potential energy}, $\frac{1}{2}\dot{\x}(t)^2$ \emph{kinetic energy}.
+% ~\eqref{eq:energy_ODE} says that the Hamiltonian is monotonically non-increasing, and the decrease is %characterized by the \emph{dissipation} 
+% given by the \emph{dissipation} $\tilde{\theta}\int_{t_1}^{t_2}\dot{\x}(t)^2\mathrm{d}t \geq 0$. Note that there is no requirement on $f(\cdot)$ to be convex for this to hold. %which is always non-negative.
+% %In this system, the kinetic energy and potential energy can trade into each other, which corresponds to the oscillation behavior of Nestrov's AGD around strongly convex local min.
+% %Indeed, we can show similar view hold true for Nestrov's AGD in convex setting. That is, while GD monotonically decrease its function value, AGD monotonically decrease the total energy.
+
+% The monotonic decrease of Hamiltonian for infinitesimally small step sizes~\eqref{eq:energy_ODE} can indeed be extended to~\nag~with non-zero step sizes for nonconvex functions.
+% %It turns out Nestrov's accelerated is exactly designed in a way so that 
+% %energy monotonically decrease for convex function:
+% \begin{lemma}\label{lem:energy_convex}
+%   Assume that the function $f(\cdot)$ is $\ell$-smooth and at most $\gamma$-nonconvex i.e.,
+%   \begin{align*}
+%       f(\y) \geq f(\x) + \iprod{\nabla f(\x)}{\y-\x} - \frac{\gamma}{2} \norm{\y - \x}^2.
+%   \end{align*}
+%   ~\nag~(algorithm \ref{algo:AGD}) with learning rate $\eta \le \frac{1}{2\ell}$, $\theta\in [2\eta \gamma,1]$ satisfies following:
+%   \begin{equation*}
+%   E_{t+1} \le E_t - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2.
+%   \end{equation*}
+% \end{lemma}
+% \pn{How does this look?}
+% %\begin{lemma}\label{lem:energy_convex}
+% %Assume that the function $f(\cdot)$ is $\ell$-smooth and convex, we have for Nestrov's AGD (algorithm \ref{algo:AGD}) with learning rate $\eta \le \frac{1}{2\ell}$, $\theta\le 1$ satisfies following:
+% %\begin{equation*}
+% %E_{t+1} \le E_t - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2
+% %\end{equation*}
+% %\end{lemma}
+% Note however, that if the nonconvexity parameter $\gamma$ is the same as the smoothness parameter $\ell$, Hamiltonian decrease above requires $\theta = 1$, in which case~\nag~is the same as~\gd, and there is no improvement to be had. In fact, this is not a looseness of Lemma~\ref{lem:energy_convex}.
+% \cnote{!!!Gave an one step example, why no longer true in nonconvex setting without NCE.}
+
+% In order to overcome this issue, we modify~\nag~to perform negative curvature exploitation, which is inspired by~\cite{carmon2017convex}. At a high level,~\nce~checks if the function is highly nonconvex between $\x_t$ and $\y_t$. If yes, it resets momentum and perhaps moves in that direction (depending on the magnitude of momentum). If not, it continues doing~\nag~updates. The following lemma shows that the modified method monotonically decreases the Hamiltonian.
+
+%Unfortunately for standard accelerated gradient descent, the monotonically decreasing is no longer true in nonconvex case. 
+
+
+
+%This motivates us to modify the algorithm to add NCE part which is inspired by \citep{carmon2017convex}.

@@ -1,0 +1,80 @@
+% !TEX root = paper.tex
+
+\subsection{ZigZag Algorithm and the UMD Property}
+
+\cite{Pisier75} used martingale techniques to provide a characterization of super-reflexive Banach spaces as those admitting an equivalent uniformly convex norm. As already described in \pref{ex:smoothness}, the essential ingredient of this analysis is a construction of a function $\burk$ with the desired restricted concavity property (which turns out to be equivalent to uniform smoothness) for the martingale inequality \pref{eq:smoothness_martingale_ineq}. The corresponding notion in the world of online learning is that of an adaptive gradient (or mirror) descent. 
+
+\cite{burkholder1981geometrical} provided a geometrical characterization of UMD spaces, and a key ingredient of the approach was to establish existence of (and sometimes to compute in closed form) the function $\burk$ with corresponding geometric properties ($\zeta$-convexity, which is equivalent to  ``zigzag concavity'' \citep{osekowski2012sharp}). As shown in \citep{foster2017zigzag}, in the online learning world the corresponding adaptive regret bound is that of empirical Rademacher averages:
+$$\sum_{t=1}^n\loss(\pred_t,y_t) - \min_{\norm{w}\leq 1}\sum_{t=1}^n \loss(\inner{w,x_t},y_t) - C\En\norm{\sum_{t=1}^n \epsilon_t \delta_t x_t}.$$
+By linearizing the loss, it suffices to use the sufficient statistic $\suff(x_t,\pred_t,\delta_t)= (\delta_t\pred_t, \delta_t x_t, \epsilon_t x_t)$ where $(\epsilon_t)$ is taken to be a sequence drawn by the algorithm.
+The corresponding martingale inequality is
+\begin{align}
+	\label{eq:umd_martingale_ineq}
+	\En\left[ \norm{\sum_{t=1}^n \epsilon_t\bx_t(\epsilon)}^p - C\norm{\sum_{t=1}^n \epsilon_t'\bx_t(\epsilon)}^p\right] \leq 0,
+\end{align}
+where the process in the subtracted term is decoupled and $p>1$ is arbitrary. We refer the reader to \citep{foster2017zigzag} for more details. 
+
+We would like to emphasize that both smoothness/strong convexity (as in Pisier's work) and the UMD property (as in Burkholder's work) are two distinct notions with distinct sets of sufficient statistics. Since the fundamental works of Pisier and Burkholder, the so-called ``Burkholder method'' has been employed to prove a wide range of martingale inequalities and discover the corresponding geometric properties of the special function \citep{osekowski2012sharp,hytonen2016analysis}. The goal of this paper is to present a unifying approach for working with arbitrary sufficient statistics in online learning, and to show that the Burkholder approach is in fact \emph{algorithmic}. 
+
+
+\subsection{AdaGrad and Square Function Inequalities}
+\label{sec:adagrad}
+
+The Burkholder method can be used to recover efficient algorithms that obtain regret bounds in the vein of diagonal AdaGrad and full-matrix AdaGrad \citep{duchi2011adaptive}, with optimal constants. We thank Adam Os\k{e}kowski for suggesting this example to us \citep{osekowski2017personal}.
+
+Define a function $\burk_{\textrm{square}}(x, y):\bbR^{d}\times{}\bbR_{+}\to\bbR$  \citep{osekowski2005two,osekowski2012sharp} via
+\[
+\burk_{\textrm{square}}(x, y) = \left\{
+\begin{array}{ll}
+-\sqrt{2y^{2} - \nrm*{x}_{2}^{2}},\quad& y\geq{}\nrm*{x}_{2}. \\
+\nrm*{x}_{2}-2y,\quad& y<\nrm*{x}_{2}.
+\end{array}
+\right.
+\]
+$\burk_{\textrm{square}}$ satisfies three properties as in \pref{lem:equivalence_burkholder}: \textbf{1.} $\burk_{\textrm{square}}(x,y)\geq{}\nrm*{x}_{2}-2y$, \textbf{2.} $\burk_{\textrm{square}}(x,\nrm*{x}_{2})\leq{}0$, and \textbf{3.} $\burk_{\textrm{square}}(x+d,\sqrt{y^2 + \nrm*{d}_{2}^{2}})\leq{} \burk_{\textrm{square}}(x,y) + \tri*{\partial_{x}\burk_{\textrm{square}}(x,y), d}$. This function consequently leads to two algorithms in the style of AdaGrad \citep{duchi2011adaptive} but with optimal constants, and which we now sketch.
+
+The first regret bound is for $\ls_{2}$ classes, as in full-matrix AdaGrad, and has the form
+\[
+\sum_{t=1}^n\loss(\pred_t,y_t) - \min_{\norm{w}_{2}\leq 1}\sum_{t=1}^n \loss(\inner{w,x_t},y_t) - 2L\sqrt{\sum_{t=1}^{n}\nrm*{x_t}^{2}_{2}}\leq{}0.
+\]
+
+The associated martingale inequality is 
+$
+\En\norm{\sum_{t=1}^n \epsilon_t\bx_t(\epsilon)}_{2} \leq{} 2\En\sqrt{\sum_{t=1}^{n}\nrm*{\bx_{t}(\eps)}^{2}_{2}},
+$
+which was shown to be optimal in \cite{osekowski2005two}.\footnote{Note that the expectation is outside the square root, so this is stronger than the ubiquitous inequality $\En\norm{\sum_{t=1}^n \epsilon_t\bx_t(\epsilon)}_{2} \leq{} \sqrt{\En\sum_{t=1}^{n}\nrm*{\bx_{t}(\eps)}^{2}_{2}}$.} The second regret bound is for $\ls_{\infty}$ classes, as in diagonal AdaGrad, and has the form
+\[
+\sum_{t=1}^n\loss(\pred_t,y_t) - \min_{\norm{w}_{\infty}\leq 1}\sum_{t=1}^n \loss(\inner{w,x_t},y_t) - 2L\nrm*{\prn*{\sum_{t=1}^{n}x_{t}^{2}}^{1/2}}_{1}\leq{}0,
+\]
+where $x_{t}^{2}$ denotes the element-wise square. This is obtained by applying the scalar version of $\burk_{\textrm{square}}$ coordinate-wise. The associated martingale inequality is 
+$
+\En\norm{\sum_{t=1}^n \epsilon_t\bx_t(\epsilon)}_{1} \leq{} 2\En\nrm*{\prn*{\sum_{t=1}^{n}\bx_{t}(\eps)^{2}}^{1/2}}_{1}.
+$
+Both regret bounds require no prior knowledge of the range of $(x_t)_{t\leq{}n}$.
+
+\subsection{Strongly Convex Losses}
+\label{sec:square_loss}
+In this section we take $\cF=\crl*{x\mapsto{}\tri*{w,x}\mid{}w\in\bbR^{d}}$ and equip this space with a regularizer $\Phi(w) = \frac{1}{2}\nrm*{w}_{2}^{2}$. We assume that the loss $\ls(\yh, y)$ is $\rho$-strongly convex and $L$-Lipschitz. We adopt the shorthand $z_t=(x_t, -\yh_t)$, and our goal is to obtain a data- and comparator- dependent regret bound of the form
+
+\[
+\cA_{\lambda}(w; z_{1},\ldots,z_{n}) = \Phi((w,1)) + c\log\,\det\prn*{\rho{}\sum_{t=1}^{n}z_tz_t^{\trn} + \lambda{}I} - c\log\,\det(\lambda{}I).
+\]
+for some $c>0$. Here we recover the classical Vovk-Azoury-Warmuth-type bound for strongly convex losses \citep{Vovk98,AzouryWarmuth01}. This example is important because it shows that the Burkholder method in full generality can both obtain fast rates for curved losses and obtain bounds that jointly depend on the comparator and data; the UMD-type Burkholder functions used in \cite{foster2017zigzag} do not obtain such results. The right sufficient statistic for this problem should be familiar: In addition to storing a sum of gradients, we also store the empirical covariance $\sum_{t=1}^{n}z_tz_t^{\trn}$. We introduce one last piece of notation: For $A\succeq{}0$, $\Psi_{A}(w)=\frac{1}{2}\tri*{w,Aw}$.
+
+\begin{proposition}
+  \label{prop:square_loss_sufficient}
+   The sufficient statistic $\suff(x_t,\pred_t,\delta_t)= \left( \delta_{t}z_t, z_tz_t^{\trn} \right)\in\bbR^{d+1}\times{}\sym^{d+1}_{+}$ and
+\begin{equation}
+\label{eq:vovk_azoury_warmuth_v}
+V(x, A) = \Psi^{\star}_{\rho{}A + \lambda{}I}\prn*{x} - c\log\prn*{\det(\rho{}A + \lambda{}I)/\det(\lambda{}I)}
+\end{equation}
+forms a sufficient statistic pair for the adaptive regret bound $\cA_{\lambda}$.
+\end{proposition}
+
+\begin{theorem}
+  \label{thm:square_loss_burkholder}
+      For the sufficient statistic pair $(\suff, V)$ in \pref{prop:square_loss_sufficient}, $\burk=V$ is a Burkholder function whenever $c\geq{}L^{2}/\rho$. 
+\end{theorem}
+Note that for this setting the natural choice for $V$ turned out to be a Burkholder function itself.
+
+

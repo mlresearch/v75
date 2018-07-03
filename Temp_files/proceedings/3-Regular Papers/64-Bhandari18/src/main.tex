@@ -1,0 +1,146 @@
+% \documentclass[anon,12pt]{colt2018} % Anonymized submission
+\documentclass[final,12pt]{colt2018} % Include author names
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{physics}
+\usepackage[ruled]{algorithm2e}
+\usepackage{tikz}
+\usepackage{breqn}
+\usepackage{soul}
+\usepackage{mwe}
+\usepackage{caption}
+\usepackage{cancel}
+\usepackage{algpseudocode}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+\usepackage{cleveref}
+\usepackage{mathtools}
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\declaretheorem[name=Theorem]{thm}
+\declaretheorem[name=Lemma]{lem}
+
+\usepackage{lipsum}
+
+\renewcommand\footnotemark{}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\mix}{mix}
+% \newlength{\commentWidth}
+% \setlength{\commentWidth}{4cm}
+% \newcommand{\atcp}[1]{\tcp*[r]{\makebox[\commentWidth]{#1\hfill}}}
+% \makeatletter
+% \renewcommand{\@algocf@capt@plain}{above}% formerly {bottom}
+% \makeatother
+\newcommand{\nosemic}{\SetEndCharOfAlgoLine{\relax}}
+\newtheorem{assumption}{Assumption}
+\newcommand{\at}[2][]{#1|_{#2}}
+\newcommand{\ghatthetat}{ \bar{g}(\theta_t) }
+\newcommand{\normghatthetat}{ \norm{\bar{g}(\theta_t)} }
+\newcommand{\Vt}{V_{\theta_t}}
+\newcommand{\Phitrans}{\Phi^\top}
+\newcommand{\PhiD}{\Phi^\top D}
+\newcommand{\Vstar}{V_{\theta^*}}
+\newcommand{\PiP}{\Pi_{\perp}}
+\newcommand{\Vdiff}{V_{\theta_t} - V_{\theta^*}}
+\newcommand{\Dpi}{D}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\newcommand{\E}{\mathbb{E}}
+
+
+\newcommand{\Xc}{\mathcal{X}}
+\newcommand{\Yc}{\mathcal{Y}}
+\newcommand{\Zc}{\mathcal{Z}}
+\newcommand{\Pc}{\mathcal{P}}
+\newcommand{\Qc}{\mathcal{Q}}
+\newcommand{\Oc}{\mathcal{O}}
+\newcommand{\Fc}{\mathcal{F}}
+\newcommand{\Gc}{\mathcal{G}}
+\newcommand{\Rc}{\mathcal{R}}
+\newcommand{\Sc}{\mathcal{S}}
+\newcommand{\Ac}{\mathcal{A}}
+\newcommand{\Mc}{\mathcal{M}}
+\newcommand{\Tc}{\mathcal{T}}
+\newcommand{\Ic}{\mathcal{I}}
+\newcommand{\Vc}{\mathcal{V}}
+\newcommand{\Dc}{\mathcal{D}}
+\newcommand{\Bc}{\mathcal{B}}
+\newcommand{\Hc}{\mathcal{H}}
+\newcommand{\Prob}{\mathbb{P}}
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Finite Time Analysis of TD]{A Finite Time Analysis of Temporal Difference Learning With Linear Function Approximation}
+\usepackage{times}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'\mathbb{E}}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \\mathbb{E}mail{abc@sample.com}\and
+  %  \Name{Author Name2} \\mathbb{E}mail{xyz@sample.com}\\
+  %  \addr Address}
+
+%  Three or more authors with the same address:
+%  \coltauthor{\Name{Jalaj Bhandari} \\{jb3618@columbia.edu}\\
+%  \\
+%   \Name{Daniel Russo} \\{dan.joseph.russo@gmail.com}\\
+%   \\
+%   \Name{Raghav Singal} \\{rs3566@columbia.edu}\\
+%   \addr Columbia University, NYC}
+
+%  \coltauthor{\Name{Jalaj Bhandari} \\
+%   \Name{Daniel Russo} \\
+%   \Name{Raghav Singal} \\
+%   \addr Columbia University, NYC}
+  
+ % Authors with different addresses:
+ \coltauthor{\Name{Jalaj Bhandari} \Email{jb3618@columbia.edu}\\
+ \addr Industrial Engineering and Operations Research, Columbia University
+ \AND
+ \Name{Daniel Russo} \Email{dan.joseph.russo@gmail.com}\\
+ \addr Decision Risk and Operations, Columbia Business School
+ \AND
+ \Name{Raghav Singal} \Email{rs3566@columbia.edu}\\
+ \addr Industrial Engineering and Operations Research, Columbia University
+ }
+ 
+ 
+
+\def\dr#1{\textbf{\color{green}#1}}
+\def\jb#1{\textbf{\color{red}#1}}
+\def\rs#1{\textbf{\color{blue}#1}}
+
+\begin{document}
+\maketitle
+\footnote{Extended abstract. Full version available on arXiv with the same name.}
+\begin{abstract}
+Temporal difference learning (TD) is a simple iterative algorithm used to estimate the value function corresponding to a given policy in a Markov decision process. Although TD is one of the most widely used algorithms in reinforcement learning, its theoretical analysis has proved challenging and few guarantees on its statistical efficiency are available. In this work, we provide a \emph{simple and explicit finite time analysis} of temporal difference learning with linear function approximation. Except for a few key insights, our analysis mirrors standard techniques for  analyzing stochastic gradient descent algorithms, and therefore inherits the simplicity and elegance of that literature. A final section of the paper shows that all of our main results extend to the study of a variant of Q-learning applied to optimal stopping problems.
+\end{abstract}
+
+\begin{keywords}
+Reinforcement learning, temporal difference learning, finite sample bounds, stochastic gradient descent. 
+\end{keywords}
+
+
+
+\section{Introduction} \label{sec:introduction}
+
+Reinforcement learning (RL) offers a general paradigm for learning effective policies for stochastic control problems. At the core of RL is the task of value prediction: the problem of learning to predict cumulative discounted future reward as a function of the current state of the system. Usually, this is framed formally as the problem of estimating the value function corresponding to a given policy in a Markov decision process (MDP).  Temporal difference learning (TD),  first introduced by \cite{sutton1988learning}, is the most widely used algorithm for this task. The method approximates the value function by a member of some parametric class of functions. The parameters of this approximation are then updated online in a simple iterative fashion as data is gathered. 
+
+While easy to implement,  theoretical analysis of TD is quite subtle. A central challenge is that TD’s incremental updates, which are cosmetically similar to stochastic gradient updates, are not true gradient steps with respect to any fixed loss function. This makes it difficult to show that the algorithm makes consistent, quantifiable, progress toward any particular goal. Reinforcement learning researchers in the 1990s gathered both limited convergence guarantees for TD and examples of divergence. Many issues were clarified in the work of \cite{tsitsiklis1997analysis}, who established precise conditions for the asymptotic convergence of TD with linear function approximation, and provided counterexamples when these conditions are violated.  With guarantees of asymptotic convergence in place, a natural next step is to understand the algorithm's statistical efficiency. How much data is required to reach a given level of accuracy? Can one give uniform bounds on this, or could data-requirements explode depending on the problem instance? Twenty years after the work of \cite{tsitsiklis1997analysis}, such questions remain largely unsettled. 
+
+In this work, we take a step toward correcting this by providing \emph{a simple and explicit finite time analysis of temporal difference learning.}  We draw inspiration from the analysis of projected stochastic gradient descent. These analyses are simple--enough so that they are frequently taught in machine learning courses--and the explicit bounds they produce provide clear assurance of the robustness of SGD. Unfortunately, there are critical differences between TD and SGD, and as such these simple analyses do not apply to TD. Instead, past work on TD has needed to invoke powerful results from the theory of stochastic approximation. In this work, we uncover an approach to analyzing TD which, except for a few crucial steps, leverages the standard tools for finite time analysis of SGD. In addition to the several novel guarantees we derive in the paper, we feel the analysis offers insight into the dynamics of TD, and we hope our approach helps future researchers derive stronger bounds and principled improvements to the algorithm. 
+
+
+%-----------------------------------------------------
+\bibliography{bibfile}
+%-----------------------------------------------------
+
+\end{document}

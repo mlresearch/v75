@@ -1,0 +1,266 @@
+
+\section{Models and algorithms\label{sec:setup}}
+
+In this section, we formally set up the clustering problem under SGMMs
+and describe our SDP relaxation approach.
+
+\subsection{Notations}
+
+We first introduce some notations. Vectors and matrices are denoted
+by bold letters such as $\mathbf{\u}$ and $\M$. For a vector $\u$,
+we denote by $u_{i}$ its $i$-th entry. For a matrix $\M$, $\Tr(\M)$
+denotes its trace, $M_{ij}$ its $(i,j)$-th entry, $\mbox{diag}\left(\M\right)$
+the vector of its diagonal entries, $\norm[\M]1\coloneqq\sum_{i,j}M_{ij}$
+its entry-wise $\ell_{1}$ norm, $\M_{i\bullet}$ its $i$-th row
+and $\M_{\bullet j}$ its $j$-th column. We write $\M\succeq0$ if
+$\M$ is symmetric positive semidefinite. The trace inner product
+between two matrices $\M$ and $\Q$ of the same dimension is denoted
+by $\left\langle \M,\Q\right\rangle \coloneqq\Tr(\M^{\top}\Q)$. For
+a number $a$, $\M\geq a$ means $M_{ij}\geq a,\forall i,j$. We denote
+by $\onevec_{m}$ the all-one column vector of dimension $m$. For
+a positive integer $i$, let $[i]\coloneqq\{1,2,\ldots,i\}$.  For
+two non-negative sequences $\{a_{\num}\}$ and $\{b_{\num}\}$, we
+write $a_{\num}\lesssim b_{\num}$ if there exists a universal constant
+$C>0$ such that $a_{\num}\le Cb_{\num}$ for all $\num$, and write
+$a_{\num}\asymp b_{\num}$ if $a_{\num}\lesssim b_{\num}$ and $b_{\num}\lesssim a_{\num}$.
+Finally, $\norm[X]{\psi_{2}}\coloneqq\inf\left\{ t>0:\E\exp\left(X^{2}/t^{2}\right)\le2\right\} $
+denotes the sub-Gaussian norm of a random variable $X$, and $X$
+is called sub-Gaussian if $\norm[X]{\psi_{2}}<\infty$. Note that
+Normal and bounded random variables are sub-Gaussian. 
+
+\subsection{Sub-Gaussian Mixture Model \label{sec:setup_model}}
+
+We focus on Sub-Gaussian Mixture Models (SGMMs) with balanced clusters
+and isotropic components.
+
+\begin{mdl}[Sub-Gaussian Mixture Model]\label{mdl:SGMM} Let $\Mean_{1},\ldots,\Mean_{\numclust}\in\real^{\vecdim}$
+be $\numclust$ unknown cluster centers. We observe $\num$ random
+points in $\real^{\vecdim}$ of the form 
+\[
+\h_{i}\coloneqq\Mean_{\labelstar(i)}+\g_{i},\qquad i\in\left[\num\right]
+\]
+where $\labelstar(i)\in[\numclust]$ is the unknown cluster label
+of the $i$-th point, and $\left\{ \g_{i}\right\} $ are i.i.d.~zero-mean random
+vectors such that each $g_{ij}$ are i.i.d.~with $\norm[g_{ij}]{\psi_{2}}=\sgnorm$.
+We assume that the ground-truth clusters have equal sizes, that is,
+$\left|\left\{ i\in\left[\num\right]:\labelstar(i)=a\right\} \right|=\frac{\num}{\numclust}$
+for each $a\in\left[\numclust\right]$.
+
+\end{mdl}
+
+Throughout the paper we assume $\num\ge4$ and $\numclust\ge2$ to
+avoid degeneracy. Let $\LabelStar\in[\numclust]^{\num}$ be the vector
+of the true cluster labels, that is, its $i$-th coordinate is $\labelstar_{i}\equiv\labelstar(i)$
+(we use them interchangeably throughout the paper.) This unknown true
+underlying clustering can be encoded by \emph{cluster matrix} $\Ystar\in\{0,1\}^{\num\times\num}$
+such that for each $i,j\in\left[\num\right]$, 
+\[
+\ystar_{ij}=\begin{cases}
+\ensuremath{1} & \text{if \ensuremath{\labelstar(i)=\labelstar(j)}, i.e., points \ensuremath{i} and \ensuremath{j} are in the same cluster},\\
+\ensuremath{0} & \text{if \ensuremath{\labelstar(i)=\labelstar(j)}, i.e., points \ensuremath{i} and \ensuremath{j} are in different clusters, }
+\end{cases}
+\]
+with the convention $\ystar_{ii}=1,\forall i\in[\num]$. The task
+is to estimate the underlying clustering $\Ystar$ given the observed
+data $\{\h_{i}:i\in[\num]\}$. From the data one may compute the pairwise
+squared distance matrix $\Adj\in\real^{\num\times\num}$, defined
+as 
+\[
+\adj_{ij}=\norm[\h_{i}-\h_{j}]2^{2},\qquad(i,j)\in[\num]\times[\num].
+\]
+The separation of the centers of clusters $a$ and $b$ is denoted
+by $\minsep_{ab}\coloneqq\norm[\Mean_{a}-\Mean_{b}]2$, and $\minsep\coloneqq\min_{a\ne b\in\left[\numclust\right]}\norm[\Mean_{a}-\Mean_{b}]2$
+is the minimum separation of the centers. Playing a crucial role in
+our results is the quantity 
+\begin{equation}
+\snr\coloneqq\frac{\minsep}{\sgnorm},\label{eq:snr}
+\end{equation}
+which is a measure of the SNR of an SGMM. 
+
+\subsection{Semidefinite programming relaxation\label{sec:setup_sdp}}
+
+We now describe our SDP relaxation for clustering SGMMs. To begin,
+note that any candidate clustering of $\num$ points into $\numclust$
+clusters can be represented using an \emph{assignment matrix $\F\in\{0,1\}^{\num\times\numclust}$
+}where 
+\[
+F_{ia}=\begin{cases}
+1 & \text{if point \ensuremath{i} is assigned to cluster \ensuremath{a}}\\
+0 & \text{otherwise.}
+\end{cases}
+\]
+Let $\mathcal{F}\coloneqq\left\{ \F\in\{0,1\}^{\num\times\numclust}:\F\one_{\numclust}=\one_{\num}\right\} $
+be the set of all possible assignment matrices. Given the points $\{\h_{i}\}$
+to be clustered, a natural approach is to find a assignment $\F$
+that minimizes the total within-cluster pairwise distance. This objective
+can be expressed as
+\[
+\sum_{i,j}\adj_{ij}\indic\{\text{\ensuremath{i} and \ensuremath{j} are assigned to the same cluster}\}=\sum_{i,j}\adj_{ij}(\F\F^{\top})_{ij}=\left\langle \F\F^{\top},\Adj\right\rangle .
+\]
+Therefore, the approach described above is equivalent to solving the
+integer program (\ref{eq:kmeans1}) below:
+\begin{center}
+\begin{tabular}{cc}
+\begin{minipage}[t]{0.3\textwidth}%
+\begin{equation}
+\begin{aligned}\min_{\F}\; & \left\langle \F\F^{\top},\Adj\right\rangle \\
+\text{s.t.}\; & \F\in\mathcal{F}\\
+ & \one_{\num}^{\top}\F=\frac{\num}{\numclust}\one_{\numclust}^{\top}
+\end{aligned}
+\label{eq:kmeans1}
+\end{equation}
+%
+\end{minipage} & %
+\begin{minipage}[t]{0.5\textwidth}%
+\begin{equation}
+\begin{aligned}\min_{\mathbf{Y}}\; & \left\langle \Y,\Adj\right\rangle \\
+\text{s.t.}\; & \Y\one_{\num}=\frac{\num}{\numclust}\one_{\num}\\
+ & \Y\succeq0\\
+ & \mbox{diag}\left(\Y\right)=\one_{\num}\\
+ & \Y\in\left\{ 0,1\right\} ^{\num\times\num};\rank{\Y}=\numclust.
+\end{aligned}
+\label{eq:kmeans2}
+\end{equation}
+%
+\end{minipage}\tabularnewline
+\end{tabular}
+\par\end{center}
+
+In (\ref{eq:kmeans1}) the additional constraint $\one_{\num}^{\top}\F=\frac{\num}{\numclust}\one_{\numclust}^{\top}$
+enforces that all $\numclust$ clusters have the same size $\frac{\num}{\numclust}$,
+as we are working with an SGMM whose true clusters are balanced. Under
+this balanced model, it is not hard to see that the program (\ref{eq:kmeans1})
+is equivalent to the classical k-means formulation. With a change
+of variable $\Y=\F\F^{\top}$, we may lift the program (\ref{eq:kmeans1})
+to the space of $\num\times\num$ matrices and obtain the equivalent
+formulation (\ref{eq:kmeans2}). Both programs (\ref{eq:kmeans1})
+and (\ref{eq:kmeans2}) involve non-convex combinatorial constraints
+and are computationally hard to solve. To obtain a tractable formulation,
+we drop the non-convex rank constraint in (\ref{eq:kmeans2}) and
+replace the integer constraint with a linear constrain $0\le\Y\le1$
+(the constraint $\Y\le1$ is redundant). This leads to the following
+SDP relaxation:
+\begin{equation}
+\begin{aligned}\Yhat\in\argmin_{\mathbf{Y}\in\mathbb{R}^{\num\times\num}}\; & \left\langle \Y,\Adj\right\rangle \\
+\mbox{s.t.}\; & \Y\one_{\num}=\frac{\num}{\numclust}\one_{\num}\\
+ & \Y\succeq0\\
+ & \mbox{diag}\left(\Y\right)=\one_{\num}\\
+ & \Y\ge0.
+\end{aligned}
+\label{eq:SDP1}
+\end{equation}
+It is not hard to see that the true cluster matrix $\Ystar$ is feasible
+to program (\ref{eq:SDP1}). We view any optimal solution $\Yhat$
+to (\ref{eq:SDP1}) as an estimate of the true clustering $\Ystar$.
+Our goal is to characterize the cluster recovery/estimation error
+$\norm[\Yhat-\Ystar]1$ in terms of the number of points $\num$,
+number of clusters $\numclust$, data dimension $\vecdim$ and SNR
+$\snr$ defined above. Note that here we measure the error of $\Yhat$
+in $\ell_{1}$ metric; as we shall see later, this metric is directly
+related to the clustering error (i.e., the fraction of misclassified
+points).
+
+We remark that the SDP (\ref{eq:SDP1}) is somewhat different from
+the more classical and well-known SDP relaxation of k-means proposed
+by \citet{peng2007approximating}. This SDP (\ref{eq:SDP1}) is closely
+related to the one considered by \citet{amini2014semidefinite} in
+the context of the Stochastic Block Model, though it seems to be much
+less studied under SGMMs with the notable exception of \citet{li2017kmeans}.
+
+\subsection{Explicit clustering \label{sec:setup_explict_clustering}}
+
+Our main results directly concern the SDP solution $\Yhat$, which
+is not integral in general and hence does not directly correspond
+to an explicit clustering. In case an explicit clustering is desired,
+we may easily extract cluster memberships from the solution $\Yhat$
+using a simple procedure.  
+
+The procedure consists of two steps given as Algorithms \ref{alg:apx_clustering}
+and \ref{alg:est_clustering}, respectively. In the first step, we
+treat the rows of $\Yhat$ as elements of $\real^{\num}$, and consider
+the $\ell_{1}$ balls centered at each row with a certain radius.
+The ball that contains the most rows is identified, and the indices
+of the rows in this ball are output and removed. The process continues
+iteratively with the remaining rows of $\Yhat$. This step outputs
+a number of sets whose sizes are no larger than $\frac{\num}{\numclust}$
+but may not equal to each other. 
+\begin{algorithm}[H]
+\caption{First step \label{alg:apx_clustering}}
+
+Input: data matrix $\Yhat\in\real^{\num\times\num}$, size of each
+cluster $\frac{\num}{\numclust}$.
+\begin{enumerate}
+\item $B_{0}\leftarrow\emptyset$, $t\leftarrow0$, $\vertexset\leftarrow\left[\num\right]$
+\item While $\vertexset\backslash\bigcup_{i=0}^{t}B_{i}\ne\emptyset$:
+\begin{enumerate}
+\item $t\leftarrow t+1$
+\item $\vertexset_{t}\leftarrow\vertexset\backslash\bigcup_{i=0}^{t-1}B_{i}$
+\item For each $u\in\vertexset_{t}$: $B(u)\leftarrow\left\{ w\in V_{t}:\norm[\Yhat_{u\bullet}-\Yhat_{w\bullet}]1\leq\frac{\num}{4\numclust}\right\} $.
+\item $B_{t}\leftarrow\argmax_{B(u):u\in\vertexset_{t}}\left|B(u)\right|$
+\item If $\left|B_{t}\right|>\frac{\num}{\numclust}$, then remove arbitrary
+elements in $B_{t}$ so that $\left|B_{t}\right|=\frac{\num}{\numclust}$
+\end{enumerate}
+\end{enumerate}
+Output: sets $\left\{ B_{t}\right\} _{t\ge1}$.
+\end{algorithm}
+In the second step, we convert the sets output by Algorithm \ref{alg:apx_clustering}
+above into $\numclust$ equal-size clusters. This is done by picking
+the $\numclust$ largest sets among them, and distributing points
+in the remaining sets across the chosen $\numclust$ sets so that
+each of the $\numclust$ sets contains exactly $\frac{\num}{\numclust}$
+points. 
+\begin{algorithm}[H]
+\caption{Second step \label{alg:est_clustering}}
+
+Input: approximate clustering sets $\left\{ B_{t}\right\} _{t\ge1}$,
+number of points $\num$, number of clusters to extract $\numclust$.
+\begin{enumerate}
+\item $\numclust'\leftarrow\left|\left\{ B_{t}\right\} _{t\ge1}\right|$
+\item Choose $\numclust$ largest sets among $\left\{ B_{t}\right\} _{t\ge1}$
+and rename the chosen sets as $\left\{ U_{t}\right\} _{t\in\left[\numclust\right]}$
+\item Arbitrarily distribute elements of $\left\{ B_{t}\right\} _{t\ge1}\backslash\left\{ U_{t}\right\} _{t\in\left[\numclust\right]}$
+among $\left\{ U_{t}\right\} _{t\in\left[\numclust\right]}$ so that
+each $U_{t}$ has exactly $\frac{\num}{\numclust}$ elements
+\item For each $i\in\left[\num\right]$: $\labelhat_{i}\leftarrow t$, where
+$t$ is the unique index in $[\numclust]$ such that $i\in U_{t}$
+\end{enumerate}
+Output: clustering assignment vector $\LabelHat\in[\numclust]^{\num}$.
+\end{algorithm}
+Our final clustering algorithm, $\clustering$, is a combination of
+the above two algorithms. 
+\begin{algorithm}[H]
+\caption{$\protect\clustering$ \label{alg:clustering}}
+
+Input: data matrix $\Yhat\in\real^{\num\times\num}$, number of points
+$\num$, number of clusters to extract $\numclust$.
+\begin{enumerate}
+\item Run Algorithm \ref{alg:apx_clustering} with $\Yhat$ and $\frac{\num}{\numclust}$
+as input and get $\left\{ B_{t}\right\} _{t\ge1}$
+\item Run Algorithm \ref{alg:est_clustering} with $\left\{ B_{t}\right\} _{t\ge1}$,
+$\num$ and $\numclust$ as input and get $\LabelHat$
+\end{enumerate}
+Output: clustering assignment $\LabelHat\in[\numclust]^{\num}$.
+\end{algorithm}
+The output 
+\[
+\LabelHat\coloneqq\clustering(\Yhat,\num,\numclust)
+\]
+is a vector in $[\numclust]^{\num}$ such that point $i$ is assigned
+to the $\labelhat_{i}$-th cluster. We are interested in controlling
+the clustering error of $\LabelHat$ relative to the ground-truth
+clustering $\LabelStar$. Let $\calS_{\numclust}$ denote the symmetric
+group consisting of all permutations of $[\numclust]$. The clustering
+error is defined by
+\begin{equation}
+\misrate(\LabelHat,\LabelStar)\coloneqq\min_{\perm\in\calS_{\numclust}}\frac{1}{n}\left|\left\{ i\in[\num]:\labelhat_{i}\neq\pi(\labelstar_{i})\right\} \right|,\label{eq:mis_rate_def}
+\end{equation}
+which is the proportion of points that are misclassified, modulo permutations
+of the cluster labels. 
+
+Variants of the above $\clustering$ procedure have been considered
+before by \citet{makarychev2016learning} and \citet{mixon2017clustering}.
+In our main results, we show that the clustering error $\misrate(\LabelHat,\LabelStar)$
+is always upper bounded by the $\ell_{1}$ error $\norm[\Yhat-\Ystar]1$
+of the SDP solution $\Yhat$. 
+
+ 

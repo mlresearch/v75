@@ -1,0 +1,175 @@
+%!TEX root = main.tex
+
+\subsection{Main Framework} \label{sec:framework}
+For simplicity of presentation, recall $\utime \defeq \sqrt{\cn} \cdot \chi c = \tilde{\Theta}(\sqrt{\cn})$ and denote $\ufun \defeq \sqrt{\epsilon^3/\rho}\cdot \chi^{-5}c^{-7} = \tilde{\Theta}(\sqrt{\epsilon^3/\rho})$, where $c$ is sufficiently large constant as in Theorem \ref{thm:main}. Our overall proof strategy will be to show the following ``average descent claim'':
+\emph{Algorithm~\ref{algo:PAGD} decreases the Hamiltonian by $\ufun$ in every set of $\utime$ iterations as long as it does not reach an~\ESSP}.
+Since the Hamiltonian cannot decrease more than $E_0 - E^\star = f(\x_0) - f^\star$, this immediately shows that it has to reach an~\ESSP~in $O((f(\x_0) - f^\star)\utime/\ufun)$ steps, proving Theorem~\ref{thm:main}.
+
+It can be verified by the choice of parameters~\eqref{eq:parameter} and Lemma~\ref{lem:energy_nonconvex} that whenever \eqref{eq:certificate} holds so that NCE is triggered, the Hamiltonian decreases by at least $\ufun$ in one step.
+So, if~\nce~step is performed even once in each round of $\utime$ steps, we achieve enough average decrease. The troublesome case is when in some time interval of $\utime$ steps starting with $\x_t$, only AGD steps are performed without NCE.
+If $\x_t$ is not an $\epsilon$-second order stationary point, either the gradient is large or the Hessian has a large negative direction. We prove the average decrease claim by considering these two cases.
+% \pn{May be say that we consider the average decrease per step, between any two perturbations or something?}
+% \pn{I can see the correctness of the proof but changing timesteps from $\tau$ to $0$ multiple times could be confusing.}
+% Our strategy will be to prove that on average, every step decreases the Hamiltonian by $\omtilde{\frac{\epsilon^{7/4}}{\ell^{1/2}\rho^{1/4}}}$. Note that the initial Hamiltonian is $E_0 = f(\x_0)$, and the minimum Hamiltonian is achieved at the global minimum with zero velocity which is $E^\star = f^\star$. So $E_0 - E^\star = f(\x_0) - f^\star$. If we can show the claimed average decrease per step, then the total number of iterations is bounded by:
+% \begin{equation*}
+% \tilde{O}\left(\frac{\ell^{1/2}\rho^{1/4}(f(\x_0) - f^*)}{\epsilon^{7/4}}\right).
+% \end{equation*}
+
+% Let us first consider the case when~\nce~is triggered. In this case, Lemma~\ref{lem:energy_nonconvex} tells us that in the step where~\nce~is triggered, Hamiltonian decreases by $\omtilde{\sqrt{\frac{\epsilon^3}{\rho}}}$. This means that even if Hamiltonian did not decrease in the previous $\otilde{\frac{1}{\theta}}$ steps, the average decrease per step is $\omtilde{\theta \cdot \sqrt{\frac{\epsilon^3}{\rho}}}$. Recalling that $\theta = \otheta{\sqrt{\frac{\sqrt{\rho \epsilon}}{\ell}}}$ gives the desired average decrease per step.
+% \pn{the gap between two perturbations is $\otilde{\frac{1}{\theta}}$?}
+% \pn{Give the value of $\theta$.}
+% %We note when NCE is triggered, we decrease energy by $O(\sqrt{\frac{\epsilon^3}{\rho}})$. This basically says
+% %once NCE is triggered, even if in previous $O(\frac{1}{\theta})$ steps we make no progress, on average we still have sufficient decrease in energy.
+% It now suffices to establish average per step decrease when~\nce~is not triggered for $\omtilde{\frac{1}{\theta}}$ steps.
+% %For the remaining part, we always assume NCE is not triggered and 
+% This can be divided into two cases: one where the gradient is large, and the other where the Hessian has a large negative direction. Note that if none of these hold, then the current point is an $\epsilon$-second order stationary point.\cnote{both achieve accelerated rate}\cnote{Say something about quadratic case and eigenvalue decomposition?}
+
+% Denote $\utime \defeq \tilde{O}(\frac{1}{\theta})$ and $\ufun \defeq \tilde{O}(\sqrt{\frac{\epsilon^3}{\rho}})$. The next lemma captures the large gradient case.
+
+% We prove
+
+\begin{lemma}[Large gradient]\label{lem:largeGrad}
+Consider the setting of Theorem~\ref{thm:main}.
+%If in~\pagd~(Algorithm~\ref{algo:PAGD}),
+If $\norm{\grad f(\x_\tau)} \ge \epsilon$ for all $ \tau \in [t, t+\utime]$, then by running Algorithm \ref{algo:PAGD} we have $E_{t+\utime} - E_t \le -\ufun$.
+\end{lemma}
+% \noindent
+% The following lemma captures the case where Hessian has a large negative direction.
+\begin{lemma}[Negative curvature]\label{lem:negHess}
+Consider the setting of Theorem~\ref{thm:main}. 
+If $\norm{\grad f(\x_t)} \le \epsilon$, $\lambda_{\min} (\hess f(\x_t)) < -\sqrt{\rho\epsilon}$, 
+and perturbation has not been added in iterations $\tau \in [t-\utime, t)$, then by running Algorithm \ref{algo:PAGD}, we have $E_{t+\utime} - E_t \le -\ufun$ with high probability.
+\end{lemma}
+
+We note that an important aspect of these two lemmas is that the Hamiltonian decreases by $\Omega(\ufun)$ in $\utime = \tilde{\Theta}(\sqrt{\cn})$ steps, which is faster compared to~\pgd~which decreases the function value by $\Omega(\ufun)$ in $\utime^2 = \tilde{\Theta}(\cn)$ steps~\citep{jin2017escape}.  That is, the acceleration phenomenon in~\pagd~happens in both cases.
+We also stress that under both of these settings,~\pagd~cannot achieve $\Omega(\ufun/\utime)$ decrease in each step---it has to accumulate momentum over time to achieve $\Omega(\ufun/\utime)$ amortized decrease.
+
+
+% requiring an understanding of multiple-step behavior of~\nag. The \emph{\iol} framework (Corollary \ref{cor:localball}) is crucial here, telling us that either the Hamiltonion decreases by $\ufun$, or $\{\x_\tau\}_{\tau = t}^{t+\utime}$ is localized in a {ball} of radius $\uspace = \tilde{\Theta}(\sqrt{\epsilon/\rho})$. In this ball, we can approximate $f(\cdot)$ by a quadratic taking advantage of the Lipschitz property, and analyze the remainder as approximation error.
+
+
+
+% Our
+% analysis heavily  
+% In the case of exact quadratic function, we can decouple the function according to each eigendirection of Hessian. Suppose for along one eigendirection, function can be written as $\lambda x^2 /2$ (with eigenvalue lambda) gradient 
+
+
+%  In following, we will show the reason seperately.
+
+
+
+% The proof of Lemma~\ref{lem:negHess} follows by combining estimates of eigenvalues of~\nag~operator matrix with coupling techniques introduced in~\cite{jin2017escape}, in order to show escape from saddle points. \cnote{after calculating the eigenvalues it is true}.
+% The proof of Lemma~\ref{lem:largeGrad} on the other hand, is technically quite challenging. We now give a brief sketch of the proofs of Lemmas~\ref{lem:largeGrad} and~\ref{lem:negHess}.
+
+% \subsubsection{Proof overview of Lemma~\ref{lem:largeGrad}}
+\subsubsection{Large Gradient Scenario}
+For AGD, gradient and momentum interact, and both play important roles in the dynamics. Fortunately, according to Lemma~\ref{lem:energy_nonconvex}, the Hamiltonian decreases sufficiently whenever the momentum $\v_t$ is large, so it is sufficient to discuss the case where the momentum is small.
+%According to Hamiltonian monotonically decreasing lemma (Lemma \ref{lem:energy_nonconvex}), whenever momentum $\v_t$ is large, Hamiltonian will have sufficiently fast decrease, we focus on cases where momentum is small.
+
+One difficulty in proving Lemma \ref{lem:largeGrad} lies in enforcing the precondition that gradients of all iterates are large even with quadratic approximation. Intuitively we hope that the large initial gradient $\norm{\grad f(\x_t)}\ge \epsilon$ suffices to give a sufficient decrease of the Hamiltonian. Unfortunately, this is not true. Let $\S$ be the subspace of eigenvectors of $\nabla^2 f (\x_t)$ with eigenvalues in $[\sqrt{\rho\epsilon}, \ell]$, consisting of all the strongly convex directions, and let $\S^c$ be the orthogonal subspace. It turns out that the initial gradient component in $\S$ is not very helpful in decreasing the Hamiltonian since~\nag~rapidly decreases the gradient in these directions. %due to large positive curvature, which 
+We instead prove Lemma~\ref{lem:largeGrad} in two steps.
+
+\begin{lemma}(informal)\label{lem:1}
+    If $\v_t$ is small, $\norm{\grad f(\x_t)}$ not too large and $E_{t+\utime/2} - E_t \ge - \ufun$, then for all $\tau\in [t+\utime/4, t+\utime/2]$ we have $\norm{\proj_\S \grad f(\x_\tau)}\le \epsilon/2$.
+    % \begin{equation*}
+    % \norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{10}
+    % \text{~~and~~}
+    % % \norm{\proj_\S(\x_t - \x_{t-1})} \le \frac{\epsilon}{\ell}
+    % \v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le \frac{\epsilon^2}{10\ell}.
+    % \end{equation*}
+\end{lemma}
+
+\begin{lemma}(informal)\label{lem:2}
+% Under the setting of Theorem \ref{thm:main}, if $\norm{\proj_{\S^c}\grad f(\x_{0})} \ge \frac{\epsilon}{2}$, $\norm{\v_0} \le \umom$, $\v_0\trans [\proj_{\S}\trans\hess f(\x_0) \proj_{\S}] \v_0 \le  2 \sqrt{\rho\epsilon}\umom^2 $,
+% and in $t\in [0, \utime/4]$ only AGD steps are used without NCE or perturbation,
+% then:
+% \begin{equation*}
+% E_{\utime/4} - E_0 \le - \ufun
+% \end{equation*}
+If $\v_t$ is small and $\norm{\proj_{\S^c}\grad f(\x_{t})} \ge \epsilon/2$,
+then we have $E_{t+\utime/4} - E_t \le - \ufun.$
+\end{lemma}
+\noindent See the formal versions, Lemma \ref{lem:largegrad_nonconvex} and Lemma \ref{lem:largegrad_convex}, 
+for more details.  We see that if the Hamiltonian does not decrease much (and so is localized in a small ball), 
+the gradient in the strongly convex subspace $\norm{\proj_\S \grad f(\x_\tau)}$ vanishes in $\utime/4$ steps by Lemma~\ref{lem:1}. Since the hypothesis of Lemma~\ref{lem:largeGrad} guarantees a large gradient for all of the $\utime$ steps, this means that $\norm{\proj_{\S^c}\grad f(\x_{t})}$ is large after $\utime/4$ steps, thereby decreasing the Hamiltonian in the next $\utime/4$ steps (by Lemma~\ref{lem:2}).
+
+
+% Assume  as we can split the localized ball
+
+%  we would like to prove
+% Let $\S$ be the subspace of eigenvectors of $\nabla^2 f (\x_0)$ with eigenvalues in $[\sqrt{\rho\epsilon}, \ell]$, and $\S^c$ be the orthogonal subspace. \pn{$\S^\perp$ might be a better notation but probably too painful to change now.} Also let $\proj_{\S}$ and $\proj_{\S^c}$ be the corresponding projection matrices. First, we note that if $\v_\tau$ is always large, then we have the desired decrease in the Hamiltonian.
+% \begin{lemma}\label{lem:large-mom-grad}
+% If $\norm{\v_t}\ge \frac{\epsilon \sqrt{\cn}}{\ell}$ or $\norm{\grad f(\x_t)} \ge 2\epsilon\sqrt{\cn}$, we have:
+% \begin{equation*}
+%  E_{t+1} - E_t \le - \Omega(\ufun/\utime)
+% \end{equation*} 
+% \end{lemma}
+% \noindent
+% We now consider the case where both $\norm{\v_\tau}$ and $\norm{\nabla f(\x_\tau)}$ are smaller than the values above for some $\tau$. It turns out that in this case, the projection of $\nabla f(\x_{t})$ on $\S$ decreases significantly.
+% %Finally, the only bad case is the gradient is large but always only large in $\S$ subspace.
+% %We show this can not happen for a long time.
+% \begin{lemma}
+% 	Suppose $\norm{\v_0}\le \frac{\epsilon \sqrt{\cn}}{\ell}$ and $\norm{\grad f(\x_0)} \le 2\epsilon\sqrt{\cn}$. Suppose further that $E_{3\utime} - E_0 \ge - \mu \ufun$
+% 	for small enough constant $\mu$, then, $\forall \; t\in [\utime, 3\utime]$ we have:
+% 	\begin{equation*}
+% 	\norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{10}
+% 	\text{~~and~~}
+% 	% \norm{\proj_\S(\x_t - \x_{t-1})} \le \frac{\epsilon}{\ell}
+% 	\v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le \frac{\epsilon^2}{10\ell}.
+% 	\end{equation*}
+% \end{lemma}
+% If $\norm{\v_{t}}\geq \frac{\epsilon\sqrt{\kappa}}{\ell} \; \forall \; t \in [\utime, 3\utime]$, we can appeal to Lemma~\ref{lem:large-mom-grad}. If not, there exists $t \in [\utime, 3\utime]$ such that $\norm{\v_{t}}\leq \frac{\epsilon\sqrt{\kappa}}{\ell}$ and $\v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le \frac{\epsilon^2}{10\ell}$. Since we are considering the case where~\nce~is not triggered, we can conclude that $|\v_0\trans [\proj_{\S^c}\trans\hess f(\x_0) \proj_{\S^c}] \v_0| \le   \frac{\epsilon^2}{\ell} $. \pn{Add proof.}
+% %Finally, we use NCE to argue when $\norm{\v_0} \le \frac{\epsilon\sqrt{\cn}}{\ell}$ and 
+% %$\v_0\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_0 \le \frac{\epsilon^2}{10\ell}$ it implies
+% %$|\v_0\trans [\proj_{\S^c}\trans\hess f(\x_0) \proj_{\S^c}] \v_0| \le   \frac{\epsilon^2}{\ell} $.
+% This means that it suffices to consider the final case where $\v_\tau$ is small for some $\tau$ but the gradient has a large projection on $\S^c$ subspace.
+% \begin{lemma}
+% If $\norm{\proj_{\S^c}\grad f(\x_{0})} \ge \epsilon$, $\norm{\v_0} \le \frac{\epsilon\sqrt{\cn}}{\ell}$
+% and $\v_0\trans [\proj_{\S}\trans\hess f(\x_0) \proj_{\S}] \v_0 \le   \frac{\epsilon^2}{\ell} $
+% then we have:
+% \begin{equation*}
+% E_{\utime} - E_0 \le - \Omega(\ufun).
+% \end{equation*}
+% \end{lemma}
+% \noindent
+% This finishes the proof of Lemma~\ref{lem:largeGrad}.
+
+% \begin{lemma}
+%     Suppose $\norm{\v_0}\le \frac{\epsilon \sqrt{\cn}}{\ell}$ and $\norm{\grad f(\x_0)} \le 2\epsilon\sqrt{\cn}$. Suppose further that $E_{3\utime} - E_0 \ge - \mu \ufun$
+%     for small enough constant $\mu$, then, $\forall \; t\in [\utime, 3\utime]$ we have:
+%     \begin{equation*}
+%     \norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{10}
+%     \text{~~and~~}
+%     % \norm{\proj_\S(\x_t - \x_{t-1})} \le \frac{\epsilon}{\ell}
+%     \v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le \frac{\epsilon^2}{10\ell}.
+%     \end{equation*}
+% \end{lemma}
+
+% \begin{lemma}
+% If $\norm{\proj_{\S^c}\grad f(\x_{0})} \ge \epsilon$, $\norm{\v_0} \le \frac{\epsilon\sqrt{\cn}}{\ell}$
+% and $\v_0\trans [\proj_{\S}\trans\hess f(\x_0) \proj_{\S}] \v_0 \le   \frac{\epsilon^2}{\ell} $
+% then we have:
+% \begin{equation*}
+% E_{\utime} - E_0 \le - \Omega(\ufun).
+% \end{equation*}
+% \end{lemma}
+
+
+\subsubsection{Negative Curvature Scenario}
+% Denote $\uspace \defeq \sqrt{\frac{2\eta \utime\ufun}{\theta}} = \tilde{\Theta}(\sqrt{\frac{\epsilon}{\rho}})$
+In this section, we will show that the volume of the set around a strict saddle point from which AGD does not escape quickly is very small (Lemma~\ref{lem:negHess}).
+%In this section, we will show that the volume of points where~\pagd~does not decrease Hamiltonian, and hence might not escape the saddle point, is tiny.
+We do this using the coupling mechanism introduced in~\cite{jin2017escape}, which gives a fine-grained understanding of the geometry around saddle points.
+More concretely, letting the perturbation radius $r = \tilde{\Theta}(\epsilon/\ell)$ as specified in \eqref{eq:parameter}, we show the following lemma.
+\begin{lemma} (informal) \label{lem:informal_neg_curve}
+Suppose $\norm{\nabla f(\tilde{\x})} \le \epsilon$ and $\lambda_{\min}(\hess f(\tilde{\x})) \le - \sqrt{\rho\epsilon}$. Let $\x_0,  \modify{\x}_0$ be at distance at most $r$ from $\tilde{\x}$, and $\x_0 -  \modify{\x}_0 = r_0 \e_1$ where $\e_1$ is the minimum eigen-direction of $\hess f(\tilde{\x})$ and $r_0 \ge \delta r /\sqrt{d}$. Then for~\nag~starting at $(\x_0, \v)$ and $(\x_0', \v)$, we have:
+\begin{align*}
+\min\{E_{\utime} - \widetilde{E}, \modify{E}_{\utime} - \widetilde{E}\} \le - \ufun,
+\end{align*}
+where $\widetilde{E},E_{\utime}$ and $\modify{E}_{\utime}$ are the Hamiltonians at $(\tilde{\x}, \v), (\x_{\utime}, \v_{\utime})$ and $(\modify{\x}_{\utime}, \modify{\v}_{\utime})$ respectively.
+\end{lemma}
+\noindent See the formal version in Lemma \ref{lem:2nd_seq}. We note that $\delta$ in this lemma is a small number that characterizes the failure probability of the algorithm (as defined in Theorem \ref{thm:main}), and $\utime$ has logarithmic dependence on $\delta$ according to \eqref{eq:parameter}.
+Lemma~\ref{lem:informal_neg_curve} says that around any strict saddle, for any two points that are separated along the smallest eigen-direction by at least $\delta r /\sqrt{d}$,~\pagd, starting from at least one of those points, decreases the Hamiltonian, and hence escapes the strict saddle. This implies that the width of the region starting from where~\nag~is stuck has width at most $\delta r /\sqrt{d}$, and thus has small volume.
+
+% The proof of this lemma is by tracking the difference between the evolutions of~\pagd~at both $\x_{0}$ and $\x_{0}'$, and showing that this difference i.e., $\norm{\x_{\utime} - \x_{\utime}'}$ is large. This means that either $\norm{\x_{\utime}-\x_{0}}$ is large or $\norm{\x_{\utime}'-\x_{0}'}$ is large. This then implies that $\min\{E_{\utime} - E_0, \modify{E}_{\utime} - \modify{E}_0\} \le - \Omega(\ufun)$.
+% \cnote{Talk about two sequence techniques}

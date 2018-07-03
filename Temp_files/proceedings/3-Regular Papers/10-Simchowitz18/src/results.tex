@@ -1,0 +1,217 @@
+%!TEX root = LWM_colt.tex
+\section{Results}
+\label{sec:results}
+
+    In this work, we consider both the specific problem of estimating linear dynamical systems, and a more general problem of linear estimation in time series.
+    In both cases we measure the estimation error in the operator norm $\|\cdot\|_{\op}$.
+    In Section~\ref{sec:linear_systems} we present upper bounds on the estimation error of the 
+parameters $\Ast$ of a linear dynamical system, which hold for any $\Ast$ with $\rho(\Ast) \leq 1$.
+%
+In Section~\ref{sec:lower_bounds} we show that these upper bounds are
+nearly optimal in many regimes of interest.
+%
+Finally, Section~\ref{sec:meta_thm} states a general result,
+which applies to covariate processes with linear responses. 
+
+\textbf{Notation:} We let $\calS^{d-1}$ denote the unit sphere in $\R^d$. Given a matrix $M$ we denote by $M^\dagger$ its pseudoinverse. For a symmetric matrix $M \in \R^{d\times d}$, we let $\lambda_{\max}(M)$ and $\lambda_{\min}(M)$ denote its largest and smallest eigenvalues. If $M \in \R^{d \times d}$ and $M \succ 0$, we denote by $\calS_M$ the set of all points $x\in \R^d$ such that $\|M^{-1/2}x\|_2 = 1$.  
+
+
+\subsection{Linear Dynamical Systems}
+\label{sec:linear_systems}
+
+We analyze the statistical performance of the $\OLS$ estimator of the parameter $\Ast$
+    from a single observed trajectory $X_1, \ldots, X_{T+1}$ satisfying $X_{t + 1} = \Ast X_t + \noise_t$, where $X_0 = 0$ and $\noise_t \iid \calN(0, \sigma^2 I_d)$:
+    \begin{align}
+    \ALS(T) &:= \arg\min_{A \in \R^{d \times d}} \sum_{t=1}^T \frac{1}{2}\|X_{t + 1} - A X_t\|_2^2 \:.
+    \end{align}
+%
+Our bounds are stated in terms of the finite-time controllability Gramian of the system, denoted by $\Gramm_t := \sum_{s=0}^{t-1} (\Ast^{s})(\Ast^s)^{\top}$, which captures the magnitude of the excitations induced by the process noise. Indeed, we can write $X_t$ explicitly as
+\begin{eqnarray}\label{eq:recursion_eq}
+X_{t} = \sum_{s=1}^{t} \Ast^{t-s}\noise_{s-1}~~\text{ which implies that}~~\Exp[X_tX_t^{\top}] = \sigma^2\Gramm_t~.
+\end{eqnarray}
+Hence, the expected covariance can be expressed in terms of the Gramians via $\Exp[\sum_{t=1}^T X_tX_t^\top] = \sigma^2\cdot \sum_{t=1}^T \Gramm_t$. As is standard in analyses of least-squares, ``larger'' covariates/covariance matrices correspond to faster rates of learning.
+% For example,, and hence, $\Exp\|X_t\|_2^2 = \tr\left(\Gramm_t\right)$. Furthermore, the identity implies th
+We are ready to state our first result, proved in Section~\ref{sec:pf_stable_thm}:
+
+\begin{thm}\label{stable_thm} Fix $\delta \in (0,1/2)$ and consider the linear dynamical system $X_{t+1} = \Ast X_t + \noise_t $, where $\Ast$ is a marginally stable matrix in $\R^{d\times d}$ (i.e. $\rho(\Ast) \leq 1$), $X_0 = 0$, and $\noise_t  \iid \calN(0,\sigma^2 I)$. Then there exist universal constants $c,C > 0$ such that
+\begin{align}
+\Pr\left[\opnormbig{\ALS(T)-\Ast} >\frac{C}{\sqrt{T\lambda_{\min}\left(\Gramm_{k}\right)}} \sqrt{d\log\frac{d}{\delta} + \log \det (\Gramm_T \Gramm_k^{-1})} \right] \le  \delta,
+\end{align}
+for any $k \ge 1$ such that $\frac{T}{k} \ge c(d\log(d/\delta)+\log \det (\Gramm_T \Gramm_{k}^{-1}))$ holds.
+\end{thm}
+Note that $\sigma^2$ does not appear in the bound from Theorem~\ref{stable_thm} because scaling the noise also rescales the covariates. In Appendix~\ref{sec:appendix:kst}, we show that for any marginally stable $\Ast$,
+we can always choose a $k \geq 1$ provided $T$ is sufficiently large. Therefore, even when $\rho(\Ast) = 1$ and the system does not mix, we obtain finite-sample estimation guarantees which also guarantees consistency of estimation. In many cases, these rates are qualitatively no-worse than random-design linear regression with independent covariates (Theorem~\ref{cor:consistent} and Remark~\ref{rem:consistent}).
+
+In general, $\lambda_{\min}\left(\Gramm_k\right)$ is a nondecreasing function of the block length $k$. The intuition for this is that larger $k$ takes into account more long-term excitations to lower bound the size of our covariance matrix. However, as we use longer blocks, our high probability bounds degrade. Thus, the optimal block length is the maximal value $k$ which satisfies the condition in Theorem~\ref{stable_thm}.
+
+The dependence on the minimum eigenvalue of the Gramian $\lambda_{\min}\left(\Gramm_k\right)$ has two interpretations. From a \emph{statistical} perspective, we have $\frac{1}{2k\cdot \sigma^2}\Exp[\sum_{t=1}^{2k} X_tX_t^\top] = \frac{1}{2k}\sum_{t= 1}^{2k}\Gramm_t \succeq \frac{1}{2}\lambda_{\min}\left(\Gramm_k\right) \cdot I $. Thus, $\lambda_{\min}\left(\Gramm_k\right)$ gives a lower bound on the smallest eigenvalue value of the covariance matrix associated with the first $2k$ covariates. In fact, one can also show (see~\eqref{eq:paley_zygmund}) that for any $t_0 \ge 0$, we still have $\frac{1}{2k\cdot \sigma^2}\Exp[\sum_{t=t_0 + 1}^{t_0 + 2k} X_tX_t^\top | X_{t_0}]~\succeq  \frac{1}{2}\lambda_{\min}\left(\Gramm_k\right) \cdot I$. Theorem~\ref{stable_thm} thus states that the larger the expected covariance matrix, the faster $\Ast$ is estimated. Note that $\Gamma_k \succeq I$ for all $k \ge 1$.
+
+The second interpretation is \emph{dynamical}. The term $\lambda_{\min}\left(\Gramm_k\right)$ corresponds to the ``excitability'' of the system, which is the extent to which the process noise $\noise_t$ influences future covariates. This can be seen from~\eqref{eq:recursion_eq}, where the slower $(\Ast^{t_0})(\Ast^{t_0})^\top$ decays as $t_0$ grows, the larger the contribution of $\noise_{t - t_0-1}$ is. This is precisely the reason why linear systems with larger spectral radii mix slowly, and do not mix when $\rho(\Ast) \ge 1$.
+%
+In this light, Theorem~\ref{stable_thm} shows that with high-probability, the more a linear system is excited by the noise $\noise_t$, the easier it is to estimate the parameter matrix $\Ast$. For stable systems with $\rho(\Ast) < 1$, the following corollary removes the explicit dependence on the block length $k$ for large values of $T$:
+\begin{cor}\label{cor:mixed_cor}
+Suppose that $\rho(\Ast) < 1$. Then the limit $\Gamma_{\infty} := \lim_{t \to \infty} \Gamma_t$ exists, and there is a time $T_0$ depending on $\Ast$ and $\delta$ such that the following holds w.p. $1-\delta$ for all $T > T_0$:
+\begin{eqnarray}
+\opnormbig{\ALS(T)-\Ast} \le \BigOh{\sqrt{ \frac{d \cdot \log\left(\frac{d}{\delta} \right)}  {T\lambda_{\min}\left(\Gramm_{\infty}\right)}}}  \,.
+\end{eqnarray}
+\end{cor}
+The above corollary uses the fact that $\lim_{k \to \infty}\|\Ast^k\|_{\op}^{1/k} = \rho(\Ast)$, which implies that the limit $\lim_{t \to \infty} \Gamma_t$ is finite when $\rho(\Ast) < 1$. The rate of the convergence of $\Gamma_t$ to $\Gamma_{\infty}$ is related to the $\mathcal{H}_{\infty}$-norm of the linear system, a core concept in control theory. For an extended discussion on this relationship, we direct the reader to~\cite{tu2017non}. Corollaries~\ref{cor:consistent} and~\ref{cor:diag} in the appendix give an analogue of Corollary~\ref{cor:mixed_cor} which holds even if $\rho(\Ast) = 1$. We now explicitly describe the consequences of Theorem~\ref{stable_thm} for three illustrative classes of linear systems:
+
+%Even a when $\rho(A^*) = 1$, we can find a positive block length $k$ which satisfies the hypothesis of Theorem~\ref{stable_thm}, provided $T$ is sufficiently large.
+
+\begin{enumerate}
+\item \textbf{Scalar linear system.} In this case the states $X_t$ and the parameter $\Ast$ are scalars, and denoted $a_* = \Ast$. For $|a_*| \le 1$, we can apply Theorem~\ref{stable_thm} with block length $k = \BigOm(T/\log(1/\delta))$. This then guarantees that $|\widehat{a} - a_*| \leq \BigOm\left(\sqrt{\log(1/\delta)/\left(T \sum_{t = 1}^{k_*} a_*^{2t} \right)}\right)$ with probability $1 - \delta$. In Appendix~\ref{sec:1d_appendix}, we show this statistical rate is minimax optimal (Theorem~\ref{thm:info_lb_1d}). Moreover, we offer a specialized analysis for the scalar case (Theorem~\ref{thm:one_d_thm}) which yields sharper constants and also applies to the unstable case $|a_*| > 1$, matching the lower bounds of Theorem~\ref{thm:info_lb_1d}. Stated succinctly, our results in Appendix~\ref{sec:1d_appendix} imply that the $\OLS$ estimator satisfies with probability $1 - \delta$ error guarantees which can be categorized into three regimes:
+\begin{align*}
+    |\widehat{a} - a_*| = \begin{cases}
+        \Theta\left(\sqrt{\frac{\log(1/\delta)(1 - |a_*|)}{T}}\right)\; &\text{ if }\; |a_*| \leq 1 - \frac{c\log(1/\delta)}{T},\\
+        \Theta\left(\frac{\log(1/\delta)}{T}\right)\; &\text{ if }\; 1 - \frac{c\log(1/\delta)}{T} < |a_*| \leq 1 + \frac{1}{T}\\
+        \Theta\left(\frac{\log\left(1/\delta\right)}{|a_*|^T}\right) \; &\text{ if }\; 1 + \frac{1}{T} \le |a_*|.
+    \end{cases}
+\end{align*}
+
+\citet{white1958limiting} showed the same dependence on $|a_*|$ of the estimation error by characterizing the asymptotic distribution of $\widehat{a} - a_*$ when appropriately scaled. However, our results offer finite sample guarantees. 
+
+
+\item \textbf{Scaled orthogonal systems.} Let us assume $\Ast =  \rho \cdot O$ for an orthogonal $d\times d$ matrix $O$ and $|\rho| \leq 1$. Then, one can verify that $\Gamma_t = I \cdot \sum_{s=0}^{t-1} \rho^{2s}$ and that we can choose the block length $k = \BigOm\left(\tfrac{T}{d\log(d/\delta)}\right)$. Therefore, Theorem~\ref{stable_thm} guarantees that with probability $1 - \delta$:
+\begin{align}\label{eq:rho_eye_upper}
+\opnorm{\ALS - \Ast} \leq \begin{cases}
+    \BigOm\left(\sqrt{(1-|\rho|) \cdot \frac{d\log(d/\delta)}{T}}\right)\; &\text{ if }\; |\rho| \leq 1 - \frac{cd\log(d/\delta)}{T},\\
+    \BigOm\left(\frac{d\log(d/\delta)}{T}\right)\; &\text{ if }\; 1 - \frac{cd\log(d/\delta)}{T} < |\rho|.
+\end{cases}
+\end{align}
+
+	\item \textbf{Diagonalizable linear systems.} Let $\Ast = SDS^{-1}$ define a diagonalizable linear system. We denote by $\underline{\rho}$ the smallest magnitude of an eigenvalue of $\Ast$. In Appendix~\ref{app:consistent}, we show that we can choose the block length $k$ such that
+$
+k \geq \frac{T}{c d \log\left(\frac{d \, \cond(S)}{\delta}\right)}. 
+$
+With this choice of $k$ the $\OLS$ estimator satisfies (Corollary~\ref{cor:diag})
+\begin{align*}
+\Pr\left[\opnorm{\ALS - \Ast} \leq \BigOm\left(\sqrt{\frac{d\log(d \, \cond(S)/\delta)}{T\left(1 + \cond(S)^{-2}\sum_{s = 0}^{k-1}\underline{\rho}^{2s}\right)}}\right)\right] \ge 1- \delta
+\end{align*}
+which could once again be split into a slow and fast rate, as in the examples presented above, depending on the size $\underline{\rho}$ of the least excitable mode of the system defined by $\Ast$. Note that up to a factor of $\log(d \, \cond(S)/\delta)$, the above bound is no worse than the worst-case rate for standard random-design least-squares in the operator norm (see Appendix~\ref{app:op_norm_ls}).
+\end{enumerate}
+\begin{remark}[Noise dependence] As mentioned before, the estimation guarantee provided by Theorem~\ref{stable_thm} does not depend on the variance $\sigma^2$ of the noise $\noise_t$. For Gaussian noise with a general identity covariance $\noise_t \sim \calN(0,\Sigma)$, one can rederive rates from our more general Theorem~\ref{main_thm} to get a more precise dependence on $\Gramm_t$ and $\Sigma$.
+%
+Note that if the covariance $\Sigma$ is known, an alternative estimator would be to choose $\ALS$ to minimize a loss which takes $\Sigma$ into account in the same way that one would for non-dynamic linear regression with heteroskedastic noise, e.g. $\widehat{A}^{\Sigma}(T) := \arg\min_{A \in \R^{d \times d}} \sum_{t=1}^T \frac{1}{2}\left\|\Sigma^{-1/2}\left(X_{t + 1} - A X_t\right)\right\|_2^2$.
+\end{remark}
+\begin{remark}[Learning with input sequences] We can also consider the case where the linear system $X_{t + 1} = \Ast X_t + \Bst u_t + \eta_t$ is driven by a known sequence of inputs $u_0,u_1,\dots$, with known $\Bst$. Defining the control Gramian $\GrammB_t := \sum_{s=1}^t \Ast^{t-s}\Bst\Bst^\top \Ast^{t-s}~$, the proof of Theorem~\ref{stable_thm} can be modified to show that, if the inputs are white noise $u_t \overset{i.i.d}{\sim} \mathcal{N}(0,\sigmaU^2 I)$, then there exist universal constants $c,C > 0$ such that, with probability $1-\delta$,
+\begin{align*}
+\opnorm{\ALS(T)-\Ast} \le \frac{C\sigma^2}{\sqrt{T\lambda_{\min}\left(\sigma^2\Gramm_k + \sigmaU^2 \GrammB_k)\right)}}\sqrt{d\log\left(\frac{1}{\delta} \frac{\tr \left(\sigma^2\Gramm_T + \sigmaU^2 \GrammB_T)\right)}{\lambda_{\min}\left(\sigma^2\Gramm_k + \sigmaU^2 \GrammB_k\right)}\right)}
+\end{align*}
+for any $k$ such that $\frac{T}{k} \ge cd\log \left( \frac{\tr(\sigma^2\Gramm_T + \sigmaU^2 \GrammB_T)}{\delta\lambda_{\min}(\sigma^2\Gramm_k + \sigmaU^2 \GrammB_k)} \right)$. Process noise with covariance not equal to a multiple of the identity can be absorbed into $\Bst$. 
+\end{remark}
+
+\subsection{Lower Bounds for Linear System Identification}
+\label{sec:lower_bounds}
+
+    We have seen in Theorem~\ref{stable_thm} and in the subsequent examples that the estimation of linear dynamical systems is easier for systems
+    which are easily excitable. It is natural to ask what is the best possible estimation rate one can hope to achieve. To make explicit the dependence of the lower bounds on the spectrum of $\Gamma_t$, we consider the minimax rate of estimation over the set $\eig \cdot \Od$, where $\eig \in \R$ and $\Od$ denotes the orthogonal group. In this case, we can define an \emph{scalar} Gramian $\gamma_t(\eig) := \sum_{s=0}^{t-1} |\eig|^{2s}$, so that $\Gamma_t := \gamma_t(\eig) \cdot I$. We now show that the estimation rate of the $\OLS$ provided in Theorem~\ref{stable_thm} is optimal up to log factors for $|\rho| \le 1 - \BigOhTil{d/T}$:
+    \begin{thm}
+    \label{thm:info_lb_d} Fix  $d \ge 2$, $\eig \in \R$, $\delta \in (0,1/4)$, and $\epsilon \le \frac{\eig}{2048}$. Then, there exists a universal constant $c_0$ such for any estimator $\widehat{A}$,
+    \begin{eqnarray*}
+    \sup_{O \in \Od}\Pr_{\eig O}\left[\left\|\widehat{A}(T) - \eig O\right\|_{\op} \ge \epsilon\right] \ge \delta\; \text{ for any } T \text{ such that }\; T \gamma_{T}(\eig) \leq  \frac{c_0 \left( d + \log\left(1/\delta\right)\right)}{\epsilon^2},
+    \end{eqnarray*}
+    where $\Od$ is the orthogonal group of $d \times d$ real matrices.
+    \end{thm}
+    This result is proved in Appendix~\ref{sec:lb_proofs}. We can interpret it
+    by considering the following regimes:
+\begin{align*}
+    \opnorm{\widehat{A} - \Ast} \ge \begin{cases}
+        \Omega\left(\sqrt{\frac{(d+\log(1/\delta))\cdot(1 - |\rho|)}{T}}\right)\; &\text{ if }\; |\rho| \leq 1 - \frac{1}{T},\\
+        \Omega\left(\frac{\sqrt{d+\log(1/\delta) }}{T}\right)\; &\text{ if }\; 1 - \frac{1}{T} < |\rho| < 1 + \frac{1}{T}\\
+        \Omega\left(\frac{\sqrt{d+\log(1/\delta)}}{T|\rho|^T}\right) \; &\text{ if }\; 1 + \frac{1}{T} \le |\rho|.
+    \end{cases}
+\end{align*}
+Comparing to~\eqref{eq:rho_eye_upper}, we see that for $|\rho| \le 1 - \BigOhTil{d/T}$, our upper and lower bounds coincide up to logarithmic factors. In the regime $\rho \in [1 - \BigOhTil{d/T},1]$, our upper and lower bounds differ by a factor of $\BigOhTil{\sqrt{d + \log(1/\delta)}}$. 
+
+%We conjecture that our upper bounds qualitatively describe the performance of $\OLS$; that we conjecture that the least-squares estimator actually attains a rate of $\BigOh{\frac{d + \log(1/\delta)}{T}}$ (without the log factors) and that our lower bounds are off by a factor of $\BigOhTil{\sqrt{d + \log(1/\delta)}}$.\horia{Not sure what we are trying to conjecture here, but something is wrong.}
+
+%; we provide a heuristic argument which is specific to least squares in Appendix~\ref{sec:Lower_Bound_Loose}. It is possible that shaving off the $\BigOhTil{\sqrt{d + \log(1/\delta)}}$ factor for $|\rho|$ close to one may be informational-theoretically possible (that is, attainable by an algorithm other than OLS).
+
+
+% \subsection{Estimation Rates with Known $\Bst$}
+% In this section, we show that the learning rates can be improved when the system is driven by inputs $u_t$ when the control matrix $\Bst$ is known. For ease, we assume that the inputs are white noise $u_t \overset{i.i.d}{\sim} \mathcal{N}(0,\sigmaU^2 I)$. In this regime, note that we have the decomposition:
+% \begin{eqnarray}\label{eq:recursion_eq}
+% &&X_{t+1} = \sum_{s=1}^{t} \Ast^{t-s}(\noise_s+\Bst u_t)~~\text{ which implies that}~~\Exp[X_tX_t^{\top}] = \sigma^2\Gramm_t~ + \sigmaU^2 \GrammB_t~,\nonumber\\
+% \text{where}&& \quad \GrammB_t := \sum_{s=1}^t \Ast^{t-s}\Bst\Bst^\top \Ast^{t-s}~.
+% \end{eqnarray}
+% With these definitions, we can now state an analogue of Theorem~\ref{stable_thm} for control inputs, which is again a consequence of Theorem~\ref{main_thm}:
+% \begin{thm}\label{thm:stbl_input} Fix $\delta \in (0,1/2)$ and consider the linear dynamical system $X_{t+1} = \Ast X_t + \Bst u_t + \noise_t $, where $\Ast$ is a marginally stable matrix in $\R^{d\times d}$, $X_0 = 0$, $\noise_t  \iid \calN(0,\sigma^2 I)$, and $u_t \sim \mathcal{N}(0,\sigmaU^2 I)$.
+% \end{thm}
+
+
+
+\subsection{General Time Series with Linear Responses}
+\label{sec:meta_thm}
+
+    In this section, we consider a sequence of covariate-response pairs $(X_t,Y_t)_{t \ge 1}$, where $Y_t = \Ast X_t + \noise_t$, with $Y_t, \noise_t \in \R^n$, $X_t \in \R^d$, and $\Ast \in \R^{n \times d}$. The least squares estimator is then
+    \begin{eqnarray}
+    \ALS(T) &:= \arg\min_{A \in \R^{d \times d}} \sum_{t=1}^T \frac{1}{2}\|Y_{t} - A X_t\|_2^2 \:.
+    \end{eqnarray}
+
+    We let $\calF_{t} := \sigma(\noise_0,\noise_1,\dots,\noise_{t},X_1,\dots,X_t)$ denote the filtration generated by the covariates and noise process. Note then that $Y_t \in \calF_{t}$, but $Y_t \notin \calF_{t - 1}$. Further, we assume $\eta_t | \calF_{t-1}$ is mean-zero, and $\sigma^2$-sub-Gaussian (i.e., $\Exp[\exp(\lambda \eta_t) | \calF_t] \le e^{\sigma^2 \lambda^2/2}$).
+    %
+    The linear dynamical systems sub-case is recovered from this general setting when $Y_t = X_{t+1}$.
+
+%For concreteness, the $\OLS$ estimates for the two cases considered here are respectively
+%
+%
+%    \begin{align}
+%    \label{eq:ols}
+%    \ALS(T) &:= \arg\min_{A \in \R^{n \times d}} \sum_{t=1}^T \frac{1}{2}\|Y_t - A X_t\|_2^2.
+%    \end{align}
+
+%	In this section, we analyze the performance of the $\OLS$ estimator when applied to time series of the form $Y_t = \Ast X_t + \noise_t$.
+%
+% Theorem~\ref{stable_thm} is a consequence of the result presented in this section.
+    To capture the excitation behavior observed in the case of linear systems we introduce a general martingale small-ball condition which quantifies the growth of the covariates $X_t$.
+	\begin{defn}[Martingale Small-Ball]\label{def:bmsb} Let $(Z_t)_{t \ge 1}$ be an $\{\calF_t\}_{t \ge 1}$-adapted random process  taking values in $\R$. We say $(Z_t)_{t\ge 1}$ satisfies the $(k,\nu,p)$-block martingale small-ball (BMSB) condition if, for any $j \ge 0$, one has $\frac{1}{k}\sum_{i=1}^k \Pr( |Z_{j+i}| \ge \nu | \calF_{j}) \ge p$ almost surely.  Given a process $(X_t)_{t \ge 1}$ taking values in $\R^d$, we say that it satisfies the $(k,\Gamsb,p)$-BMSB condition for $\Gamsb \succ 0$ if, for any fixed $w\in \calS^{d-1}$, the process $Z_t:= \langle w, X_t\rangle$ satisfies $(k,\sqrt{w^\top \Gamsb w},p)$-BMSB.
+	\end{defn}
+
+	Such a small-ball condition is necessary for establishing a high-probability lower bound on $\lambda_{\min}(\sum_{t=1}^T X_tX_t^\top) = \min_{\direc \in \calS^{d-1}} \sum_{t=1}^T \langle X_t, \direc \rangle^2$. The parameter $\Gamsb$ plays the role of the Gramians $\Gramm_t$ considered in the case of linear systems,
+    and measures how excitable the covariates $X_t$ are. As expected, the next result shows that a higher $\lambda_{\min}(\Gamsb)$ leads to faster statistical estimation.
+
+\begin{thm}\label{main_thm} Fix $\epsilon, \delta \in (0,1)$, $T \in \N$ and $0 \prec \Gamsb \preceq \Gambar$. Then if $(X_t,Y_t)_{t \ge 1} \in (\R^d \times \R^n)^{T}$ is a random sequence such that (a) $Y_t = \Ast X_t + \noise_t$, where $\noise_t | \calF_t$ is $\sigma^2$-sub-Gaussian and mean zero, (b) $X_1,\dots,X_T$ satisfies the $(k,\Gamsb,p)$-small ball condition, and (c) such that\\ $\Pr[\sum_{t = 1}^T X_t X_t^\top \npreceq T\Gambar] \le \delta$. Then if 
+\begin{align}\label{eq:main_thm_condition}
+T \geq  \frac{10k}{p^2}\left(\log \left(\frac{1}{\delta}\right) + 2d\log(10/ p) +  \log \det (\Gambar \Gamsb^{-1}) \right),
+\end{align}
+we have
+\begin{align}
+\Pr\left[\opnormbig{\ALS(T)-\Ast} >\frac{90\sigma}{p}\sqrt{\frac{n + d\log \frac{10}{p} + \log \det \Gambar \Gamsb^{-1} + \log\left(\frac{1}{\delta}\right)}{T\lambda_{\min}(\Gamsb)}} \right] \le  3\delta.
+\end{align}
+\end{thm}
+%\begin{remark}
+The proof of Theorem~\ref{main_thm} is outlined in Section~\ref{sec:mn_thm_proof}, and technical details are deferred to Appendix~\ref{app:main_thm}. We remark that the conclusion of Theorem~\ref{main_thm} still holds if one replaces the $(k,\Gamsb,p)$ small-ball condition with any high probability lower bound of the form $\Pr\left( \sum_{t = 1}^T X_t X_t^\top \succsim T \Gamsb \right) \leq \delta$.
+%\end{remark}
+
+\subsection{Analysis Techniques\label{sec:analysis_tech}}
+Let $\ALS = \ALS(T)$, let $\matX \in \R^{T \times d}$ denote the matrix whose rows are $X_t$, and $\Noise \in \R^{T \times n}$ denote the matrix
+whose rows are $\noise_t$.  Consider the compact SVD of $\matX$ and
+$\matX = \matU \matSig \matV^\top$, where $\matSig,\matV \in \R^{d \times d}$
+and $\matU \in \R^{T \times d}$. Note then that we have $\ALS - A_* =
+(\matX^{\dagger} \Noise)^\top $ which implies that
+\begin{eqnarray}\label{eq:error_decomp}
+\opnorm{\ALS - A_\star}  = \opnorm{\matX^{\dagger} \Noise} \leq \sigma_{d}(\matX)^{-1}\opnorm{\matU^{\top}\Noise}.
+\end{eqnarray}
+Here $\sigma_{d}((\matX)^{-1})$ denotes the $d$-th largest singalue value of $\matX$, which is precisely $\sqrt{1/\lambda_{\min}(\matX^\top \matX)}$.
+The technical challenge arises from the fact that the singular space $\matU^{\top}$ and $\Noise$ are correlated, and that the rows $X_t$ of $\matX$ are also dependent. We upper bound $\opnorm{\matU^{\top}\Noise}$ with Lemma~\ref{eq:normalized}, a martingale-Chernoff bound that gives precise control on the deviations of sub-Gaussian martingale sequences in terms of random variance proxies. We explain this argument in more detail at the end of Section~\ref{sec:mn_thm_proof}.
+
+Our lower bound on $\sigma_{\min}(\matX) = \sqrt{\lambda_{\min}(\sum_{t=1}^TX_tX_t^\top)}$ eschews mixing-time arguments in favor of a careful modification of Mendelson's small-ball method~\citep{mendelson14b}. %to lower bound the least singular value of the covariance matrix $\sum_{t=1}^T X_tX_t^\top$.
+We divide our covariates into size-$k$ blocks $\{X_{(\ell-1) k + 1},\dots,X_{\ell k}\}$, such that for  any fixed $\direc \in \calS^{d-1}$, the quantity $\sum_{\ell=1}^k \langle X_{(\ell-1) k + 1}, \direc \rangle^2$ can be lower bounded by the $(k, \Gamsb, p)$-BMSB condition. Proposition~\ref{prop:Small_Ball} below (proved in Appendix~\ref{sec:proof_small_ball}) then implies that we have $\sum_{t=1}^T \langle X_t, \direc \rangle^2~\gtrsim~T w^\top \Gamsb w$~with probability at least $1 - \exp( - c T/k)$ for some constant $c$:
+\begin{prop}\label{prop:Small_Ball} Let $\{Z_t\}_{t\geq 1}$ be  a scalar process  that satisfies the $(k,\nu,p)$-BMSB condition. Then
+    \begin{eqnarray}
+    \Pr\left[\sum_{i=1}^T Z_i^2 \le \frac{\nu^2p^2}{8} k\floor{T/k}\right] \leq   e^{-\frac{\floor{T/k}p^2}{8}}.
+    \end{eqnarray}
+ \end{prop}
+Once $T$ is large enough, these high-probability bounds can be used to derive a uniform bound over $\direc \in \calS^{d-1}$ via a discretization argument (Lemma~\ref{lem:eig_Packing_Lem}).  In general there is a trade-off between the size of the blocks $k$ and the probability guarantee obtained: a larger block size leads to a larger
+parameter $\nu$ and a faster rate, but it degrades the probability guarantee.
+
+ %e show that in the case of linear systems, this trade-off can be settled to yield fast rates of estimation for nearly unstable matrices $\Ast$ which hold with high probability.
+
+
+  %	\maxs{explain: advantage is that we need failure probability $e^{-\BigOhTil{d}}$ for lb on $\sigma_{\min}(\dots)$, so we can have as few as $T/\BigOhTil{d}$-blocks. And fewer blocks means large $k$ means large $\nu$, necessarily bc we can only lower bound with $\nu$ w. const prob, not high prob. }
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

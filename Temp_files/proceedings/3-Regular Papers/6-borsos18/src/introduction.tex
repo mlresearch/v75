@@ -1,0 +1,128 @@
+% !TEX root = onlinevarinancebandits.tex
+
+\section{Introduction}
+% Structure:
+% \begin{itemize}
+% \item The approach of (Regularized) ERM and its importance in Machine Learning.
+% Solving such problems with sequential optimization algorithms such as SGD/SVRG/Online K-means.
+% Maybe focus on SGD as a running example.
+% \item  Mentioned the alternative option is uniform sampling. Describe/illustrate how importance sampling can be used to improve the performance. Give references. 
+% \item Describe how the variance of the estimates is a natural measure of performance in this setting. Mention that low variance translates to better performance, e.g. for SGD. 
+% \textbf{Online Problem:}
+% Similarly to  Duchi/EPFL  we formulate importance sampling an online convex optimization problem.
+% Describe the approaches of Duchi/EPFL say very nice things about them give them credit and discuss the limitations of their results/approaches.
+% \item State our result. State our contributions+ discuss the improvements over previous work: \\
+% (i) tighter regret guarantees with respect to the simplex.\\
+% (ii) Showing that regret minimization makes sense in this setting.\\
+% (iii) (Hopefully) complementary lower bounds. \\
+% (iii) Efficient experimental implementation showing the benefits of the proposed method
+% \kl{This is for COLT, for ArXiv put the experiments in (ii) place}
+
+% Discuss the technical challenges of our work, specifically the fact that the costs are unbounded + the bandit feedback.
+% Discuss the new regularization that we introduce, its benefits (closed form formula for the FTRL) + the challenge.
+% Mention other settings with unbounded losses, e.g. log loss in portfolio selection.
+ 
+%  \textbf{Related work}
+%  Who should we cite? Look at Jaggi/Duchi/EPFL for references.
+
+% \kl{Mention (where?) that we can use our approach for coordinate descent.}
+
+% \end{itemize}
+%Among the most important paradigms in machine learning is Empirical Risk Minimization (ERM) , which is often the strategy of choice due to its generality and statistical efficiency.
+Empirical risk minimization (ERM) is among the most important paradigms in machine learning, and  is often the strategy of choice due to its generality and statistical efficiency.
+In ERM, we draw a set of  samples $\D=\{x_1,\ldots,x_n\}\subset \X$ from the underlying data distribution, and we aim to find a solution $w\in\W$ that minimizes the empirical risk,  %The empirical risk serves as a proxy to the expected loss which is often. 
+%the objective is to  find a solution $w\in\W$ that minimizes the empirical risk based on a collection of $n$ samples $\D=\{x_1,\ldots,x_n\}\subset \X $:
+\begin{equation} \label{eq:ERM}
+  \min_{w\in\W }L(w) := \frac{1}{n}  \sum_{i=1}^n \ell (x_i, w),
+\end{equation}
+where $\ell: \mathcal{X} \times \W \rightarrow \reals$ is a given loss function, and $\W\subseteq \reals^d$ is usually a compact domain.
+
+In this work we are interested in sequential procedures for minimizing the ERM objective, and relate to such methods as \emph{ERM solvers}.
+More concretely, we focus on the regime where the number of samples $n$ is very large,  and it is therefore desirable to employ ERM solvers that only require  few passes over the dataset. There exists a rich arsenal of such efficient solvers which have been investigated throughout the years, with the canonical example from this category being  Stochastic Gradient Descent (SGD).
+
+
+% among are SVRG \citep{johnson2013accelerating} and SAGA \citep{defazio2014saga},
+%
+%
+% such efficient sequential solvers have been developed throughout the years, with the canonical example from this category being  Stochastic Gradient Descent (SGD).
+
+Typically, such methods  require an unbiased estimate of the loss function at each round, which is usually  generated   by sampling a few points uniformly at random from the dataset.
+However, by employing uniform sampling, these methods are insensitive to the intrinsic structure of the data. In case of SGD, for example, some data points might produce large gradients, but they are nevertheless assigned the same probability of being sampled as any other point. This ignorance often results in high-variance estimates, which is likely to degrade the performance.
+
+The above issue can be mended by employing non-uniform importance sampling.
+And indeed, we have recently witnessed several  techniques to do so: %techniques.
+%In recent years several approaches have been developed in order to address this issue.
+\citet{zhao2015stochastic} and similarly \citet{needell2014stochastic}, suggest using prior knowledge on the gradients of each data point in order to devise predefined importance sampling distributions.  \citet{NIPS2017_7025} devise adaptive sampling techniques guided by a robust optimization approach. These are only a few examples of a larger body of work 
+ \citep{bouchard2015online, alain2015variance, csiba2016importance}.
+
+Interestingly, the recent works of \cite{pmlr-v70-namkoong17a} and \cite{salehi2017} formulate the task of devising importance sampling distributions as an online learning problem with bandit feedback. In this context, they  think of the algorithm, which adaptively chooses the distribution, as a player that competes against the ERM solver. The goal of the player is to minimize the cumulative variance of the resulting (gradient) estimates.  Curiously, both methods rely on some form of the ``linearization trick''\footnote{ By ``linearization trick'' we mean that these methods update according to a first order approximation  of the costs rather than the costs themselves.} 
+%\footnote{If $g_t$ is a subgradient of the convex function $f:S\rightarrow \mathbb{R}$ at $w_t$, then $f(w_t) - f(u) \leq (w_t-u)^\intercal g_t$,  $\forall u \in S$.} 
+ to resort to the analysis of the EXP3  \citep{auer2002nonstochastic}.
+
+On the other hand, the theoretical guarantees of the above methods are somewhat limited. Strictly speaking, none of them provides regret guarantees with respect to the best fixed distribution in hindsight:  \citet{pmlr-v70-namkoong17a} only compete with the best distribution among a \emph{subset} of the simplex (around the uniform distribution).  Conversely, \cite{salehi2017} compete against a solution which might perform worse than the best in hindsight up to a multiplicative factor of $3$.
+
+In this work, we adopt the above mentioned online learning formulation, and design novel importance sampling techniques. 
+Our adaptive sampling procedure is simple and efficient, and 
+in contrast to previous work, we are able to provide regret guarantees with respect to the best fixed point among the simplex.
+As our contribution, we
+\vspace{-1.5mm}
+\begin{itemize}
+\setlength\itemsep{0.05em}
+\item motivate theoretically why regret minimization is meaningful in this setting, 
+\item propose a novel bandit algorithm for variance reduction ensuring regret  of~$\tO(n^{1/3}T^{2/3})$,
+\item empirically validate our method, and provide an efficient implementation\footnote{The source code is available at  \url{https://github.com/zalanborsos/online-variance-reduction}}.
+\end{itemize}
+On the technical side, we do not rely on a ``linearization trick'' but rather directly employ a scheme based on the classical 
+ Follow-the-Regularized-Leader approach. 
+Our analysis entails several technical challenges, most notably handling  unbounded cost functions while only receiving partial (bandit) feedback. Our design and analysis draws inspiration from the seminal works of  \citet{auer2002nonstochastic}  and 
+\cite{Abernethy08}. 
+Although we present our method for choosing \emph{data points}, it naturally applies to choosing \emph{coordinates in coordinate descent} or even \emph{blocks} of thereof \citep{allen2016even,perekrestenko2017faster, nesterov2012efficiency, necoara2011random}.
+More broadly, the proposed algorithm can be incorporated in \emph{any sequential algorithm} that relies on an unbiased estimation of the loss. A prominent  application of our method is variance reduction for SGD, which can be achieved by considering  gradient norms as  losses, i.e., replacing $\ell(w,x_i) \leftrightarrow \|\nabla \ell(w,x_i)\|$. With this modification, our method is minimizing the cumulative variance of the gradients throughout the optimization process.
+
+%defining the bandit feedback as the norm of the gradient estimate. 
+The paper is organized as follows. In Section \ref{sec:Motivation}, we formalize the online learning setup of variance reduction, and motivate why regret is a suitable performance measure. As the first step of our analysis, we investigate the full information setting in Section \ref{sec:full-info}, which serves as a mean for studying the bandit setting in Section \ref{sec:bandit}. Finally, we validate our method empirically, and provide the detailed discussion of the results in Appendix  \ref{sec:experiments}. 
+
+
+
+%We achieve this by relying on classical results from Follow-the-Regularized-Leader framework, where the regularizer is chosen to suit the setting of variance reduction with importance sampling.
+
+%\newpage
+%
+%
+% rely on solving a a ro
+%
+%There exists
+%
+%In 
+%Addressing the regime where the number of samples $n$ is very large, efficient \emph{sequential} procedures have been developed, that perform only a few passes over the dataset. These methods usually require an unbiased estimate of the loss function at each round, and they generate the estimate by sampling a few points uniformly at random from the dataset. The canonical example from this category is Stochastic Gradient Descent (SGD).
+%
+%However, by employing uniform sampling, these methods are agnostic to the intrinsic structure of the data. In case of SGD, for example, some data points might produce large gradients, but they are nevertheless assigned the same probability of being sampled as any other point. This ignorance often results in high-variance estimates.
+%
+%References:
+%\begin{itemize}
+%\item \textbf{Variance reduction with uniform sampling}: SVRG \citep{johnson2013accelerating} and SAGA \citep{defazio2014saga}, \cite{xiao2014proximal}
+%\item \textbf{Variance reduction with importance sampling (points): } \citep{needell2014stochastic, zhao2015stochastic, bouchard2015online, csiba2016importance,alain2015variance, NIPS2017_7025}
+%\item \textbf{Importance sampling, but without direct interpretation as variance reduction (points): } \cite{strohmer2009randomized}, 
+%\item \textbf{Coordinate descent, with non-uniform sampling:} \cite{allen2016even,perekrestenko2017faster, nesterov2012efficiency, necoara2011random}
+%\item \textbf{Bandits, both points and coordinates:} \cite{pmlr-v70-namkoong17a}, \cite{salehi2017}, \cite{salehi2017stochastic}
+%\end{itemize}
+%
+%
+%This issue is addressed by several variance reduction techniques, some prominent examples being  SVRG \citep{johnson2013accelerating} and SAGA \citep{defazio2014saga}. In case of (strongly) convex loss functions, the reduced variance directly translates to improved convergence bounds. \textcolor{red}{An important class of methods that allow variance reduction interpretation}  rely on the technique of importance sampling \citep{needell2014stochastic, zhao2015stochastic, bouchard2015online, csiba2016importance,alain2015variance%, allen2016even, perekrestenko2017faster%
+%, NIPS2017_7025}, where the sampling distribution is either fixed or adaptive over the iterations. Since competing against \textcolor{red}{the optimal per-round} sampling distributions is usually computationally infeasible, the methods are often compared to the optimal sampling distribution \emph{in hindsight}.
+%
+%An interesting idea of the recent works of \cite{pmlr-v70-namkoong17a} and \cite{salehi2017} is to formulate the task of finding a competitive sampling distribution under importance sampling for variance reduction as a \emph{bandit problem}. In this setting, no-regret assures that the chosen distribution performs close to the optimal stationary distribution in hindsight. Both methods rely on some form of the ``linearization trick'' \citep{shalev2012online} to resort to the analysis of the EXP3  \citep{auer2002nonstochastic} and obtain similar algorithms. These methods show convincing convergence guarantees for stochastic optimization for convex ERM both theoretically and empirically.
+%
+%On the other hand, the two methods come with limitations. While the latter is guaranteed to approximate the variance under the optimal sampling distribution in hindsight within a factor of 3, the former incorporates a KL-projection step in order to ensure that the sampling probabilities are larger than some threshold $\pmin$ --- an additional hyperparameter that affects the convergence bounds.
+%
+%In this work, we pursue the same idea of employing bandit optimization for variance reduction and we design an algorithm that suffers from none of the limitations mentioned above. We achieve this by relying on classical results from Follow-the-Regularized-Leader framework, where the regularizer is chosen to suit the setting of variance reduction with importance sampling. As our contribution, we
+%\vspace{-1.5mm}
+%\begin{itemize}
+%\setlength\itemsep{0.05em}
+%\item motivate theoretically why regret minimization is meaningful in this setting,
+%\item propose and analyze a novel bandit algorithm for variance reduction,
+%\item empirically validate our method and provide an efficient implementation\footnote{The source code is available at  \url{https://github.com/zalanborsos/online-variance-reduction}}.
+%\kl{Dont forget to remove this footnote in the anonimized COLT submission!}
+%\end{itemize}
+%The analysis entails several technical challenges, most notably handling  unbounded cost functions and unbounded regularizers. Although we present our method for choosing \emph{datapoints} in an optimization problem, it naturally applies to choosing \emph{coordinates in coordinate descent} or even \emph{blocks} of thereof. More broadly, the proposed algorithm can be incorporated in \emph{any sequential algorithm} that relies on unbiased estimation of the loss.
+%\kl{add citation about coordinate descent, see Cevher and Jaggi}

@@ -1,0 +1,170 @@
+%\documentclass[anon,12pt]{colt2018} % Anonymized submission
+\documentclass[final,12pt]{colt2018}% Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\usepackage{times}
+\usepackage{graphicx}
+%\usepackage{amsmath,amsthm,amssymb}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+\usepackage{ifthen}
+%\usepackage[algo2e,ruled]{algorithm2e}
+\usepackage{wrapfig}
+\usepackage{enumitem}
+
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{cor}[theorem]{Corollary}
+%\newtheorem{corollary}[theorem]{Corollary}
+%\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{fact}[theorem]{Fact}
+%\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ncb}[1]{\textcolor{red}{NCB: #1}}
+
+\newcommand{\scU}{\mathcal{U}}
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\R}{\field{R}}
+\newcommand{\C}{\field{C}}
+\newcommand{\E}{\field{E}}
+\renewcommand{\Pr}{\field{P}}
+\newcommand{\Ind}[1]{\field{I}{\left\{#1\right\}}}
+\newcommand{\Var}{\field{V}}
+\newcommand{\dt}{\displaystyle}
+\newcommand{\ve}{\varepsilon}
+\renewcommand{\ss}{\subseteq}
+\newcommand{\theset}[2]{ \left\{ {#1} \,:\, {#2} \right\} }
+\newcommand{\inner}[1]{ \left\langle {#1} \right\rangle }
+\newcommand{\norm}[1]{\|{#1}\|}
+\newcommand{\argmin}{\mathop{\rm argmin}}
+\newcommand{\argmax}{\mathop{\rm argmax}}
+\newcommand{\defeq}{\stackrel{\rm def}{=}}
+\newcommand{\sgn}{\mbox{\sc sgn}}
+\newcommand{\trace}{\mathrm{Tr}}
+\newcommand{\diag}{\mathrm{Diag}}
+\newcommand{\scE}{\mathcal{E}}
+\newcommand{\scO}{\mathcal{O}}
+\newcommand{\scS}{\mathcal{S}}
+\newcommand{\scF}{\mathcal{F}}
+\newcommand{\scK}{\mathcal{K}}
+\newcommand{\be}{\boldsymbol{e}}
+\newcommand{\bg}{\boldsymbol{g}}
+\newcommand{\bs}{\boldsymbol{s}}
+\newcommand{\bx}{\boldsymbol{x}}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\bu}{\boldsymbol{u}}
+\newcommand{\bv}{\boldsymbol{v}}
+\newcommand{\bw}{\boldsymbol{w}}
+\newcommand{\tbw}{\boldsymbol{{\tilde w}}}
+\newcommand{\bp}{\boldsymbol{p}}
+\newcommand{\bV}{\boldsymbol{V}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\bZ}{\boldsymbol{Z}}
+\newcommand{\bzero}{\boldsymbol{0}}
+\newcommand{\bool}{\{0,1\}}
+\newcommand{\loss}{\ell}
+\newcommand{\bloss}{\boldsymbol{\loss}}
+\newcommand{\avgloss}{{\overline{\ell}}}
+\newcommand{\avglossf}{{\overline{f}}}
+\newcommand{\shat}{\widehat{\nu}}
+\newcommand{\Lhat}{\widehat{L}}
+\newcommand{\ellhat}{\widehat{\ell}}
+\newcommand{\khat}{\widehat{k}}
+
+
+\newlength{\minipagewidth}
+\setlength{\minipagewidth}{\textwidth}
+\setlength{\fboxsep}{3mm}
+\addtolength{\minipagewidth}{-\fboxrule}
+\addtolength{\minipagewidth}{-\fboxrule}
+\addtolength{\minipagewidth}{-\fboxsep}
+\addtolength{\minipagewidth}{-\fboxsep}
+\newcommand{\bookbox}[1]{
+\par\medskip\noindent
+\framebox[\textwidth]{
+\begin{minipage}{\minipagewidth}
+{#1}
+\end{minipage} } \par\medskip }
+
+
+\title[Composite Anonymous Feedback]{Nonstochastic Bandits with Composite Anonymous Feedback}
+
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+ \coltauthor{\Name{Nicol\`{o} Cesa-Bianchi} \Email{nicolo.cesa-bianchi@unimi.it} \\
+ \addr Dipartimento di Informatica, Universit\`{a} degli Studi di Milano, Italy
+ \AND
+ \Name{Claudio Gentile} \Email{cla.gentile@gmail.com} \\
+ \addr INRIA Lille Nord Europe (France) and Google LLC (USA)
+ \AND
+ \Name{Yishay Mansour} \Email{mansour.yishay@gmail.com} \\
+ \addr Blavatnik School of Computer Science, Tel Aviv University and Google
+ }
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We investigate a nonstochastic bandit setting in which the loss of an action is not immediately charged to the player, but rather spread over at most $d$ consecutive steps in an adversarial way. This implies that the instantaneous loss observed by the player at the end of each round is a sum of as many as $d$ loss components of previously played actions. Hence, unlike the standard bandit setting with delayed feedback, here the player cannot observe the individual delayed losses, but only their sum. Our main contribution is a general reduction transforming a standard bandit algorithm into one that can operate in this harder setting. We also show how the regret of the transformed algorithm can be bounded in terms of the regret of the original algorithm. Our reduction cannot be improved in general: we prove a lower bound on the regret of any bandit algorithm in this setting that matches (up to log factors) the upper bound obtained via our reduction. Finally, we show how our reduction can be extended to more complex bandit settings, such as combinatorial linear bandits and online bandit convex optimization.
+\end{abstract}
+
+\begin{keywords}
+Nonstochastic bandits, composite losses, delayed feedback, bandit convex optimization
+\end{keywords}
+
+
+
+\input{intro}
+
+%\input{related}
+
+\input{prel}
+
+\input{wrapper}
+
+\input{lower}
+
+%\input{discounted}
+
+%\input{extensions}
+\input{extensions3}
+
+%\input{conclusions}
+\input{conclusions2}
+
+% Acknowledgments---Will not appear in anonymized version
+\acks{YM was supported in part by a grant from the Israel Science
+Foundation (ISF).}
+\newpage
+
+\bibliography{ncb}
+
+
+\appendix
+%\input{appe}
+\input{appe2}
+
+\end{document}

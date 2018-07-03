@@ -1,0 +1,1230 @@
+\documentclass[final,12pt]{colt2018} % Anonymized submission
+
+\usepackage{mathrsfs,bm,bbm,tikz}
+
+\def \by {\bar{y}}
+\def \bx {\bar{x}}
+\def \bh {\bar{h}}
+\def \bz {\bar{z}}
+\def \cF {\mathcal{F}}
+\def \cX {\mathcal{X}}
+\def \cY {\mathcal{Y}}
+\def \cZ {\mathcal{Z}}
+\def \bP {\mathbb{P}}
+\def \bE {\mathbb{E}}
+\def \cP {\mathcal{P}}
+\def \bR {\mathbb{R}}
+\def \cG {\mathcal{G}}
+\def \cB {\mathcal{B}}
+\def \cM {\mathcal{M}}
+\def \cL {\mathcal{L}}
+\def \spo {\mathsf{Poi}}
+\def \var {\mathsf{Var}}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\jiao}[1]{\langle{#1}\rangle}
+
+\newcommand{\calA}{{\mathcal{A}}}
+\newcommand{\calB}{{\mathcal{B}}}
+\newcommand{\calC}{{\mathcal{C}}}
+\newcommand{\calD}{{\mathcal{D}}}
+\newcommand{\calE}{{\mathcal{E}}}
+\newcommand{\calF}{{\mathcal{F}}}
+\newcommand{\calG}{{\mathcal{G}}}
+\newcommand{\calH}{{\mathcal{H}}}
+\newcommand{\calI}{{\mathcal{I}}}
+\newcommand{\calJ}{{\mathcal{J}}}
+\newcommand{\calK}{{\mathcal{K}}}
+\newcommand{\calL}{{\mathcal{L}}}
+\newcommand{\calM}{{\mathcal{M}}}
+\newcommand{\calN}{{\mathcal{N}}}
+\newcommand{\calO}{{\mathcal{O}}}
+\newcommand{\calP}{{\mathcal{P}}}
+\newcommand{\calQ}{{\mathcal{Q}}}
+\newcommand{\calR}{{\mathcal{R}}}
+\newcommand{\calS}{{\mathcal{S}}}
+\newcommand{\calT}{{\mathcal{T}}}
+\newcommand{\calU}{{\mathcal{U}}}
+\newcommand{\calV}{{\mathcal{V}}}
+\newcommand{\calW}{{\mathcal{W}}}
+\newcommand{\calX}{{\mathcal{X}}}
+\newcommand{\calY}{{\mathcal{Y}}}
+\newcommand{\calZ}{{\mathcal{Z}}}
+
+\newtheorem{question}{Question}
+\newtheorem{assumption}{Assumption}
+\newtheorem*{multinomial}{Multinomial Observation Model}
+\newtheorem*{poissonized}{Poissonized Observation Model}
+\newcommand{\stepa}[1]{\overset{\rm (a)}{#1}}
+\newcommand{\stepb}[1]{\overset{\rm (b)}{#1}}
+\newcommand{\stepc}[1]{\overset{\rm (c)}{#1}}
+\newcommand{\stepd}[1]{\overset{\rm (d)}{#1}}
+\newcommand{\stepe}[1]{\overset{\rm (e)}{#1}}
+
+
+\title[Distributed Parameter Estimation]{Geometric Lower Bounds for Distributed Parameter Estimation under Communication Constraints}
+\usepackage{times}
+
+\coltauthor{\Name{Yanjun Han} \Email{yjhan@stanford.edu}\\
+	\addr Department of Electrical Engineering, Stanford University
+\AND
+	\Name{Ayfer \"{O}zg\"{u}r} \Email{aozgur@stanford.edu}\\
+ \addr Department of Electrical Engineering, Stanford University
+ \AND
+ \Name{Tsachy Weissman} \Email{tsachy@stanford.edu}\\
+ \addr Department of Electrical Engineering, Stanford University
+ }
+
+
+\begin{document}
+
+%\author{Jiantao Jiao\thanks{Department of Electrical Engineering, Stanford University, email: \texttt{\{jiantao,yjhan\}@stanford.edu}}, Weihao Gao\thanks{Department of Electrical and Computer  Engineering, Coordinated Science Laboratory, University of Illinois at Urbana-Champaign, email: \texttt{wgao9@illinois.edu}}, Yanjun Han$^{*}$}
+%
+
+%\date{\today}
+
+% \vspace{-10pt}
+%
+\maketitle
+
+
+\begin{abstract}
+We consider parameter estimation in distributed networks,
+where each sensor in the network observes an independent
+sample from an underlying distribution and has $k$ bits to
+communicate its sample to a centralized processor which computes an estimate of a desired parameter. 
+%We consider two classes of distributed communication models: one in which nodes send their $k$-bits over independent private channels to the central estimator and a second interactive model, where every transmission is heard by all the nodes. 
+We develop lower bounds for the minimax risk of estimating the
+underlying parameter under squared $\ell_2$ loss for a large class of distributions.
+Our results show that under mild regularity conditions, the communication constraint reduces the effective sample size by a factor of $d$ when $k$ is small, where $d$ is the dimension of the estimated parameter. Furthermore, this penalty reduces at most exponentially with increasing $k$, which is the case for some models, e.g., estimating high-dimensional distributions. For other models however, we show that the sample size reduction is re-mediated only linearly with increasing $k$, e.g. when some sub-Gaussian structure is available. We apply our results to the distributed setting with product Bernoulli model, multinomial model, and dense/sparse Gaussian location models which recover or strengthen existing results.
+% In some models, this penalty reduces exponentially with increasing $k$.  We show, for example, that this is the case with estimating high-dimensional distributions, which can be thought of as a special case of our parameter estimation problem.
+% In some other models however, such as the Gaussian location model, we show that the sample size reduction is re-mediated only linearly with increasing $k$. For this Gaussian model, we also investigate the impact of a sparse structure for the underlying parameter. We show that even if the parameter is sparse, the effective sample size still reduces by a factor equal to the ambient dimension (similar to the non-sparse case) and not the effective dimension of the parameter, hence sparse mean estimation becomes much harder in the distributed case. 
+
+Our approach significantly deviates from existing approaches for developing information-theoretic lower bounds for communication-efficient estimation. We circumvent the need
+for strong data processing inequalities used in prior work and develop a geometric approach which builds on a new representation of the communication constraint. This approach allows us to strengthen and generalize existing results with simpler and more transparent proofs.
+\end{abstract}
+
+\begin{keywords}
+Distributed estimation; Minimax lower bound; High-dimensional geometry; Blackboard communication protocol; Strong data processing inequality
+\end{keywords}
+
+\section{Introduction}
+Statistical estimation in distributed settings has gained increasing
+popularity motivated by the fact that modern data sets are often distributed across multiple machines and processors,
+and bandwidth and energy limitations in networks and within
+multiprocessor systems often impose significant bottlenecks
+on the performance of algorithms. There are also an increasing
+number of applications in which data is generated in a
+distributed manner and it (or features of it) are communicated
+over bandwidth-limited links to central processors \cite{boyd2011distributed,balcan2012distributed,daume2012protocols,daume2012efficient,dekel2012optimal}.
+
+In this paper, we focus on the impact of a finite-communication budget per sample on the performance of several statistical estimation problems. More formally, consider the following parameter estimation problem
+\begin{align*}
+X_1, X_2, \cdots, X_n \overset{i.i.d}{\sim} P_\theta
+\end{align*}
+where we would like to estimate $\theta\in\Theta\subset \bR^d$ under squared $\ell_2$ loss. In most examples throughout, we will assume that $P_\theta$ enjoys a product structure
+\begin{align*}
+P_\theta = p_{\theta_1} \times p_{\theta_2} \times \cdots \times p_{\theta_d}, \qquad \theta=(\theta_1,\cdots,\theta_d)\in\bR^d.
+\end{align*} 
+Unlike the traditional setting where $X_1,\cdots,X_n$ are available to the estimator as they are, we consider a distributed setting where each observation $X_i$ is available at a different sensor and has to be communicated to a central estimator by using a communication budget of $k$ bits. We consider the blackboard communication protocol $\Pi_{\mathsf{BB}}$ \cite{kushilevitz1997communication}: all sensors communicate via a publicly shown blackboard while the total number of bits each sensor can write in the final transcript $Y$ is limited by $k$. Note that when one sensor writes a message (bit) on the blackboard, all other sensors can see the content of the message. We assume that public randomness is available in the blackboard communication protocol. 
+
+Under both models, the central sensor needs to produce an estimate $\hat{\theta}$ of the underlying parameter $\theta$ from the the $k$-bit observations $Y^n$ it collects at the end of the communication. Our goal is to jointly design the blackboard communication protocol $\Pi_{\mathsf{BB}}$ and the estimator $\hat{\theta}(\cdot)$ so as to minimize the worst case squared $\ell_2$ risk, i.e., to characterize
+$$
+\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2.
+$$
+
+Distributed parameter estimation and function computation has been considered in many recent works; we refer to \cite{duchi2013local,zhang2013information,shamir2014fundamental,garg2014communication,braverman2016communication,xu2017information} and the references therein for an overview. Most of these works focus on the Gaussian location model and strong/distributed data processing inequalities appear as the key technical step in developing converse results. A more recent work \cite{diakonikolas2017communication} studied the high-dimensional distribution estimation problem under the blackboard model %, and obtained the required sample complexity 
+without using strong data processing inequalities. However, a complete characterization of the minimax risk for this problem with general $(n,d,k)$ is still missing.
+
+The main contributions of our paper are as follows:
+\begin{enumerate}
+	\item For a large class of statistical models, we develop a novel geometric approach that builds on a new representation of the communication constraint to establish information-theoretic lower bounds for distributed parameter estimation problems. Our approach circumvents the need for strong data processing inequalities, and relate the experimental design problem directly to an explicit optimization problem in high-dimensional geometry.
+	\item Based on our new approach, we show that the communication constraint reduces the effective sample size from $n$ to $n/d$ for $k=1$ under mild regularity conditions and under both independent and interactive models, where $d$ is the dimension of the parameter to be estimated. Moreover, as opposed to the linear dependence on $k$ in prior works, our new approach enables us to show that the penalty is at most exponential in $k$, which turns out to be tight in high-dimensional distribution estimation.
+	\item Our new approach recovers the linear dependence on $k$ when some sub-Gaussian structure is available, e.g., in the Gaussian location model. This result builds on a geometric inequality for the Gaussian measure, which may be of independent interest. 
+\end{enumerate}
+
+% The main contribution of our paper is to develop information-theoretic lower bounds for this problem that hold for a large class of statistical models and that are tight in most cases. In particular, we focus on understanding how the finite communication budget per sample impacts the estimation performance. For a large class of distributions, our results show that when $k=1$, the communication constraint reduces the effective sample size from $n$ to $n/d$.  We then focus on how this penalty is reduced with increasing communication budget. Our first result shows that for larger $k$, the effective sample size is smaller than $n2^k/d$. This result suggests that the reduction in effective sample size can be remediated potentially exponentially with increasing $k$. We show that this is indeed the case when one is interested in estimating the underlying discrete distribution, which can be casted as parameter estimation for the multinomial (or more precisely categorical) distribution. We show however that for the Gaussian location model, the  effective sample size is smaller than $nk/d$, i.e. the effective sample size increases only linearly in $k$, which can be limiting in high-dimensional problems. We therefore turn to investigating whether a sparse structure for the parameter can increase the effective sample size from $nk/d$ to $nk/s$, where $s$ is the effective dimension of the sparse parameter vector. We show that the answer is negative which suggests that sparse mean estimation becomes much harder in the distributed case.
+
+Notations: for a finite set $A$, let $|A|$ denote its cardinality; $[n]\triangleq \{1,2,\cdots,n\}$; for a measure $\mu$, let $\mu^{\otimes n}$ denote its $n$-fold product measure; lattice operations $\wedge, \vee$ are defined as $a\wedge b=\min\{a,b\}, a\vee b=\max\{a,b\}$; throughout the paper, logarithms $\log(\cdot)$ are in the natural base; standard notations from information theory are used: $ I(X;Y)$ denotes the mutual information, and $D(P\|Q)$ denotes the Kullback--Leibler (KL) divergence between probability measures $P$ and $Q$; $\mathsf{Multi}(n;P)$ denotes the multinomial model which observes $n$ independent samples from $P$; for non-negative sequences $\{a_n\}$ and $\{b_n\}$, the notation $a_n\lesssim b_n$ (or $b_n\gtrsim a_n, a_n=O(b_n), b_n=\Omega(a_n)$) means $\limsup_{n\to\infty} \frac{a_n}{b_n}<\infty$, and $a_n\ll b_n$ ($b_n\gg a_n, a_n=o(b_n), b_n=\omega(a_n)$) means $\limsup_{n\to\infty}\frac{a_n}{b_n}=0$, and $a_n\asymp b_n$ (or $a_n=\Theta(b_n)$) is equivalent to both $a_n\lesssim b_n$ and $b_n\lesssim a_n$.
+
+\section{Main Results}
+\subsection{Assumptions}
+We first consider the distributed estimation problem of $\theta$ in a general statistical model $(P_\theta)_{\theta\in\Theta\subset\bR^d}$. Choose an interior point $\theta_0\in \Theta$, we consider the following regularity assumptions on $(P_\theta)_{\theta\in\Theta}$ for $\theta$ near $\theta_0$:
+\begin{assumption}\label{assump.ULAN}
+	The statistical model $(P_\theta)_{\theta\in\Theta}$ is differentiable in quadratic mean at $\theta=\theta_0$, with score function $S_{\theta_0}$ and non-singular Fisher information matrix $I(\theta_0)$. 
+\end{assumption}
+\begin{assumption}\label{assump.var}
+	Let $\delta>0$ and $\theta_0 + \delta [-1,1]^d\subset \Theta$. There exist constants $\delta_0, c_0>0$ such that if $\delta<\delta_0(B^2d)^{-\frac{1}{4}}$, then
+	\begin{align}\label{eq.assumption_2}
+	\bE \left[\bE_{U} \left(\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X)-1\right) \left(\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X') -1 \right) - \delta^2S_{\theta_0}(X)^T S_{\theta_0}(X') \right]^2 \le (c_0\delta^4B^2d)^2,
+	\end{align}
+	where $U\sim \mathsf{Unif}( \{\pm 1\}^d )$, random variables $X,X'\sim P_{\theta_0}$ are independent, and $B$ is the maximum of all diagonal elements of $I(\theta_0)$.
+\end{assumption}
+\begin{assumption}\label{assump.subGaussian}
+	Let $\delta>0$ and $\theta_0 + \delta [-1,1]^d\subset \Theta$. Let $\calX$ be the sample space, and $\calX_0\subset \calX$ satisfy $\inf_{\|\theta-\theta_0\|_\infty\le \delta} P_\theta(\calX_0)\ge 1-d^{-5}$. Define $(Q_\theta)_{\theta\in\Theta}$ to be the conditional probability measure obtained by restricting $(P_\theta)_{\theta\in\Theta}$ on $\calX_0$, i.e., $Q_\theta(\cdot) = \frac{P_\theta(\cdot\cap \calX_0)}{P_\theta(\calX_0)}$. There exist constants $\delta_1,\delta_2,c_1,c_2>0$ such that if $\delta<\delta_1(B^2d^2+B^3d)^{-\frac{1}{4}}$, then
+	\begin{align}\label{eq.assumption_3_remainder}
+	\bE_{Q_{\theta_0}} \left(\frac{dQ_{\theta_0+\delta u}}{dQ_{\theta_0}}(X) - 1\right)^4    \le c_1^2 \left( B^2d^2 + B^3d\right)\delta^4
+	\end{align}
+	holds for any $u\in \{\pm 1 \}^d$, and if $\delta<\delta_2(B^2d\log d)^{-\frac{1}{4}}$, then
+	\begin{equation}\label{eq.assumption_3}
+	\begin{split}
+	&\bE_{U} \left(\frac{dQ_{\theta_0+\delta U}}{dQ_{\theta_0}}(x)-1\right) \left(\frac{dQ_{\theta_0+\delta U}}{dQ_{\theta_0}}(x') -1 \right) + 1 - \exp(\delta^2S_{\theta_0}(x)^TS_{\theta_0}(x') )  \\
+	&\qquad \qquad \qquad \qquad \le c_2(\delta^4B^2d\log d+\sqrt{\delta^4B^2d\log d}\cdot\exp(\delta^2S_{\theta_0}(x)^TS_{\theta_0}(x')) )
+	\end{split}
+	\end{equation}
+	holds for any $x,x'\in \calX_1$ with $Q_{\theta_0}(\calX_1)\ge 1-d^{-5}$, where $U, B$ are the same as Assumption \ref{assump.var}.
+\end{assumption}
+
+Assumption \ref{assump.ULAN} is a standard regularity condition commonly used in asymptotic statistics \cite{ibragimov2013statistical}. Assumptions \ref{assump.var} and \ref{assump.subGaussian} roughly correspond to the product measure case where $P_{\theta_0}=p_{\theta_1}\times p_{\theta_2}\times \cdots \times p_{\theta_d}$, and control the remainder term in different ways. The insights behind Assumptions \ref{assump.var} and \ref{assump.subGaussian} are that, based on local expansion of $(P_\theta)_{\theta\in\Theta}$ around $\theta\approx \theta_0$, for small $\delta$ we have
+\begin{align*}
+\bE_{U} \left(\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x)-1\right) \left(\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x') -1 \right) \approx \exp(\delta^2 S_{\theta_0}(x)^TS_{\theta_0}(x')) - 1 \approx \delta^2 S_{\theta_0}(x)^TS_{\theta_0}(x').
+\end{align*}
+Roughly speaking, Assumption \ref{assump.var} corresponds to an approximate product measure for general statistical models and \ref{assump.subGaussian} imposes additional sub-Gaussian structure. %, whose lower bounds will be shown in Theorems \ref{thm.general} and \ref{thm.sub-gaussian}. 
+We can choose $\calX_0=\calX_1=\calX$ in Assumption \ref{assump.subGaussian} under some models, while sometimes we use $\calX_0$ to deal with the unbounded support of $(P_\theta)$ and avoid the assumptions of bounded likelihood ratios, which were assumed in some previous works \cite{braverman2016communication}. The next proposition shows that, these assumptions hold for many commonly used statistical models. 
+\begin{proposition}\label{prop.assumption}
+	Assumptions \ref{assump.ULAN} and \ref{assump.var} hold for the Gaussian location model $P_\theta=\calN(\theta, \sigma^2I_d)$ with any $\theta_0\in \bR^d$, the product Bernoulli model $P_\theta = \prod_{i=1}^d \mathsf{Bern}(\theta_i)$ with $\theta_0 = (p,p,\cdots,p)$ for $p\in (0,1)$, and the Multinomial model $P_\theta = \mathsf{Multi}(1; \theta)$ for any probability measure $\theta$ over $d+1$ elements. In particular, for the Gaussian location model and the product Bernoulli model above, Assumption \ref{assump.subGaussian} also holds.
+\end{proposition}
+
+%In some scenarios we will need to following additional assumption:
+%\begin{assumption}\label{assump.bounded_LR}
+%There exists some constant $\delta_3>0$ such that for any $\delta<\delta_3/\sqrt{d}$ and $u\in \{\pm1 \}^d$,
+%\begin{align}\label{eq.bounded_LR}
+%\frac{dP_{\theta_0+\delta u}}{dP_{\theta_0}} \ge \frac{1}{2}, \qquad P_{\theta_0}\text{-a.s.}
+%\end{align}
+%\end{assumption}
+%
+%Assumption \ref{assump.bounded_LR} ensures that the statistical model $(P_\theta)_{\theta\in\Theta}$ admits a bounded likelihood ratio locally with a given radius. It typically holds when $P_\theta$ is compactly supported (e.g., $P_{\theta}=\prod_{i=1}^d\mathsf{Bern}(\theta_i)$ with $\theta_0=\frac{1}{2}\cdot {\bf 1}$), while it may fail for other distributions such as Poisson or Gaussian.
+
+\subsection{Main Theorems}
+We present the following main theorem for the distributed inference of $\theta$ in general statistical models $(P_\theta)_{\theta\in \Theta\subset \bR^d}$:
+\begin{theorem}[General lower bound]\label{thm.general}
+	Let $P_{\theta}=\prod_{i=1}^d p_{\theta_i}$, and Assumptions \ref{assump.ULAN} and \ref{assump.var} be fulfilled for $(P_\theta)_{\theta\in\Theta}$ at $\theta_0$, with $P_{\theta_0}=p_{\theta_0}^{\otimes d}$. Let $s_0(x), I_0$ be the score function and Fisher information of $(p_\theta)$ at $\theta=\theta_0$, respectively. Then for any $k\in\mathbb{N}, n\ge \frac{d^2}{2^k\wedge d}$, we have
+	\begin{align*}
+	\inf_{\Pi_{\mathsf{BB}}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \ge C\cdot \frac{d^2}{n(2^k\wedge d)\var_{p_{\theta_0}}(s_{0}(X))} =  C\cdot \frac{d^2}{n(2^k\wedge d)I_0}
+	\end{align*}
+	where the infimum is taken over all possible estimators $\hat{\theta}=\hat{\theta}(Y^n)$ and blackboard protocols with $k$-bit communication constraint, and the constant $C>0$ is independent of $n,d,k,I_0$. 
+\end{theorem}
+
+We compare Theorem \ref{thm.general} with the centralized case. When there is no communication constraints, classical H\'{a}jek--Le Cam theory \cite{Hajek1972local} tells that we can achieve a squared $\ell_2$ risk $1/(nI_0)$ asymptotically for each coordinate, which sums up to $d/(nI_0)$ for the entire vector. Compared with Theorem \ref{thm.general}, we see an effective sample size reduction from $n$ to $n/(2^{-k}d\vee 1)$ if each sensor can only transmit $k$ bits. The following corollary is immediate for $k=1$.
+\begin{corollary}[General lower bound for $k=1$]\label{cor.k=1}
+	When each sensor can only transmit one bit (i.e., $k=1$), under the conditions of Theorem \ref{thm.general}, for $n\ge d^2$ we have
+	\begin{align*}
+	\inf_{\Pi_{\mathsf{BB}}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \ge C\cdot \frac{d^2}{nI_0}.
+	\end{align*}
+	%In other words, $n=\Omega(\frac{d^2}{\epsilon I(\theta_0)})$ sensors are necessary to achieve a uniform squared $\ell_2$ risk $\epsilon\in (0,1)$ under any blackboard communication protocol. 
+\end{corollary}
+
+Corollary \ref{cor.k=1} shows that when $k=1$, we have an effective sample size reduction from $n$ to $n/d$. This bound can also possibly be achieved by a simple grouping idea: the sensors are splitted into $d$ groups, and all $n/d$ sensors in one group contribute to estimating only one coordinate of $\theta$. Hence, we expect that the dependence on $n,d$ of our lower bound to be tight for $k=1$.
+
+When $k>1$, Theorem \ref{thm.general} shows that the dependence of the squared $\ell_2$ risk on $k$ cannot be faster than $2^{-k}$, i.e., the penalty incurred by the distributed setting reduces at most exponentially in $k$. The next theorem shows that, {when the score function $s_{0}(X)$ has a sub-Gaussian tail}, the above penalty will reduce at most linearly in $k$. Recall that the $\psi_2$-norm of a random variable $X$ is defined by $$\|X\|_{\psi_2(P)}=\inf\{a>0: \bE_P[\exp(\frac{X^2}{a^2})]\le 2\},$$ which is the Orlicz norm of $X$ associated with the Orlicz function $\psi_2(x)=\exp(x^2)-1$ \cite{birnbaum1931verallgemeinerung}. There are also some equivalent definitions of $\psi_2$-norm, and $\|X\|_{\psi_2}\le \sigma$ if and only if $X$ is sub-Gaussian with parameter $C_0\sigma$ for some absolute constant $C_0>0$ \cite{vershynin2010introduction}. 
+
+\begin{theorem}[Lower bound with sub-Gaussian structure]\label{thm.sub-gaussian}
+	Let Assumptions \ref{assump.ULAN} and \ref{assump.subGaussian} be fulfilled for $(P_\theta)_{\theta\in\Theta}$ at $\theta_0$, with $P_\theta=\prod_{i=1}^d p_{\theta_i}, Q_\theta=\prod_{i=1}^d q_{\theta_i}, Q_{\theta_0}=q_{\theta_0}^{\otimes d}$. Let $s_0(x)$ be the score function of $(p_\theta)$ at $\theta=\theta_0$, $R\triangleq \sup_{x,x'\in \calX_0} \max_{i\in [d]} |s_{0}(x_i) - s_{0}(x_i')|$ be the diameter of $\calX_0$ in Assumption \ref{assump.subGaussian} in terms of the $\ell_\infty$ norm, and $\sigma^2\triangleq \|s_{0}(X)\|_{\psi_2(q_{\theta_0})}^2\le d$ be the sub-Gaussian parameter of the score function under $q_{\theta_0}$. Then for any $k\ge (R/\sigma)^2\vee \log d$ and $n\ge \frac{d^2}{k\wedge d}$, we have
+	\begin{align*}
+	\inf_{\Pi_{\mathsf{BB}} } \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \ge C\cdot \frac{d^2}{n(k\wedge d)\sigma^2},
+	\end{align*}
+	where the constant $C>0$ is independent of $n,d,k,\sigma$. 
+\end{theorem}
+
+Theorem \ref{thm.sub-gaussian} improves over Theorem \ref{thm.general} in scenarios where $s_{0}(X)$ not only admits a finite variance but also behaves like a Gaussian random variable. We remark that the different dependence on $k$ in Theorems \ref{thm.general} and \ref{thm.sub-gaussian} is due to the nature of different geometric inequalities (cf. Lemma \ref{lemma.geometry_1} and Lemma \ref{lemma.geometry_2}) satisfied by general probability distributions and a sub-Gaussian distribution. Since typically $(R/\sigma)^2\lesssim \log d$, compared with the phase transition threshold $k\asymp d$, the condition $k\ge (R/\sigma)^2$ is mild; we believe this condition can be removed using better technical arguments.
+
+\subsection{Applications}
+Next we apply Theorems \ref{thm.general} and \ref{thm.sub-gaussian} to some concrete examples.
+
+\begin{corollary}[Distribution estimation]\label{cor.multi}
+	Let $P_\theta=\mathsf{Multi}(1;\theta)$ with $\Theta=\calM_d$ being the probability simplex over $d$ elements. For $k\in \mathbb{N}$ and $n\ge \frac{d^2}{2^k\wedge d}$, we have
+	\begin{align*}
+	\inf_{\Pi_{\mathsf{BB}}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \ge C\cdot \left(\frac{d}{n2^k} \vee \frac{1}{n}\right)
+	\end{align*}
+	where $C>0$ is a universal constant independent of $n,k,d$.
+\end{corollary}
+
+\begin{corollary}[Gaussian location model]\label{cor.gaussian}
+	Let $P_\theta=\calN(\theta,\sigma^2I_d)$ with $\Theta=\bR^d$. Under any blackboard communication protocol, for $k\ge \log d$ and $n\ge \frac{d^2}{k\wedge d}$, we have
+	\begin{align*}
+	\inf_{\Pi_{\mathsf{BB}}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \ge C\cdot \left(\frac{d^2}{nk} \vee \frac{d}{n}\right)\sigma^2
+	\end{align*}
+	where $C>0$ is a universal constant independent of $n,k,d,\sigma^2$.
+\end{corollary}
+
+Corollarys \ref{cor.multi} and \ref{cor.gaussian} follow from Theorems \ref{thm.general} and \ref{thm.sub-gaussian}, respectively. Corollary \ref{cor.multi} completely characterizes the minimax risk for distribution estimation under general $(n,k,d)$ \cite{han2018distributed}, which improves over \cite{diakonikolas2017communication}. Corollary \ref{cor.gaussian} recover the results in \cite{zhang2013information,garg2014communication} (without logarithmic factors in the risk) under a mild technical condition $k\ge \log d$. Note that these two models have different tight dependence on $k$: in Corollary \ref{cor.multi}, when $2^k<d$, we see an effective sample size reduction from $n$ to $n2^k/d$; in Corollary \ref{cor.gaussian}, when $k<d$, we see an effective sample size reduction from $n$ to $nk/d$. This phenomenon may be better illustrated using the following example: 
+
+
+\begin{proposition}[Product Bernoulli model]\label{prop.bernoulli}
+	Let $P_\theta=\prod_{i=1}^d \mathsf{Bern}(\theta_i)$. If $\Theta=[0,1]^d$ and $n\ge \frac{d^2}{d\wedge k}$, we have
+$$
+		\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \asymp \frac{d^2}{nk} \vee \frac{d}{n}. 
+$$
+If $\Theta\triangleq \{(\theta_1,\cdots,\theta_d)\subset [0,1]^d: \sum_{i=1}^d \theta_i=1 \}$ and $n\ge \frac{d^2}{d\wedge 2^k}$, we have
+$$
+		\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \asymp \frac{d}{n2^k} \vee \frac{1}{n}.
+$$
+\end{proposition}
+
+Note that the dependence of the squared $\ell_2$ risk on $k$ is significantly different under these two scenarios, even if both of them are product Bernoulli models: the dependence is linear in $k$ when $\Theta=[0,1]^d$, while it is exponential in $k$ when $\Theta$ is the probability simplex. We remark that this is due to the different behaviors of the score function: if $\theta_0=\frac{1}{2}$, we have  $\var(s_{0}(X))\asymp \|s_{0}(X)\|_{\psi_2}^2=\Theta(1)$; if $\theta_0=d^{-1}$, then $\var(s_{0}(X))\asymp d\ll d^2\asymp \|s_{0}(X)\|_{\psi_2}^2$. Hence, Theorem \ref{thm.sub-gaussian} utilizes the sub-Gaussian nature and gives a better lower bound in the first case, and Theorem \ref{thm.general} becomes better in the second case where the tail of the score function is essentially not sub-Gaussian. 
+
+
+%The error $\Theta(\frac{d^2}{n})$ is achievable { under the independent communication model (and therefore also under the interactive model)}, and we refer to \cite{zhang2013information} for details. \footnote{{For general $k$, the optimal risk is $\Theta(\frac{d^2}{n(k\vee d)})$ as shown in \cite{zhang2013information}, which can also be shown in similar lines to the proof of Theorem \ref{thm.gaussian}.}}
+%{
+%	\begin{proposition}[Multinomial model with one sample]\label{cor.multinomial}
+%		Let $P_\theta=\mathsf{Multi}(1;\theta)$ with $\theta\in\Theta$ being the $(d-1)$-dimensional probability simplex, and $n\ge \frac{d^2}{d\wedge 2^k}$. In the interactive model, for general $k\in\mathbb{N}$ we have
+%		\begin{align*}
+%			C^{-1}\cdot \left(\frac{d}{n2^k} \vee \frac{1}{n}\right)\le \inf_{\{b_i(\cdot)\}_{i=1}^n} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \le C\cdot \left(\frac{d}{n2^k} \vee \frac{1}{n}\right)
+%		\end{align*}
+%		where $C>0$ is a universal constant independent of $n,d,k$.
+%	\end{proposition}
+%	
+%	Note that the multinomial model corresponds to discrete distribution estimation. In this case, $P_\theta$ is not a product measure, so we cannot apply Theorem \ref{thm.general} directly. We therefore prove Proposition~\ref{cor.multinomial} separately in the appendix. The error $\Theta(\frac{d}{n2^k} \vee \frac{1}{n})$ is also achievable under the independent communication model, and the achievable scheme builds on a simple grouping idea where each node is responsible for $2^k$ elements in $[d+1]$. We also provide a formal proof in the appendix.
+
+%Finally we examine the dependence of the distributed estimation performance on $k$. Theorem \ref{thm.general} establishes a lower bound with exponential dependence on $k$ for a large class of statistical models, where Corollary \ref{cor.multinomial} shows that this dependence is tight for Multinomial models with one observed sample. A natural question is whether or not this exponential dependence on $k$ is tight for general models. The answer turns out to be negative: the following theorem shows that for Gaussian location models, the optimal dependence is in fact linear in $k$.
+
+Finally we look at the distributed mean estimation problem for sparse Gaussian location models. 
+\begin{theorem}[Sparse Gaussian location model]\label{thm.sparse}
+	Let $P_{\theta}=\calN(\theta,\sigma^2I_d)$ with $\Theta= \{\theta\in \bR^d:\|\theta_0\|\le s\le \frac{d}{2}\}$. For $k\ge \log d$ and $n\ge \frac{sd\log(d/s)}{k\wedge d}$, we have
+	\begin{align*}
+	\inf_{\Pi_{\mathsf{BB}}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \ge C\cdot \left(\frac{sd\log(d/s)}{nk} \vee \frac{s\log(d/s)}{n}\right)\sigma^2
+	\end{align*}
+	where $C>0$ is a universal constant independent of $n,d,s,k,\sigma^2$.
+\end{theorem}
+
+Theorem \ref{thm.sparse} improves over \cite{braverman2016communication} under a slightly different framework, with tight logarithmic factors matching the upper bound in \cite{garg2014communication}. We see from Theorem \ref{thm.sparse} that as opposed to the logarithmic dependence on the ambient dimension $d$ in the centralized setting, the number of nodes required to achieve a vanishing error in the distributed setting must scale with $d$. Hence, the sparse mean estimation problem becomes much harder in the distributed case, and the dimension involved in the effective sample size reduction (from $n$ to $nk/d$) is the ambient dimension $d$ instead of the effective dimension $s$.
+
+The rest of the paper is organized as follows. In Section \ref{sec.blackboard} we introduce the tree representation of the blackboard communication protocol, and sketch the lower bound proof based on the previous representation. Section \ref{sec.geo} is devoted to the proof of Theorems \ref{thm.general} and \ref{thm.sub-gaussian}, where the key steps are two geometric inequalities. Further discussions are in Section \ref{sec.discussion}, and auxiliary lemmas and the proof of main lemmas are in the appendices.
+
+
+\section{Representations of Blackboard Communication Protocol}\label{sec.blackboard}
+The centralized lower bounds without communication constraints simply follows from the classical asymptotics \cite{Hajek1970characterization,Hajek1972local}, thus we devote our analysis to the communication constraints. In this section, we establish an equivalent tree representation of the blackboard communication protocol, and prove the statistical lower bound based on this representation.
+
+\subsection{Tree representation of blackboard communication protocol}
+Assume first that there is no public/private randomness, which will be revisited in the next subsection, and thus the protocol is deterministic. In this case, the blackboard communication protocol $\Pi_{\mathsf{BB}}$ can be viewed as a binary tree \cite{kushilevitz1997communication}, where each internal node $v$ of the tree  is assigned a deterministic label $l_v\in [n]$ indicating the identity of the sensor to write the next bit on the blackboard if the protocol reaches node $v$; 
+the left and right edges departing from $v$ correspond to the two possible values of this bit and are labeled by $0$ and $1$ respectively.
+Because all bits written on the blackboard up to the current time are observed by all nodes, the sensors can keep track of the progress of the protocol in the binary tree. The value of the bit written by node $l_v$ (when the protocol is at node $v$) can depend on the sample $X_{l_v}$ observed by this node (and implicitly on all bits previously written on the blackboard encoded in  the position of the node $v$ in the binary tree). Therefore, this bit can be represented by a binary function $a_v(x)\in \{0,1\}$, which we associate with the node $v$; sensor $l_v$ evaluates this function on its sample $X_{l_v}$ to determine the value of its bit. 
+
+Note that the $k$-bit communication constraint for each node can be viewed as a labeling constraint for the binary tree; for each $i\in [n]$, each possible path from the root node to a leaf node can visit exactly $k$ internal nodes with label $i$. In particular, the depth of the binary tree is $nk$ and there is one-to-one correspondance between all possible transcripts $y\in \{0,1\}^{nk}$ and paths in the tree. Note that a proper labeling of the binary tree together with the collection of functions $\{a_v(\cdot)\}$ (where $v$ ranges over all internal nodes)  completely characterizes all possible (deterministic) communication strategies for the sensors. Under this protocol model, the distribution of the transcript $Y$ is 
+\begin{align*}
+\mathbb{P}_{X_1,\cdots,X_n\sim P}(Y=y) = \mathbb{E}_{X_1,\cdots,X_n\sim P}\prod_{v\in \tau(y)} b_{v,y}(X_{l_v})
+\end{align*}
+where $v\in \tau(y)$ ranges over all internal nodes in the path $\tau(y)$ corresponding to $y\in \{0,1\}^{nk}$, and $b_{v,y}(x)=a_v(x)$ if the path $\tau(y)$ goes through the right child of $v$ and $b_{v,y}(x)=1-a_v(x)$ otherwise. Due to the independence of $X_1,\cdots,X_n$, we have the following lemma which is similar to the ``cut-paste" property \cite{bar2004information} for the blackboard communication protocol: 
+\begin{lemma}\label{lemma.cut-paste}
+	The distribution of the transcript $Y$ can be written as follows: for any $y\in \{0,1\}^{nk}$, we have
+$
+	\mathbb{P}_{X_1,\cdots,X_n\sim P}(Y=y) = \prod_{i=1}^n \mathbb{E}_{P}[p_{i,y}(X_i)]
+$
+	where $p_{i,y}(x)\triangleq \prod_{v\in \tau(y), l_v=i} b_{v,y}(x)$. 
+\end{lemma}
+
+The $k$-bit communication constraint results in the following important property: 
+\begin{lemma}\label{lemma.total_weight}
+	For each $i\in [n]$ and $\{x_j\}_{j=1}^n\in \calX^n$, the following equalities hold: 
+$
+	\sum_{y\in \{0,1\}^{nk}} \prod_{j=1}^n p_{j,y}(x_j) = 1$ and $\sum_{y\in \{0,1\}^{nk}} \prod_{j\neq i} p_{j,y}(x_j) = 2^k. 
+$
+\end{lemma}
+
+
+%\subsection{Equivalent representation of communication constraints}
+%In the distributed setting, the key difficulty is to characterize the communication constraint that each node is only allowed to transmit $k$ bits. In general, any (possibly randomized) decision rule can be encoded as follows: given the observation $X_i$ and any available information (i.e., the history $Y^{i-1}$ in the interactive model), any strategy of node $i$ can be viewed as a probability distribution on the output alphabet $[2^k]$. Specifically, let us define
+%\begin{align*}
+%a_{i,j}(x) \triangleq \bP(Y_i=j|X_i=x), \qquad i\in [n], j\in [2^k], x\in\calX
+%\end{align*}
+%in the independent model and 
+%\begin{align*}
+%a_{i,j}(x|y^{i-1}) \triangleq \bP(Y_i=j|X_i=x, Y^{j-1}=y^{j-1}), \qquad i\in [n], j\in [2^k], x\in\calX, y^{j-1}\in [2^k]^{j-1}
+%\end{align*}
+%in the interactive model, then $\{a_{i,j}(\cdot)\}_{i\in [n],j\in [2^k]}$ fully characterizes the transmission strategy of the nodes. Since the centralizer can only see the sequence $Y^n$, then marginalization gives the following equivalent representation of the distributed estimation problem:
+%\begin{multinomial}
+%The interactive model is equivalent to the following procedure:
+%\begin{enumerate}
+%\item The nodes choose the strategy $\{a_{i,j}(\cdot)\}_{i\in [n],j\in [2^k]}$ subject to
+%\begin{align}\label{eq.constraint}
+%a_{i,j}(x|y^{i-1}) \ge 0,\qquad \sum_{j=1}^{2^k} a_{i,j}(x|y^{i-1}) = 1
+%\end{align}
+%for any $i\in [n], j\in [2^k], x\in\calX, y^{j-1}\in [2^k]^{j-1}$. This strategy must be made before observing any samples, and is known to both the nodes and the centralizer.
+%\item Under the true parameter $\theta$, the centralizer observes a sequence $Y^n\in [2^k]^n$ with
+%\begin{align}\label{eq.multinomial_model}
+%Y_i|Y^{i-1}=y^{i-1} \sim \mathsf{Multi}(1;(\bE_{P_\theta} a_{i,1}(X|y^{i-1}),  \cdots, \bE_{P_\theta} a_{i,2^k}(X|y^{i-1}) )).
+%\end{align}
+%\item The centralizer produces some estimator $\hat{\theta}(Y^n)$ of $\theta$ based on $Y^n$.
+%\end{enumerate}
+%For the independent model, the only difference is that we replace all $a_{i,j}(x|y^{i-1})$ by $a_{i,j}(x)$.
+%\end{multinomial}
+%
+%To prove a minimax lower bound on the distributed estimation problem, by the previous multinomial observation model it suffices to fix any strategy $\{a_{i,j}(\cdot)\}$ satisfying \eqref{eq.constraint} in advance, and then prove a minimax lower bound which is independent of $\{a_{i,j}(\cdot)\}$ according to the observation model \eqref{eq.multinomial_model}. The reason why we use the name \emph{multinomial} is due to the fact that the observation model in \eqref{eq.multinomial_model} is a multinomial distribution with one sample. In the sequel we stick to the multinomial observation model.
+%
+%\subsection{Reduction to Poissonized model}
+%Although there is an equivalent representation of the distributed estimation problem under communication constraints, the difficulty of this problem has not yet been effectively reduced. In particular, the dependence between the $2^k$ possible outcomes in \eqref{eq.multinomial_model} is hard to handle in the multinomial observation model. To overcome this difficulty, we introduce the following Poissonized observation model which treats all possible outcomes as independent Poisson random variables:
+%\begin{poissonized}
+%The interactive Poissonized observation model is as follows:
+%\begin{enumerate}
+%	\item The nodes choose the strategy $\{a_{i,j}(\cdot)\}_{i\in [n],j\in [2^k]}$ as in the multinomial observation model.
+%	\item Under the true parameter $\theta$, the centralizer observes a sequence $Y^n\in (\mathbb{N}^{2^k})^n$, where $Y_i=(Y_{i,1},\cdots,Y_{i,2^k})\in \mathbb{N}^{2^k}$ is an integer-valued vector, and
+%	\begin{align}\label{eq.poissonized_model}
+%	Y_{i,j}|Y^{i-1}=y^{i-1} \sim \spo(\bE_{P_\theta}a_{i,j}(X|y^{i-1})).
+%	\end{align}
+%	Moreover, $(Y_{i,1},\cdots,Y_{i,2^k})$ are conditionally independent given $Y^{i-1}$.
+%	\item The centralizer produces some estimator $\hat{\theta}(Y^n)$ of $\theta$ based on $Y^n$.
+%\end{enumerate}
+%For the independent Poissonized observation model, the only difference is that the node $i$ only knows $b_{i'}=\mathbbm{1}(\sum_{j=1}^{2^k} Y_{i',j}=1)$ for all $i'\in [i-1]$, i.e., some partial information about $Y^{i-1}$.
+%\end{poissonized}
+%\begin{remark}
+%Note that even in the independent model, node $i$ still has \emph{some} information about $Y^{i-1}$. This is only for minor technical reasons; see the proof of Lemma \ref{lemma.poissonization} for details. Furthermore, the distribution of $b^n$ does not depend on $\theta$, so this partial information does not help to infer $\theta$.
+%\end{remark}
+%
+%As opposed to the multinomial observation model where each node sends one element in $[2^k]$, the Poissonized observation model splits each node into $2^k$ nodes, each of which sends a (conditionally) independent Poisson random variable. Note that the Poisson parameter in \eqref{eq.poissonized_model} is always no more than $1$, we could think of this Poisson random variable as approximately Bernoulli, then Poissonization essentially changes the scenario where ``one node sends $k$ bits" into another scenario where ``$2^k$ nodes send one bit each".
+%
+%The Poissonization idea of multinomial models is classical \cite{mitzenmacher2005probability}, and we refer to \cite{valiant2011power,Jiao--Venkat--Han--Weissman2015minimax,han-jiao-weissman-wu2017minimax} for some recent applications related to distribution/density estimation. However, the traditional application of Poissonization requires that the number of samples is large, while in our scenario we only observe one sample in the multinomial observation model. Nevertheless, we show that the Poissonized observation model is stronger than the multinomial one in an appropriate sense. For a system of $n$ nodes, let $R_n$ be the minimax $\ell_2$ risk of distributed parameter estimation under the multinomial observation model, i.e.,
+%\begin{align*}
+%R_n = \inf_{\{a_{i,j}(\cdot)\}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta,\text{multinomial}} \left\|\hat{\theta}(Y^n)-\theta\right\|_2^2.
+%\end{align*}
+%Similarly, let $R_n^P$ be the counterpart in the Poissonized observation model.
+%%\begin{align*}
+%%R_n^P = \inf_{\{a_{i,j}(\cdot)\}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta,\text{Poissonized}} \left\|\hat{\theta}(Y^n)-\theta\right\|_2^2.
+%%\end{align*}
+%The following lemma shows that $R_n^P$ is essentially a lower bound of $R_n$.
+%\begin{lemma}\label{lemma.poissonization}
+%Under both independent and interactive models, the following inequality holds for any $n\ge 1$:
+%\begin{align*}
+%R_n^P \le R_{\lfloor\frac{n}{2e}\rfloor} + L_{\max}\exp(-\frac{n}{8e}),
+%\end{align*}
+%where $L_{\max}=\sup_{\theta\in\Theta}\|\theta\|_2^2$ is the sup-norm of the $\ell_2$ loss.
+%\end{lemma}
+%
+%By Lemma \ref{lemma.poissonization}, to establish the lower bound for distributed estimation, it suffices to work on the Poissonized observation model.
+
+\subsection{Minimax lower bound}
+This subsection is devoted to setting up the proof of the minimax lower bound in Theorems \ref{thm.general} and \ref{thm.sub-gaussian}. We apply the standard testing argument: first, we construct a class of hypotheses and relate the minimax risk to some mutual information via a distance-based Fano's inequality; second, we derive a universal upper bound for the mutual information which holds for any blackboard communication protocol $\{a_v(\cdot)\}$. 
+
+Let $U\sim \mathsf{Unif}(\{ \pm 1\}^d)$. For each $u\in \{\pm 1\}^d$, we associate with a product probability measure $P_u$ given by
+$
+P_u \triangleq p_{\theta_0+\delta u_1}\times p_{\theta_0+\delta u_2} \times \cdots \times p_{\theta_0+\delta u_d}, 
+$
+where $\delta>0$ is some parameter to be specified later. We also denote by $P_0$ the product distribution $P_{\theta_0} = p_{\theta_0}^{\otimes d}$ for brevity. We will assume that
+\begin{align}\label{eq.condition}
+0<\delta <\min\{\delta_0, \delta_1\}\cdot\frac{1}{\sqrt{dI_0}}
+\end{align}
+throughout the proof (with $\delta_0, \delta_1$ appearing in Assumptions \ref{assump.var} and \ref{assump.subGaussian}), and will get back to it when we specify $\delta$ in the end. 
+
+Now the setting is as follows: the observations $X_1,\cdots, X_n$ are drawn from $P_U$, then sensors output the transcript $Y\in \{0,1\}^{nk}$ according to the blackboard communication protocol, and finally an estimator $\hat{\theta}(Y)$ is used to estimate $\theta$. By a standard testing argument \cite{Tsybakov2008}, we have
+\begin{align*}
+\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}(Y)-\theta\|_2^2
+&\ge \frac{d\delta^2}{10} \inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{U}}\mathbb{P}\left(d_{\mathsf{Ham}}(\hat{U},U)\ge \frac{d}{5}\right)
+\end{align*}
+where $d_{\mathsf{Ham}}(x,y)\triangleq \sum_{i=1}^d \mathbbm{1}(x_i\neq y_i)$ denotes the Hamming distance. To lower bound  $\mathbb{P}(d_{\mathsf{Ham}}(\hat{U},U)\ge \frac{d}{5})$ for any estimator $\hat{U}$ under any blackboard communication protocol, we use the following distance-based Fano's inequality:
+\begin{lemma}\cite[Corollary 1]{duchi2013distance}\label{lemma.fano}
+	Let random variables $V$ and $\hat{V}$ take value in $\calV$, $V$ be uniform on some finite alphabet $\calV$, and $V-X-\hat{V}$ form a Markov chain. Let $d$ be any metric on $\calV$, and for $t>0$, define
+$
+	N_{\max}(t) \triangleq \max_{v\in \calV} |v'\in V: d(v,v')\le t|, 
+	N_{\min}(t) \triangleq \min_{v\in \calV} |v'\in V: d(v,v')\le t|.
+$
+If $N_{\max}(t)+N_{\min}(t)<|\calV|$, the following inequality holds:
+	\begin{align*}
+	\mathbb{P}(d(V,\hat{V})>t) \ge 1 - \frac{I(V;X)+\log 2}{\log\frac{|\calV|}{N_{\max}(t)}}.
+	\end{align*}
+	%where $I(X;Y)\triangleq \bE_{P_{XY}}[\frac{dP_{XY}}{dP_X\times dP_Y}]$ denotes the mutual information between $X$ and $Y$.
+\end{lemma}
+
+Applying Lemma \ref{lemma.fano} to the Markov chain $U-Y-\hat{U}$ with Hamming distance $d_{\mathsf{Ham}}(\cdot,\cdot)$ and $t=\frac{d}{5}$, we have
+\begin{align}\label{eq.lower_bound}
+\inf_{\Pi_{\mathsf{BB}}} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}(Y)-\theta\|_2^2 \ge \frac{d\delta^2}{10}\left(1 - \frac{I(U;Y)+\log 2}{d/8}\right)
+\end{align}
+where Chernoff bound (cf. Lemma \ref{lemma.poissontail}) implies $\frac{N_{\max}(t)}{|\calV|}\le \exp(-\frac{d}{8})$. Hence, to establish the minimax lower bound, it suffices to upper bound the mutual information $I(U;Y)$, where Lemma \ref{lemma.cut-paste} plays a central role in characterizing the distribution of $Y$ given any $U=u$. Specifically, 
+\begin{align}
+I(U;Y) &\stepa \le \mathbb{E}_U D(P_{Y|U}\|P_{Y|X\sim P_0}) \stepb =  \mathbb{E}_U \mathbb{E}_{Y|U} \sum_{i=1}^n\log \frac{\mathbb{E}_{P_U}p_{i,Y}(X_i) }{\mathbb{E}_{P_0}p_{i,Y}(X_i)} \stepc \le  \mathbb{E}_U \mathbb{E}_{Y|U} \sum_{i=1}^n\left(\frac{\mathbb{E}_{P_U}p_{i,Y}(X_i) }{\mathbb{E}_{P_0}p_{i,Y}(X_i)} -1 \right) \nonumber\\
+&\stepd = \mathbb{E}_U \sum_{i=1}^n\sum_{y\in \{0,1\}^{nk}} \left(\prod_{j\neq i} \mathbb{E}_{P_U}p_{j,y}(X_j) \right)\cdot \frac{( \mathbb{E}_{P_U}p_{i,y}(X_i) - \mathbb{E}_{P_0}p_{i,y}(X_i) )^2 }{\mathbb{E}_{P_0}p_{i,y}(X_i)}, \label{eq.mutual_info}
+\end{align}
+where (a) follows from the variational representation of mutual information
+$
+I(X;Y) = \inf_{Q_Y} \mathbb{E}_{X} D(P_{Y|X} \| Q_Y), 
+$
+inequality (b) follows from Lemma \ref{lemma.cut-paste}, (c) is due to $\log x\le x-1$, and (d) follows from Lemma \ref{lemma.cut-paste} and the first equality of Lemma \ref{lemma.total_weight}. %Note that Lemma \ref{lemma.total_weight} yields the following key identity: for any $i\in [n], u\in \{0,1\}^d$, we have
+%\begin{align*}
+%\sum_{y\in \{0,1\}^{nk}} \prod_{j\neq i} \mathbb{E}_{P_u}p_{j,y}(X_j) = 2^k. 
+%\end{align*}
+
+Before we further upper bound $I(U;Y)$, we make some remarks. First, we show that it suffices to consider deterministic protocols: this is due to the joint convexity of the KL divergence $D(P\|Q)\le \bE_R D(P_{\cdot |R} \| Q_{\cdot |R})$, and thus we can always condition on the randomness and prove an upper bound on the mutual information in the deterministic case. Second, if Assumption \ref{assump.subGaussian} holds, we may apply the previous analysis to $(Q_\theta)$ instead of $(P_\theta)$. In fact, note that the total variation distance between $Q_\theta$ and $P_\theta$ is $\bP_\theta(\calX_0^c)\le d^{-5}$ for $\|\theta-\theta_0\|_\infty \le \delta$, applying the testing arguments to $Q_\theta$ will only affect the test error by an additive factor of $nd^{-5}$, which is negligible compared to the $\Omega(1)$ test error we aim to obtain. With a slight abuse of notation we still write $Q_\theta$ as $P_\theta$ in the sequel for notational simplicity. 
+
+The main ingredient to upper bound $I(U;Y)$ is summarized in the following lemma: 
+\begin{lemma}\label{lemma.upper_bound}
+	Fix any $i\in [n]$ and $\{x_j\}_{j\neq i}\in \calX^{n-1}$, and define $w_{i,y}\triangleq \prod_{j\neq i} p_{j,y}(x_j)$. Let $S_0(X)\triangleq(s_0(X_1),\cdots,s_0(X_d))$ be the $d$-dimensional score function, and $I_0$ be the Fisher information of the 1D model $(p_\theta)_{\theta\in\Theta}$ at $\theta=\theta_0$. The following inequalities hold: 
+	\begin{enumerate}
+		\item Under Assumptions \ref{assump.ULAN} and \ref{assump.var}, we have
+		\begin{align*}
+		&\sum_{y\in \{0,1\}^{nk}}w_{i,y}\cdot \bE_U \frac{( \mathbb{E}_{P_U}p_{i,y}(X_i) - \mathbb{E}_{P_0}p_{i,y}(X_i) )^2 }{\mathbb{E}_{P_0}p_{i,y}(X_i)} \le S_1 + c_0I_0^2\cdot 2^k\delta^4d
+		\end{align*}
+		where $c_0$ is the constant appearing in Assumption \ref{assump.var}, and
+		\begin{align*}
+		S_1 \triangleq \delta^2\sum_{y\in \{0,1\}^{nk}}w_{i,y}\cdot \frac{\|\bE_{P_0} S_0(X)p_{i,y}(X)\|_2^2}{\bE_{P_0} p_{i,y}(X)}. 
+		\end{align*} 
+		\item Under Assumptions \ref{assump.ULAN} and \ref{assump.subGaussian}, if $I_0\le d$, we have
+		\begin{align*}
+		&\sum_{y\in \{0,1\}^{nk}}w_{i,y}\cdot \bE_U \frac{( \mathbb{E}_{P_U}p_{i,y}(X_i) - \mathbb{E}_{P_0}p_{i,y}(X_i) )^2 }{\mathbb{E}_{P_0}p_{i,y}(X_i)} \\
+		&\qquad \le S_2 + 3(2c_1I_0\cdot \delta^2+d^{-1}) + c_2 (2I_0^2\delta^4d\log d+S_2\cdot\sqrt{I_0^2\delta^4d\log d})
+		\end{align*}
+		where $c_1,c_2$ are the constants appearing in Assumption \ref{assump.subGaussian}, and
+		\begin{align*}
+		S_2 \triangleq \sum_{y\in \{0,1\}^{nk}}w_{i,y}\cdot \frac{\bE_{P_0}[p_{i,y}(X)p_{i,y}(X')(\exp(\delta^2S_0(X)^TS_0(X')) -1) ]}{\bE_{P_0} p_{i,y}(X)}
+		\end{align*}
+		with $X'$ an independent copy of $X$. 
+	\end{enumerate}
+\end{lemma}
+The next section will upper bound the leading terms $S_1, S_2$ via geometric inequalities. 
+
+%The next lemma presents an upper bound of the mutual information $I(U;Y^n)$.
+%\begin{lemma}\label{lemma.mutual_info_upper}
+%Let Assumption \ref{assump.ULAN} be fulfilled for the independent model, and Assumptions \ref{assump.ULAN} and \ref{assump.bounded_LR} be fulfilled in the interactive model. The following upper bound holds for $I(U;Y^n)$:
+%\begin{align*}
+%I(U;Y^n) \le 2\sum_{i=1}^n\sum_{j=1}^{2^k} \bE \left[\frac{\bE_{U,U'} (\bE_{P_U} a_{i,j}(X|Y^{i-1}) - \bE_{P_{U'}} a_{i,j}(X|Y^{i-1}))^2}{\bE_U\bE_{P_U}a_{i,j}(X|Y^{i-1}) }\bigg|Y^{i-1}\right]
+%\end{align*}
+%where $U'$ is an independent copy of $U$.
+%\end{lemma}
+%For the proof of Lemma \ref{lemma.mutual_info_upper}, we distinguish into two cases. In the interactive model, we have
+%\begin{align*}
+%I(U;Y^n) &\stepa{\le} \bE_{U,U'} D(P_{Y^n|U}\|P_{Y^n|U'}) \\
+%&\stepb{=} \sum_{i=1}^n \bE_{U,U'} D(P_{Y_i|U}\|P_{Y_i|U'}|Y^{i-1}) \\
+%&\stepc{=} \sum_{i=1}^n \sum_{j=1}^{2^k}\bE_{U,U'} D(P_{Y_{i,j}|U}\|P_{Y_{i,j}|U'}|Y^{i-1}) \\
+%&\stepd{=} \sum_{i=1}^n \sum_{j=1}^{2^k}\bE_{U,U'} D(\spo(\bE_{P_U}a_{i,j}(X|Y^{i-1}))\|\spo(\bE_{P_{U'}}a_{i,j}(X|Y^{i-1}))|Y^{i-1})
+%\end{align*}
+%where (a) follows from the joint convexity of KL divergence, (b) is the chain rule for KL divergence, (c) follows from the fact that $Y_{i,1},\cdots, Y_{i,2^k}$ are conditionally independent given $(U,Y^{i-1})$, (d) is given by $Y_{i,j}|U,Y^{i-1}\sim \spo(\bE_{P_U}a_{i,j}(X|Y^{i-1}))$. Then Lemma \ref{lemma.mutual_info_upper} is a direct consequence of
+%\begin{align}\label{eq.poisson_KL}
+%D(\spo(\mu)\|\spo(\lambda)) = \mu\log\frac{\mu}{\lambda}-\mu+\lambda \le \frac{(\mu-\lambda)^2}{\lambda}
+%\end{align}
+%and Assumption \ref{assump.bounded_LR} for bounded likelihood ratios.
+%
+%In the independent model, we have (recall the definition of $b^n$ in Poissonized observation model)
+%\begin{align}\label{eq.mutual_info_indep}
+%I(U;Y^n) &\le \sum_{i=1}^n\sum_{j=1}^{2^k} I(U;Y_{i,j}|b^{i-1}) \\
+%&= \sum_{i=1}^n\sum_{j=1}^{2^k} \bE_U D(P_{Y_{i,j}|U} \| \bE_{U'|b^{i-1}}P_{Y_{i,j}|U'}|b^{i-1}) \nonumber \\
+%&\stepe{=} \sum_{i=1}^n\sum_{j=1}^{2^k} \bE_U D(P_{Y_{i,j}|U} \| \bE_{U'}P_{Y_{i,j}|U'}|b^{i-1}) \nonumber
+%\end{align}
+%where (e) is due to the fact that $b^n\sim \spo(1)^{\otimes n}$ is independent of $U$ (and thus $U'$). We postpone the proof of \eqref{eq.mutual_info_indep} to the appendix. Now Lemma \ref{lemma.mutual_info_upper} follows from the following technical lemma:
+%
+%\begin{lemma}\label{lemma.Poisson_mutual}
+%	Let $\lambda_x$ be any random variable taking value in $[0,1]$ with $\bE \lambda_x=\lambda>0$, and $\mu>0$ be any positive real number. Then
+%	\begin{align*}
+%	D(\spo(\mu)\|\bE\spo(\lambda_x)) \le 2\cdot \frac{\bE(\mu-\lambda_x)^2}{\lambda}
+%	\end{align*}
+%	where $\bE\spo(\lambda_x)$ denotes the mixture of Poisson models with parameter distributed as $\lambda_x$.
+%\end{lemma}
+%\begin{remark}
+%	We remark that the denominator of the RHS of Lemma \ref{lemma.Poisson_mutual} is $\lambda = \bE\lambda_x$ instead of $\lambda_x$. If we still apply the joint convexity of KL divergence and \eqref{eq.poisson_KL}, we will get
+%	\begin{align*}
+%	D(\spo(\mu)\|\bE\spo(\lambda_x))  \le \bE\left[\frac{(\mu-\lambda_x)^2}{\lambda_x}\right]
+%	\end{align*}
+%	which is not desirable since there is a possibly small $\lambda_x$ on the denominator.
+%\end{remark}
+
+%
+%\begin{remark}
+%Under the independent model without Assumption \ref{assump.bounded_LR}, a new inequality (cf. Lemma \ref{lemma.Poisson_mutual}) is required to upper bound the KL divergence between a Poisson and a mixture of Poissons. The traditional application of the joint convexity of KL divergences will fail in this case.
+%\end{remark}
+
+%We make some remarks about Lemma \ref{lemma.Poisson_mutual}. The traditional way to upper bound $D(\spo(\mu)\|\bE\spo(\lambda_x))$ is to use the joint convexity of KL divergence in both arguments, and then apply the known formula for the KL divergence between two Poisson distributions. In this way, we have
+%\begin{align*}
+%D(\spo(\mu)\|\bE\spo(\lambda_x)) \le \bE D(\spo(\mu)\|\spo(\lambda_x)) \le \bE\left[\frac{(\mu-\lambda_x)^2}{\lambda_x}\right]
+%\end{align*}
+%which is usually not desirable since there is some $\lambda_x$ on the denominator, and some uniform lower bound of $\lambda_x$ (or the tail control of $\lambda_x$) becomes necessary in this case. Therefore, Lemma \ref{lemma.Poisson_mutual} provides us the tool to replace the denominator by $\bE\lambda_x=\lambda$, which turns out to be useful for general models where the density can approach zero at some points.
+
+\section{Lower Bounds via Geometric Inequalities}\label{sec.geo}
+In this section, we upper bound $S_1, S_2$ in Lemma \ref{lemma.upper_bound} using two different geometric inequalities, and complete the proof of main Theorems \ref{thm.general} and \ref{thm.sub-gaussian}. 
+
+\subsection{Proof of Theorem \ref{thm.general} via Geometric Inequality I}
+Note that under a deterministic protocol, each summand of $S_1$ has the following geometric interpretation: since $p_{i,y}(X)=\mathbbm{1}(A_y)$ must be an indicator function, then we may write $S_1$ as
+\begin{align*}
+S_1 = \delta^2 \sum_{y\in \{0,1\}^{nk}} w_{i,y}\cdot \bP(A_y)\|\bE [S_0(X)|A_y]\|_2^2
+\end{align*}
+where $\|\bE [S_0(X)|A_y]\|_2$ is the $\ell_2$ norm of the mean score function vector $S_0(X)$ conditioning on the set $A_y$. Hence, we ask the following question: 
+\begin{question}\label{question_1}
+	Given $P_0(A)=t\in (0,1)$, which set $A$ maximizes the $\ell_2$ norm of the vector $\bE_{P_0}[S_0(X)|A]$? What is the corresponding maximum $\ell_2$ norm?
+\end{question}
+
+The following lemma presents an answer to Question \ref{question_1}:
+\begin{lemma}[Geometric Inequality I]\label{lemma.geometry_1}
+	For any set $A\subset \calX$, the following inequality holds:
+	\begin{align*}
+	\|\bE_{P_0}[S_0(X)|A]\|_2^2 \le I_0\cdot \frac{1-P_0(A)}{P_0(A)}.
+	\end{align*}
+\end{lemma}
+
+Note that Lemma \ref{lemma.geometry_1} is a dimension-free result: the LHS depends on the dimensionality $d$, while the RHS does not. For a comparison, if we directly apply Cauchy--Schwartz inequality to the LHS, we will lose a multiplicative factor of $d$. The key observation in the dimensionality reduction is that the independence between coordinates of $S_0(X)$ needs to be exploited. 
+
+Now we have all necessary tools for the proof of Theorem \ref{thm.general}. By Lemma \ref{lemma.geometry_1},
+\begin{align}\label{eq.S_1}
+S_1 \le \delta^2 \sum_{y\in \{0,1\}^{nk}} w_{i,y} \cdot I_0= 2^k\cdot \delta^2I_0
+\end{align}
+where the last identity is due to Lemma \ref{lemma.total_weight}. Combining \eqref{eq.lower_bound}, \eqref{eq.mutual_info}, \eqref{eq.S_1} and Lemma \ref{lemma.upper_bound}, we have
+\begin{align*}
+\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}-\theta\|_2^2 \ge \frac{d\delta^2}{10}\left(1 - \frac{n2^kI_0(\delta^2 + c_0I_0\cdot\delta^4d)+\log 2}{d/8}\right).
+\end{align*}
+Now choosing $\delta^2=c\frac{d}{n2^kI_0}$, the condition $n2^k\ge d^2$ ensures that $\delta^2\le \frac{c}{dI_0}$. Hence, by choosing $c>0$ sufficiently small, the condition \eqref{eq.condition} is satisfied, and thus
+\begin{align*}
+\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}-\theta\|_2^2 \gtrsim \frac{d^2}{n2^k\cdot I_0}.
+\end{align*}
+
+\subsection{Proof of Theorem \ref{thm.sub-gaussian} via Geometric Inequality II}
+To upper bound $S_2$, we first note that when $\delta$ is small, $S_2$ coincides with $S_1$ up to first-order Taylor expansion. Hence, we may ask the following similar question: 
+\begin{question}\label{question_2}
+	Suppose $\|s_0(X)\|_{\psi_2}\le \sigma$. Given $P_0(A)=t\in (0,1)$, which set $A\subset \bR^d$ maximizes the $\ell_2$ norm of the conditional mean vector $\bE_{P_0}[S_0(X)|A]$ in $A$? What is the maximum $\ell_2$ norm?
+\end{question}
+
+An upper bound on the $\ell_2$ norm is given in the following lemma.
+\begin{lemma}[Geometric Inequality II]\label{lemma.geometry_2}
+	Assume that $\|s_0(X)\|_{\psi_2}\le \sigma$. Then for any $A\subset \calX$, 
+	\begin{align*}
+	\|\bE_{P_0}[S_0(X)|A]\|_2^2  \le \sigma^2\cdot\log\frac{2}{P_0(A)}.
+	\end{align*}
+\end{lemma}
+
+Note that lemma \ref{lemma.geometry_2} presents a dimension-free upper bound again. Compared with Lemma \ref{lemma.geometry_1}, for sub-Gaussian score function $S_0(X)$, Lemma \ref{lemma.geometry_2} improves the upper bound from $O(\sigma^2)$ to $O(\sigma^2t\log\frac{1}{t})$, where $t=P_0(A)$ is the ``volume" of the set $A$. We provide two proofs of Lemma \ref{lemma.geometry_2} in the appendix. The first proof first reduces the problem to 1D and then makes use of the sub-Gaussian tail. The second proof is more geometric when $S_0(X)$ is exactly Gaussian: information-theoretic inequalities can be used to obtain a tight inequality for $X\sim \mathsf{Unif}(\{\pm 1\}^d)$, and then the ``tensor power trick" is applied to prove the Gaussian case. 
+
+Although Lemma \ref{lemma.geometry_2} only upper bounds the first-order Taylor expansion of $S_2$ when $\delta$ is small, it serves as the key step in establishing the upper bound of $S_2$:
+\begin{lemma}\label{lemma.S2}
+	Assume that $|s_0(X_i)|\le R$ almost surely for any $i\in [n]$ under $p_{\theta_0}$, and $\delta^2dR^2\le 1$. Then if $\|s_0(X_i)\|_{\psi_2}\le \sigma$, there exists some constant $C>0$ independent of $\delta,d,R,k,\sigma$ such that
+	\begin{align*}
+	S_2 \le C\delta^2 \left(k\sigma^2 + R^2\right). 
+	\end{align*}
+\end{lemma}
+
+Now we prove Theorem \ref{thm.sub-gaussian}. Combining \eqref{eq.lower_bound}, \eqref{eq.mutual_info}, Lemma \ref{lemma.upper_bound} and Lemma \ref{lemma.S2}, we have
+\begin{align*}
+\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}-\theta\|_2^2 \ge \frac{d\delta^2}{10}\left(1-\frac{n(C\delta^2(k\sigma^2+R^2) + 3(2c_1I_0\delta^2 + d^{-1}) + c_2CI_0^2\delta^4d\log d )+\log 2}{d/8}\right)
+\end{align*}
+and choosing $\delta^2\asymp \frac{d}{nk\sigma^2}$ completes the proof (note that $k\ge (R/\sigma)^2\vee \log d$, and $I_0\le \sigma^2\le d$). 
+
+\section{Discussions}\label{sec.discussion}
+\subsection{Some Applications of Geometric Inequalities}
+The inequalities in Lemmas \ref{lemma.geometry_1} and \ref{lemma.geometry_2} have some other combinatorial applications related to geometry. We consider the following combinatorial problem on the binary Hamming cube $\Omega=\{\pm1\}^d$:
+\begin{enumerate}
+	\item Suppose we pick half of the vectors in $\Omega$ and compute the mean $\bar{v}\in \bR^d$, i.e., $\bar{v}=|A|^{-1}\sum_{v\in A} v$ for some $A\subset \Omega, |A|=2^{d-1}$, what is the maximum possible $\ell_2$ norm $\|\bar{v}\|_2$?
+	\item Suppose we pick $2^{dR}$ vectors in $\Omega$ and compute the mean $\bar{v}\in \bR^d$, where $R\in (0,1)$, what is the dependence of the maximum possible $\ell_2$ norm $\|\bar{v}\|_2$ on $d$ and $R$?
+\end{enumerate}
+This geometric problem is closely related to the optimal data compression in multiterminal statistical inference \cite{amari2011optimal}. We prove the following proposition:
+\begin{proposition}\label{prop.geometry}
+	Under the previous setting, we have
+	\begin{align*}
+	\max_{A\subset \Omega: |A|=2^{d-1}} \left\| \frac{1}{|A|}\sum_{v\in A}v \right\|_2 &= 1,
+	\max_{A\subset \Omega: |A|=2^{dR}} \left\| \frac{1}{|A|}\sum_{v\in A}v \right\|_2 &= \sqrt{d}(1-2h_2^{-1}(R)) \cdot (1+o_d(1))
+	\end{align*}
+	where $h_2(\cdot)$ is the binary entropy function defined in Lemma \ref{lemma.h_2}. 
+\end{proposition}
+
+Proposition \ref{prop.geometry} gives the exact maximum $\ell_2$ norm when $|A|=2^{d-1}$ and its asymptotic behavior on $d$ and $R$ as $d\to\infty$ when $|A|=2^{dR}$. We see that for $|A|=2^{d-1}$, the maximum $\ell_2$ norm is attained when $A$ is the half space (or the $d-1$ dimensional sub-cube), i.e., $A=\{x\in \Omega: x_1=1\}$. However, for relatively small $|A|=2^{dR}$, the maximum $\ell_2$ norm is nearly attained at spherical caps, i.e., $A=\{x\in \Omega: d_{\mathsf{Ham}}(x,x_0)\le t \}$ for any fixed $x_0\in \Omega$ and a proper radius $t$ such that $|A|=2^{dR}$. Hence, there are different behaviors for dense and sparse sets $A$.
+
+
+\subsection{Comparison with Strong Data Processing Inequalities (SDPI)}
+
+We compare our techniques with existing ones in establishing the lower bound for distributed parameter estimation problem. By Fano's inequality, the key step is to upper bound the mutual information $I(U;Y)$ under the Markov chain $U-X-Y$, where the link $U-X$ is dictated by the statistical model, and the link $X-Y$ is subject to the communication constraint $I(X;Y)\le k$. While trivially $I(U;Y)\le I(U;X)$ and $I(U;Y)\le I(X;Y)$, neither of these two inequalities are typically sufficient to obtain a good lower bound. A strong data processing inequality (SDPI)
+\begin{align}\label{eq.SDPI}
+I(U;Y) \le \gamma^*(U,X) I(X;Y), \qquad \forall p_{Y|X}
+\end{align}
+with $\gamma^*(U,X)<1$ can be desirable. The SDPI may take different forms (e.g., for $f$-divergences), and it is applied in most works on distributed estimation, e.g., \cite{zhang2013information,braverman2016communication,xu2017information}. The SDPI-based approach turns out to be tight in certain models (e.g., the Gaussian model \cite{zhang2013information,braverman2016communication}), while it is also subject to some drawbacks:
+\begin{enumerate}
+	\item The tight constant $\gamma^*(U,X)$ is hard to obtain in general;
+	\item The linearity of \eqref{eq.SDPI} in $I(X;Y)$ can only give a linear dependence of $I(U;Y)$ on $k$, which may not be tight. For example, in Corollary \ref{cor.multi} the optimal dependence on $k$ is exponential;
+	\item The conditional distribution $p_{Y^*|X}$ achieving the equality in \eqref{eq.SDPI} typically leads to $I(X;Y^*)\to 0$, and \eqref{eq.SDPI} may be loose for $I(X;Y)=k$;
+	\item The operational meaning of \eqref{eq.SDPI} is not clear, which may not result in a valid encoding scheme from $X$ to $Y$.
+\end{enumerate}
+
+In contrast to the linear dependence on $k$ using SDPI, our technique implies that the dependence on $k$ is closely related to the tail of the score function. It would be an interesting future direction to explore other dependence on $k$ (instead of linear or exponential) in other statistical models.  
+
+\clearpage 
+\bibliographystyle{alpha}
+\bibliography{di,ref}
+
+\clearpage
+\appendix
+
+\section{Auxiliary Lemmas}
+\begin{lemma}\cite{mitzenmacher2005probability}\label{lemma.poissontail}
+	For $X\sim \mathsf{Poi}(\lambda)$ or $X\sim \mathsf{B}(n,\frac{\lambda}{n})$ and any $\delta>0$, we have
+	\begin{align*}
+	\mathbb{P}(X\ge (1+\delta)\lambda) &\le \left(\frac{e^\delta}{(1+\delta)^{1+\delta}}\right)^\lambda \le \exp(-\frac{(\delta^2\wedge \delta)\lambda}{3}),\\
+	\mathbb{P}(X\le (1-\delta)\lambda) &\le \left(\frac{e^{-\delta}}{(1-\delta)^{1-\delta}}\right)^\lambda \le \exp(-\frac{\delta^2\lambda}{2}).
+	\end{align*}
+\end{lemma}
+
+\begin{lemma}\cite{wyner1973theorem}\label{lemma.h_2}
+	For the binary entropy function $h_2(x)\triangleq -x\log_2x-(1-x)\log_2(1-x)$ on $[0,\frac{1}{2}]$, let $h_2^{-1}(y)$ be its inverse for $y\in [0,1]$. Then the function
+	\begin{align*}
+	f(y)= (1-2h_2^{-1}(y))^2
+	\end{align*}
+	is a decreasing concave function, with $f(y)\le 2\log 2\cdot (1-y)$ for all $y\in [0,1]$.
+\end{lemma}
+
+
+\section{Proof of Main Lemmas}
+%\subsection{Proof of Lemma \ref{lemma.poissonization}}
+%We first prove the case for interactive models. For $n'=\frac{n}{2e}$, suppose we have an encoding strategy $\{a_{i,j}(\cdot)\}_{i\in [n']}$ for the multinomial observation model, and apply estimator $\hat{\theta}(Y^{n'})$ at the centralizer. Consider the following encoding strategy and estimator in the Poissonized observation model:
+%\begin{enumerate}
+%\item For node $i\in [n]$:
+%\begin{enumerate}
+%\item It computes $b_{i'}=\mathbbm{1}(\sum_{j=1}^{2^k}Y_{i',j}=1)$ for $i'<i$, and finds the set $S_i$ of ``successful" nodes, i.e., $S_i\triangleq \{i'<i: b_{i'}=1\}$. Let $s_i=|S_i|$. Also, for ``successful" nodes $i'$, find the unique $j(i')\in [2^k]$ such that $Y_{i',j(i')}=1$.
+%\item Then node $i$ applies the strategy $a_{s_i+1,j}(\cdot|\{Y_{i',j(i')}\}_{i'\in S_i})$ to generate the Poissonized output $Y_i=(Y_{i,1},\cdots,Y_{i,2^k})$. Take arbitrary actions when $s_i\ge n'$.
+%\end{enumerate} 
+%\item For the centralizer:
+%\begin{enumerate}
+%\item If the total number $N$ of ``successful" nodes is at least $n'$, apply the estimator $\hat{\theta}(\cdot)$ to the indices of the non-zero output of the first $n'$ ``successful" nodes;
+%\item Otherwise, declare ``failure" and output $\hat{\theta}=0$.
+%\end{enumerate}
+%\end{enumerate}
+%
+%To show that the resulting scheme in the Poissonized observation model performs as well as the multinomial one, we recall two properties of independent Poisson distribution: 
+%\begin{enumerate}
+%	\item The conditional distribution of $Y_i$ given $\sum_{j=1}^{2^k} Y_{i,j}=1$ follows exactly the Multinomial distribution in \eqref{eq.multinomial_model}; 
+%	\item $\sum_{j=1}^{2^k} Y_{i,j} \sim \mathsf{Poi}(1)$.
+%\end{enumerate}
+%By the first property, the above scheme outputs an estimator identically distributed as the multinomial one if $N\ge n'$. By the second property, we have $N\sim \mathsf{B}(n,\bP(\spo(1)=1))=\mathsf{B}(n,e^{-1})$. Hence, by Chernoff bound (cf. Lemma \ref{lemma.poissontail}), the probability of failure is 
+%\begin{align*}
+%\bP(N< n') = \bP(\mathsf{B}(n,e^{-1})<\frac{n}{2e}) \le \exp(-\frac{n}{8e}).
+%\end{align*}
+%This completes the proof for interactive models. 
+%
+%The arguments are essentially the same for independent cases: each node uses the information from $b^{n}$ to locate itself in the sequence of ``successful" nodes, and uses the corresponding encoding strategy from $\{a_{i,j}(\cdot)\}_{i\in [n']}$.
+%
+%\subsection{Proof of Inequality \eqref{eq.mutual_info_indep}}
+%We have the following chain of inequalities:
+%\begin{align*}
+%I(U;Y^n) &= H(Y^n) - H(Y^n|U) \\
+%&= \sum_{i=1}^n H(Y_i|Y^{i-1}) - H(Y_i|U,Y^{i-1}) \\
+%&\stepa{\le} \sum_{i=1}^n H(Y_i|b^{i-1}) - H(Y_i|U,b^{i-1}) \\
+%&\stepb{\le} \sum_{i=1}^n\sum_{j=1}^{2^k} H(Y_{i,j}|b^{i-1}) - H(Y_{i,j}|U,b^{i-1}) \\
+%&= \sum_{i=1}^n\sum_{j=1}^{2^k} I(U;Y_{i,j}|b^{i-1})
+%\end{align*}
+%where (a) is due to the fact that $b^{i-1}$ is a deterministic function of $Y^{i-1}$, and $(U,Y^{i-1})-(U,b^{i-1})-Y_i, (U,b^{i-1})-(U,Y^{i-1})-Y_i$ are two Markov chains; (b) follows from the sub-additivity of conditional entropy and the conditional independence of $Y_{i,1},\cdots,Y_{i,2^k}$ given $(U,b^{i-1})$.
+%
+%\subsection{Proof of Lemma \ref{lemma.Poisson_mutual}}
+%By definition of KL divergence and Poisson mixture, 
+%\begin{align}\label{eq.KL}
+%D(\spo(\mu)\|\bE\spo(\lambda_x)) = \sum_{k=0}^\infty e^{-\mu}\frac{\mu^k}{k!}\cdot \log \frac{e^{-\mu}{\mu^k}}{\bE[e^{-\lambda_x}\lambda_x^k]}.
+%\end{align}
+%For function $\phi_k(x)=e^{-x}x^k$, we have
+%\begin{align*}
+%\phi_k''(x) = e^{-x}x^k\cdot \left(1-\frac{2k}{x}+\frac{k(k-1)}{x^2}\right) \ge 0 \Longleftrightarrow |x-k|\ge \sqrt{k}.
+%\end{align*}
+%Hence, for $k\in \{0,3,4,\cdots\}$, the function $\phi_k(x)$ is convex in $x\in [0,1]$, and thus
+%\begin{align}\label{eq.k_large}
+%\bE[e^{-\lambda_x}\lambda_x^k] \ge e^{-\bE \lambda_x}(\bE \lambda_x)^k = e^{-\lambda}\lambda^k, \qquad k=0,3,4,\cdots.
+%\end{align}
+%
+%The remaining cases $k=1,2$ need to be handled carefully. Let $P$ be the law of $\lambda_x$, we define two new probability measures $Q_1, Q_2$ with
+%\begin{align*}
+%\frac{dQ_1}{dP}(\lambda_x) = \frac{\lambda_x}{\bE_P[\lambda_x]}, \qquad \frac{dQ_2}{dP}(\lambda_x) = \frac{\lambda_x^2}{\bE_P[\lambda_x^2]}.
+%\end{align*}
+%Hence, for $k=1$ we have
+%\begin{align}
+%\bE_P[e^{-\lambda_x}\lambda_x] &= \bE_P[\lambda_x]\cdot \bE_{Q_1}[e^{-\lambda_x}] \nonumber\\
+%&\ge \bE_P[\lambda_x]\cdot e^{-\bE_{Q_1}[\lambda_x]} \nonumber\\
+%&= \lambda\exp\left(-\lambda -\frac{\bE_P(\lambda-\lambda_x)^2}{\lambda}\right). \label{eq.k=1}
+%\end{align}
+%Similarly, for $k=2$ we have
+%\begin{align*}
+%\bE_P[e^{-\lambda_x}\lambda_x^2] &= \bE_P[\lambda_x^2]\cdot \bE_{Q_2}[e^{-\lambda_x}] \\
+%&\ge \bE_P[\lambda_x^2]\cdot e^{-\bE_{Q_2}[\lambda_x]} \\
+%&= \bE_P[\lambda_x^2]\cdot \exp\left(-\frac{\bE_P[\lambda_x^3]}{\bE_P[\lambda_x^2]}\right).
+%\end{align*}
+%As a result,
+%\begin{align*}
+%\log \bE_P[e^{-\lambda_x}\lambda_x^2] &\ge \log \bE_P[\lambda_x^2] -\frac{\bE_P[\lambda_x^3]}{\bE_P[\lambda_x^2]} \\
+%&= \log(\lambda^2e^{-\lambda}) - \left(\frac{\bE_P[\lambda_x^3]}{\bE_P[\lambda_x^2]}-\lambda - \log\left(1+\frac{\bE_P(\lambda-\lambda_x)^2}{\lambda^2}\right)\right).
+%\end{align*}
+%Let $\lambda_x=\lambda+Z$ with $\bE Z=0, |Z|\le 1$, the second term in the previous inequality can be written as
+%\begin{align*}
+%\frac{\bE_P[\lambda_x^3]}{\bE_P[\lambda_x^2]}-\lambda - \log\left(1+\frac{\bE_P(\lambda-\lambda_x)^2}{\lambda^2}\right) &= \frac{\bE[Z^3]+2\lambda \bE[Z^2]}{\bE[Z^2]+\lambda^2}-\log\left(1+\frac{\bE[Z^2]}{\lambda^2}\right) \\
+%&\le \frac{\bE[Z^3]+2\lambda \bE[Z^2]}{\bE[Z^2]+\lambda^2} - \frac{\bE[Z^2]}{\bE[Z^2]+\lambda^2} \\
+%&= \frac{\bE[Z^3]-\bE[Z^2]}{\bE[Z^2]+\lambda^2} + \frac{2\lambda \bE[Z^2]}{\bE[Z^2]+\lambda^2} \le \frac{2\bE[Z^2]}{\lambda}
+%\end{align*}
+%where we have used $\log(1+x)\ge \frac{x}{1+x}$, and $\bE[Z^3]\le \bE[Z^2]$ for $|Z|\le 1$. Hence, for $k=2$ we have
+%\begin{align}\label{eq.k=2}
+%\bE_P[e^{-\lambda_x}\lambda_x^2] \ge \lambda^2\exp\left(-\lambda-\frac{2\bE_P(\lambda-\lambda_x)^2}{\lambda}\right).
+%\end{align}
+%
+%Combining \eqref{eq.KL}, \eqref{eq.k_large}, \eqref{eq.k=1} and \eqref{eq.k=2}, we have
+%\begin{align*}
+%& D(\spo(\mu)\|\bE\spo(\lambda_x)) \\
+%&\qquad \le \sum_{k\neq 1,2} e^{-\mu}\frac{\mu^k}{k!}\cdot \log \frac{e^{-\mu}{\mu^k}}{e^{-\lambda}\lambda^k} + e^{-\mu}\mu\cdot \log\frac{e^{-\mu}{\mu}}{e^{-\lambda-\bE(\lambda-\lambda_x)^2/\lambda}\lambda} + e^{-\mu}\frac{\mu^2}{2}\cdot \log\frac{e^{-\mu}{\mu^2}}{e^{-\lambda-2\bE(\lambda-\lambda_x)^2/\lambda}\lambda^2} \\
+%&\qquad =\sum_{k=0}^\infty e^{-\mu}\frac{\mu^k}{k!}\cdot \left(-\mu+\lambda+k\log\frac{\mu}{\lambda}\right) + (\bP(\spo(\mu)=1)+2\bP(\spo(\mu)=2))\cdot \frac{\bE(\lambda-\lambda_x)^2}{\lambda} \\
+%&\qquad \le \mu\log\frac{\mu}{\lambda}-\mu+\lambda + \frac{2\bE(\lambda-\lambda_x)^2}{\lambda} \\
+%&\qquad \le \mu\left(\frac{\mu}{\lambda}-1\right) - \mu +\lambda + \frac{2\bE(\lambda-\lambda_x)^2}{\lambda} \\
+%&\qquad \le \frac{2\bE(\mu-\lambda_x)^2}{\lambda}
+%\end{align*}
+%as desired. 
+
+\subsection{Proof of Lemma \ref{lemma.total_weight}}
+We prove a stronger result: for any strategy $\{a_v(\cdot)\}$, if each path from the root to any leaf node visits exactly $k_i$ internal nodes with label $i$ for each $i\in [n]$, then
+\begin{align}\label{eq.stronger}
+\sum_{y\in \{0,1\}^{\sum_{i=1}^n k_i}} \prod_{v\in \tau(y), l_v\neq i} b_{v,y}(x_{l_v}) = 2^{k_i}
+\end{align}
+for any $\{x_j\}_{j\neq i}$. Clearly \eqref{eq.stronger} implies the lemma (i.e., with $k_i=0$ and $k_i=k$, respectively). 
+
+We prove \eqref{eq.stronger} by induction on the depth $D=\sum_{i=1}^n k_i$ of the binary tree. The base case $D=0$ is obvious. To move from $D$ to $D+1$, distinguish into two cases and apply the induction hypothesis to the left/right tree of the root: 
+\begin{enumerate}
+	\item If the root node is labeled as $i$, then \eqref{eq.stronger} follows from $2^{k_i}=2^{k_i-1}+2^{k_i-1}$; 
+	\item If the root node is not labeled as $i$, then \eqref{eq.stronger} follows from $2^{k_i} = 2^{k_i}a_{\text{root}}(x_i) + 2^{k_i}(1-a_{\text{root}}(x_i))$. 
+\end{enumerate}
+
+\subsection{Proof of Lemma \ref{lemma.upper_bound}}
+We first assume that Assumptions \ref{assump.ULAN} and \ref{assump.var} hold. By Fubini's theorem, 
+\begin{align*}
+\bE_U (\bE_{P_U} p_{i,y}(X) - \bE_{P_0} p_{i,y}(X))^2 &= \bE_U \left(\bE_{P_0} \left(\frac{dP_U}{dP_0}(X) - 1\right)p_{i,y}(X) \right)^2 \\
+&= \bE_U \bE_{P_0} \left(\frac{dP_U}{dP_0}(X) - 1\right)\left(\frac{dP_U}{dP_0}(X') - 1\right)p_{i,y}(X)p_{i,y}(X') \\
+&= \bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X') \bE_U \left(\frac{dP_U}{dP_0}(X) - 1\right)\left(\frac{dP_U}{dP_0}(X') - 1\right) \right]
+\end{align*}
+where $X'$ is an independent copy of $X$. By \eqref{eq.assumption_2}, we write
+\begin{align*}
+\bE_U \left(\frac{dP_U}{dP_0}(X) - 1\right)\left(\frac{dP_U}{dP_0}(X') - 1\right) = \delta^2 S_0(X)^TS_0(X') + r_1(X,X')
+\end{align*}
+with $\bE[r_1(X,X')^2]^{\frac{1}{2}}\le c_0I_0\cdot \delta^4d$. Note that 
+\begin{align}\label{eq.fubini_1}
+\bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot \delta^2 S_0(X)^TS_0(X')\right] = \delta^2 \|\bE_{P_0}S_0(X)p_{i,y}(X) \|_2^2
+\end{align}
+and by Cauchy--Schwartz, 
+\begin{align*}
+\bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_1(X,X')\right] &\le \sqrt{ \bE_{P_0}[p_{i,y}(X)^2p_{i,y}(X')^2] }\cdot \sqrt{\bE_{P_0} r_1(X,X')^2} \\
+&\le \bE_{P_0}[p_{i,y}(X)^2] \cdot c_0 I_0^2\delta^4 d. 
+\end{align*}
+
+Hence, the sum of the remainder terms can be upper bounded as
+\begin{align}
+\sum_{y\in \{0,1\}^{nk}} w_{i,y}\cdot \frac{\bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_1(X,X')\right]}{\bE_{P_0}[p_{i,y}(X)]} &\le c_0I_0^2\delta^4d\sum_{y\in \{0,1\}^{nk}} w_{i,y}\cdot\frac{\bE_{P_0}[p_{i,y}(X)^2]}{\bE_{P_0}[p_{i,y}(X)]} \nonumber\\
+&\le c_0I_0^2\delta^4d\sum_{y\in \{0,1\}^{nk}} w_{i,y} \nonumber\\
+&= c_0I_0^2\cdot 2^k\delta^4d \label{eq.remainder_1}
+\end{align}
+where we have used $p_{i,y}(\cdot)\in [0,1]$ and the identity $\sum_{y}w_{i,y}=2^k$ in Lemma \ref{lemma.total_weight}. Combining \eqref{eq.fubini_1} and \eqref{eq.remainder_1} completes the proof of the first inequality of Lemma \ref{lemma.upper_bound}. 
+
+Next we assume that Assumptions \ref{assump.ULAN} and \ref{assump.subGaussian} hold. By \eqref{eq.assumption_3}, we write
+\begin{align*}
+\bE_U \left(\frac{dP_U}{dP_0}(X) - 1\right)\left(\frac{dP_U}{dP_0}(X') - 1\right) = \exp(\delta^2 S_0(X)^TS_0(X'))-1 + r_2(X,X')
+\end{align*}
+where $|r_2(X,X')|\le c_2I_0\cdot (1+\exp(\delta^2 S_0(X)^TS_0(X')) )\cdot \delta^4d\log d$ almost surely conditioning on $X,X'\in \calX_1$. Define $Z\triangleq \mathbbm{1}(X,X'\in \calX_1)$, we split the remainder term into two parts: 
+\begin{align*}
+&\bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_2(X,X')\right] \\
+&= \bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_2(X,X')Z\right] + \bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_2(X,X')(1-Z)\right] \\
+&\triangleq A_{1,y} + A_{2,y}. 
+\end{align*}
+
+For the first term $A_{1,y}$, since $r_2(X,X')Z$ is upper bounded and $p_{i,y}(\cdot)\ge 0$, we have
+\begin{align*}
+A_{1,y} &\le c_2\bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot (I_0^2\delta^4d\log d+\sqrt{I_0^2\delta^4d\log d}\cdot\exp(\delta^2 S_0(X)^TS_0(X')) )\right] \\
+&= c_2\left(I_0^2\delta^4d\log d\cdot (\bE_{P_0} p_{i,y}(X))^2 + \sqrt{I_0^2\delta^4d\log d}\cdot \bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot \exp(\delta^2 S_0(X)^TS_0(X')) \right]  \right)
+\end{align*}
+and thus the sum can be upper bounded as
+\begin{align}
+&\sum_{y\in \{0,1\}^{nk} } w_{i,y} \cdot \frac{A_{1,y}}{\bE_{P_0}[p_{i,y}(X)] }\nonumber \\ &\le  c_2\left(I_0^2\delta^4d\log d  + \sqrt{I_0^2\delta^4d\log d }\sum_{y\in \{0,1\}^{nk}} w_{i,y}\cdot \frac{\bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot \exp(\delta^2 S_0(X)^TS_0(X')) \right]}{\bE_{P_0}[p_{i,y}(X)] }\right) \label{eq.remainder_2}
+\end{align}
+where we have used the identity $\sum_{y} w_{i,y}\bE_{P_0}p_{i,y}(X)=1$ in Lemma \ref{lemma.total_weight}.
+
+As for the second term $A_{2,y}$, note that 
+\begin{align*}
+r_2(X,X') \le r_3(X,X') \triangleq \bE_U \left(\frac{dP_U}{dP_0}(X) - 1\right)\left(\frac{dP_U}{dP_0}(X') - 1\right) + 1. 
+\end{align*}
+We further write the indicator function 
+\begin{align*}
+1- Z = \mathbbm{1}(X\in\calX_1, X'\notin \calX_1) + \mathbbm{1}(X\notin\calX_1, X'\in \calX_1) + \mathbbm{1}(X\notin\calX_1, X'\notin \calX_1)
+\end{align*}
+as the sum of three indicators functions on rectangles. For the first rectangle, by Fubini's theorem we have
+\begin{align}
+& \bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_3(X,X')\mathbbm{1}(X\in\calX_1, X'\notin \calX_1)\right] \nonumber \\
+&= \left(\bE_{P_0} \left[p_{i,y}(X)\left(\frac{dP_U}{dP_0}(X) - 1\right)\mathbbm{1}(X\in\calX_1) \right] \right) \left(\bE_{P_0} \left[p_{i,y}(X)\left(\frac{dP_U}{dP_0}(X) - 1\right)\mathbbm{1}(X\notin\calX_1)\right] \right) \nonumber \\
+&\qquad + \left(\bE_{P_0} \left[p_{i,y}(X)\mathbbm{1}(X\in \calX_1)\right] \right)\left(\bE_{P_0} \left[p_{i,y}(X)\mathbbm{1}(X\notin \calX_1)\right] \right). \label{eq.rectangle}
+\end{align}
+
+To deal with the above terms, we define
+\begin{align*}
+f(X)&\triangleq \left(\frac{dP_U}{dP_0}(X) - 1\right)\mathbbm{1}(X\in\calX_1)\\ g(X)&\triangleq\left(\frac{dP_U}{dP_0}(X) - 1\right)\mathbbm{1}(X\notin\calX_1) \\ e_y(X)&\triangleq \sqrt{\frac{w_{i,y}}{\bE_{P_0}[p_{i,y}(X)] }}\cdot p_{i,y}(X),\qquad y\in \{0,1\}^{nk}. 
+\end{align*} 
+Consider the inner product $\jiao{u,v}\triangleq \bE_{P_0}[u(X)v(X)]$ for $u,v\in L^2(P_0)$, the sum of the first term of \eqref{eq.rectangle} can be written as $\sum_y \jiao{f,e_y}\jiao{g,e_y}$. Since we are considering a deterministic protocol, we have $w_{i,y}\in \{0,1\}, p_{i,y}(X)\in \{0,1\}$. As a result, $\{e_y(\cdot)\}$ are orthogonal to each other, and $\|e_y\|\le 1$. Hence, 
+\begin{align*}
+\left|\sum_y \jiao{f,e_y}\jiao{g,e_y}\right|  = \left|\left\langle f, \sum_y e_y\jiao{g,e_y}  \right\rangle \right| \le \|f\|\cdot \left\| \sum_y e_y\jiao{g,e_y}\right\| \le \|f\|\cdot \|g\|
+\end{align*}
+where the first inequality is due to Cauchy--Schwartz, and the second inequality is Bessel's inequality due to orthogonality. By inequality \eqref{eq.assumption_3_remainder} in Assumption \ref{assump.subGaussian}, we further have
+\begin{align*}
+\|f\|\cdot \|g\| &\le \sqrt{ \bE_{P_0}\left(\frac{dP_U}{dP_0}(X) - 1\right)^2 }\cdot \sqrt{ \bE_{P_0}\left(\frac{dP_U}{dP_0}(X) - 1\right)^2 \mathbbm{1}(X\notin \calX_1) } \\
+&\le \sqrt{ \bE_{P_0}\left(\frac{dP_U}{dP_0}(X) - 1\right)^4 } \cdot [\bE_{P_0} \mathbbm{1}(X\notin \calX_1) ]^{\frac{1}{4}} \\
+&\le c_1(I_0 \cdot d\delta^2 + I_0^{\frac{3}{2}}\cdot \sqrt{d}\delta^2  ) \cdot d^{-\frac{5}{4}}  \\
+&\le 2c_1I_0\cdot \delta^2
+\end{align*}
+when $I_0\le d$. Using similar arguments to deal with the second term of \eqref{eq.rectangle}, we arrive at
+\begin{align}\label{eq.remainder_3}
+\sum_{y\in \{0,1\}^{nk}} w_{i,y}\cdot \bE_{P_0} \left[ p_{i,y}(X)p_{i,y}(X')\cdot r_3(X,X')\mathbbm{1}(X\in\calX_1, X'\notin \calX_1)\right] \le 2c_1I_0\cdot \delta^2 + d^{-1}. 
+\end{align}
+
+We handle the other two rectangles analogously, and the proof of Lemma \ref{lemma.upper_bound} is completed using \eqref{eq.remainder_2}, \eqref{eq.remainder_3}. 
+
+\subsection{Proof of Lemma \ref{lemma.geometry_1}}
+Consider the Hilbert space $\calH$ consisting of all squared integrable random variables $X$ under $P_0$, with inner product $\langle X,Y\rangle_{\calH}\triangleq \bE_{P_0}[XY]$. Since $(s_{0}(X_1),\cdots,s_{0}(X_d))$ is an i.i.d random vector with
+\begin{align*}
+\bE_{P_0}[s_{0}(X_1)] = 0,\qquad \bE_{P_0}[s_{0}(X_1)^2]=I_0
+\end{align*}
+we conclude that the constant $1$ and $I_0^{-1/2}(s_{0}(X_1),\cdots,s_{0}(X_d))$ constitute an orthonormal system in $\calH$. Now for the element $\mathbbm{1}_A(X)\in\calH$, Bessel's inequality \cite{rudin1987real} gives
+\begin{align*}
+\|\mathbbm{1}_A\|_{\calH}^2 \ge \jiao{\mathbbm{1}_A(X), 1}_\calH^2+ \sum_{i=1}^d \langle \mathbbm{1}_A(X), I_0^{-\frac{1}{2}}s_{0}(X_i)\rangle_{\calH}^2.
+\end{align*}
+
+A rearrangement of this inequality gives the desired result. 
+
+\subsection{Proof of Lemma \ref{lemma.geometry_2}}
+Using $\|u\|_2=\sup_{v:\|v\|_2=1}\langle u,v\rangle$, it suffices to prove that $\bE_{P_0}[\langle X,v\rangle|A]^2\le C_1\log\frac{C_2}{P_0(A)}$ for any unit vector $v$. Note that the random vector $S_0(X)$ consists of i.i.d sub-Gaussian components, the inner product $\langle S_0(X),v\rangle$ is also sub-Gaussian with
+\begin{align*}
+\|\langle S_0(X),v\rangle \|_{\psi_2}^2 \le \sum_{i=1}^d v_i^2\|s_0(X_i)\|_{\psi_2}^2 \le \sigma^2.
+\end{align*}
+Hence, we may always reduce to the 1D case and assume that $S_0(X)$ is sub-Gaussian with $\|S_0(X)\|_{\psi_2}\le \sigma$. Now by the convexity of $x\mapsto \exp(\frac{x^2}{\sigma^2})$, 
+\begin{align*}
+2 \ge \bE_{P_0}[\exp(\frac{[S_0(X)]^2}{\sigma^2})] \ge \bE_{P_0}[\exp(\frac{[S_0(X)]^2}{\sigma^2})\mathbbm{1}_A(X)] \ge P_0(A)\cdot \exp(\frac{\bE_{P_0}[S_0(X)|A]^2}{\sigma^2})
+\end{align*}
+which gives the desired lemma. 
+
+\subsection{Another Proof of Lemma \ref{lemma.geometry_2} in Gaussian Case}
+We prove the following lemma:
+\begin{lemma}\label{lemma.geometry_gaussian}
+	For $X\sim \calN(0,I_d)$ and any measurable $A\subset \bR^d$, we have
+	\begin{align*}
+	\left\|\bE[X|A]\right\|_2^2 \le 2\cdot \log \frac{1}{\bP(A)}.
+	\end{align*}
+\end{lemma}
+We split the proof into two steps: we first consider the uniform distribution on the binary hypercube, and then use the tensor power trick to reduce to the Gaussian case.
+
+\subsubsection{Geometric inequality on binary hypercube}
+We prove the following lemma:
+\begin{lemma}\label{lemma.hamming}
+	For $X\sim \mathsf{Unif}(\{\pm 1\}^d)$ and any non-negative function $a(\cdot)\in [0,1]$, we have
+	\begin{align*}
+	\left\|\frac{\bE Xa(X)}{\bE a(X)}\right\|_2^2 \le 2\cdot \log \frac{1}{\bE[a(X)]}
+	\end{align*}
+	Moreover, the dimension-free constant $2$ cannot be improved.
+\end{lemma}
+\begin{proof}
+	Define a new probability measure $Q(\cdot)$ on the binary hypercube $\{\pm 1\}^d$ with $Q(y)\propto a(y)$, and let $Y\sim Q$. Let $p_i\triangleq \bP(Y_i=1)$ for $i\in [d]$, then
+	\begin{align*}
+	\left\|\frac{\bE Xa(X)}{\bE a(X)}\right\|_2^2 = \|\bE Y\|_2^2 = \sum_{i=1}^d (\bE Y_i)^2 = \sum_{i=1}^d (1-2p_i)^2.
+	\end{align*}
+	Recall the definition of $h_2(\cdot)$ in Lemma \ref{lemma.h_2}. Define $q_i\triangleq h_2(p_i)$, the concavity in Lemma \ref{lemma.h_2} gives
+	\begin{align*}
+	\left\|\frac{\bE Xa(X)}{\bE a(X)}\right\|_2^2 = \sum_{i=1}^d (1-2h_2^{-1}(q_i))^2 \le d\left(1-2h_2^{-1}\left(\frac{1}{d}\sum_{i=1}^d q_i\right)\right)^2.
+	\end{align*}
+	
+	On the other hand, by the subadditivity of Shannon entropy,
+	\begin{align*}
+	\sum_{i=1}^d q_i = \frac{1}{\log 2}\sum_{i=1}^d H(Y_i) &\ge \frac{H(Y)}{\log 2}= d-\bE\left[\log_2 \frac{a(Y)}{\bE[a(X)]}\right] \\
+	&\ge d-\bE\left[\log_2 \frac{1}{\bE[a(X)]}\right] = d-\log_2 \frac{1}{\bE[a(X)]}.
+	\end{align*}
+	Hence, applying the decreasing property and the last inequality in Lemma \ref{lemma.h_2}, we have
+	\begin{align*}
+	\left\|\frac{\bE Xa(X)}{\bE a(X)}\right\|_2^2&\le d\left(1-2h_2^{-1}\left(1-\frac{1}{d}\log_2\frac{1}{\bE[a(X)]}\right)\right)^2 \\
+	&\le d\cdot 2\log 2\cdot \frac{1}{d}\log_2\frac{1}{\bE[a(X)]}\\
+	& = 2\log\frac{1}{\bE[a(X)]}.
+	\end{align*}
+	
+	To show that $2$ is the best possible constant, pick $a(x)=\mathbbm{1}_B(x)$ where $B$ is the Hamming ball with center ${\bf 1}$ and radius $\epsilon d$. Direct computation gives the constant $2$ as $d\to\infty$ and $\epsilon\to 0$.
+\end{proof}
+
+\subsubsection{Tensor Power Trick}
+Next we make use of Lemma \ref{lemma.hamming} to prove the Gaussian case. We apply the so-called \emph{tensor power trick}: we lift the dimension by making $B$ independent copies, and apply CLT to move to the Gaussian case as $B\to\infty$. This idea has been widely used in harmonic analysis and high-dimensional geometry, e.g., to prove the isoperimetric inequality for the Gaussian measure \cite{ledoux2005concentration}. 
+
+Here the trick goes: fix any dimension $d$ and any function $a(\cdot)\in [0,1]$ defined on $\bR^d$. By a suitable approximation we may assume that $a(\cdot)$ is continuous. Now for any $B>0$, we define a new function $\tilde{a}(\cdot)$ on $\{\pm 1\}^{dB}$ as follows:
+\begin{align*}
+\tilde{a}(X)=\tilde{a}(\{X_{i,j}\}_{i\in [d],j\in [B]}) \triangleq a\left(\frac{\sum_{j=1}^n X_{1,j}}{\sqrt{B}},\cdots,\frac{\sum_{j=1}^n X_{d,j}}{\sqrt{B}}\right).
+\end{align*}
+By symmetry, we have
+\begin{align*}
+\|\bE X\tilde{a}(X)\|_2^2 = \sum_{i=1}^d \left(\bE\left[\frac{\sum_{j=1}^B X_{i,j}}{\sqrt{B}}a\left(\frac{\sum_{j=1}^n X_{1,j}}{\sqrt{B}},\cdots,\frac{\sum_{j=1}^n X_{d,j}}{\sqrt{B}}\right)\right]\right)^2.
+\end{align*}
+Moreover, by Lemma \ref{lemma.hamming}, we have
+\begin{align}\label{eq.uniform}
+\left\|\frac{\bE X\tilde{a}(X)}{\bE \tilde{a}(X)}\right\|_2^2 \le 2\cdot \log \frac{1}{\bE[\tilde{a}(X)]}.
+\end{align}
+
+Let $Z\sim \calN(0,I_d)$, then CLT gives $\|\bE X\tilde{a}(X)\|_2^2 \to \|\bE Za(Z)\|_2^2$ and $\bE[\tilde{a}(X)]\to \bE[a(Z)]$ as $B\to\infty$. Hence, as $B\to\infty$, \eqref{eq.uniform} becomes
+\begin{align}\label{eq.gaussian}
+\left\|\frac{\bE Za(Z)}{\bE {a}(Z)}\right\|_2^2 \le 2\cdot \log \frac{1}{\bE[a(Z)]}.
+\end{align}
+Note that \eqref{eq.gaussian} holds for all $d$ and $a(\cdot)$, the proof of Lemma \ref{lemma.geometry_gaussian} is complete by choosing $a(\cdot)=\mathbbm{1}_A(\cdot)$. 
+
+\subsection{Proof of Lemma \ref{lemma.S2}}
+We use the notation $\jiao{u,v}\triangleq u^Tv$ to denote the inner product between two vectors. Moreover, for the sake of notational simplicity, we write $y=S_0(x), y'=S_0(x')$. We have the Taylor expansion
+\begin{align*}
+\exp(\delta^2 \jiao{S_0(x), S_0(x')}) - 1 = \sum_{m = 1}^\infty \frac{\delta^{2m}\jiao{y, y'}^m}{m!} = \sum_{m=1}^\infty \frac{\delta^{2m}\jiao{y^{\otimes m}, (y')^{\otimes m}}}{m!}.
+\end{align*}
+Hence, 
+\begin{align}\label{eq.Taylor_S2}
+S_2 = \sum_{m=1}^\infty \frac{\delta^{2m}}{m!} \sum_{y\in\{0,1\}^{nk} }w_{i,y}\cdot \frac{ \|\bE_{P_0} Y^{\otimes m}p_{i,y}(X)\|_2^2 }{ \bE_{P_0} p_{i,y}(X) }. 
+\end{align}
+
+We upper bound $\|\bE_{P_0} Y^{\otimes m}p_{i,y}(X)\|_2^2$ for each $m\ge 1$. The tensor $Y^{\otimes m}$ has dimension $d^m$, and each coordinate of $Y^{\otimes m}$ takes the form $y_{i_1}y_{i_2}\cdots y_{i_m}$ for $i_1,i_2,\cdots,i_m\in [d]$. We split the entire $d^m$ indices into several groups: 
+\begin{enumerate}
+	\item If there are repeated elements in $i_1,\cdots,i_{m}$, we define $d$ groups $\calG_{i_1,i_2,\cdots,i_m} = \{ (i_1,\cdots,i_m) \}$ for each $i_m\in [d]$. Each group $\calG$ only has one element. 
+	\item If there is no repeated element in $i_1,\cdots,i_{m-1}$, we define one group $\calH_{i_1,i_2,\cdots,i_{m-1}} = \{ (i_1,\cdots,i_m): i_m\notin \{i_1,\cdots,i_{m-1}\} \}$. Each group $\calH$ has $d-m+1$ elements. 
+\end{enumerate}
+
+It's obvious that all possible $\calG$'s and $\calH$'s constitute a partition of $[d]^m$. Let $Y_\calG$ be the shortened vector consisting of indices in $\calG$ only, we have
+\begin{align*}
+\|\bE_{P_0} Y^{\otimes m}p_{i,y}(X)\|_2^2 = \sum_{\calG} \|\bE_{P_0} Y_\calG p_{i,y}(X)\|_2^2 + \sum_{\calH} \|\bE_{P_0} Y_\calH p_{i,y}(X)\|_2^2. 
+\end{align*}
+Next we upper bound each term of the RHS separately. 
+
+For each $\calG$-group $\calG_{i_1,\cdots,i_m}$, the restriction $Y_{\calG_{i_1,\cdots,i_m}}$ is in fact a scalar, and thus by the boundedness assumption of $Y$, we have $\|\bE_{P_0} Y_\calG p_{i,y}(X)\|_2^2 \le R^{2m} (\bE_{P_0} p_{i,y}(X))^2$. The total number of $\calG$-groups is at most $d^{m-1}\cdot (m-1)$, and thus
+\begin{align}\label{eq.G_group}
+\sum_{\calG} \|\bE_{P_0} Y_\calG p_{i,y}(X)\|_2^2 \le d^{m-1}(m-1)\cdot R^{2m}(\bE_{P_0} p_{i,y}(X))^2. 
+\end{align}
+
+For each $\calH$-group $\calH_{i_1,\cdots,i_{m-1}}$, the restriction $Y_{\calH_{i_1,\cdots,i_{m-1}}}$ is a vector in $\bR^{d-m+1}$. Moreover, for any unit vector $v\in \bR^{d-m+1}$, the inner product
+\begin{align*}
+\jiao{Y_{\calH_{i_1,\cdots,i_{m-1}}}, v} =  y_{i_1}y_{i_2}\cdots y_{i_{m-1}}\jiao{(y_{i_m})_{i_m\notin \{i_1,\cdots,i_{m-1}\} } ,v}
+\end{align*} 
+has squared $\psi_2$ norm at most $R^{2(m-1)}\sigma^2$, where we have used $|y_{i_l}|\le R$ for any $l\in [m-1]$, the sub-Gaussian assumption of each $y_{i_m}$, and the independence between coordinates of $Y$. As a result, using the same argument in Lemma \ref{lemma.geometry_2}, we have
+\begin{align*}
+\|\bE_{P_0} Y_{\calH_{i_1,\cdots,i_{m-1}}} p_{i,y}(X)\|_2^2 \le R^{2(m-1)}\sigma^2\cdot (\bE_{P_0}p_{i,y}(X) )^2\log \frac{2}{\bE_{P_0}p_{i,y}(X) }. 
+\end{align*}
+The total number of $\calH$-groups is $\binom{d}{m-1}\le d^{m-1}$, and thus
+\begin{align}\label{eq.H_group}
+\sum_{\calH} \|\bE_{P_0} Y_\calH p_{i,y}(X)\|_2^2 \le d^{m-1}\cdot R^{2(m-1)}\sigma^2(\bE_{P_0} p_{i,y}(X))^2\log \frac{2}{\bE_{P_0}p_{i,y}(X) }. 
+\end{align} 
+
+Combining \eqref{eq.G_group} and \eqref{eq.H_group}, we have
+\begin{align}\label{eq.S2_m}
+&\sum_{y\in\{0,1\}^{nk} }w_{i,y}\cdot \frac{ \|\bE_{P_0} Y^{\otimes m}p_{i,y}(X)\|_2^2 }{ \bE_{P_0} p_{i,y}(X) } \nonumber \\
+&\qquad \le (dR^2)^{m-1}\sum_{y\in \{0,1\}^{nk}} w_{i,y}\left((m-1)R^2\cdot \bE_{P_0} p_{i,y}(X) + \sigma^2 \cdot \bE_{P_0} p_{i,y}(X)\log \frac{2}{\bE_{P_0} p_{i,y}(X)}\right) \nonumber \\
+&\qquad = (dR^2)^{m-1} \cdot \left((m-1)R^2 + \sigma^2 \sum_{y\in\{0,1\}^{nk} }w_{i,y} \cdot \bE_{P_0} p_{i,y}(X)\log \frac{2}{\bE_{P_0} p_{i,y}(X)}\right) 
+\end{align}
+where we have used Lemma \ref{lemma.total_weight} in the last equality. For the remaining sum, we apply Lemma \ref{lemma.total_weight} and Jensen's inequality to the concave function $x\mapsto x\log \frac{1}{x}$ to obtain
+\begin{align}
+&\sum_{y\in\{0,1\}^{nk} }w_{i,y} \cdot \bE_{P_0} p_{i,y}(X)\log \frac{2}{\bE_{P_0} p_{i,y}(X)} \nonumber\\
+&\qquad = 2^k \sum_{y\in\{0,1\}^{nk} }\frac{w_{i,y}}{2^k} \cdot \bE_{P_0} p_{i,y}(X)\log \frac{2}{\bE_{P_0} p_{i,y}(X)} \nonumber\\
+&\qquad \le 2^k \left(\sum_{y\in\{0,1\}^{nk} }\frac{w_{i,y}}{2^k}\bE_{P_0} p_{i,y}(X)\right)\log \frac{2}{\left(\sum_{y\in\{0,1\}^{nk} }\frac{w_{i,y}}{2^k}\bE_{P_0} p_{i,y}(X)\right)} \nonumber\\
+&\qquad = 2^k \cdot \frac{1}{2^k}\log \frac{2}{2^{-k}} =k +1 \label{eq.jensen}.
+\end{align}
+
+Finally, a combination \eqref{eq.Taylor_S2}, \eqref{eq.S2_m} and \eqref{eq.jensen} yields
+\begin{align*}
+S_2 &\le \sum_{m=1}^\infty \frac{\delta^{2m}}{m!}\cdot (dR^2)^{m-1}\left((m-1)R^2 + (k+1)\sigma^2\right) \\
+&\le \delta^2R^2\sum_{m=1}^\infty \frac{(\delta^2dR^2)^{m-1}}{(m-1)!} + (k+1)\delta^2\sigma^2 \sum_{m=1}^\infty \frac{(\delta^2dR^2)^{m-1}}{m!} \\
+&\le \delta^2\exp(\delta^2dR^2)\cdot \left((k+1)\sigma^2 + R^2 \right) \\
+&\le C\delta^2 \left(k\sigma^2 + R^2\right)
+\end{align*}
+where the last step used the assumption $\delta^2dR^2\le 1$. The proof is complete. 
+
+%\subsection{Proof of Proposition \ref{cor.multinomial}}
+%\subsubsection{Proof of lower bound}
+%The parametric rate $\Omega(n^{-1})$ is obvious, thus we only focus on the lower bound $\Omega(\frac{d}{n2^k})$. Without loss of generality we assume that $d=2T$ is even, and let $U\in \{\pm 1\}^T$ be uniformly distributed on the Hamming ball. For
+%\begin{align*}
+%\delta \in \left(0, \frac{1}{2d}\right)
+%\end{align*}
+%and $P_u=\mathsf{Multi}(1;p_u)$ with
+%\begin{align*}
+%p_u = (\frac{1}{d}+\delta u_1,\cdots,\frac{1}{d}+\delta u_T,\frac{1}{d}-\delta u_1,\cdots,\frac{1}{d}-\delta u_T) \in \calM_{d}
+%\end{align*}
+%the bounded likelihood ratio condition (Assumption \ref{assump.bounded_LR}) holds for this $\delta$. 
+%
+%Since there are only $d$ possible outcomes, any strategy $a(\cdot)$ can be identified as a vector in $\bR^{d}$ with each coordinate in $[0,1]$. Now for any such $a\in \bR^{d}$, we have
+%\begin{align*}
+%\bE_{U,U'}\frac{(\bE_{P_U}a(X) - \bE_{P_{U'}}a(X))^2}{\bE_U\bE_{P_U}a(X)} &= d\cdot \frac{a^T\bE_{U,U'}[(p_u-p_{u'})(p_u-p_{u'})^T]a}{a^T{\bf 1}} \\
+%&\le 2\delta^2d\cdot \frac{a^Ta}{a^T{\bf 1}} \le 2\delta^2d
+%\end{align*}
+%where the last inequality follows from $\|a\|_\infty\le 1$. By Lemma \ref{lemma.mutual_info_upper} and \eqref{eq.lower_bound},
+%\begin{align*}
+%\inf_{\{b_i(\cdot)\}_{i=1}^n}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}-\theta\|_2^2 \ge \frac{T\delta^2}{10}\left(1-\frac{4n2^k\cdot \delta^2d+\log 2}{T/8}\right)
+%\end{align*}
+%and choosing $\delta^2=c(n2^k)^{-1}$ for a small constant $c>0$ yields to the lower bound $\Omega(\frac{d}{n2^k})$. Note that $n\ge \frac{d^2}{2^k}$ is required to ensure $\delta\in (0,\frac{1}{2d})$. 
+%
+%\subsubsection{Proof of upper bound}
+%We present a communication scheme under the independent model to achieve the desired error. Note that in this case $X$ can take $d$ possible values. We denote the alphabet of $X$ by $\{1,2,\cdots,d\}$. Without loss of generality we assume that $k<\log_2 d$, since the centralized perfomance can be trivially achieved when $k=\log d$. Note that $k$ bits can describe $2^k$ distinct symbols. We can partition the alphabet $\{1,2,\cdots,2^k\}$ into $\approx\frac{d}{2^k}$ groups of size $\approx 2^k$ each, and let each node be responsible for one group. Specifically, let $D_1,D_2,\cdots,D_m$ (each of size $2^k-1$) be a partition of the alphabet $\{1,2,\cdots,d\}$, where without loss of generality we assume that $m=\frac{d}{2^k-1}$ is an integer. For $j=1,2,\cdots,m$, fix a labeling to the symbols in $D_j=\{a_{j,1},\cdots,a_{j,2^k-1}\}$, and consider the following encoding function:
+%\begin{align*}
+%b_j(s) = \begin{cases}
+%l & \text{if } s= a_{j,l}\in D_j \\
+%2^k & \text{if }s\notin D_j
+%\end{cases} \in \{1,2,\cdots,2^k\}.
+%\end{align*}
+%
+%Next we also partition $n$ nodes in the network to $m$ groups $N_1,\cdots,N_m$ of size $\frac{n}{m}$ each (also assume that $\frac{n}{m}$ is an integer since $n\gtrsim 2^{-k}d^2$), and apply the encoding function $b_j(\cdot)$ to nodes in $j$-th group $N_j$. The crucial observation is that, for $s=a_{j,l}\in D_j$ and $X\sim P_\theta$, we have
+%\begin{align*}
+%\mathbb{P}(b_j(X)=l) = \theta_s.
+%\end{align*}
+%Hence, for any $s\in \{1,2,\cdots,d\}$ with $s=a_{j,l}$, the statistic
+%\begin{align*}
+%\hat{\theta}_s &= \frac{1}{|N_j|}\sum_{i\in N_j} \mathbbm{1}(Y_i=l) = \frac{m}{n}\sum_{i\in N_j} \mathbbm{1}(b_j(X_i)=l)
+%\end{align*}
+%satisfies
+%$
+%\frac{n}{m}\hat{\theta}_s \sim \mathsf{B}(\frac{n}{m}, \theta_s).
+%$
+%By the Binomial nature, $\hat{\theta}_s$ is the natural unbiased estimator for $\theta_s$, and the resulting estimator for $\theta$ is $\hat{\theta}=(\hat{\theta}_1,\cdots,\hat{\theta}_d)$. To analyze the performance of $\hat{\theta}$, note that
+%\begin{align*}
+%\mathbb{E}(\hat{\theta}_s-\theta_s)^2 = \frac{m}{n}\theta_s(1-\theta_s)
+%\end{align*}
+%and thus we have,
+%\begin{align*}
+%\mathbb{E}\|\hat{\theta}-\theta\|_2^2 \le \sum_{s=1}^d \frac{m}{n}\theta_s = \frac{m}{n} = \frac{d}{n(2^k-1)}
+%\end{align*}
+%completing the proof of the proof of the lemma.
+
+\section{Proof of Propositions and Theorem \ref{thm.sparse}}
+
+\subsection{Proof of Proposition \ref{prop.assumption}}
+For notational simplicity, let $r_1(x,x'), r_2(x,x')$ denote the remainder terms (inside the expectation over $X,X'$) appearing in \eqref{eq.assumption_2} and \eqref{eq.assumption_3}, respectively. 
+
+For the Multinomial distribution with probability measure $\theta$ over $d+1$ elements, we consider the free parameter $(\theta_1,\cdots,\theta_d)$ with $\theta_{d+1} = 1-\sum_{i=1}^d \theta_i$. In this model we have
+\begin{align*}
+S_{\theta_0}(X)_i = \frac{\mathbbm{1}(X=i)}{\theta_i} - \frac{\mathbbm{1}(X=d+1)}{\theta_{d+1}}, \qquad I(\theta_0)_{i,j} = \frac{\mathbbm{1}(i=j)}{\theta_i} + \frac{1}{\theta_{d+1}}, \qquad i,j\in [d].
+\end{align*}
+Moreover, 
+\begin{align*}
+\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X) - 1 = \sum_{i=1}^d \frac{\delta u_i}{\theta_i}\mathbbm{1}(X=i) - \frac{\delta\sum_{i=1}^d u_i}{\theta_{d+1}}\mathbbm{1}(X=d+1) = \delta \cdot S_{\theta_0}(X)^TU. 
+\end{align*}
+Since $\bE[UU^T]=I$, for any $x,x'\in\calX$, we have 
+\begin{align*}
+\bE_U \left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x) - 1 \right)\left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x') - 1 \right) = \delta^2 \cdot S_{\theta_0}(x)^TS_{\theta_0}(x')
+\end{align*}
+i.e., \eqref{eq.assumption_2} is satisfied. Hence, the Multinomial distribution satisfies Assumptions \ref{assump.ULAN} and \ref{assump.var}. 
+
+Next we consider the product Bernoulli distribution $\prod_{i=1}^d \mathsf{Bern}(\theta_i)$ with $\theta_0=(p,p,\cdots,p)$, where $p\in (0,1)$. Assume that $\calX=\{-1,1\}$, in this model we have 
+\begin{align*}
+S_{\theta_0}(X)_i = \frac{X_i+(1-2p)}{2p(1-p)}, \qquad I(\theta_0)_{i,j} = \frac{\mathbbm{1}(i=j)}{p(1-p)}, \qquad i,j\in [d].
+\end{align*}
+Moreover, 
+\begin{align*}
+\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X) - 1 = \prod_{i=1}^d \left(1 + \delta u_i\cdot \frac{X_i+(1-2p)}{2p(1-p)}\right) - 1 = \prod_{i=1}^d \left(1 + \delta u_i\cdot S_{\theta_0}(X_i)\right) - 1.
+\end{align*}
+As a result, 
+\begin{align*}
+\bE_U \left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x) - 1 \right)\left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x') - 1 \right) = \prod_{i=1}^d (1+\delta^2 S_{\theta_0}(x_i)S_{\theta_0}(x_i'))- 1. 
+\end{align*}
+Since $S_{\theta_0}(X_i), i\in [d]$ are i.i.d. Bernoulli random variables, we may calculate the second moment of the remainder term $r_1(X,X')$ explicitly as (note that $B= \frac{1}{p(1-p)}$)
+\begin{align*}
+\bE r_1(X,X')^2 = (1+ \delta^4 B^2)^d - 1 -  \delta^4 B^2d \le (c_0\cdot \delta^4B^2d)^2
+\end{align*}
+as long as $\delta^4B^2d=O(1)$, establishing \eqref{eq.assumption_2}. As for Assumption \ref{assump.subGaussian}, we choose $\calX_0=\calX_1=\calX=\{\pm 1\}^d$. Since
+\begin{align*}
+r_2(x,x') = \prod_{i=1}^d (1+\delta^2 S_{\theta_0}(x_i)S_{\theta_0}(x_i'))- \exp(\delta^2 S_{\theta_0}(x)^TS_{\theta_0}(x')) \le 0, 
+\end{align*} 
+inequality \eqref{eq.assumption_3} holds. As for inequality \eqref{eq.assumption_3_remainder}, for any $u\in \{\pm 1\}^d$ we have
+\begin{align*}
+\bE\left(\frac{dP_{\theta_0+\delta u}}{dP_{\theta_0}}(X) - 1\right)^4 &= \sum_{\ell=0}^4 (-1)^{\ell}\binom{4}{\ell} \prod_{i=1}^d\left( p\left(1+\frac{\delta u_i}{p}\right)^{\ell} + (1-p)\left(1-\frac{\delta u_i}{1-p}\right)^{\ell} \right) \\
+&= \sum_{\ell=0}^4 (-1)^{\ell}\binom{4}{\ell} \prod_{i=1}^d\left( 1 + \binom{\ell}{2}B\delta^2 + \binom{\ell}{3}u_i^3 \left(\frac{1}{p^2}-\frac{1}{(1-p)^2}\right)\delta^3 + O(B^3\delta^4)\right) \\
+&= \sum_{\ell=0}^4 (-1)^{\ell}\binom{4}{\ell} \left(1  + \sum_{i=1}^d \left( \binom{\ell}{2}B\delta^2 + \binom{\ell}{3}u_i^3 \left(\frac{1}{p^2}-\frac{1}{(1-p)^2}\right)\delta^3 \right) \right.\\
+&\qquad\qquad\left. + O(B^2\delta^4d^2+B^3\delta^4d) \right) \\
+&= O(B^2\delta^4d^2+B^3\delta^4d)
+\end{align*}
+if $B^2\delta^4d^2+B^3\delta^4d=O(1)$. Hence, Assumptions \ref{assump.ULAN}, \ref{assump.var}, \ref{assump.subGaussian} hold for product Bernoulli models with any $p\in (0,1)$. 
+
+Finally we consider the Gaussian location model $P_\theta=\calN(\theta,\sigma^2 I_d)$ for any $\theta\in\bR^d, \sigma>0$. By translation and scaling properties, it suffices to consider the case where $\theta_0=(0,0,\cdots,0), \sigma^2=1$. In this model we have 
+\begin{align*}
+S_{\theta_0}(X)_i = X_i, \qquad I(\theta_0)_{i,j} = \mathbbm{1}(i=j), \qquad i,j\in [d].
+\end{align*}
+Moreover, 
+\begin{align*}
+\frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X) - 1 = \exp\left(\delta\sum_{i=1}^d u_iX_i - \frac{\delta^2d}{2} \right) - 1. 
+\end{align*}
+As a result, 
+\begin{align}
+&\bE_U \left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x) - 1 \right)\left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x') - 1 \right) \nonumber\\
+&= \exp(-\delta^2d) \prod_{i=1}^d \cosh(\delta(x_i+x_i')) - \exp(-\delta^2d/2) \left(\prod_{i=1}^d \cosh(\delta x_i) + \prod_{i=1}^d \cosh(\delta x_i')\right) + 1 \nonumber\\
+&= \exp(-\delta^2d) \left(\prod_{i=1}^d \cosh(\delta(x_i+x_i'))-\prod_{i=1}^d \cosh(\delta x_i)\prod_{i=1}^d \cosh(\delta x_i') \right) \nonumber\\
+&\qquad + \left(\exp\left(-\frac{\delta^2d}{2}\right)\prod_{i=1}^d \cosh(\delta x_i)-1 \right) \left(\exp\left(-\frac{\delta^2d}{2}\right)\prod_{i=1}^d \cosh(\delta x_i')-1 \right). \label{eq.LR}
+\end{align}
+Note that $\cosh(x) = \exp(\frac{x^2}{2}+O(x^4))$, and $\sum_{i=1}^d X_i^2=d+O_P(\sqrt{d}), \sum_{i=1}^d X_i^4 = O_P(d)$ for $X\sim\calN(0,I_d)$, we have
+\begin{align*}
+\exp\left(-\frac{\delta^2d}{2}\right)\prod_{i=1}^d \cosh(\delta X_i)-1 = \exp\left(\frac{\delta^2(\sum_{i=1}^d X_i^2 - d)}{2} + O(\delta^4)\cdot \sum_{i=1}^d X_i^4 \right) - 1 = O_P(\delta^2\sqrt{d})
+\end{align*}
+as long as $\delta^4d=O(1)$. Hence, the second term in \eqref{eq.LR} is of the order $O_P(\delta^4d)$. Similarly, the first term in \eqref{eq.LR} is of the order $(1+O_P(\delta^2\sqrt{d}))\cdot (\exp(\delta^2 X^TX')-1)$. Note that $X^TX'=O_P(\sqrt{d})$, we have $\exp(\delta^2 X^TX')-1 = \delta^2 X^TX' + O_P(\delta^4d)$, and therefore
+\begin{align*}
+\bE_U \left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X) - 1 \right)\left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(X') - 1 \right) = \delta^2 X^TX' + O_P(\delta^4d)
+\end{align*}
+establishing \eqref{eq.assumption_2}. 
+
+As for Assumption \eqref{assump.subGaussian}, choose $\calX_0 = [-C\sqrt{\log d}, C\sqrt{\log d}]^d\subset \calX=\bR^d$. By Gaussian tail, by choosing $C$ large enough we have $\bP(\calX_0)\ge 1-d^{-5}$. Also, choosing $\calX_1 = \{x\in \bR^d: |\sum_{i=1}^d x_i^2 - d|\le C\sqrt{d\log d}, \sum_{i=1}^d x_i^4\le Cd\}$, for $C$ large enough we have $\bP(\calX_1)\ge 1-d^{-5}$. For $x,x'\in\calX_0\cap\calX_1$ and $\delta^4d\log d=O(1)$, applying $\cosh(x) = \exp(\frac{x^2}{2}+O(x^4))$ in \eqref{eq.LR} yields
+\begin{align*}
+\bE_U \left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x) - 1 \right)\left( \frac{dP_{\theta_0+\delta U}}{dP_{\theta_0}}(x') - 1 \right) = (1+O(\delta^2\sqrt{d\log d}))\cdot (\exp(\delta^2 x^Tx')-1 ) + O(\delta^4d\log d)
+\end{align*}
+establishing \eqref{eq.assumption_3}. 
+
+Finally, for any $u\in \{\pm 1\}^n$ and $\delta=O(d^{-\frac{1}{2}})$, we have
+\begin{align*}
+\bE\left(\frac{dP_{\theta_0+\delta u}}{dP_{\theta_0}}(X) - 1\right)^4 &= \bE \left[ \exp\left(\delta\sum_{i=1}^d u_iX_i - \frac{\delta^2d}{2} \right) - 1 \right]^4 \\
+&= \exp(6\delta^2d) - 4\exp(3\delta^2d) + 6\exp(\delta^2d) - 3 \\
+&= O(\delta^4d^2)
+\end{align*}
+where the last step follows from Taylor expansion. Hence, the Gaussian location model satisfies all assumptions. 
+
+\subsection{Proof of Proposition \ref{prop.bernoulli}}
+For the first result, the lower bound follows from \cite{zhang2013information} (or Theorem \ref{thm.sub-gaussian}), with a matching upper bound in \cite{zhang2013information}. The lower bound of the second result follows from Theorem \ref{thm.general} (or along the same line of \cite{han2018distributed}), and it suffices to prove an upper bound for the case where $\sum_{i=1}^d \theta_i=1$. 
+
+We apply a slightly different ``simulate-and-infer" procedure in \cite{acharya2018distributed}. Specifically, for $2^k\le d$, we split $[d]$ into $m\triangleq \frac{d}{2^k-2}$ (assumed to be an integer) groups $\calG_1,\cdots,\calG_m$ of size $2^k-2$ each, and also split the sensors $[n]$ into $N=\frac{n}{2m}$ (also assumed to be an integer) groups $\calH_1,\cdots,\calH_N$ of size $2m$ each. For each group $\calH_j$ of $2m$ sensors, consider the following protocol: for any $\ell \in [m]$, 
+\begin{enumerate}
+	\item sensor $(2\ell -1)$ sends $a_0\in [2^k]$ if $\sum_{i\in\calG_\ell} X_{2\ell-1,i}=0$, sends $a_1\in [2^k]$ if $\sum_{i\in\calG_\ell} X_{2\ell-1,i}\ge 2$, and sends the unique $i^*\in \calG_\ell$ with $X_{2\ell-1,i^*}=1$ in the remaining $2^k-2$ cases; 
+	\item sensor $2\ell$ first looks at the message that sensor $(2\ell-1)$ transmits. If the message is $a_0$ or $a_1$, sensor $2\ell$ can transmit an arbitrary message; otherwise, sensor $(2\ell-1)$ must have transmitted a unique location $i\in [d]$, and then sensor $2l$ tranmits the one-bit message $X_{2\ell,i}$. 
+\end{enumerate}
+
+Clearly the communication constraints are satisfied here. For each group $\calH_j$ of sensors, we call this group \emph{succeeds} if and only if: 
+\begin{enumerate}
+	\item there exists a unique $\ell^*\in [m]$ such that sensor $(2\ell^*-1)$ does not send $a_0$ or $a_1$, and any sensor $(2\ell-1)$ sends $a_0$ for $\ell\neq \ell^*$; 
+	\item for the index $\ell^*$ above, sensor $2\ell^*$ sends zero. 
+\end{enumerate}
+If this group succeeds, the centralizer records the index $i^*\in [d]$ sent by sensor $(2\ell^*-1)$ above. We show that: 
+\begin{enumerate}
+	\item conditioning on the event that the group succeeds, $i^*\sim \mathsf{Multi}(1; \theta)$; 
+	\item any group succeeds with probability $\Omega(1)$. 
+\end{enumerate}
+
+To establish the first result, note that the probability for any fixed group to succeed \emph{and} $i^*=i\in \calG_\ell$ is
+\begin{align*}
+p_i = \prod_{\ell' \neq \ell} \prod_{i'\in \calG_{\ell'} } (1-\theta_{i'})\cdot \theta_i\prod_{i'\in \calG_\ell, i'\neq i} (1-\theta_{i'})\cdot (1-\theta_i) = \theta_i \prod_{i'=1}^d (1-\theta_{i'}).
+\end{align*}
+Hence, the probability of that group to succeed is $p = \sum_{i=1}^d p_i=\prod_{i'=1}^d (1-\theta_{i'})$, and thus the conditional distribution of $i^*$ is exactly $\mathsf{Multi}(1; \theta)$. The second result is established using the same arguments as \cite[Theorem 4.7]{acharya2018distributed}, while replacing one sensor by two sensors if necessary. 
+
+Hence, we have $N$ groups, each of which succeeds independently with probability $\Omega(1)$. Let $M$ be the number of successful groups, Lemma \ref{lemma.poissontail} yields $\bP(M\ge \Omega(1)\cdot N)\ge 1-e^{-\Omega(N)}$. Moreover, we observe $M$ i.i.d. observations from the discrete distribution $(\theta_1,\theta_2,\cdots,\theta_d)$, where the empirical distribution has squared $\ell_2$ risk at most 
+\begin{align*}
+\frac{1}{M} \lesssim \frac{1}{N} \asymp \frac{d}{n2^k}
+\end{align*}
+which completes the proof for the case where $2^k\le d$. 
+
+%When $2^k>d$, note that for each sensor, the probability that its observation vector has exactly one non-zero entry is 
+%\begin{align*}
+%q &= \sum_{i=1}^d \theta_i \prod_{j\neq i} (1-\theta_j) \ge \sum_{i=1}^d \theta_i \exp\left(-\sum_{j\neq i} \frac{\theta_j}{1-\theta_j}\right) \\
+%&= \sum_{i=1}^d \theta_i \exp\left(-\sum_{j\neq i}\theta_j - \sum_{j\neq i} \frac{\theta_j^2}{1-\theta_j}\right) = \frac{1}{e} \sum_{i=1}^d \theta_i \exp\left(\theta_i - \sum_{j\neq i} \frac{\theta_j^2}{1-\theta_j}\right) \\
+%&\ge \frac{1}{e} \sum_{i=1}^d \theta_i \left(1+\theta_i - \sum_{j\neq i} \frac{\theta_j^2}{1-\theta_j}\right) = \frac{1}{e}\left(1 + \sum_{i=1}^d \theta_i^2 - \sum_{i,j: i\neq j} \frac{\theta_i\theta_j^2}{1-\theta_j}\right) \\
+%&= \frac{1}{e}\left(1 + \sum_{i=1}^d \theta_i^2 - \sum_{j=1}^d \theta_j^2\right) = \frac{1}{e}. 
+%\end{align*}
+%Hence, a feasible protocol can be as follows: 
+
+When $2^k>d$, we simply apply the previous protocol again with $2^k$ replaced by $d$ (and $m=1$), then any group of two sensors has $\Omega(1)$ probability to generate a random sample from the discrete distribution $(\theta_1,\cdots,\theta_d)$. As a result, the squared $\ell_2$ risk of the empirical distribution is at most $O(\frac{1}{n})$ with probability at least $1-e^{-\Omega(n)}$, as desired. 
+
+\subsection{Proof of Proposition \ref{prop.geometry}}
+Let $X$ follow the uniform distribution on $\Omega$, then $\bar{v}=\bE[X|A]$. Choosing $S_0(X)=X$ in Lemmas \ref{lemma.geometry_1} and \ref{lemma.geometry_2}, each coordinate of $X$ has variance $1$ and is $1$-sub-Gaussian. By Lemma \ref{lemma.geometry_1}, for $|A|=2^{d-1}$ we have
+\begin{align*}
+\|\bE[X|A]\|_2 \le 1\cdot \frac{\bP(A)}{1-\bP(A)} = 1, 
+\end{align*}
+establishing the first inequality. 
+
+Similarly, the second inequality follows from Lemma \ref{lemma.hamming} (and its proof). 
+
+\subsection{Proof of Theorem \ref{thm.sparse}}
+We construct a new family of hypotheses: let $U\in\bR^d$ be uniformly distributed on the finite set
+\begin{align*}
+\calU = \{\theta\in \{0,\pm 1\}^d : \|\theta\|_0=s\}.
+\end{align*}
+Clearly $|\calU|=2^s\binom{d}{s}$. For $u\in\calU$ we associate with the Gaussian distribution $P_u \triangleq \calN(\delta u,I_d)$, and
+\begin{align*}
+\left|\left\{u'\in\calU: d_{\mathsf{Ham}}(u,u')\le \frac{s}{5}\right\}\right| = \sum_{u+v\le \frac{s}{5}} \binom{s}{u}\binom{s-u}{v}\binom{d-s}{v} \le \left(\frac{s}{5}+1\right)^2\cdot \binom{s}{s/5}^2\binom{d}{s/5}.
+\end{align*}
+As a result, we have $\log \frac{|\calU|}{N_{\max}(s/5)}\ge cs\log\frac{d}{s}$ for some constant $c>0$, and Lemma \ref{lemma.fano} gives
+\begin{align}\label{eq.sparse_lower_bound}
+\inf_{\Pi_{\mathsf{BB}}}\inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_\theta\|\hat{\theta}-\theta\|_2^2 \ge \frac{s\delta^2}{10}\left(1-\frac{I(U;Y)+\log 2}{cs\log(d/s)}\right).
+\end{align}
+
+By construction, conditioning on the support $T$ of $U$, the restriction $U_T$ is uniform on $\{\pm 1\}^d$. Hence, by Proposition \ref{prop.assumption}, Assumption \eqref{assump.subGaussian} still holds with $d$ replaced by $s$, $d\log d$ replaced by $s\log d$, and inner product between score functions replaced by the expected inner product between score functions restricted on $T$, where the expectation is taken over the random support $T$ with $|T|=s$. Hence, by the same argument as in the proof of Theorem \ref{thm.sub-gaussian}, we arrive at
+\begin{align*}
+I(U;Y) \le \frac{Cns}{d}\left(\frac{\delta^2}{\sigma^2}\left(k+ \log d\right) + \frac{\delta^4 s\log d}{\sigma^4}\right)
+\end{align*}
+for some universal constant $C>0$. Now choosing $\delta^2\asymp \frac{d\log(d/s)}{nk}\sigma^2$ in \eqref{eq.sparse_lower_bound} completes the proof. 
+
+%{\section{Communication Scheme for the Multinomial model}\label{achievability}
+%	In this section, we show that the lower bound in Proposition \ref{cor.multinomial} is tight.
+%	\begin{lemma}[Achievability for the Multinomial model with one sample]\label{lem.multinomial}
+%		Let $P_\theta=\mathsf{Multi}(1;\theta)$ with $\Theta=\calM_{d+1}$ being the $d$-dimensional probability simplex, and $n\ge \frac{d^2}{2^k}$. Under the independent model, for general $k\in\mathbb{N}$ we have
+%		\begin{align*}
+%			\inf_{\{b_i(\cdot)\}_{i=1}^n} \inf_{\hat{\theta}}\sup_{\theta\in\Theta} \bE_{\theta}\|\hat{\theta}-\theta\|_2^2 \le c\cdot \left(\frac{d}{n2^k} \vee \frac{1}{n}\right)
+%		\end{align*}
+%		where $c>0$ is a universal constant independent of $n,d,k$.
+%	\end{lemma}
+%	
+%	\emph{Proof:} 
+%}
+
+\end{document}

@@ -1,0 +1,289 @@
+\newcommand{\orc}{\phi}
+\newcommand{\alg}{\mathsf{A}}
+% -*- Mode: latex -*-
+
+\section{Problem Formulation}
+
+As desribed in the introduction, we consider convex optimization problems of
+minimizing a convex objective $f$ over the domain $\domain = [0, 1]^d$. We
+consider algorithms that proceed in a fixed number of \emph{batches} or
+\emph{rounds}, where in each round,the algorithm chooses $n$ points $x_1,
+x_2, \ldots, x_n$ from the domain $\domain$ to query \emph{in parallel},
+receiving noisy information about the function $f$.
+
+%that are based 
+%on noisy zeroth and first order oracles, which proceed by iteratively 
+%querying a point $x\in \domain$ and receive some unbiased estimate 
+%of the function value $f(x)$ or some unbiased estimate of some subgradient 
+%$\grad f(x) \in \partial f(x)$. Here we are interested in algorithms that proceed for 
+%a fixed number of \emph{batches}/\emph{rounds}, where in each batch/round,
+%the algorithm chooses $n$ points $x_1, x_2, \ldots, x_n \in \domain$ 
+%to query \emph{in parallel} and receive the noisy information from the oracle. 
+
+Here we formalize the definition of the sequential optimization procedure.
+Let $M \in \N$ denote the total number of rounds. For each $t \in [M]$, let
+$X_{1:n}^{(t)} = \{X_{1}^{(t)}, X_2^{(t)}, \ldots, X_n^{(t)}\}$ be the
+points the algorithm queries in round $t$.  We consider the usual noisy
+oracle model of optimization~\citep{NemirovskiYu83, AgarwalBaRaWa12}, where
+we represent information available to the algorithm via an \emph{information
+  oracle} $\orc \in \ofamily$ from a family of oracles $\ofamily$.  We
+consider one of two oracle families. The first is the family $\ofamilyz$ of
+\textbf{zeroth-order oracles}, which, when queried at a point $x \in
+\domain$ for the function $f$, return $Y = f(x) + \varepsilon$, where
+$\E[\varepsilon \mid x] = 0$. For the \textbf{first-order oracle} family
+$\ofamilyf$, the information consists of the pair $(Y, Z)$, where $\E[Z \mid
+  x] \in \partial f(x)$ is a stochastic subgradient.
+%In
+%proving our lower bounds, we always use a noise oracle for which the noise
+%$\varepsilon\simiid \normal(0, \sigma^2)$ is independent Gaussian noise and
+%$Z \sim \normal(f'(x), \sigma^2 I)$, where $f'(x) \in \partial f(x)$ is a
+%fixed subgradient, that is, independent Gaussian noise.
+
+Let $Y_{1:n}^{(t)} = \{Y_1^{(t)},Y_2^{(t)}, \ldots, Y_n^{(t)}\}$ be the
+(random) received noisy function values at the query points $X_{1:n}^{(t)}$
+when the oracle is zeroth-order oracle, and $Z_{1:n}^{(t)}$ the noisy
+gradient values at $X_{1:n}^{(t)}$. Then a \emph{batched} optimization
+algorithm $\alg$ consists of a series of conditional distributions $Q$, each
+defined on the space $\domain^n$ (within a round, the points
+$X_{1:n}^{(t)}$ may have arbitrary dependence), of the querying points
+$X_{1:n}^{(t)}$ for $t\in [T]$. At round $t$, the conditional $Q^{(t)}$ is
+defined given all past information $\{X_{1:n}^{(i)}, Y_{1:n}^{(i)},
+Z_{1:n}^{(i)}\}_{i=1}^{t-1}$; the algorithm consists of these conditionals
+and the final conditional distribution $Q$ of the estimate
+$\what{X}$ for the minimizer of the function $f$ given $\{X_{1:n}^{(t)},
+Y_{1:n}^{(t)}, Z_{1:n}^{(t)}\}_{t=1}^{M}$.  A \emph{batched}
+optimization algorithm $\alg$ is representable as the collection of these
+conditional distributions,
+%Note that, the conditional 
+%distribution of the querying points for $X_{1:n}^{(t)}$ where $m\in [M]$
+%can be interpreted as the sampling strategy of the algorithm $\alg$, and 
+%the conditional distribution of the estimator $\hat{X}$ can be interpreted 
+%as the estimation strategy after gathering all the information from the 
+%querying. Therefore, if we use $\Qm = \Qm(X_{1:n}^{(t)}
+%\mid X_{1:n}^{(1)}, Y_{1:n}^{(1)}, \dots, X_{1:n}^{(m-1)}, Y_{1:n}^{(m-1)})$
+%to represent the conditional distribution 
+%, where each of the 
+%conditional distributions of the query points can be interpreted as 
+%the sampling strategy of the algorithm $\alg$ and the conditional 
+%distribution of $\hat{X}$ can be interpreted 
+% 
+%$\alg$ can be thought of as a set of transition kernels, where each 
+%transition kernel represents either the sampling strategy or the estimation 
+%strategy that are based on all the information we receive in the past. 
+%More concretely, if we use $\Qm$ to represent the sampling $\QMpone$ 
+%
+%
+%, for any algorithm $\alg$, it can be represented as 
+\begin{equation}
+  \label{eqn:alg-zo}
+  \alg \defeq \bigg\{
+  Q(\what{X}\mid X_{1:n}^{(1:M)}, Y_{1:n}^{(1:M)})
+  \bigg\}
+  \cup
+  \bigcup_{t=1}^M 
+  \bigg\{
+  Q^{(t)}(X_{1:n}^{(t)}
+  \mid X_{1:n}^{(1:t-1)}, Y_{1:n}^{(1:t-1)})
+  \bigg\}
+\end{equation}
+when the oracle is zeroth-order, or 
+\begin{equation}
+\label{eqn:alg-fo}
+  \alg \defeq \bigg\{
+  Q(\what{X}\mid X_{1:n}^{(1:M)}, Y_{1:n}^{(1:M)}, Z_{1:n}^{(1:M)})
+  \bigg\}
+  \cup
+  \bigcup_{t=1}^M
+  \bigg\{
+  Q^{(t)}(X_{1:n}^{(t)}
+  \mid X_{1:n}^{(1:t-1)}, Y_{1:n}^{(1:t-1)},
+  Z_{1:n}^{(1:t-1)})
+  \bigg\}
+\end{equation}
+when the oracle is first-order.
+
+%For any algorithm $\alg \in \sfamily$ and any function 
+%$f$, we evaluate its performance by computing the expected function
+%gap between the output and the minimum: 
+%\begin{equation*}
+%\risk \left(\alg, f\opt\right) = \E_f \left[f(\hat{X}) - f\opt\right].
+%\end{equation*}
+
+\newcommand{\minimax}{\mathfrak{M}}
+
+With this algorithmic setting, we define the risk of an $M$-round
+algorithm $\alg$, for a given oracle $\orc$ and function $f : \domain
+\to \R$, by the expected gap
+\begin{equation*}
+  \risk(\orc, \alg, f) = \E_f \left[f(\what{X}) - f\opt\right],
+\end{equation*}
+where the expectation is taken over any randomness in $\alg$ and the oracle
+$\orc$. We evaluate the performance of an algorithm $\alg$ in a uniform
+sense~\citep{Wald39} by considering its maximum risk for a collection of
+functions $\ffamily$. Now, letting $\sfamily_M$ be the collection of all
+$M$-batch algorithms (as in Eqs.~\eqref{eqn:alg-zo} and~\eqref{eqn:alg-fo}),
+the $M$-batch minimax risk of the function class $\ffamily$ for an oracle family $\ofamily$ is
+\begin{equation}
+  \label{eqn:minimax-risk-definition}
+  \minimax_M(\ffamily, \ofamily) \defeq 
+  \sup_{\orc \in \ofamily}
+  \inf_{\alg \in \sfamily_M}
+  \sup_{f\in \ffamily} \risk (\orc, \alg, f).
+\end{equation}
+
+Throughout this paper,  we consider the following important classes
+of convex functions:
+\begin{enumerate}[i.]
+\item The class of $\lambda$ strongly convex and $H$ strongly smooth 
+  functions $\ffamily_{H, \lambda}$,
+  \begin{equation*}
+    \ffamily_{H, \lambda} = \left\{f: \lambda \ltwo{x-x^\prime}^2 \leq 
+    \left<\grad f(x) - \grad f(x^\prime), x - x^\prime\right> \leq 
+    H\ltwo{x-x^\prime}^2 ~\text{for all}~x, x^\prime \in \xdomain\right\}.
+  \end{equation*}
+\item The class of $L$ Lipschitz convex functions $\ffamily_L$,
+\begin{equation*}
+\ffamily_{L} = \left\{f: \left|f(x) - f(x^\prime)\right| \leq L
+\ltwo{x-x^\prime} ~\text{for all}~x, x^\prime \in \xdomain\right\}.
+\end{equation*}
+\end{enumerate}
+Finally, the minimax risk~\eqref{eqn:minimax-risk-definition} and our
+algorithms are highly dependent on the oracle class $\ofamily$. Throughout this
+paper, we consider \emph{subgaussian} oracles, defined as follows. Recall
+the definition.
+\begin{definition}
+  A random vector $W \in \R^d$ is \emph{$\sigma^2$-subgaussian} if
+  for all $v \in \R^d$ and $t \in \R$ we have
+  \begin{equation*}
+    \E\left[\exp(t\<v, W - \E[W]\>)\right]
+    \le \exp\left(\frac{t^2 \sigma^2 \ltwo{v}^2}{2} \right).
+    %% \P \left(\langle v, X - \E X \rangle \geq t\right) \leq 2\exp\left(-\frac{t^2}{2\sigma^2}\right)
+  \end{equation*} 
+\end{definition}
+Throughout this paper, we use $\ofamilyz$ and $\ofamilyf$ to denote an
+(otherwise arbitrary) noise oracle family with the following properties:
+\begin{enumerate}[i.]
+\item The zeroth-order oracle class $\ofamilyz$. For any $\orc \in \ofamilyz$, given
+  the query $x \in \domain$, the oracle outputs $y =
+  f(x) + \noise$, where $\noise\in \R$ is (conditionally on $x$)
+  mean-zero and $\sigma^2$-subgaussian.
+\item The first-order oracle class $\ofamilyf$. For any $\orc \in \ofamilyf$, given
+  the query $x \in \domain$, the oracle outputs
+  $y = f(x) + \noise_1$ and the noisy gradient value $z = g + \noise_2$, where $g(x) \in \partial f(x)$ and $\noise_2 \in \R^d$ is (conditionally on $x$)
+  mean-zero and $\sigma^2$-subgaussian.
+\end{enumerate}
+\noindent
+We assume that the noise additions are independent conditional
+on the query points $X_{1:n}^{(1:M)}$.
+%
+%we first define the 
+%following as the risk of  algorithm $\alg$ on a particular function 
+%$f$: 
+%\begin{equation*}
+%\risk (\alg, )
+%\end{equation*}
+
+%where each 
+%Markov kernel represents the sampling or the estimating strategy of the 
+%algorithm at current stage given all the \emph{past information}. 
+
+
+%Consider optimizing an objective function $f \in \ffamily$, 
+%where the functions in $\ffamily$ are defined on a common domain $\domain=[0,1]^d \in \R^d$.
+%We are trying to optimize some function $f \in \ffamily$ through $M$ rounds of noisy observation of 
+%function values and/or gradient values,
+%where in each round the optimizer is given a budget of $n$ queries for an oracle $\phi$.
+%That is, during the $m$-th round, the optimizer decides which $n$ points to observe
+%based on the information from previous $m-1$ rounds, 
+%and then obtain noisy information about the $n$ points using some oracle $\phi$.
+%Once we finish all $M$ rounds, the optimizer 
+%then returns an estimate $\what{X}$ of the minimum point of the objective function.
+
+%When the oracle $\phi$ is \emph{zeroth-order}, given any query at $X$, its return value $\phi(X)$ is
+%an estimate of function value $f(X)$ contaminated with independent $\sigma$-sub-Gaussian noise.
+%We denote the class of all such zeroth-order oracles as $\ofamilyz$.
+%When the oracle is \emph{first-order}, $\phi(X)$ is a tuple that contains 
+%estimates of both function value and gradient,
+%where the noise in function value is a $\sigma$-sub-Gaussian random variable and 
+%the noise in gradient is a $\sigma$-sub-Gaussian random vector. Similarly, the class of all such first-order oracles is $\ofamilyf$.
+
+%On $m$-th round, the optimizer samples points $X_1^{(t)}, X_2^{(t)}, \dots, X_n^{(t)}$ in $\domain$,
+%which we denote as $X_{1:n}^{(t)}$ for brevity, based on the information obtained from the previous rounds.
+%Then, a zeroth-order oracle returns noisy information about the function at $X_{1:n}^{(t)}$,
+%which we denote as $Y_1^{(t)}, Y_2^{(t)}, \dots, Y_n^{(t)}$ or $Y_{1:n}^{(t)}$ in short.
+%When the oracle is first-order, it returns estimates of function values and gradients
+%at $X_{1:n}^{(t)}$. 
+%Similarly, we denote the noisy function values and gradients as $Y_{1:n}^{(t)}$ and $Z_{1:n}^{(t)}$,
+%respectively.
+
+%Using these notations, we can represent our $m$-th round ($m=1, \dots, M$) sampling strategy as
+%conditional probability distributions of $m$-th sample points given previous observations:
+%\begin{align*}
+%&\Qm(X_{1:n}^{(t)}
+%\mid X_{1:n}^{(1)}, Y_{1:n}^{(1)}, \dots, X_{1:n}^{(m-1)}, Y_{1:n}^{(m-1)}), \textup{ or }\\
+%&\Qm(X_{1:n}^{(t)} 
+%\mid X_{1:n}^{(1)}, Y_{1:n}^{(1)}, Z_{1:n}^{(1)}
+%\dots, 
+%X_{1:n}^{(m-1)}, Y_{1:n}^{(m-1)}, Z_{1:n}^{(m-1)}),
+%\end{align*}
+%depending on the order of the oracle.
+%After $M$ rounds, the optimizer returns estimate $\what{X}$ of the minimum point.
+%This algorithm can also represented as
+%\begin{align*}
+%&\QMpone(\what{X}
+%\mid X_{1:n}^{(1)}, Y_{1:n}^{(1)}, \dots, X_{1:n}^{(t)}, Y_{1:n}^{(t)}), \textup{ or }\\
+%&\QMpone(\what{X}
+%\mid X_{1:n}^{(1)}, Y_{1:n}^{(1)}, Z_{1:n}^{(1)}
+%\dots, 
+%X_{1:n}^{(t)}, Y_{1:n}^{(t)}, Z_{1:n}^{(t)}).
+%\end{align*}
+%By $\what X$ we mean the (random) estimate of the minimum point returned by the algorithm, 
+%but we slightly abuse this notation to also denote the algorithm (including sampling strategies) itself. 
+%We also denote the set of all such algorithms as $\sfamily$.
+
+
+
+
+
+%it is of natural interest to understand what 
+%the optimal sequential algorithm is. To evaluate the performance of the 
+%algorithm, we define the risk a
+%
+%
+%
+%To 
+%evaluate the performance o
+%
+%
+%The goal of this section is to develop a novel technique that gives us lower bounds 
+%on the minimax rate of optimization under this new setting for some particular choices 
+%of function classes $\ffamily$, where the minimax rate is defined depending on the oracle classes: 
+%\begin{equation*}
+%\sup_{\phi \in \ofamilyz} \inf_{\what{X} \in \sfamily} \sup_{f \in \ffamily} \E[f(\what{X}) - f^\star] \textup{ or }
+%\sup_{\phi \in \ofamilyf} \inf_{\what{X} \in \sfamily} \sup_{f \in \ffamily} \E[f(\what{X}) - f^\star],
+%\end{equation*}
+%where $f^\star$ denotes true optimal value of $f$.
+%
+%Two types of function classes are 
+%of particular interest to us: one is the class of $L$-Lipshictz convex functions
+%and the other is $H$-smooth and $\lambda$-strongly convex functions where $H/5 \geq \lambda$.
+%Also, for the proof, we assume that the oracle noise is independent zero-mean Gaussian with variance $\sigma^2$.
+%Showing a lower bound for this particular oracle suffices because we are trying to give a lower bound for
+%the supremum over all possible oracles.
+%
+%\rfcomment{ 
+%I think, at somewhere, we should define the function class. It should 
+%appear before this section. 
+%\begin{equation*}
+%\ffamily_{H, \lambda} = \left\{f: \lambda \ltwo{x-x^\prime}^2 \leq 
+%	\left<\grad f(x) - \grad f(x^\prime), x - x^\prime\right> \leq 
+%		H\ltwo{x-x^\prime}^2 ~\text{for all}~x, x^\prime \in \xdomain\right\}.
+%\end{equation*}
+%The second class of function consists of Lipschitz convex functions. This 
+%function class is parameterized by one single parameter $L$, and is defined 
+%as below: 
+%\begin{equation*}
+%\ffamily_{L} = \left\{f: \left|f(x) - f(x^\prime)\right| \leq L \ltwo{x-x^\prime}	
+%	~\text{for all}~x, x^\prime \in \xdomain\right\}.
+%\end{equation*}
+%}

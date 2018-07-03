@@ -1,0 +1,139 @@
+\section{Introduction}
+
+% active learning of linear separators
+% attribute-efficient learning (Winnow for t-disjunctions: if t is small then the mistake bound is smaller) ; basically, we would like to have a sample complexity of poly(t, ln d)
+
+% Q: is there any attribute efficient active learning algorithm?
+% A: there are in the model of 1-bit compressed sensing, i.e. MQ setting; however, in the PAC setting, the problem remains unresolved
+% We provide such a solution
+
+% Our contributions
+% 1. in the t-sparse realizable setting, we provide the first efficient PAC AL algorithm with near-optimal label complexity.
+% 2. in the t-sparse eta-bounded noise setting, under the condition that \eta is sufficiently small, we provide the first efficient PAC AL algorithm with near optimal label complexity.
+% 3. in the t-sparse agnostic noise setting, under the condition that nu is Omega(\epsilon), we provide the first efficient PAC AL algorithm with near optimal label complexity.
+Active learning is a machine learning paradigm that aims at reducing label requirements through interacting with labeling oracles~\citep{S10}. The learner is given a distribution from which it can draw unlabeled examples,
+and a labeling oracle from which it can query labels interactively. This is in contrast with passive learning, where labeled examples are drawn from distributions directly.
+Using the ability to adaptively query labels, an active learning
+algorithm can avoid querying the labels it has known before, thus substantially reducing label requirements.
+In the PAC active learning model~\citep{V84,KSS94,BBL09,H14}, the performance of an active learner is measured by its label complexity, i.e. the number of label requests to satisfy an error requirement $\epsilon$ with high probability.
+
+
+%The study of linear classifiers has led to success in machine learning~\cite{CS00}.
+%For example, the study of SVM and boosting results in both theoretically grounded and practically effective algorithms.
+%Consequently, t
+
+%For instance, the algorithm \cite{DKM05} works if there is no noise, under
+%the uniform distribution over the $d$-dimensional unit sphere; it has an information theoretically optimal label complexity of $O(d \ln \frac 1 \epsilon)$.
+%As another example, the algorithm of \cite{ABL17}, with appropriate setting of its parameters (see \cite{HKY15}),
+%works under any isotropic log-concave distribution, and allow any $\Omega(\epsilon)$ fraction of labels to be corrupted.
+%The algorithm of \cite{ABL17} has a label complexity of $O(d \ln \frac 1 \epsilon)$.
+%On the practical side, heuristics that have superior performance over supervised learning have been developed~\cite{TK01, AM01, TST03}.
+%On the theoretical side,
+There have been many exciting works on active halfspace learning in the literature.
+In this setting, the instances are in $\R^d$, and the labels are from $\{-1,+1\}$. The goal is to learn a classifier from $\calH = \{\sign(w \cdot x): w \in \R^d \}$, the class of homogeneous linear classifiers, to predict labels from instances.
+Efficient active halfspace learning algorithms that work under different distributional assumptions have been proposed. Some of these algorithms are computationally efficient, and enjoy
+information theoretically optimal label complexities~\citep{DKM05, BBZ07, ABL17, HKY15, ABHU15, YZ17}, that is,
+$O(d \ln\frac 1 \epsilon)$ in terms of $d$ and $\epsilon$ \citep[See e.g.][for an $\Omega(d \ln\frac 1 \epsilon)$ lower bound]{KMT93}.
+%These label complexities have an unavoidable linear dependence on $d$~.
+On the other hand, a line of work on attribute efficient learning \citep{B90} shows that one can in fact learn faster
+when the target classifier is {\em sparse}, i.e. it depends only on a few of the input features.
+In the problem of active halfspace learning, one can straightforwardly apply existing results to achieve attribute efficiency.
+For instance, consider running the algorithm of ~\cite{ZC14} with concept class $\calH_t$, the set of $t$-sparse linear classifiers. Under certain distributional assumptions, \cite{ZC14}'s algorithm achieves label complexities of order $O(t \ln d \ln\frac 1 \epsilon)$. However, such algorithms are computationally inefficient: they require solving empirical 0-1 loss minimization with respect to $\calH_t$, which is NP-hard even in the realizable setting~\citep{N95}.
+
+%However, the problem becomes more challenging if computational efficiency requirement is enforced.
+
+
+%We remark that learning in the PAC model is more challenging than
+%These results can be applied to active learning in, where the learning algorithm is free to create
+%examples in the instance domain $X$ and query their labels.
+The results above raise the following question: are there active learning algorithms that learn linear classifiers in an attribute and computationally efficient manner?
+A line of work on one-bit compressed sensing~\citep{BB08}, partially answers this question. They show that when the learning algorithm is allowed to synthesize instances to query their labels (also known as the membership query model~\citep{A88}, abbrev. MQ), it is possible to approximately recover the target halfspace using a near-optimal number of $\tilde{O}(t (\ln d + \ln \frac 1 \epsilon))$ queries~\citep{HB11}.
+However, when applied to active learning in the PAC model, these results have strong distributional
+requirements.
+For instance, the algorithm of~\cite{HB11} requires the unlabeled distribution to have a constant probability to observe elements in the discrete set $\{-1,0,+1\}^d$.
+%the algorithm of \cite{L16} requires the unlabeled distribution to be a product over $\alpha$-stable distributions ($\alpha$ is sufficiently small) to recover the support of $w^*$.
+%However, to approximately recover $w^*$, one needs active learning algorithms that works under the product over $\alpha$-stable distributions. To the best of our knowledge,
+%no active learning algorithm provably works under this distribution, even for the recent algorithms that can handle $s$-concave distributions~\cite{BZ17}.
+%, either in the unlabeled distribution, or in the conditional distribution of the label given the instance.
+
+In the PAC setting, recent work of~\cite{ABHZ16} proposes attribute and computationally efficient active halfspace learning algorithms, under the assumption that the unlabeled distribution is isotropic log-concave~\citep{LV07}. In the $t$-sparse $\Omega(\epsilon)$-adversarial noise setting, where all but an $\Omega(\epsilon)$ fraction of examples agree with some $t$-sparse linear classifier (see also Definition~\ref{def:an}), their algorithm has a label complexity of $\tilde{O}(\frac{t}{\epsilon^2} )$.
+In the $t$-sparse $\eta$-bounded noise setting, where each label is generated by some underlying $t$-sparse linear classifier and then flipped with probability at most a constant $\eta \in [0,\frac12)$ (see also Definition~\ref{def:bn}), their algorithm has a label complexity of $\tilde{O}((\frac{t}{\epsilon})^{O(1)} )$. Compared to those achieved by computationally inefficient algorithms (e.g. ~\cite{ZC14} discussed above), these label complexity bounds are suboptimal, in that they do not have a logarithmic dependence on $\frac 1 \epsilon$.
+
+%This immediately raises the question: are there attribute and computationally efficient halfspace learning algorithms that achieve near-optimal label complexities?
+
+In this paper, we give an algorithm that combines the advantages of~\cite{ZC14} and~\cite{ABHZ16}, achieving computational efficiency and $\tilde{O}(t \polylog(d, \frac 1 \epsilon))$ label complexity simultaneously, under certain distributional assumptions on the data.
+Specifically, our algorithm works if the unlabeled distribution is isotropic log-concave, and has the following guarantee.
+If one of the two conditions below is true:
+\begin{enumerate}
+\item the $t$-sparse $\mu_1\epsilon$-adversarial noise condition holds (see Definition~\ref{def:an}), where $\mu_1 > 0$ is some numerial constant;
+
+\item the $t$-sparse $\mu_2$-bounded noise condition holds (see Definition~\ref{def:bn}), where $\mu_2 > 0$ is some numerical constant,
+
+%\item There is a $t$-sparse linear classifier $u$ such that given any instance $x$, its associated label $y$ is
+%$\sign(u \cdot x)$ flipped with probability at most $c$, where $c$ is a numerical constant;
+\end{enumerate}
+then, with high probability, the algorithm outputs a halfspace with excess error at most $\epsilon$, and queries at most $O(t (\ln d + \ln \frac 1 \epsilon)^3 \ln \frac 1 \epsilon )$ labels. As a corollary, if there is a $t$-sparse linear classifier that
+agrees with all the labeled examples drawn from the distribution (see Definition~\ref{def:r}), the algorithm also achieves a label complexity of $O(t (\ln d + \ln \frac 1 \epsilon)^3 \ln \frac 1 \epsilon )$. In the next section, we give a detailed comparison between
+our results and related results in the literature.
+
+From a technical perspective, our algorithm combines the margin-based
+framework of~\cite{BBZ07, BL13} with iterative hard thresholding~\citep{BD09, GK09}, a technique well-studied in compressed sensing~\citep{CT06,D06}. Our analysis is based on sharp uniform concentration bounds of hinge losses over linear predictors in $\ell_1$ balls in the label query regions, which is in turn built upon classical Rademacher complexity bounds for linear prediction~\citep{KST09}.
+
+
+%For instance, \cite{LS07} proposes an efficient algorithm that learns halfspaces
+%over $t$ variables using $\poly(t, \ln d))$ samples to achieve a constant error.
+
+%\begin{itemize}
+%\item If there is a $t$-sparse linear classifier that perfectly classifies the data, and the unlabeled distribution is isotropic log-concave, then with high probability, our algorithm outputs a halfspace with error at most $\epsilon$, and queries at most $O(t \ln^3 d \ln \frac 1 \epsilon )$ labels.
+
+%\item If there is a $t$-sparse linear classifier that classifies the data with $\Omega(\epsilon)$ error, and the unlabeled distribution is isotropic log-concave, then with high probability, our algorithm outputs a halfspace with excess error at most $\epsilon$, and queries at most $O(t \ln^3 d \ln \frac 1 \epsilon )$ labels.
+
+%\item If there is a $t$-sparse linear classifier that classifies the data with $\Omega(\epsilon)$ error, and the unlabeled distribution is isotropic log-concave, then with high probability, our algorithm outputs a halfspace with excess error at most $\epsilon$, and queries at most $O(t \ln^3 d \ln \frac 1 \epsilon )$ labels.
+
+%\end{itemize}
+
+
+
+
+
+%It can been seen that the $\phi(r,\eta)$ defined in \cite{ZC14} is $O(\ln \frac r \eta)$, thus its algorithm achieves a label complexity of
+%$O(t \ln d \ln \frac 1 \epsilon)$ in the $\Omega(\epsilon)$-adversarial noise setting, and
+%$O(\frac{t\ln d}{(1-2\eta)^2} \ln \frac 1 \epsilon)$ in the $\eta$-bounded noise setting.
+
+%Are there
+
+% the algorithm in \cite{ZC14}
+
+%Similarly, \cite{B90} shows that, even if the feature space
+%is infinite dimensional, so long as the $y$ depends on a subset of variables in $x$, and each $x$ shown has only a bounded number of
+%entries, there are algorithms that acheive a finite mistake bound.
+
+% $\sign(w^* \cdot x)$, for some boolean vector $w^*$ that has at most $t$
+%nonzero entries, the Winnow algorithm of~\cite{L87} makes only $O(t^2 \ln d)$ mistakes
+
+
+
+
+%\cite{BBZ07,BL13,ZC14} & $\tilde{O}(\frac{d}{(1-2\eta)^2}\ln\frac1\epsilon)$ & $\superpoly(d,\frac1\epsilon)$ \footnotemark\\
+%\cite{ABHZ16} & $\tilde{O}(d^{O(\frac 1 {(1-2\eta)^4})}\cdot\ln\frac1\epsilon)$ & $\tilde{O}(d^{O(\frac 1 {(1-2\eta)^4})}\cdot\frac1\epsilon)$ \\
+%Our Work & $\tilde{O}(\frac{d}{(1-2\eta)^2}\ln\frac1\epsilon)$ & $\tilde{O}\del{\frac{d^2}{(1-2\eta)^3}\frac1\epsilon}$\\
+
+%We study the problem of attribute-efficient active learning of linear separators.
+%Suppose that the instances $x \in \R^d$ are drawn iid from an isotropic log-concave distribution over
+%$\R^d$, and
+% we are in the realizable case, where there is a targe linear separator $u$ such that $\| u \|_2 = 1$, and
+% for all examples $(x,y)$ drawn, $y = \sign(u \cdot x)$.
+% Our goal is to learn a linear separator $\hat{u}$ using active learning, using
+%  as few label queries as possible. Existing active learning algorithms and lower bounds show a minimax label complexity of
+%  $\Theta(d \ln \frac 1 \epsilon)$ for this problem.
+
+  %that is,
+  % we drawn unlabeled examples and perform label queries, such that the returned
+  % $\hat{u}$ has angle at most $\epsilon$ to target $u$, with probability $1-\delta$,
+
+%In this note, we focus on the setting that the target halfspace $u$ is {\em sparse}:
+%\begin{assumption}[Sparse Target Halfspace]
+%There are at most $t = o(d)$ nonzero entries of vector $u$.
+%\end{assumption} Under the sparsity assumption,
+%we hope to design computationally efficient algorithms that achieve better label complexites
+%than the worst case $O(d \ln \frac 1 \epsilon)$ bound.

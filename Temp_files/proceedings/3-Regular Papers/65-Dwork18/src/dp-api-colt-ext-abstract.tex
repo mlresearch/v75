@@ -1,0 +1,166 @@
+\documentclass[final,12pt]{colt2018}
+\usepackage{times}
+
+\usepackage{amssymb,color,hyperref}
+\usepackage{vfmacros,framed,algorithm,algorithmic}
+\newcommand{\INDSTATE}[1][1]{\STATE\hspace{#1\algorithmicindent}}
+
+
+\providecommand{\err}{\mathsf{Err}}
+\providecommand{\opt}{\mathsf{Opt}}
+\providecommand{\K}{{\mathcal K}}
+\providecommand\X{\mathcal{X}}
+\providecommand{\D}{{\mathcal D}}
+\providecommand{\cE}{{\mathcal E}}
+\providecommand{\F}{{\mathcal F}}
+\providecommand{\cP}{{\mathcal P}}
+\providecommand{\cQ}{{\mathcal Q}}
+\providecommand{\cY}{{\mathcal Y}}
+\providecommand{\cO}{{\mathcal O}}
+\providecommand{\cS}{\mathcal{S}}
+
+\newcommand{\Thr}{\mathsf{Thr}}
+\newcommand{\proj}{\mathsf{Proj}}
+\newcommand{\epw}{\mathrm{ExpPW}}
+
+
+
+
+\begin{document}
+
+\title{Privacy-preserving Prediction}
+ \coltauthor{ \Name{Cynthia Dwork} \\
+ \addr Harvard University \AND
+\Name{Vitaly Feldman}\\% \Email{vitaly@post.harvard.edu}\\
+ \addr Google Brain
+ }
+
+\date{}
+\maketitle
+
+\begin{abstract}
+Ensuring differential privacy of models learned from sensitive user data is an important goal that has been studied extensively in recent years.
+It is now known that for some basic learning problems, especially those involving high-dimensional data, producing an accurate private model requires much more data than learning without privacy. At the same time, in many applications it is not necessary to expose the model itself. Instead users may be allowed to query the prediction model on their inputs only through an appropriate interface. Here we formulate the problem of ensuring privacy of individual predictions and investigate the overheads required to achieve it in several standard models of classification and regression.
+
+We first describe a simple baseline approach based on training several models on disjoint subsets of data and using standard private aggregation techniques to predict. We show that this approach has nearly optimal sample complexity for (realizable) PAC learning of any class of Boolean functions. At the same time, without strong assumptions on the data distribution, the aggregation step introduces a substantial overhead.
+We demonstrate that this overhead can be avoided for the well-studied class of thresholds on a line and for a number of standard settings of convex regression. The analysis of our algorithm for learning thresholds relies crucially on strong generalization guarantees that we establish for all differentially private prediction algorithms.\footnotetext{Extended abstract. Full version appears as \citep[v2]{DworkFeldman18}.}
+\end{abstract}
+
+\section{Introduction and problem formulation}
+In machine learning tasks, the training data often consists of information collected
+from individuals. This data can be highly sensitive, for example in the case
+of medical or financial information, and therefore privacy-preserving data analysis is becoming an increasingly important area of study in machine learning, data mining and statistics \citep{DworkSmith:09,SarwateC:13,DworkRoth:14}. We rely on the well-studied differential privacy model of privacy that has become a de facto standard for formal understanding of privacy \citep{DworkMNS:06}.
+
+The standard setting of privacy-preserving learning aims to ensure that the model learned from the data is produced in a differently private way. Thus this approach preserves privacy even when a potential adversary has complete access to the description of the predictive model. The downside of this strong guarantee is that for some learning problems, achieving the guarantee is known to have substantial additional costs. More examples are needed to achieve the same level of accuracy (or lower accuracy is achievable for a given number of examples). In addition, private learning may require new and computationally less efficient algorithms.
+
+In this work we consider learning in a setting where the description of the learned model is not accessible to the (potentially adversarial) user(s). Instead the users have access to the model through an interface (often referred to as an API). For an input point the interface provides the value of the predictive model on that point. This view is appropriate for many existing applications where user privacy is a concern. For example, companies that collect data about their users usually expose only a cloud-based interface to the models they train on user data. Credit rating bureaus only allow access to their models through an electronic interface. In addition, it may enable new applications where privacy considerations are currently preventing the use of predictive models trained on sensitive user data. For example, in medical diagnostics a prediction interface would suffice for most applications.
+
+Allowing such restricted access may appear to pose no risk to individual privacy. However, as recently demonstrated by \citet{ShokriSSS17}, blackbox access to Amazon ML and Google prediction APIs suffice for successful membership inference attacks. Membership inference is the task in which given a user's record the goal is to infer whether the record was used for training the model. This information is known to be sensitive in several contexts. Membership inference can also be used to complete partial records revealing the values of sensitive attributes. Even more recently, \citet{LongBWBW18} demonstrated several additional successful membership inference attacks based on blackbox access. Further, \citet{CarliniLKES18} proposed a more formal way to measure the degree to which sensitive information is memorized by generative sequence models and explored several techniques to extract sensitive information using black box access to such models. The use of differentially private learning algorithms to protect against such attacks has been proposed in \citep{ShokriSSS17} and briefly explored in \citep{CarliniLKES18}.
+
+We now describe the setting more formally. For a prediction problem over a domain $X$ and label space $Y$, a prediction interface is an algorithm that has access to a dataset $S \in (X\times Y)^n$ and given a query point $x\in X$ outputs a value $y \in Y$. The algorithm can be queried multiple times and is stateful (namely, responses can depend on previous queries). We define the privacy of such an interface in the same way as usually done for interactive algorithms. Namely, for a prediction interface $M$ and a stateful query generating algorithm $Q$ we denote by $(Q\rightleftarrows M(S))$ the sequence of queries and responses generated in the interaction of $Q$ and $M$ on dataset $S$.
+\begin{defn}[Private prediction interface]
+A prediction interface $M$, is $(\eps,\delta)$-differentially private if for every interactive query generating algorithm $Q$, the output $(Q\rightleftarrows M(S))$ is $(\eps,\delta)$-differentially private with respect to dataset $S$.
+\end{defn}
+
+While the problem setting has many facets that merit investigation, we focus on perhaps the most basic question: what is the cost of ensuring privacy of a single prediction. In other words, we focus on the problem of answering a single prediction query. Composition properties of differential privacy imply that such an algorithm can be used to answer multiple queries with privacy parameters that degrade gracefully with the number of queries \citep{DworkRoth:14}. Therefore such an algorithm is a natural building block for constructing an algorithm that can answer multiple queries. Naturally, better ways of dealing with sequences of queries might exist and the general topic of answering interactive sequences of queries has been studied extensively in the differential privacy literature (see \citep{DworkRoth:14} for an overview).
+
+An algorithm $M$ that answers a single query $x$ defines a randomized prediction at $x$ and hence such an algorithm implicitly defines a learning algorithm that outputs a randomized predictor $h(x) = M(S,x)$.
+\begin{defn}
+\label{def:prediction-privacy}
+Let $M$ be an algorithm that given a dataset $S\in (X\times Y)^n$ and a point $x$ produces a value in $Y$. We say that $M$ is {\em  $(\eps,\delta)$-differentially private prediction} algorithm if for every $x \in X$, the output $M(S,x)$ is $(\eps,\delta)$-differentially private with respect to $S$. We use $M(S)$ to refer to the (randomized) function $M(S,\cdot)$.
+\end{defn}
+
+This definition allows us to treat this building block in the same way as regular learning algorithms and discuss it in the context of standard statistical learning models.
+
+Two standard and closely related models for classification we will look at are PAC (or realizable) learning  \citep{Valiant:84} and agnostic \citep{Haussler:92,KearnsSS:94} learning.  In the PAC learning model the algorithm is given random examples in which each point is sampled i.i.d.~from some unknown distribution over the domain and is labeled by an unknown function from a set of functions $C$. In the agnostic learning model the algorithm is given examples sampled i.i.d.~from an arbitrary (and unknown) distribution over labeled points. The goal of the learning algorithm in both models is to output a hypothesis whose prediction error on the distribution from which examples are sampled is within additive $\alpha$ of the prediction error of the best function in $C$ (which is $0$ in the PAC model).
+
+We will also consider a more general regression setting in which we are given a loss function $\ell: \R\times Y \rightarrow \R$ and the goal is to design a private prediction algorithm $M$ that minimizes  $$\cE_{\cP}[\ell(M(S)] = \E_{M, (x,y) \sim \cP}[\ell(M(S,x),y)] ,$$
+where $\cP$ is an unknown probability distribution  over $X\times Y$.
+
+
+\section{Overview of the results}
+We first consider a natural ``baseline'' approach to this problem based on private aggregation of non-private learning algorithms.
+
+\subsection{Private aggregation of non-private models}
+To produce a prediction differentially privately we partition the dataset $S$ into several subsamples $S_1,\ldots,S_r$ and run a non-private learning algorithm on each of those subsamples too obtain predictors $f_1,\ldots,f_r$. Now given a point $x$ we use a differentially private aggregation technique on values $f_1(x),\ldots,f_r(x)$ and output the result. Several such subsample-and-aggregate techniques are known \citep{NissimRS07,DworkLei:09,SmithT13,DworkRoth:14} that carefully exploit properties of the distribution over results on subsamples. A significant advantage of this approach is that it does not require a new learning algorithm and hence is easy to implement (there is an additional computational cost that is easy to parallelize).
+
+Obviously, using $r$ subsamples requires more data than non-private learning and therefore it is natural to ask whether this approach is optimal and how it compares to differentially private learning in the standard setting. We discuss these questions in the context of specific problems below.
+
+\paragraph{PAC Learning:}
+For PAC learning (or realizable case) accurate models $f_1,\ldots,f_r$ have to be close to the true labeling function $f$ (that is, they disagree with probability at most $\alpha$).
+In particular, the fraction of points on which more than $1/4$ of the predictors output the wrong label cannot be more than $4\alpha$. Outputting the correct label with privacy is easy in this setting and we do this using a soft majority vote (or, equivalently, the exponential mechanism \citep{McSherryTalwar:07} on the label counts). A number of other approaches would give comparable guarantees. A simple analysis shows that using $r = O(\ln(1/\alpha)/\eps)$ this reduction ensures $\eps$-differentially private prediction for a formal statement).
+
+As an immediate corollary of this reduction and standard bounds on the sample complexity of PAC learning we obtain the following upper bound.% on the sample complexity of $\eps$-differential private prediction for PAC learning.
+\begin{cor}
+\label{cor:pac}
+Let $C$ be a class of Boolean functions of VC dimension $d$. Then for all $\alpha,\beta,\eps > 0$, there exists an $\eps$-differentially private prediction algorithm $M$ that PAC learns $C$ with error $\alpha$ and confidence $1-\beta$ given $n = \tilde O\lp\frac{d + \log(1/\beta)}{\eps\alpha}\rp$ examples.
+\end{cor}
+
+It turns out that this simple approach is essentially optimal in the worst case. Specifically, we prove that the sample complexity of this problem is $\Omega(d/(\eps\alpha))$ even when $\delta$ is as large as $\eps/3$.
+\begin{thm}
+\label{thm:pac-lower-bound}
+Let $C$ be a class of Boolean functions of VC dimension $d$. Then for all $\alpha,\eps > 0$, any $(\eps,\eps/3)$-differentially private prediction algorithm $M$ that PAC learns $C$ with error $\alpha$ and confidence $1/12$ requires $n=\Omega(d/(\eps\alpha))$ examples.
+\end{thm}
+
+For comparison, \citet{KasiviswanathanLNRS11} showed that the sample complexity of differentially privately PAC learning a class $C$ over domain $X$ is $O(\log(|C|)/(\eps\alpha))$. By Sauer's lemma, $\log(|C|) = O(d \cdot \log(|X|))$ and therefore the multiplicative gap between these two measures can be as large as $\log(|X|)$. The sample complexity of $\eps$-differentially private PAC learning was subsequently shown to be $\tilde{\Theta}(R/(\eps\alpha))$, where $R$ is the so-called representation dimension of $C$ \citep{BeimelNS:13}. However, as shown in \citep{FeldmanXiao15}, for many classes the gap between $R$ and the VC dimension is still roughly $\log(|X|)$. For example, the representation dimension of linear threshold functions over $[N]^p$ is $p^2 \cdot \log N$ whereas the VC dimension is just $p$.
+
+We remark that the technique we use to prove the lower bound in Thm.~\ref{thm:pac-lower-bound} is different from those used for proving lower bounds in the standard setting of learning with privacy.
+
+\paragraph{Agnostic learning:}
+In agnostic learning, the labels $f_1(x),\ldots,f_r(x)$ no do not necessarily agree on most points $x$ and taking the majority vote may even reduce the accuracy. In this setting we predict by first averaging the non-private predictions to obtain $v(x)=\fr{r}(f_1(x)+\cdots+f_r(x))$ and then outputting $1$ with probability $v(x) + \zeta$ (truncated to range $[0,1]$), where $\zeta$ is a Laplace noise variable. It is not hard to show that for $r=O(1/(\eps\alpha))$, this approach ensures that the prediction will be $\eps$-differentially private and the addition of noise increases the prediction error by at most an extra $\alpha$ term. As a corollary of this reduction, we obtain the following upper-bound on the sample complexity in this setting.
+\begin{cor}
+\label{cor:agnostic-sample-complexity-intro}
+Let $C$ be a class of Boolean functions of VC dimension $d$. Then for all $\alpha,\beta,\eps > 0$ there exists an $\eps$-differentially private prediction algorithm $M$ that agnostically learns $C$ with excess error $\alpha$ and confidence $1-\beta$ given $n = \tilde O\lp\frac{d  + \log(1/\beta)}{\eps\alpha^3}\rp$ examples.
+\end{cor}
+In this case the upper bound is much worse than the lower bound of $\Omega(d/\alpha^2 + d/(\eps\alpha))$ implied by Thm.~\ref{thm:pac-lower-bound}. For comparison, $\eps$-differentially private agnostic learning can be done using $\tilde O(d/\alpha^2 + R/(\eps\alpha))$ examples, where $R$ is the representation dimension of $C$ mentioned above \citep{BeimelNS:13,FeldmanXiao15}. As a result, for classes such that $R=O(d)$ a differentially private learning algorithm matches the lower bound for private prediction. This leads to a natural question of whether it is possible to match the lower bound for all classes $C$. While we do not answer this question for arbitrary classes $C$, we give an example of an algorithm that goes beyond these two approaches. Specifically, it agnostically learns $C$ with $\eps$-private prediction using $\tilde O(d/\alpha^2 + d/(\eps\alpha))$ examples whereas learning $C$ with privacy in the standard model requires an infinite number of examples.
+
+
+\paragraph{Convex regression:}
+Our analysis of agnostic learning can be seen as a special case of a more general analysis of prediction problems with convex loss functions. Specifically, the aggregation by averaging can be seen as a way to increase the {\em uniform prediction stability} of a learning algorithm. A learning algorithm is uniformly prediction stable with rate $\gamma$ if for predictors $f_S$ and $f_{S'}$ produced on any pair of datasets $S,S'$ that differ on a single element and any point $x$, $|f_S(x) - f_{S'}(x)| \leq \gamma$. As follows immediately from this definition, a uniformly prediction stable learning algorithm can be converted to a differentially private prediction algorithm simply by adding Laplace (or Gaussian) noise to the prediction. Hence it reduces our problem to the problem of finding a uniformly prediction stable learning algorithm with sufficiently low rate of stability. Aggregation by averaging the predictors obtained by running a learning algorithm on $r$ disjoint datasets can be seen as improving its uniform prediction stability by a factor of $r$. Convexity of the loss function, in turn, ensures that such averaging preserves the guarantees on the expected loss of the algorithm.
+
+We demonstrate how this general approach can be applied to convex regression problems.  Specifically, we consider problems in which we have a family of predictors $\{ f(w,\cdot)\}_{w\in \K}$ parameterized by a vector $w \in \K $, where $\K \subset \R^d$ is some convex body, $\ell$ is a convex loss function and $\ell(f(\cdot,x),y)$ is a convex function of $w$ over $\K$ for all $(x,y) \in X\times Y$. The goal is to find $\hat{w}$ such that $$\E_{(x,y)\sim\cP}[\ell(f(\hat{w},x),y)] \leq \min_{w \in \K} \E_{(x,y)\sim\cP}[\ell(f(w,x),y)]+\alpha,$$  where $\cP$ is an unknown distribution over examples. This setting captures many important learning problems and has also been extensively investigated in the privacy literature (see \citep{ChaudhuriMS11,KiferST12,BassilyST14,TalwarTZ15,WangYX17} and references therein). For the purpose of comparison with sample complexity bounds known in this literature we restrict our attention to a basic setting in which $\K$ is a subset of the unit Euclidean ball and $\ell(f(w,x),y)$ is 1-Lipschitz in $w$ for all $(x,y)$ in support of $\cP$. For this setting it is known that $\tilde{O}(d/(\eps \alpha^2))$ samples suffice to solve the problem with $\eps$-differential privacy and $\tilde{O}(\sqrt{d}\log^4(1/\delta)/(\eps \alpha^2))$ samples suffice for $(\eps,\delta)$-differential privacy \citep{BassilyST14}. Further, such dependence on the dimension is optimal in both settings \citep{BassilyST14}.
+
+
+The dependence on the dimension is not necessary for non-private learning in this setting. In addition, we can exploit known stability analyses to reduce (or even eliminate) the need to use the aggregation step. By plugging the known stability results based on strong convexity and/or \cite{BousquettE02,ShwartzSSS10,HardtRS16}, we demonstrate that convex regression problems of this type can be solved with $\eps$-differentially private prediction using $O(1/(\eps\alpha^2))$ examples. We also demonstrate that smoothness of the loss function $\ell$ can be used to improve the dependence on $\eps$.
+We note that stability of the optimal solution of a strongly convex problem has been used to achieve differential privacy in multiple prior works starting with the pioneering work of \citet{ChaudhuriMS11}. Stability of gradient descent on convex smooth functions has also been recently used to obtain privacy guarantees \citep{WuLKCJN17}.
+
+
+\subsection{Beyond aggregation: learning thresholds}
+The class of linear thresholds $\Thr$ is defined over a subset of reals and consists of  indicator functions of ``$x \geq a$" for all $a \in \R$. Without loss of generality, we consider such functions over the set $[N]=\{1,\ldots,N\}$.  While the class is very simple, learning it with privacy has proved to be rather challenging and some basic questions are still not fully resolved  \citep{BeimelKN:10,ChaudhuriHsu:11,BeimelNS:13,FeldmanXiao15,BunNSV15}. It is known that $\eps$-differentially private PAC learning of $\Thr$  requires $\Omega(\log(N)/(\eps\alpha))$ examples \citep{FeldmanXiao15} and {\em proper} $(\eps,\delta)$ differentially private PAC learning requires $\Omega(\log^*(N)/(\eps\alpha))$ examples \citep{BunNSV15} (no lower bounds for non-proper learning and $\delta>0$ case are known). Note that the VC dimension of this class is just $1$.
+
+We give an $\eps$-differentially private prediction algorithm for agnostic learning of this class with the following guarantee:
+\begin{thm}
+\label{thm:thr-intro}
+For any $\alpha,\eps > (0,1]$ and $N\in \N$, there exists an $\eps$-differentially private prediction algorithm $M$ that given $n \geq \frac{12 \ln(2/\alpha)}{\alpha \eps}$ examples from an arbitrary distribution $\cP$ over $[N]\times \zo$ guarantees:
+$$\E_{S \sim \cP^n}\lb \err_\cP(M(S)) \rb  \leq e^\eps \cdot (\opt_\cP(\Thr) + \alpha) .$$
+\end{thm}
+Note that this statement implies an upper bound of $n=O(\ln(1/\alpha)/(\alpha\eps))$ in the realizable case when $\opt_\cP(\Thr) = 0$ and also an upper bound of $n=O(\ln(1/\alpha)/(\alpha\eps) + \ln(1/\alpha)/\alpha^2)$ in the agnostic setting. The $\tilde O(1/\alpha^2)$ term arises from having to set $\eps < \alpha$ to ensure that the expected error is at most $\opt_\cP(\Thr) + O(\alpha)$.
+Our algorithm can also handle unions of $k$ intervals (at the expense of an additional factor $k$ in the sample complexity).
+
+At a high level our algorithm works as follows. First, the examples are sorted. To determine the probability with which to output $1$ on point $x$ the algorithm traverses the examples on points smaller than $x$ in increasing order. Starting from bias $1/2$ the algorithm increases or decreases the current bias by a factor of (roughly) $e^\eps$ for each example it traverses. The bias is increased if the label of the example is 1 and decreased otherwise. Importantly, the bias is projected back to the interval $[\alpha,1-\alpha]$ after each update. The algorithm outputs 1 with probability obtained at the end of this process. While the prediction privacy of our algorithm is relatively easy to establish, the analysis of its error is more delicate and we are not aware of similar algorithms having been proposed for this problem. Furthermore, our analysis only bounds the empirical error of this algorithm. The hypothesis produced by the algorithm is sufficiently complicated that it would not be possible to ensure generalization using VC dimension or similar techniques. Remarkably, the fact that our algorithm is prediction private allows us to prove that it generalizes.
+
+\subsection{Generalization}
+It has been known for a while that differential privacy is a notion of stability and hence implies bounds on the expectation of generalization error. Recent work in the context of adaptive data analysis has substantially strengthened this connection, proving that differential privacy ensures generalization with high probability \citep{DworkFHPRR14:arxiv,BassilyNSSSU16,FeldmanS17}. Prediction privacy can also be seen as a notion of stability that is weaker than differential privacy but stronger than uniform prediction stability. We show how to derive relatively strong generalization guarantees from this notion of stability. These guarantees are stronger than those known for classical notions of stability (\eg \citep{BousquettE02,ShwartzSSS10}) but not as strong as those proved for differential privacy. Specifically, our generalization results imply that for every non-negative loss function $\ell$, a moment $k \geq 1$, and an $\eps$-differentially private prediction algorithm $M$:
+$$\E_{S,S'\sim \cP^n,} \lb \lp \cE_{S'}[\ell(M(S))]\rp^k \rb \leq e^{k^2 \eps} \cdot \E_{S\sim \cP^n} \lb \lp\cE_{S}[\ell(M(S))]\rp^k \rb ,$$
+where $\cE_{S}[\ell(M(S)]$ denotes the expected empirical loss of $M(S)$ on $S$. Note that on the left hand side we are bounding the average loss on an independently drawn set of examples $S'$ which is tightly concentrated around the expected loss $\cE_{\cP}[\ell(M(S)]$. For comparison, $\eps$-differential privacy gives a similar bound with $e^{k\eps}$ factor instead of $e^{k^2\eps}$ \citep{DworkFHPRR14:arxiv}. The bound above is stated using the $k=1$ version of this result. However this generalization bound implies that loss is also well concentrated. We give an example of how to derive high probability bounds on the generalization error from this moment bound.
+
+
+
+
+\subsection{Related work}
+\label{sec:related}
+\citet{PathakRR10} consider secure and differentially private aggregation of non-private linear models held by multiple mistrusting parties. They achieve it by computing the average model and adding noise to it. They do not consider accuracy guarantees of their approach formally.
+
+To the best of our knowledge, the privacy-preserving aggregation of non-private predictions to produce privacy-preserving predictions was first investigated by Bilenko, Dwork, Muthukrishnan, Rothblum, Thakurta and Wang in 2014\footnote{This was the core of a larger project on privacy-preserving click prediction that did not survive the closing of the Silicon Valley lab.}.   Bilenko \etal, obtained high levels of composition by exploiting the frequently high degree of (near) consensus among the predictions of the non-private models via a variant of the sparse-vector technique~\cite{DworkRoth:14}.  Our work shares the same goal of generating differentially private predictions. At the same time we formalize the general problem of learning with differentially private predictions and focus on the sample complexity of making a single prediction. In addition, we demonstrate approaches that go beyond privacy-preserving aggregation.
+
+%Recall that in private prediction, it is the privacy of the training data for the predictor (model) that is being protected. %A different goal is to generate a predictor, or a model, while protecting the privacy of the training data.
+
+Aggregation of non-private models to produce labels while preserving privacy was also used in recent works of \citet{HammCB16} and, subsequently, \citet{PapernotAEGT17,papernot2018scalable} to give a new semi-supervised approach to differentially private learning. Specifically, their approach is predicated on availability of public {\em unlabeled} dataset $Z$. The dataset $Z$ is labeled using differentially-private aggregation of labels provided by models trained on the sensitive dataset $S$. The labeled data is used to train a new model. Since differential privacy is closed under post-processing, this new model is privacy-preserving for $S$ (but not for $Z$).
+The works of Papernot et al. \citep{PapernotAEGT17,papernot2018scalable} deal primarily with techniques for accurately bounding the privacy parameters while ensuring accurate prediction on benchmark datasets. \citet{HammCB16} also formally examine additional error that noisy aggregation introduces and explicitly rely on stability of strongly-convex regression problems to provide formal guarantees for their approach. Their framework and the guarantees are incomparable to ours, and, in particular, they do not avoid dependence on the dimension.
+
+In a recent and independent work, \citet{BassilyTT:18} consider the formal guarantees for answering a sequence of prediction queries using differentially private aggregation techniques. They demonstrate that given a non-private learning algorithm has error of at most $\alpha$ (such as in the PAC model), there exists an algorithm that answers $m$ prediction queries for points chosen i.i.d.~from the same distribution with error $O(\alpha)$ and privacy parameter $\eps$ scaling as $\sqrt{m \alpha} \cdot \log m$ (for comparison, a direct application of composition theorems for differential privacy implies $\sqrt{m}$ scaling for an arbitrary sequence of queries). They then analyze the sample complexity of semi-supervised (or, equivalently, label-private) learning algorithm that is obtained by labeling a public unlabeled dataset using their algorithm for answering prediction queries.
+
+We remark that all these works do not examine the problem of private prediction itself and focus on the aggregation-based approaches. Recall that in private prediction, it is the privacy of the training data for the predictor (model) that is being protected. 
+\bibliography{vf-allrefs-central,dp-api}
+
+\end{document}

@@ -1,0 +1,206 @@
+\section{Random Rotations and Sparse PCA}
+\label{s:rotations}
+
+In this section, we deduce tight lower bounds for detection in sparse PCA when $k \gg \sqrt{n}$. We also show a suboptimal lower bound when $k \ll \sqrt{n}$ matching the results of \cite{berthet2013complexity} and \cite{gao2017sparse}. In both cases, we reduce from biclustering and rank-1 submatrix to biased and unbiased variants of sparse PCA. The reductions in this section are relatively simple, with most of the work behind the lower bounds we show residing in the reductions from PC to biclustering and rank-1 submatrix. This illustrates the usefulness of using natural problems as intermediates in constructing average-case reductions. The lower bounds we prove make use of the following theorem of Diaconis and Freedman showing that the first $m$ coordinates of a unit vector in $n$ dimensions where $m \ll n$ are close to independent Gaussians in total variation \cite{diaconis1987dozen}.
+
+\begin{theorem}[Diaconis and Freedman \cite{diaconis1987dozen}]
+Suppose $(v_1, v_2, \dots, v_n)$ is uniformly distributed according to the Haar measure on $\mathbb{S}^{n-1}$. Then for each $1 \le m \le n - 4$,
+$$\TV\left( \mL\left( v_1, v_2, \dots, v_m \right), N(0, n^{-1})^{\otimes m} \right) \le \frac{2(m+3)}{n - m - 3}$$
+\end{theorem}
+
+The next lemma is the crucial ingredient in the reductions of this section. Note that the procedure $\textsc{Random-Rotation}$ in Figure \ref{fig:randrot} requires sampling the Haar measure on $\mathcal{O}_{\tau n}$. This can be achieved efficiently by iteratively sampling a Gaussian, projecting it onto the orthogonal complement of the vectors chosen so far, normalizing it and adding it to the current set. Repeating this for $n$ iterations yields an implementation for the sampling part of Step 2 in Figure \ref{fig:randrot}. In the next lemma, we show that $\textsc{Random-Rotation}$ takes an instance $\lambda \cdot uv^\top + N(0, 1)^{\otimes m \times n}$ of rank-1 submatrix to an $m \times n$ matrix with its $n$ columns sampled i.i.d. from $N(0, I_m + \theta vv^\top)$.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{Random-Rotation}
+
+\vspace{2mm}
+
+\textit{Inputs}: Matrix $M \in \mathbb{R}^{m \times n}$, parameter $\tau \in \mathbb{N}$
+\begin{enumerate}
+\item Construct the $m \times \tau n$ matrix $M'$ such that the leftmost $m \times n$ submatrix of $M'$ is $M$ and the remaining entries of $M'$ are sampled i.i.d. from $N(0, 1)$
+\item Let $R$ be the leftmost $\tau n \times n$ submatrix of a random orthogonal matrix sampled from the normalized Haar measure on the orthogonal group $\mathcal{O}_{\tau n}$
+\item Output $M'R$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Random rotation procedure in Lemma \ref{lem:randrot}.}
+\label{fig:randrot}
+\end{figure}
+
+\begin{lemma}[Random Rotation] \label{lem:randrot}
+Let $\tau : \mathbb{N} \to \mathbb{N}$ be an arbitrary function with $\tau(n) \to \infty$ as $n \to \infty$. Consider the map $\phi : \mathbb{R}^{m \times n} \to \mathbb{R}^{m \times n}$ that sends $M$ to $\textsc{Random-Rotation}$ with inputs $M$ and $\tau$. It follows that $\phi(N(0, 1)^{\otimes m \times n}) \sim N(0, 1)^{\otimes m \times n}$ and for any unit vectors $u \in \mathbb{R}^m, v \in \mathbb{R}^n$ we have that
+$$\TV\left( \phi\left( \lambda \cdot uv^\top + N(0, 1)^{\otimes m \times n} \right), N\left(0, I_m + \frac{\lambda^2}{\tau n} \cdot uu^\top\right)^{\otimes n} \right) \le \frac{2(n + 3)}{\tau n - n - 3}$$
+\end{lemma}
+
+\begin{proof}
+Let $R' \in \mathcal{O}_{\tau n}$ be the original $\tau n \times \tau n$ sampled in Step 2 of $\textsc{Random-Rotation}$ and let $R$ be its upper $\tau n \times n$ submatrix. Let $M$ and $M'$ be the matrices input to $\textsc{Random-Rotation}$ and computed in Step 1, respectively, as shown in Figure \ref{fig:randrot}. If $M \sim N(0, 1)^{\otimes m \times n}$, then it follows that $M' \sim N(0, 1)^{\otimes m \times \tau n}$. Since the rows of $M'$ are independent and distributed according to the isotropic distribution $N(0, 1)^{\otimes \tau n}$, multiplication on the right by any orthogonal matrix leaves the distribution of $M'$ invariant. Therefore $M' R' \sim N(0, 1)^{\otimes m \times \tau n}$ and since $M' R$ consists of the first $n$ columns of $M'R'$, it follows that $\phi(M) = M'R \sim N(0, 1)^{\otimes m \times n}$.
+
+Now suppose that $M$ is distributed as $\lambda \cdot uv^\top + N(0, 1)^{\otimes m \times n}$ for some unit vectors $u, v$. Let $v'$ be the unit vector in $\mathbb{R}^{\tau n}$ formed by appending $\tau n - n$ zeros to the end of $v$. It follows that $M'$ is distributed as $\lambda \cdot uv'^\top + N(0, 1)^{\otimes m \times \tau n}$. Let $M' = \lambda \cdot uv'^\top + W$ where $W \sim N(0, 1)^{\otimes m \times \tau n}$. Now let $W' = WS^{-1}$ where $S \in \mathcal{O}_{\tau n}$ is sampled according to the Haar measure and independently of $R'$. Observe that
+$$M'R' = \lambda \cdot u \cdot \left( R'^\top v' \right)^\top + W' S R'$$
+Now note that conditioned on $R'$, the product $SR'$ is distributed according to the Haar measure on $\mathcal{O}_{\tau n}$. This implies that $SR'$ is independent of $R'$. Therefore $W' S R'$ is independent of $R'$ and distributed according to $N(0, 1)^{\otimes m \times \tau n}$. This also implies that $R'^\top v$ is independent of $W' S R'$ and distributed uniformly over $\mathbb{S}^{\tau n - 1}$. Let $r \in \mathbb{R}^n$ denote the vector consisting of the first $n$ coordinates of $R'^\top v'$ and let $W''$ denote the $m \times n$ matrix consisting of the first $n$ columns of $W' S R'$. It follows that $\phi(M) = M' R = \lambda \cdot u r^\top + W''$ where $r$ and $W''$ are independent. Now let $g \in \mathbb{R}^n$ be a Gaussian vector with entries i.i.d. sampled from $N(0, n^{-1})$. Also let $Z = \lambda \cdot ug^\top + W''$ and note that by Diaconis-Freedman's theorem and coupling the noise terms $W''$, the data processing inequality implies
+$$\TV\left( \mL\left( \lambda \cdot ug^\top + W'' \right), \mL\left( \lambda \cdot ur^\top + W'' \right) \right) \le \TV\left( \mL(r), \mL(g) \right) \le \frac{2(n + 3)}{\tau n - n - 3}$$
+Now note that since the entries of $g$ are independent, the matrix $\lambda \cdot u g^\top + W''$ has independent columns. Its $i$th row has jointly Gaussian entries with covariance matrix
+\begin{align*}
+\bE\left[ (\lambda \cdot u g_i + W_i) (\lambda \cdot u g_i + W_i)^\top \right] &= \bE\left[ \lambda^2 \cdot uu^\top g_i^2 + \lambda \cdot g_i  \cdot u W_i^\top + \lambda \cdot g_i \cdot W_i u^\top + W_i W_i^\top \right] \\
+&= \frac{\lambda^2}{\tau n} \cdot uu^\top + I_m
+\end{align*}
+Therefore $\lambda \cdot ug^\top + W'' \sim N\left(0, I_m + \frac{\lambda^2}{\tau n} \cdot uu^\top\right)^{\otimes n}$. Combining these results yields that
+$$\TV\left( \phi(M), N\left(0, I_m + \frac{\lambda^2}{\tau n} \cdot uu^\top\right)^{\otimes n} \right) \le \frac{2(n + 3)}{\tau n - n - 3}$$
+which completes the proof of the lemma.
+\end{proof}
+
+Applying reflection cloning to produce an instance of rank-1 submatrix and then randomly rotating to obtain an instance of sparse PCA yields a reduction from $\textsc{PC}$ to $\textsc{SPCA}$ as given in $\textsc{SPCA-High-Sparsity}$. This establishes tight lower bounds in the regime $k \gg \sqrt{n}$. This reduction is stated in the next lemma, which takes an instance of $\textsc{PC}(n, k, 1/2)$ to an instance of sparse PCA with sparsity $2^\ell k$ and $\theta = \frac{\mu^2 k^2}{2\tau n}$ where $\tau$ and $\mu$ can be taken to be polylogarithmically small in $n$.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{SPCA-High-Sparsity}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, number of iterations $\ell$, function $\tau : \mathbb{N} \to \mathbb{N}$ with $\tau(n) \to \infty$
+\begin{enumerate}
+\item Compute the output $M$ of $\textsc{ROS-Reduction}$ applied to $G$ with $\ell$ iterations
+\item Output the matrix returned by $\textsc{Random-Rotation}$ applied with inputs $M$ and $\tau$
+\end{enumerate}
+\vspace{2mm}
+\textbf{Algorithm} \textsc{SPCA-Low-Sparsity}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, number of iterations $\ell$, function $\tau : \mathbb{N} \to \mathbb{N}$ with $\tau(n) \to \infty$
+\begin{enumerate}
+\item Compute the output $M$ of $\textsc{BC-Reduction}$ applied to $G$ with $\ell$ iterations
+\item Output the matrix returned by $\textsc{Random-Rotation}$ applied with inputs $M$ and $\tau$
+\end{enumerate}
+\vspace{2mm}
+\textbf{Algorithm} \textsc{SPCA-Recovery}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, density bias $\rho$, function $\tau : \mathbb{N} \to \mathbb{N}$ with $\tau(n) \to \infty$
+\begin{enumerate}
+\item Let $M$ be the output of $\textsc{BC-Recovery}$ applied to $G$ with density bias $\rho$
+\item Output the matrix returned by $\textsc{Random-Rotation}$ applied with inputs $M$ and $\tau$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reductions to $\textsc{SPCA}_D$ when $k \gtrsim \sqrt{n}$ and $k \lesssim \sqrt{n}$ in Lemmas \ref{lem:hsspca} and \ref{lem:lsspca} and reduction to $\textsc{SPCA}_{R}$ in Theorem \ref{thm:spcarec}.}
+\label{fig:randrot}
+\end{figure}
+
+\begin{lemma} \label{lem:hsspca}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large,
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+and $\tau : \mathbb{N} \to \mathbb{N}$ is a function with $\tau(n) \to \infty$ as $n \to \infty$. Then $\phi = \textsc{SPCA-High-Sparsity}$ is a randomized polynomial time computable map $\phi : \mG_n \to \mathbb{R}^{n \times n}$ such that if $G$ is an instance of $\text{PC}(n, k, 1/2)$ then under $H_0$, it holds that $\phi(G) \sim N(0, 1)^{\otimes n \times n}$ and under $H_1$, there is a prior $\pi$ such that
+$$\TV\left( \mL_{H_1}(\phi(G)), \int N\left(0, I_n + \frac{\mu^2 k^2}{2 \tau n} \cdot uu^\top\right)^{\otimes n} d\pi(u) \right) \le \frac{2(n + 3)}{\tau n - n - 3} + O\left( \frac{1}{\sqrt{\log n}} + k^{-1} \right)$$
+where $\pi$ is supported on unit vectors in $\mathcal{V}_{n, 2^\ell k}$.
+\end{lemma}
+
+\begin{proof}
+Let $M'$ be the matrix output in Step 2. Under $H_0$, Lemma \ref{lem:ros} implies that $M \sim N(0, 1)^{\otimes n \times n}$ and Lemma \ref{lem:randrot} implies that we also have $M' \sim N(0, 1)^{\otimes n \times n}$. It suffices to consider the case of $H_1$. By Lemma \ref{lem:ros}, 
+$$\TV\left( \mL_{H_1}(M), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot  uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi'(u, v) \right) = O\left( \frac{1}{\sqrt{\log n}} + k^{-1} \right)$$
+where $\pi'(u, v)$ is a prior supported on pairs of unit vectors in $\mathcal{V}_{n, 2^\ell k}$. Let $W \sim \frac{\mu k}{\sqrt{2}} \cdot  uv^\top + N(0, 1)^{\otimes n \times n}$ where $(u, v)$ is distributed according to $\pi'$ and let $\varphi$ denote the map in Step 2 taking $A$ to $\textsc{Random-Rotation}(A, \tau)$. Conditioning on $(u, v)$ yields by Lemma \ref{lem:randrot} that
+$$\TV\left( \mL\left( \varphi(W) | u, v \right), N\left(0, I_n + \frac{\mu^2 k^2}{2 \tau n} \cdot uu^\top\right)^{\otimes n} \right) \le \frac{2(n + 3)}{\tau n - n - 3}$$
+Now consider the measure $\pi(u) = \bE_{v} \pi'(u, v)$ given by marginalizing over $v$ in $\pi'$. The triangle inequality implies that
+\begin{align*}
+&\TV\left( \mL(\varphi(W)), \int N\left(0, I_n + \frac{\mu^2 k^2}{2 \tau n} \cdot uu^\top\right)^{\otimes n} d\pi(u) \right) \\
+&\quad \quad \le \bE_{u, v} \left[ \TV\left( \mL\left( \varphi(W) | u, v \right), N\left(0, I_n + \frac{\mu^2 k^2}{2 \tau n} \cdot uu^\top\right)^{\otimes n} \right) \right] \le \frac{2(n + 3)}{\tau n - n - 3}
+\end{align*}
+By the data processing inequality and triangle inequality, we now have that
+\begin{align*}
+&\TV\left( \mL_{H_1}(\phi(G)), \int N\left(0, I_n + \frac{\mu^2 k^2}{2 \tau n} \cdot uu^\top\right)^{\otimes n} d\pi(u) \right) \\
+&\quad \quad \le \TV\left( \mL_{H_1}(M), \mL(W) \right) + \TV\left( \mL(\varphi(W)), \int N\left(0, I_n + \frac{\mu^2 k^2}{2 \tau n} \cdot uu^\top\right)^{\otimes n} d\pi(u) \right) \\
+&\quad \quad \le \frac{2(n + 3)}{\tau n - n - 3} + O\left( \frac{1}{\sqrt{\log n}} + k^{-1} \right)
+\end{align*}
+since $\mL_{H_1}(\phi(G)) \sim \mL_{H_1}(\varphi(M))$. This completes the proof of the lemma.
+\end{proof}
+
+The next lemma gives the guarantees of $\textsc{SPCA-Low-Sparsity}$, which maps from planted clique to an instance of biclustering and then to sparse PCA. This reduction shows hardness for the canonical simple vs. simple hypothesis testing formulation of sparse PCA. In particular, the output in Lemma \ref{lem:randrot} is close in total variation to the simple vs. simple model $\textsc{UBSPCA}$. After multiplying the rows of the matrix output in Lemma \ref{lem:randrot} by $\pm 1$, each with probability $1/2$, this also yields a reduction to $\textsc{USPCA}$. The lemma can be proven with the same applications of the triangle and data processing inequalities as in Lemma \ref{lem:hsspca} using the total variation bound in Lemma \ref{lem:bc} instead of Lemma \ref{lem:ros}. 
+
+Before stating the lemma, we determine the parameters of the sparse PCA instance that the mapping $\textsc{SPCA-Low-Sparsity}$ produces. Under $H_1$, $\textsc{BC-Reduction}$ takes an instance of $G(n, k, 1/2)$ approximately in total variation to $2^{-\ell-1/2} \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n}$ where $S, T \subseteq [2^\ell n]$ have size $2^\ell k$ and $\mu$ is subpolynomial in $n$. This matrix can be rewritten as $2^{-1/2} \mu k \cdot uv^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n}$ where $u, v$ are $2^\ell k$-sparse unit vectors. Now $\textsc{Random-Rotation}$ takes this matrix to an instance of $\textsc{UBSPCA}_D$ with the resulting parameters $d = n' = 2^\ell n$, $k' = 2^\ell k$ and $\theta = \frac{\mu^2 k^2}{2^{\ell + 1} \tau n}$ where $\tau, \mu$ are subpolynomial in $n$.
+
+\begin{lemma} \label{lem:lsspca}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large,
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+and $\tau : \mathbb{N} \to \mathbb{N}$ is a function with $\tau(n) \to \infty$ as $n \to \infty$. Then $\phi = \textsc{SPCA-Low-Sparsity}$ is a randomized polynomial time computable map $\phi : \mG_n \to \mathbb{R}^{2^\ell n \times 2^\ell n}$ such that if $G$ is an instance of $\text{PC}(n, k, 1/2)$ then under $H_0$, it holds that $\phi(G) \sim N(0, 1)^{\otimes 2^\ell n \times 2^\ell n}$ and
+$$\TV\left( \mL_{H_1}(\phi(G)), \int N\left(0, I_n + \frac{\mu^2 k^2}{2^{\ell + 1} \tau n} \cdot uu^\top\right)^{\otimes n} d\pi(u) \right) \le \frac{2(2^\ell n + 3)}{\tau \cdot 2^\ell n - 2^\ell n - 3} + O\left( \frac{1}{\sqrt{\log n}} \right)$$
+where $\pi$ is the uniform distribution over all $2^\ell k$-sparse unit vectors in $\mathbb{R}^{2^\ell n}$ with nonzero entries equal to $1/\sqrt{2^\ell k}$.
+\end{lemma}
+
+We now apply these reductions to deduce planted clique hardness for sparse PCA and its variants. Note that when $k \ll \sqrt{n}$, the lower bounds for sparse PCA are not tight. For biased sparse PCA, the lower bounds are only tight at the single point when $\theta = \tilde{\Theta}(1)$. The next theorem deduces tight hardness for $\textsc{SPCA}_D$ when $k \gtrsim \sqrt{n}$ with Lemma \ref{lem:hsspca}.
+
+\begin{theorem} \label{thm:spca}
+Let $\alpha > 0$ and $\beta \in (0, 1)$ be such that $\alpha > \max(1 - 2\beta, 0)$. There is a sequence $\{ (N_n, K_n, d_n, \theta_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $d = \Theta(N)$, $\theta = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log \theta_n^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{SPCA}_D(N_n, K_n, d_n, \theta_n)$ is at least $1$ assuming the PC conjecture holds for $p = 1/2$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Note that if $\alpha \ge 1$, then sparse PCA is information theoretically impossible. Thus we may assume that $\alpha \in (0, 1)$ and $\beta > \frac{1 - \alpha}{2}$. Let $\gamma = \frac{1 - \alpha}{2} \in (0, 1/2)$. Now set $N_n = d_n = n$
+$$\ell_n = \left\lceil \left( \beta - \frac{1 - \alpha}{2} \right) \log_2 n \right\rceil, \quad \quad k_n = \lceil n^{\gamma} \rceil, \quad \quad K_n = 2^{\ell_n} k_n, \quad \quad \theta_n = \frac{\mu^2 k_n^2}{2 \tau n}$$
+where $\mu =  \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$ and $\tau$ is a sub-polynomially growing function of $n$. 
+By Lemma \ref{lem:hsspca}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(n, k_n, 1/2)$ to the detection problem $\text{SPCA}_D(N_n, K_n, d_n, \theta_n)$, exactly under $H_0$ and to a prior over $H_1$, with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+$$\lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \lim_{n \to \infty} \frac{\left\lceil \left( \beta - \frac{1 - \alpha}{2} \right) \log_2 n \right\rceil \cdot \log 2 + \left( \frac{1 - \alpha}{2} \right) \log n}{\log n} = \beta$$
+$$\lim_{n \to \infty} \frac{\log \theta_n^{-1}}{\log N_n} = \lim_{n \to \infty} \frac{(1 - 2\gamma) \log n - 2 \log \mu + \log(2\tau)}{\log n} = \alpha$$
+which completes the proof.
+\end{proof}
+
+Similarly, varying the parameters $\ell$ and $k$ in Lemma \ref{lem:lsspca} yields the following hardness for the simple vs. simple hypothesis testing formulations of biased and ordinary sparse PCA. Since $\textsc{UBSPCA}_D$ and $\textsc{USPCA}_D$ are instances of $\textsc{BSPCA}_D$ and $\textsc{SPCA}_D$, respectively, the next theorem also implies the lower bounds when $\alpha > 1 - 2\beta$ in Theorem \ref{thm:spca} when $k \lesssim \sqrt{n}$.
+
+\begin{theorem}
+Let $\alpha > 0$ and $\beta \in (0, 1)$ be such that $\frac{1 - \alpha}{2} < \beta < \frac{1 + \alpha}{2}$. There is a sequence $\{ (N_n, K_n, d_n, \theta_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $d = \Theta(N)$, $\theta = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log \theta_n^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on $\textsc{USPCA}_D(N_n, K_n, d_n, \theta_n)$ and $\textsc{UBSPCA}_D(N_n, K_n, d_n, \theta_n)$ is at least $1$ assuming the PC conjecture holds for $p = 1/2$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Note that if $\alpha \ge 1$, then $\text{USPCA}_D$ and $\textsc{UBSPCA}_D$ are information theoretically impossible. Thus we may assume that $\alpha \in (0, 1)$. Now observe that $\beta \in (0, 1)$ and $\frac{1 - \alpha}{2} < \beta < \frac{1 + \alpha}{2}$ imply that $\gamma = \frac{1 - \alpha}{3 - \alpha - 2\beta} \in (0, 1/2)$, that $\alpha + 2\beta - 1 > 0$ and $3 - \alpha - 2\beta > 0$. Now set
+$$N_n = d_n = 2^{\ell_n} n, \quad \quad \ell_n = \left\lceil \left( \frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} \right) \log_2 n \right\rceil, \quad \quad k_n = \lceil n^{\gamma} \rceil,$$
+$$K_n = 2^{\ell_n} k_n, \quad \quad \theta_n = \frac{\mu^2 k_n^2}{2^{\ell_n + 1} \tau n}$$
+where $\mu =  \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$ and $\tau$ is a sub-polynomially growing function of $n$. 
+By Lemma \ref{lem:lsspca}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(n, k_n, 1/2)$ to the detection problem $\textsc{UBSPCA}_D(N_n, K_n, d_n, \theta_n)$, exactly under $H_0$ and to a prior over $H_1$, with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+\begin{align*}
+\lim_{n \to \infty} \frac{\log K_n}{\log N_n} &= \lim_{n \to \infty} \frac{\left\lceil \left( \frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} \right) \log_2 n \right\rceil \cdot \log 2 + \left( \frac{1 - \alpha}{3 - \alpha - 2\beta} \right) \log n}{\left\lceil \left( \frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} \right) \log_2 n \right\rceil \cdot \log 2 + \log n} = \frac{\frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} + \frac{1 - \alpha}{3 - \alpha - 2\beta}}{\frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} + 1} = \beta \\
+\lim_{n \to \infty} \frac{\log \theta_n^{-1}}{\log N_n} &= \lim_{n \to \infty} \frac{\left\lceil \left( \frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} \right) \log_2 n \right\rceil \cdot \log 2 + (1 - 2\gamma) \log n - 2 \log \mu + \log(2\tau)}{\left\lceil \left( \frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} \right) \log_2 n \right\rceil \cdot \log 2 + \log n} \\
+&= \frac{\frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} -2 \cdot \frac{1 - \alpha}{3 - \alpha - 2\beta} + 1}{\frac{\alpha + 2\beta - 1}{3 - \alpha - 2\beta} + 1} = \frac{\alpha + 2\beta - 1 - 2(1 - \alpha) + 3 - \alpha - 2\beta}{2}= \alpha
+\end{align*}
+which completes the proof. As described previously, the corresponding lower bound for $\textsc{USPCA}_D$ follows by randomly signing the rows of the data matrix of the resulting $\textsc{UBSPCA}_D$ instance.
+\end{proof}
+
+To conclude this section, we observe that the reduction $\textsc{SPCA-Recovery}$ shows that recovery in $\textsc{UBSPCA}_R$ is hard if $\theta \ll 1$ given the PDS recovery conjecture. The proof of the following theorem follows the same structure as Lemma \ref{lem:hsspca} and Theorem \ref{thm:bcrec}. Note that $\textsc{BC-Recovery}$ approximately maps from $\textsc{PDS}_R(n, k, 1/2 + \rho, 1/2)$ to $\textsc{BC}_R(n, k, \mu)$ where $\mu = \frac{\log (1 + 2\rho)}{2 \sqrt{6 \log n + 2\log 2}} = \tilde{\Theta}(\rho)$. This map preserves the support of the planted dense subgraph in the row support of the planted matrix in $\textsc{BC}_R$. Then $\textsc{Random-Rotation}$ approximately maps from this $\textsc{BC}_R$ instance to a $\textsc{UBSPCA}_R(n, k, n, \theta)$ instance with $\theta = \frac{k^2 \mu^2}{\tau n} = \tilde{\Theta}\left( \frac{k^2 \rho^2}{n} \right)$. This map ensures that the planted vector $u$ is supported on the same indices as the original $\textsc{PDS}_R$ instance. Furthermore, the PDS conjecture is that the original $\textsc{PDS}_R$ instance is hard if $\rho^2 \ll \frac{n}{k^2}$ which corresponds to the barrier $\theta \ll 1$ under this reduction.
+
+\begin{theorem} \label{thm:spcarec}
+Let $\alpha \in \mathbb{R}$ and $\beta \in (0, 1)$. There is a sequence $\{ (N_n, K_n, D_n, \theta_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $d = \Theta(N)$, $\theta = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log \theta_n^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item If $\alpha > 0$ and $\beta > \frac{1}{2}$, then the following holds. Let $\epsilon > 0$ be fixed and let $X_n$ be an instance of $\textsc{UBSPCA}_R(N_n, K_n, D_n, \theta_n)$. There is no sequence of randomized polynomial-time computable functions $\phi_n : \mathbb{R}^{D_n \times N_n} \to \binom{[N_n]}{k}^2$ such that for all sufficiently large $n$ the probability that $\phi_n(X_n)$ is exactly the pair of latent row and column supports of $X_n$ is at least $\epsilon$, assuming the PDS recovery conjecture.
+\end{enumerate}
+Therefore, given the PDS recovery conjecture, the computational boundary for $\textsc{UBSPCA}_R(n, k, d, \theta)$ in the parameter regime $\theta = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\alpha^* = 0$ when $\beta > \frac{1}{2}$.
+\end{theorem}
+
+\begin{proof}
+Suppose that $\alpha > 0$ and $\beta \ge \frac{1}{2}$. Let $\gamma =  \beta - \frac{1 - \alpha}{2} > 0$ and define 
+$$K_n = k_n = \lceil n^{\beta} \rceil, \quad \rho_n = n^{-\gamma}, \quad N_n = D_n = n, \quad \mu_n = \frac{\log (1 + 2\rho_n)}{2 \sqrt{6 \log n + 2\log 2}}, \quad \theta_n = \frac{k_n^2 \mu_n^2}{\tau n}$$
+where $\tau$ is an arbitrarily slowly growing function of $n$. Let $\varphi_n = \textsc{SPCA-Recovery}$ be the reduction in Figure \ref{fig:randrot}. Let $G_n \sim G(n, S, 1/2 + \rho_n, 1/2)$ and $X_n = \varphi_n(G_n)$ where $S$ is a $k_n$-subset of $[n]$. Let $u_S$ denote the unit vector supported on indices in $S$ with nonzero entries equal to $1/\sqrt{k_n}$. Lemma \ref{lem:bcrec} and Lemma \ref{lem:randrot} together imply that
+$$\TV\left( \mL(X_n), N\left( 0, I_n + \theta_n u_S u_S^\top \right) \right) \le O\left( \frac{1}{\sqrt{\log n}} \right) + \frac{2(n+3)}{\tau n - n - 3} \to 0 \text{ as } n \to \infty$$
+Let $\mL_{n, S} = N\left( 0, I_n + \theta_n u_S u_S^\top \right)$. Assume for contradiction that there is a sequence of randomized polynomial-time computable functions $\phi_n$ as described above. Now observe that
+$$\left| \bP_{X \sim \mL(X_n)} \left[ \phi_n(X) = S \right] - \bP_{X \sim \mL_{n, S}}\left[ \phi_n(X) = S\right]\right| \le \TV\left( \mL(X_n), \mL_{n, S} \right) \to 0 \text{ as } n \to \infty$$
+Since $\bP_{X \sim \mL_{n, S}}\left[\phi_n(X) = S \right] \ge \epsilon$ for sufficiently large $n$, it follows that
+$$\bP_{X \sim \mL(X_n)} \left[ \phi_n \circ \varphi_n(G_n) = S \right] = \bP_{X \sim \mL(X_n)} \left[ \phi_n(X) = S \right] \ge \epsilon/2$$
+for sufficiently large $n$. Furthermore observe
+$$\lim_{n \to \infty} \frac{\log k_n}{\log n} = \beta \quad \text{and} \quad \lim_{n \to \infty} \log_n \left( \frac{k_n^2 \rho_n^2}{\frac{1}{4} - \rho_n^2} \right) = 2\beta - 2\gamma = 1 - \alpha < 1$$
+Since the sequence of functions $\phi_n \circ \varphi_n$ can be computed in randomized polynomial time, this contradicts the PDS recovery conjecture. Therefore no such sequence of functions $\phi_n$ exists for the parameter sequence $\{ (N_n, K_n, D_n, \theta) \}_{n \in \mathbb{N}}$ defined above. As in Theorem \ref{thm:bcrec}, $\mu_n \sim \frac{\rho_n}{\sqrt{6 \log n}}$ as $n \to \infty$.
+Therefore it follows that
+$$\lim_{n \to \infty} \frac{\log \theta_n^{-1}}{\log N_n} = \lim_{n \to \infty} \frac{2\gamma \log n + \log (6\log n) + \log n - 2\beta \log n}{\log n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+which completes the proof of the theorem.
+\end{proof}
+
+As is the case for $\textsc{BC-Recovery}$, the reduction $\textsc{SPCA-Recovery}$ also shows hardness for partial and weak recovery if the PDS recovery conjecture is strengthened to assume hardness of partial and weak recovery, respectively, for $\textsc{PDS}_R$.

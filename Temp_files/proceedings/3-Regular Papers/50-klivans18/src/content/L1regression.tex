@@ -1,0 +1,120 @@
+\section{Robust L1 Regression}
+In this section, we describe our algorithm for robust linear regression. Our algorithm works for the following class of distributions: 
+
+% We introduce one key notation to aid us in this section- the class of all distributions that admit a low-error regression hypothesis.
+
+% \begin{definition}[Admissible Distributions (Spectral Norm Assumption)]
+% Let $\cD$ be the set of all distributions on $\R^d \times \R$ such that 
+% \begin{enumerate}
+% \item for every $D$, $\E_{(x,y) \sim D} y^2 \leq 1$,
+% \end{enumerate}
+%  \end{definition}
+
+% First, we define the \emph{robust optimum} error of linear regression on $D$. 
+
+% \begin{definition}[Robust Optimum]
+% Let $\cD$ be the set of all distributions on $\R^d \times \R$ such that there's a linear regression hypothesis that achieves an error of $\opt$ on any $D \in \cD$.
+
+% The $\epsilon$-robust optimum of any $D \in \cD$ is defined as 
+% \[
+% \sup_{\begin{subarray}{c}
+% D' \in \cD, \|D'-D\|_{TV} \leq \epsilon, \\
+% \ell' \in \R^d: \E_{D'} (\iprod{\ell',x}-y)^2 \leq \opt \end{subarray}} \E_{D} (\iprod{\ell',x}-y)^2.
+% \]
+% \end{definition}
+
+% Our main result is the following:
+
+% \begin{theorem}[Robust Linear Regression]
+% There's an polynomial time algorithm that takes an $\epsilon$-corrupted sample of size $\gg d \log{(d)}/\epsilon^2$ from a distribution $D \in \cD$ and outputs a unit vector $\ell' \in \bbS^{d-1}$ such that 
+% \[
+% \E_{(x,y) \sim D} |\iprod{\ell',x} - y| \leq \opt + 4C \sqrt{\epsilon}
+% \]
+% where $C = \|\E_{D} \dyad{(x,y)}\| $ and $\opt =\inf_{\ell \in \R^d} \E_{(x,y) \sim D} |\iprod{\ell,x}-y|.$
+% \end{theorem} 
+
+
+\subsection{Information Theoretic Indentifiability of the Regression Hypothesis}
+In this section, we prove tight bounds on the error of the regression hypothesis learned from a corrupted sample. We stress that these bounds are, a priori, only information theoretic and do not address any computational efficiency issues. In the next section, we would observe that the proofs of these bounds can be readily imported into the SoS proof system implying also fast algorithms for computing the optimal regression hypotheses from corrupted samples. 
+
+
+
+
+
+% \begin{lemma}[Robust Identifiability of Regression Hypothesis]
+% Let $D,D' \in \cD$ be two distributions on $\R^d \times \R$ that are $\epsilon$ close in total variation distance. 
+% Then, for every $\ell$, 
+% \[
+% \E_{(x,y) \sim D'} |\iprod{\ell,x} - y| \leq \E_{(x,y) \sim D} |\iprod{\ell,x}-y| + \sqrt{\epsilon} \cdot 2\sqrt{2} \sqrt{C} \sqrt{ 1+ \|\ell\|^2_2}\mcom
+% \]
+% where $C = \max\Set{\|\E_D \dyad{(x,y)}\|,\|\E_{D'} \dyad{(x,y)}\| }.$
+% \end{lemma}
+
+% \begin{proof}
+% Consider a coupling $G$, a distribution over $(x,y), (x',y')$ such that $(x,y) \sim D$, $(x',y') \sim D'$ and  $\Pr_G \Set{(x,y) = (x',y')} = 1-\epsilon.$ Such a coupling exists because $D,D'$ are $\epsilon$ close in TV. 
+% \begin{align*}
+% \E_{G} |\iprod{\ell,x} - y| - |\iprod{\ell,x'} - y'| &= \E_G \1((x',y') \neq (x,y)) \Paren{|\iprod{\ell,x} - y| - |\iprod{\ell,x'} - y'|}\\
+% &\leq \Paren{\E_G \1((x',y') \neq (x,y))}^{1/2} \Paren{\E_G \Paren{|\iprod{\ell,x} - y| - |\iprod{\ell,x'} - y'|}^2}^{1/2}
+% \end{align*}
+% Here, the second line follows from the Cauchy-Schwarz inequality. Observe that the first term is at most $\epsilon^{1/2}$. We analyze the second term now.
+
+% Now (perhaps this kind of steps can be strengthened, but may be we don't save anything more than constants), we have:
+% \begin{align*}
+% \E_G \Paren{|\iprod{\ell,x} - y| - |\iprod{\ell,x'} - y'|}^2 &\leq 2 \E_D \Paren{\iprod{\ell,x} - y}^2 + \E_D' \Paren{\iprod{\ell,x'} - y'}^2\\
+% &\leq 4 \Paren{\E_D \Paren{\iprod{\ell,x}^2 + y^2} + \E_{D'} \Paren{\iprod{\ell,x'}^2 + y'^2}}\\
+% &\leq 8C + 8C\|\ell\|_2^2.
+% \end{align*}
+% In the first and second inequalities we are using the simple fact $(a+b)^2 < 2a^2 + 2b^2$. The final inequality follows by noting that $D,D'$ both have covariances with spectral norm at most $C$ and that $\E_D y^2 \leq \|\E_D \dyad{(x,y)}\|$.
+
+% We thus have $\E_{G} |\iprod{\ell,x} - y| - |\iprod{\ell,x'} - y'| \leq \sqrt{\epsilon} 2 \sqrt{2C} \sqrt{1+ \|\ell\|_2^2}.$ and the lemma follows.
+
+% \end{proof}
+
+
+We now describe our robust linear regression algorithm. 
+\begin{enumerate}
+  \item \textbf{Given: } An $\epsilon$-corrupted labeled sample $Y = \{ (y_i, \sigma_i)\}_{i \leq n}$ of size $n$ from a distribution $D$ on $\R^d \times \R$. An error bound $\opt$.
+
+  \item \textbf{Output: } $\ell' \in \R^d$. 
+
+  \item \textbf{Operation: } 
+    \begin{enumerate}
+      \item Find a pseudo-distribution $\tilde{\mu}$ on $w$ and $\ell \in \R^{d}$ satisfying the constraints:
+      \begin{enumerate}
+        \item $\Set{\sum_i w_i = (1-\epsilon)n}$,
+        \item $\Set{w_i^2 = w_i \mid \forall i}$,
+        \item $\Set{B_i \geq \iprod{\ell,y_i} - \sigma_i \mid \forall i}$, 
+        \item $\Set{B_i \geq -\iprod{\ell,y_i} + \sigma_i \mid \forall i}$,
+        \item  $\Set{B_i^2 = \Paren{\iprod{\ell,y_i} - \sigma_i}^2 \mid \forall i}$, and
+        \item $\frac{1}{(1-\epsilon)n} \sum_i w_i B_i \leq \opt$,
+      \end{enumerate}
+      and minimizing $\|\sum_i w_i \dyad{(x_i,y_i)}\|.$ 
+      \item Output $\hat{\ell} = \pE_{\tmu} \ell.$
+    \end{enumerate}
+\end{enumerate}
+
+The correctness of our algorithm is a direct consequence of the identifiability lemma.
+
+\subsection{Robust L1 Regression for Arbitrary Distributions}
+In this section, we present our robust L1 regression algorithm that works for any distribution. 
+
+\begin{enumerate}
+  \item \textbf{Given: } An $\epsilon$-corrupted labeled sample $Y = \{ (y_i, \sigma_i)\}_{i \leq n}$ of size $n$ from a distribution $D$ on $\R^d \times \R$. 
+
+  \item \textbf{Output: } $\ell \in \R^{d}$. 
+
+  \item \textbf{Operation: } 
+    \begin{enumerate}
+      \item Find a pseudo-distribution $\tilde{\mu}$ on $w$ and $\ell \in \R^{d}$ minimizing $\|\ell\|_2^2$, subject to the following constraints
+      \begin{enumerate}
+        \item $\frac{1}{(1-\epsilon)n} \sum_i w_i B_i \leq \opt$
+        \item $\Set{\sum_i w_i = (1-\epsilon)n}$,
+        \item $\Set{w_i^2 = w_i \mid \forall i}$,
+        \item $\Set{B_i \geq y_i - \langle \ell, x_i \rangle \mid \forall i}$,
+        \item $\Set{B_i \geq -y_i + \langle \ell, x_i \rangle \mid \forall i}$,
+        \item $\Set{B_i^2 = (y_i - \langle \ell, x_i \rangle)^2 \mid \forall i}$.
+      \end{enumerate}
+      \item Output $\hat{\ell} = \pE_{\tmu} \ell.$
+    \end{enumerate}
+\end{enumerate}
+

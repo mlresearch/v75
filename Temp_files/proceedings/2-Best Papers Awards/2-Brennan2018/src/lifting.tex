@@ -1,0 +1,541 @@
+\section{Densifying Planted Clique and Planted Independent Set}
+\label{s:lifting}
+
+In this section, we give a reduction increasing the ambient edge density in planted clique and showing tight hardness for the planted independent set problem. This reduction, which we term $\textsc{PC-Lifting}$, serves as an introduction to the general distributional lifting procedure in the next section. Distributional lifting will subsequently be specialized to produce Poisson and Gaussian variants of the procedure, which will be used to prove hardness for biclustering and different regimes of planted dense subgraph.
+
+\subsection{Detecting Planted Generalized Diagonals}
+
+We first prove a technical lemma that will be used in all of our cloning procedures. Given a matrix $M$, let $M^{\sigma_1, \sigma_2}$ denote the matrix formed by permuting rows according to $\sigma_1$ and columns according to $\sigma_2$. Let $\text{id}$ denote the identity permutation.
+
+\begin{lemma} \label{lem:4a}
+Let $P$ and $Q$ be two distributions such that $Q$ dominates $P$ and $\chi^2(P, Q) \le 1$. Suppose that $M$ is an $n \times n$ matrix with all of its non-diagonal entries i.i.d. sampled from $Q$ and all of its diagonal entries i.i.d. sampled from $P$. Suppose that $\sigma$ is a permutation on $[n]$ chosen uniformly at random. Then
+$$\TV\left( \mL(M^{\text{id},\sigma}), Q^{\otimes n \times n} \right) \le \sqrt{\frac{\chi^2(P, Q)}{2}}$$
+\end{lemma}
+
+\begin{proof}
+Let $\sigma'$ be a permutation of $[n]$ chosen uniformly at random and independent of $\sigma$. Note that by Fubini's theorem we have that
+$$\chi^2\left( \mL(M^{\text{id}, \sigma}), Q^{\otimes n \times n} \right) + 1 = \int \frac{\bE_\sigma \left[ \bP_{M^{\text{id}, \sigma}} ( X | \sigma) \right]^2}{\bP_{Q^{\otimes n \times n}}(X)} dX = \bE_{\sigma, \sigma'} \int \frac{\bP_{M^{\text{id}, \sigma}} ( X | \sigma) \bP_{M^{\text{id}, \sigma'}} ( X | \sigma')}{\bP_{Q^{\otimes n \times n}}(X)} dX$$
+Now note that conditioned on $\sigma$, the entries of $M^{\text{id}, \sigma}$ are independent with distribution
+$$\bP_{M^{\text{id}, \sigma}} ( X | \sigma) = \prod_{i = 1}^n P\left(X_{i \sigma(i)} \right) \prod_{j \neq \sigma(i)} Q\left(X_{ij} \right)$$
+Therefore we have that
+\begin{align*}
+\int \frac{\bP_{M^{\text{id}, \sigma}} ( X | \sigma) \bP_{M^{\text{id}, \sigma'}} ( X | \sigma')}{\bP_{Q^{\otimes n \times n}}(X)} dX &= \int \left( \prod_{i : \sigma(i) = \sigma'(i)} \frac{P\left(X_{i\sigma(i)}\right)^2}{Q\left(X_{i\sigma(i)}\right)} \right) \left( \prod_{i : \sigma(i) \neq \sigma'(i)} P\left(X_{i\sigma(i)}\right) \right) \\
+&\quad \quad \times \left( \prod_{i : \sigma(i) \neq \sigma'(i)} P\left(X_{i\sigma'(i)}\right) \right) \left( \prod_{j \neq \sigma(i), j \neq \sigma'(i)} Q\left(X_{ij}\right) \right)dX \\
+&= \prod_{i : \sigma(i) = \sigma'(i)} \left( \int \frac{P\left(X_{i\sigma(i)}\right)^2}{Q\left(X_{i\sigma(i)}\right)} dX_{i\sigma(i)} \right) \\
+&= \left( 1 + \chi^2(P, Q) \right)^{|\{ i : \sigma(i) = \sigma'(i) \}|}
+\end{align*}
+If $\tau = \sigma' \circ \sigma^{-1}$, then $\tau$ is a uniformly at random chosen permutation and $Y = |\{ i : \sigma(i) = \sigma'(i) \}|$ is the number of fixed points of $\tau$. As in \cite{pitman1997some}, the $i$th moment of $Y$ is the $i$th Bell number for $i \le n$ and for $i > n$, the $i$th moment of $Y$ is at most the $i$th Bell number. Since a Poisson distribution with rate $1$ has its $i$th moment given by the $i$th Bell number for all $i$, it follows that for each $t \ge 0$ the MGF $\bE[e^{tY}]$ is at most that of a Poisson with rate $1$, which is $\exp(e^t - 1)$. Setting $t = \log(1 + \chi^2(P, Q)) > 0$ yields that
+$$\chi^2\left( \mL(M^{\text{id}, \sigma}), Q^{\otimes n \times n} \right) = \bE\left[ (1 + \chi^2(P, Q))^Y \right] - 1 \le \exp\left(\chi^2(P, Q)\right) - 1 \le 2 \cdot \chi^2(P, Q)$$
+since $e^x \le 1 + 2x$ for $x \in [0, 1]$. Now by Cauchy-Schwarz we have that
+$$\TV\left( \mL(M^{\text{id}, \sigma}), Q^{\otimes n \times n} \right) \le \frac{1}{2} \sqrt{\chi^2\left( \mL(M^{\text{id}, \sigma}), Q^{\otimes n \times n} \right)} \le \sqrt{\frac{\chi^2(P, Q)}{2}}$$
+which completes the proof of the lemma.
+\end{proof}
+
+\subsection{Planted Clique Lifting}
+
+In this section, we analyze the reduction $\textsc{PC-Lifting}$, which is given in Figure \ref{fig:pclifting}. This reduction will be shown to approximately take an instance of $\textsc{PC}(n, n^{1/2-\epsilon}, 1/2)$ to $\textsc{PC}(N, k, 1 - q)$ where $N = \tilde{\Theta}(n^{1 + \alpha})$, $k = \tilde{\Theta}(n^{1/2 + \alpha/2 - \epsilon})$ and $q = \tilde{\Theta}(n^{-\alpha})$. By taking the complement of the resulting graph, this shows planted clique lower bounds for $\textsc{PIS}_D(N, k, q)$ up to the boundary $\frac{N^2}{k^4} \gg q$, exactly matching the computational boundary stated in Theorem 1. The reduction $\textsc{PC-Lifting}$ proceeds iteratively, with $\textsc{PC}(n, k, p)$ approximately mapped at each step to $\textsc{PC}(2n, 2k, p^{1/4})$.
+
+Given a labelled graph $G$ on $n$ vertices and a permutation $\sigma$ on $[n]$, let $G^{\sigma}$ denote the labelled graph formed by permuting the vertex labels of $G$ according to $\sigma$. Given disjoint subsets $S, T \subseteq [n]$, let $G[S]$ denote the induced subgraph on the set $S$ and $G[S \times T]$ denote the induced bipartite subgraph between $S$ and $T$. Also let $B(m, n, p)$ denote the random bipartite graph with parts of sizes $m$ and $n$, respectively, where each edge is included independently with probability $p$. Let $G(n, p, S)$ where $S$ is a $k$-subset of $[n]$ denote an instance of $G(n, k, p)$ where the planted clique is conditioned to be on $S$.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{PC-Lifting}
+
+\vspace{2mm}
+
+\textit{Inputs}: Planted clique instance $G \in \mG_n$, number of iterations $\ell$, function $w$ with $w(n) \to \infty$
+\begin{enumerate}
+\item For each pair of vertices $\{i, j\} \not \in E(G)$, add the edge $\{i, j\}$ to $E(G)$ independently with probability $1 - 2 \cdot w(n)^{-1}$
+\item Initialize $H \gets G$, $m \gets n$ and $p \gets 1 - w(n)^{-1}$
+\item For $i = 0, 1, \dots, \ell - 1$ do:
+\begin{enumerate}
+\item[a.] For each pair $\{ i, j \}$ of distinct vertices in $[m]$, sample $x^{ij} \in \{0, 1\}^4$ such that
+\begin{itemize}
+\item If $\{i, j\} \in E(H)$, then $x^{ij} = (1, 1, 1, 1)$
+\item If $\{i, j\} \not \in E(H)$, then $x^{ij} = v$ with probability
+$$\bP\left[x^{ij} = v\right] = \frac{p^{|v|_1/4} \left(1 - p^{1/4}\right)^{4 - |v|_1}}{1 - p}$$
+for each $v \in \{0, 1\}^4$ with $v \neq (1, 1, 1, 1)$
+\end{itemize}
+\item[b.] Construct the graph $H'$ on the vertex set $[2m]$ such that for distinct $i, j \in [m]$
+\begin{itemize}
+\item $\{i, j \} \in E(H')$ if $x^{ij}_1 = 1$
+\item $\{2m + 1 - i, j \} \in E(H')$ if $x^{ij}_2 = 1$
+\item $\{i, 2m + 1 - j \} \in E(H')$ if $x^{ij}_3 = 1$
+\item $\{2m + 1 - i, 2m + 1 - j \} \in E(H')$ if $x^{ij}_4 = 1$
+\end{itemize}
+and for each $i \in [m]$, add the edge $\{i, 2m + 1 - i \} \in E(H')$
+\item[c.] Generate a permutation $\sigma$ on $[2m]$ uniformly at random
+\item[d.] Update $H \gets (H')^\sigma, p \gets p^{1/4}$ and $m \gets 2m$
+\end{enumerate}
+\item Output $H$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Planted clique lifting procedure in Lemma \ref{lem:4b}.}
+\label{fig:pclifting}
+\end{figure}
+
+\begin{lemma}[Planted Clique Lifting] \label{lem:4b}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large. Let $w(n) > 2$ be an increasing function with $w(n) \to \infty$ as $n \to \infty$. Then $\phi = \textsc{PC-Lifting}$ is a randomized polynomial time computable map $\phi : \mG_n \to \mG_{2^\ell n}$ such that under both $H_0$ and $H_1$, it holds that
+$$\TV\left( \phi\left(\textsc{PC}(n, k, 1/2)\right), \textsc{PC}\left(2^\ell n, 2^\ell k, \left(1 -w(n)^{-1}\right)^{\frac{1}{4^\ell}}\right) \right) \le \frac{2}{\sqrt{w(n)}}$$
+\end{lemma}
+
+\begin{proof}
+If $\ell = O(\log n)$, this algorithm runs in randomized polynomial time. Let $\phi_\ell$ be the algorithm that outputs the value of $H$ in $\phi$ after $\ell$ iterations of Step 3. Note that $\phi_0$ outputs $H$ after Steps 1 and 2.
+
+We first consider a single iteration of Step 3 applied to $G \sim G(n, p, S)$, where $G(n, p, S)$ is the distribution of Erd\H{o}s-Reny\'{i} graphs with a planted clique on a fixed vertex set $S \subseteq [n]$ of size $|S| = k$ and $p \ge 1/2$. For each pair of distinct $\{i, j\} \not \in \binom{S}{2}$, it holds that $\mathbf{1}_{\{i, j\} \in E(G)} \sim \text{Bern}(p)$ and by the probability in Step 3a that $x^{ij} \sim \text{Bern}(p^{1/4})^{\otimes 4}$. Therefore the graph $H'$ constructed in Step 3b satisfies that:
+\begin{itemize}
+\item $S' = S \cup \{ 2n + 1 - i : i \in S\}$ forms a clique of size $2k$;
+\item $\{2n + 1 - i, i\} \in E(H')$ for each $i \in [n]$; and
+\item each other edge is in $E(H')$ independently with probability $p^{1/4}$.
+\end{itemize}
+Now consider the graph $\phi_1(G) = H = (H')^\sigma$ conditioned on the set $\sigma(S')$. We will show that this graph is close in total variation to $G(2n, p^{1/4}, \sigma(S'))$. Let $T_1 = [n] \backslash S$ and $T_2 = [2n]\backslash \{ 2n + 1 - i : i \in S\}$. Note that every pair of vertices of the form $\{2n + 1 - i, i\}$ in $H'$ are either both in $S'$ or between $T_1$ and $T_2$. This implies that every pair of distinct vertices not in $\sigma(S')^2$ or $\sigma(T_1) \times \sigma(T_2)$ is in $E(H)$ independent with probability $p^{1/4}$, exactly matching the corresponding edges in $G(2n, p^{1/4}, \sigma(S'))$. Coupling these corresponding edges yields only the edges between $\sigma(T_1)$ and $\sigma(T_2)$ uncoupled. Therefore we have that
+$$\TV\left( \mL(H | \sigma(S')), G\left(2n, p^{1/4}, \sigma(S')\right) \right) = \TV\left( \mL\left(H[\sigma(T_1) \times \sigma(T_2)]\right), B\left(n - k, n - k, p^{1/4}\right) \right)$$
+Now let the $(n - k) \times (n - k)$ matrix $M$ have $1$'s on its main diagonal and each other entry distributed sampled i.i.d. from $\text{Bern}(p^{1/4})$. If $\tau$ is a random permutation on $[n-k]$, then the adjacency matrix of $H[\sigma(T_1) \times \sigma(T_2)]$ conditioned on $\sigma(S')$ is distributed as $\mL\left( M^{\text{id}, \tau} \right)$, since $T_1$ and $T_2$ are disjoint. Therefore it follows that
+\begin{align*}
+\TV\left( \mL\left(H[\sigma(T_1) \times \sigma(T_2)]\right), B\left(n - k, n - k, p^{1/4}\right) \right) &= \TV\left( \mL\left( M^{\text{id}, \tau} \right), \text{Bern}(p^{1/4})^{\otimes(n-k) \times (n-k)} \right) \\
+&\le \sqrt{\frac{\chi^2(\text{Bern}(1), \text{Bern}(p^{1/4}))}{2}} \\
+&\le \sqrt{1-p^{1/4}}
+\end{align*}
+by Lemma \ref{lem:4a} and since $p \ge 1/2$. It follows by the triangle inequality that
+$$\TV\left( \phi_1(G(n, p^{1/4}, S)), G(2n, 2k, p^{1/4}) \right) \le \bE_{\sigma(S')} \left[ \TV\left(\mL(H | \sigma(S')), G\left(2n, p^{1/4}, \sigma(S')\right) \right) \right]$$
+Letting $S$ be chosen uniformly at random over all subsets of $[n]$ of size $k$, applying the triangle inequality again and combining the inequalities above yields that
+\begin{align*}
+\TV\left( \phi_1(G(n, k, p)), G(2n, 2k, p^{1/4}) \right) &\le \bE_S\left[ \TV\left( \phi_1(G(n, p, S)), G(2n, 2k, p^{1/4}) \right) \right] \\
+&\le\sqrt{1-p^{1/4}}
+\end{align*}
+A nearly identical but slightly simpler argument shows that
+$$\TV\left( \phi_1(G(n, p)), G(2n, p^{1/4}) \right) \le \sqrt{1-p^{1/4}}$$
+For each $\ell \ge 0$, let $p_\ell = \left(1 -w(n)^{-1}\right)^{\frac{1}{4^\ell}}$ be the value of $p$ after $\ell$ iterations of Step 2. Now note that for each $\ell \ge 0$, we have by triangle inequality and data processing inequality that
+\begin{align*}
+&\TV\left( \phi_{\ell + 1}\left(G(n, k, 1/2)\right), G\left(2^{\ell+1} n, 2^{\ell+1} k, p_{\ell+1} \right) \right) \\
+&\quad\le \TV\left( \phi_1\left(\phi_\ell\left(G(n, k, 1/2)\right) \right), \phi_1\left(G\left(2^\ell n, 2^\ell k, p_\ell \right) \right) \right) \\
+&\quad \quad + \TV\left( \phi_1\left(G\left(2^\ell n, 2^\ell k, p_\ell \right) \right), G\left(2^{\ell+1} n, 2^{\ell+1} k, p_{\ell+1} \right) \right) \\
+&\quad\le \TV\left( \phi_\ell\left(G(n, k, 1/2)\right), G\left(2^\ell n, 2^\ell k, p_\ell \right) \right) \\
+&\quad \quad + \sqrt{1-p_{\ell+1}}
+\end{align*}
+and an identical inequality for $\phi_\ell(G(n, 1/2))$. Noting that this total variation is zero when $\ell = 0$ and applying these inequalities inductively yields that
+$$\TV\left( \phi_\ell\left(G(n, k, 1/2)\right), G\left(2^\ell n, 2^\ell k, p_\ell \right) \right) \le \sum_{i = 1}^\ell \sqrt{1-p_{i}}$$
+and an identical inequality for $\phi_\ell(G(n, 1/2))$. Now note that if $x \le 1/2$ then $(1 - x)^{1/4} \ge 1 - x/3$. Iterating this inequality yields that $1 - p_{i} \le 3^{-i} w(n)^{-1}$. Therefore
+$$\sum_{i = 1}^\ell \sqrt{1-p_{i}} \le \frac{1}{\sqrt{w(n)}} \sum_{i = 1}^\ell 3^{-i/2} < \frac{2}{\sqrt{w(n)}}$$
+This completes the proof of the lemma.
+\end{proof}
+
+The next theorem formally gives the hardness result guaranteed by the reduction analyzed above together with the PC conjecture. There will be many theorems of this form throughout the paper, which will typically resolve to applying a total variation bound guaranteed in a previous lemma with Lemma \ref{lem:3a}, and analyzing the asymptotic regime of several parameters.
+
+\begin{theorem} \label{lem:4c}
+Let $\alpha \in [0, 2)$ and $\beta \in (0, 1)$ be such that $\beta < \frac{1}{2} + \frac{\alpha}{4}$. There is a sequence $\{ (N_n, K_n, q_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $q = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log q_n^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{PIS}_D(N_n, K_n, q_n)$ is at least $1$ assuming the PC conjecture holds with density $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{PIS}_D(n, k, q)$ in the parameter regime $q = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \frac{\alpha}{4}$.
+\end{theorem}
+
+\begin{proof}
+If $\beta < \alpha$ then PIS is information-theoretically impossible. Thus we may assume that $\beta \ge \alpha$. Let $\gamma = \frac{2\beta - \alpha}{2 - \alpha}$ and note that $\gamma \in (0, 1/2)$. Now set
+$$\ell_n = \left\lceil \frac{\alpha \log_2 n}{2 - \alpha} \right\rceil, \quad \quad k_n = \lceil n^{\gamma} \rceil, \quad \quad N_n = 2^{\ell_n} n \quad \quad K_n = 2^{\ell_n} k_n, \quad \quad q_n = 1 - (1 - w(n)^{-1})^{1/4^{\ell_n}}$$
+where $w(n)$ is any sub-polynomial increasing function tending to infinity. By Lemma \ref{lem:4b}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(n, k_n, 1/2)$ to $\text{PC}_D(N_n, K_n, 1 - q_n)$ with total variation converging to zero as $n \to \infty$. Now note that flipping every edge to a non-edge and non-edge to an edge maps $\text{PC}_D(N_n, K_n, 1 - q_n)$ to $\text{PIS}_D(N_n, K_n, q_n)$. This map with Lemma 1 now implies that property 2 above holds. We now verify property 1. Note that
+$$\lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \lim_{n \to \infty} \frac{\left\lceil \frac{\alpha \log_2 n}{2 - \alpha} \right\rceil \cdot \log 2 + \left( \frac{2\beta - \alpha}{2 - \alpha} \right) \log n}{\left\lceil \frac{\alpha \log_2 n}{2 - \alpha} \right\rceil\cdot \log 2 + \log n} = \frac{\frac{\alpha}{2 - \alpha} + \frac{2\beta - \alpha}{2 - \alpha}}{\frac{\alpha}{2 - \alpha} + 1} = \beta$$
+Note that as $n \to \infty$, it follows that since $4^{-\ell_n} \log(1 - w(n)^{-1}) \to 0$,
+$$q_n = 1 - (1 - w(n)^{-1})^{1/4^{\ell_n}} = 1 - e^{4^{-\ell_n} \log(1 - w(n)^{-1})} \sim 4^{-\ell_n} \log(1 - w(n)^{-1})$$
+Now it follows that
+$$\lim_{n \to \infty} \frac{\log q_n^{-1}}{\log N_n} = \lim_{n \to \infty} \frac{2\left\lceil \frac{\alpha \log_2 n}{2 - \alpha} \right\rceil \log 2 - \log(1 - w(n)^{-1})}{\left\lceil \frac{\alpha \log_2 n}{2 - \alpha} \right\rceil\cdot \log 2 + \log n} = \frac{\frac{2\alpha}{2 - \alpha}}{\frac{\alpha}{2 - \alpha} + 1} = \alpha$$
+which completes the proof.
+\end{proof}
+
+\section{Rejection Kernels and Distributional Lifting}
+\label{s:rejection}
+In this section, we generalize the idea in $\textsc{PC-Lifting}$ to apply to any distribution with a natural cloning operation, analogous to Step 3a in $\textsc{PC-Lifting}$. Before describing this general distributional lifting procedure, we first will establish several results on applying rejection kernels, a general method for changes of measure such as from Bernoulli edge indicators to Gaussians, that we will need throughout our reductions.
+
+%NOTE: Maybe defer proofs to an appendix and just give intuition based on Lemma 4 here. Double check numerical issues that arise when computing PMFs and PDFs (is inverting fine in polylog time? Seems fine here since all numbers inverting are large and probabilities are bounded above by $1$?).
+
+%NOTE: Handle Gaussian Le Cam here and Poisson TV approximations for polynomial time? That way can make Gaussian cloning for PDS completely rigorous? Think about what should go into appendix or not be mentioned here for clarity? Maybe leave the body as it is right now and handle the discretization in the appendix later to not detract from the ideas? Although you probably want to make all theorem and lemma statements completely correct. Show the proof of one and move the others to the appendix. FOR NOW: When Gaussians are used as a reduction gadget, do everything rigorously in the body (i.e. in reductions to PDS and PSBM). When Gaussians are in the data of the problem we are reducing to, assume can sample Gaussians perfectly and deal with discretization in second last section. Do Poisson approximation here. State explicitly what you do somewhere in the introduction. Also, remember to make slides for a talk so that you know what is important to include in the introduction. Also, can we combine the two approximate maps to Poisson random variables? Should we defer proofs here to the appendix (to not detract from flow of the paper)?
+
+%CHANGE OF PLANS: Do not let the core of the manuscript get bogged down in the same repetitive details of discretization. Instead state will do everything continuously in the body and then have a section later devoted to discretized reductions. Discuss numerical stability and have a general lemma about being able to add logarithmically many bits and converge in TV for ``numerically stable" reductions (mulitply errors by polynomial). Can verify that all of the reductions are numerically stable. Will still need to sample from the Haar measure and use a stable version of Gram-Schmidt. Relate to classical notion of numerical stability? Still in this section describe kernels and everything in terms of discretized and how to sample random variables. Defer all proofs to the appendix for this section other than the basic lemma. Clearly in the overview, introduction and problem formulations section overview your approach to discretization and use this section as a reminder of the approach. At the end also comment on errors in precision for computation of weights in truncated kernels.
+
+%TODOS: Include discretization here and defer second and third proofs to appendix. Try to motivate that this section is conceptually simple. Rest of discretization: Give the general union bound coupling lemma in the Gaussian cloning section. Then try to apply it directly in PSBM analysis. For ROS, SPCA and BC will need to say show hardness for discretized models. May need to show Le Cam deficiency for ROS and maybe more (BC and SPCA may have been previously covered).
+
+%NOTE: In proof above, directly bound differences in probabilities. Remember to cite Ma-Wu and Gao-Ma-Zhou for doing this type of reduction first. It's important that you decide not to worry too much about being able to compute numbers in your algorithms too precisely. Try to restrict your discussion of discretization only to the random variables. For example in $\textsc{PC-Cloning}$ you even need to technically deal with the bit precision of the probability calculations. Best call is likely to separate these two concerns and have a master lemma somewhere saying that if can compute probabilities of a discrete distribution arbitrarily closely then can sample from in polynomial time. This would also give a way to sample from Gaussian in polynomial time with logarithmically many bits. But to get full polynomial, would need to dive into the technical details a little more. Explain all of this in the intro (to be transparent about discretization issues and your reasoning behind your choices) and in section 5. May also want to replace all lemma statements with $O_n(f(n))$ bounds to improve readability? Rewrite truncated kernel theorems to avoid parameters $n$ and instead have $\epsilon$ for the resulting TV where you can?
+
+%TODO: Finish proofs of last two lemmas and work out necessary time complexity of algorithms. Issue of $F_Z$ have a region of slow growth (affecting the precision you need to use in approximation $F_Z$)? Maybe can use truncation to ensure this is always on the right order?
+
+%NOTE: Will probably need numerically stable Gram-Schmidt as can be found on Wikipedia.
+
+%NOTE: Idea here is do not need to construct entire CDF along dyadic approximation (which seems to be what is happening in Ma-Wu?). Instead can just perform binary search if have an oracle to permit computing the CDF. Indicate that use this method to generate Gaussian and Poisson random variables. Indicate here how whenever generate Poisson random variables, can do nearly exactly in total variation (be rigorous throughout about generation?). Whenever generate Gaussian random variables, it is to some bit precision. Or should we use the Marsaglia-Polar method or Box-Muller method? Make sure to brush these details aside when possible in the body of the paper and defer to the appendix to not detract from the main ideas!
+
+%NOTE: In next section, deal with issue of sampling from $Q_{\lambda}$ in Step 3b
+
+\subsection{Rejection Kernels}
+
+All of our remaining reductions will involve approximately mapping from a pair of Bernoulli random variables, typically edge indicators in random graphs, to a given pair of random variables. Similar entry-wise transformations of measure were used in \cite{ma2015computational} and \cite{gao2017sparse} for mapping from Bernoulli random variables to Gaussian random variables. We generalize these maps to arbitrary distributions and give a simple algorithm using rejection sampling to implement them. The general objective is to construct a single randomized function $\textsc{rk} : \{0, 1\} \to \mathbb{R}$ that simultaneously maps $\text{Bern}(p)$ to the distribution $f_X$ and $\text{Bern}(q)$ to $g_X$, approximately in total variation distance. For maps from instances $G$ of planted clique, such a map with $p = 1$ and $q = 1/2$ approximately sends the edge indicators $\mathbf{1}_{\{ i, j \} \in E(G)}$ to $f_X$ if $i$ and $j$ are in the planted clique and to $g_X$ otherwise.
+
+We first describe the general structure of the maps $\textsc{rk}$ and their precise total variation guarantees in the following lemma. Then we give particular rejection kernels that we will use in our reductions.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{rk}$(x)$
+
+\vspace{2mm}
+
+\textit{Parameters}: Input $x \in \{0, 1\}$, a pair of PMFs or PDFs $f_X$ and $g_X$ that can be efficiently computed and sampled, Bernoulli probabilities $p, q \in [0, 1]$, number of iterations $N$
+\begin{enumerate}
+\item Initialize $Y \gets 0$
+\item For $N$ iterations do:
+\begin{enumerate}
+\item[a.] If $x = 0$, sample $Z \sim g_X$ and if
+$$p \cdot g_X(Z) \ge q \cdot f_X(Z)$$
+then with probability $1 - \frac{q \cdot f_X(Z)}{p \cdot g_X(Z)}$, update $Y \gets Z$ and break
+\item[b.] If $x = 1$, sample $Z \sim f_X$ and if
+$$(1 - q) \cdot f_X(Z) \ge (1 - p) \cdot g_X(Z)$$
+then with probability $1 - \frac{(1 - p) \cdot g_X(Z)}{(1 - q) \cdot f_X(Z)}$, update $Y \gets Z$ and break
+\end{enumerate}
+\item Output $Y$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Rejection kernel in Lemma \ref{lem:5zz}}
+\label{fig:rej-kernel}
+\end{figure}
+
+\begin{lemma} \label{lem:5zz}
+Let $f_X$ and $g_X$ be probability mass or density functions supported on subsets of $\mathbb{R}$ such that $g_X$ dominates $f_X$. Let $p, q \in [0, 1]$ be such that $p > q$ and let
+$$S = \left\{ x \in \mathbb{R} : \frac{1 - p}{1 - q} \le \frac{f_X(x)}{g_X(x)} \le \frac{p}{q} \right\}$$
+Suppose that $f_X(x)$ and $g_X(x)$ can be computed in $O(T_1)$ time and samples from $f_X$ and $g_X$ can be generated in randomized $O(T_2)$ time. Then there is a randomized $O(N(T_1 + T_2))$ time computable map $\textsc{rk} : \{0, 1\} \to \mathbb{R}$ such that $\TV\left( \textsc{rk}(\text{Bern}(p)), f_X \right) \le \Delta$ and $\TV\left( \textsc{rk}(\text{Bern}(q)), g_X \right) \le \Delta$ where
+\begin{align*}
+\Delta = \max &\left\{ \frac{2 \cdot \bP_{X \sim f_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim g_X}[X \not \in S] + \frac{q}{p} \right)^{N}, \right. \\
+&\, \, \, \, \left. \frac{2 \cdot \bP_{X \sim g_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim f_X}[X \not \in S] + \frac{1 - p}{1 - q} \right)^{N} \right\}
+\end{align*}
+\end{lemma}
+
+\begin{proof}
+Let $\textsc{rk}$ be implemented as shown in Figure \ref{lem:5zz} and note that $\textsc{rk}$ runs in randomized $O(N(T_1 + T_2))$ time. Define $S_0$ and $S_1$ by
+$$S_0 = \left\{ x \in \mathbb{R} : \frac{f_X(x)}{g_X(x)} \le \frac{p}{q} \right\} \quad \text{and} \quad S_1 = \left\{ x \in \mathbb{R} : \frac{1 - p}{1 - q} \le \frac{f_X(x)}{g_X(x)} \right\}$$
+Now define the distributions by the densities or mass functions
+\begin{align*}
+\varphi_0(x) &= \frac{p \cdot g_X(x) - q \cdot f_X(x)}{p \cdot \bP_{X \sim g_X} [X \in S_0] - q \cdot \bP_{X \sim f_X} [X \in S_0]} \quad \text{for } x \in S_0 \\
+\varphi_1(x) &= \frac{(1 - q) \cdot f_X(x) - (1 - p) \cdot g_X(x)}{(1 - q) \cdot \bP_{X \sim f_X} [X \in S_1] - (1 - p) \cdot \bP_{X \sim g_X} [X \in S_1]} \quad \text{for } x \in S_1
+\end{align*}
+Note that these are both well-defined PDFs or PMFs since they are nonnegative by the definitions of $S_0$ and $S_1$ and normalized. First consider the case when $x = 0$. Let $A_i$ be the event that the update $Y \gets Z$ occurs in the $i$th iteration of Step 2a. The probability of $A_i$ is
+$$\bP[A_i] = \int_{S_0} g_X(x) \left( 1 - \frac{q \cdot f_X(x)}{p \cdot g_X(x)} \right) dx = \bP_{X \sim g_X}[X \in S_0] - \frac{q}{p} \cdot \bP_{X \sim f_X}[X \in S_0]$$
+The density of $Y$ given the event $A_i$ is therefore given by
+$$f_{Y|A_i}(x) = \bP[A_i]^{-1} \cdot f_{X | X \in S_0}(x) \cdot \left( 1 - \frac{q \cdot f_X(x)}{p \cdot g_X(x)} \right) = \varphi_0(x)$$
+If $A = A_1 \cup A_2 \cup \cdots \cup A_N$ is the event that the update $Y \gets Z$ occurs in an iteration of Step 2a, then it follows by independence that
+\begin{align*}
+\bP\left[A^C\right] &= \prod_{i = 1}^N \left(1 - \bP[A_i]\right) = \left( 1 - \bP_{X \sim g_X}[X \in S_0] + \frac{q}{p} \cdot \bP_{X \sim f_X}[X \in S_0] \right)^N \\
+&\le \left( \bP_{X \sim g_X}[X \not \in S] + \frac{q}{p} \right)^{N}
+\end{align*}
+since $S \subseteq S_0$. Note that $f_{Y|A}(x) = \varphi_0(x)$ and $\textsc{rk}(0)$ is $Y$ if $x = 0$. Therefore it follows by Lemma \ref{lem:5tv} that
+$$\TV\left( \textsc{rk}(0), \varphi_0 \right) = \bP\left[A^C \right] \le \left( \bP_{X \sim g_X}[X \not \in S] + \frac{q}{p} \right)^{N}$$
+A symmetric argument shows that when $x = 1$,
+$$\TV\left( \textsc{rk}(1), \varphi_1 \right) \le \left( \bP_{X \sim f_X}[X \not \in S] + \frac{1 - p}{1 - q} \right)^{N}$$
+Now note that
+\begin{align*}
+&\left\| \varphi_0 - \frac{p \cdot g_X - q \cdot f_X}{p - q} \right\|_1 = \int_{S_0^C} \frac{q \cdot f_X(x) - p \cdot g_X(x)}{p - q} dx\\
+&\quad \quad \quad+\int_{S_0} \left| \frac{p \cdot g_X(x) - q \cdot f_X(x)}{p \cdot \bP_{X \sim g_X} [X \in S_0] - q \cdot \bP_{X \sim f_X} [X \in S_0]} - \frac{p \cdot g_X(x) - q \cdot f_X(x)}{p - q} \right| dx \\
+&\quad \quad \quad= \left| 1 - \frac{p \cdot \bP_{X \sim g_X} [X \in S_0] - q \cdot \bP_{X \sim f_X} [X \in S_0]}{p - q} \right| \\
+&\quad\quad \quad \quad+ \frac{q \cdot \bP_{X \sim f_X} [X \not \in S_0] - p \cdot \bP_{X \sim g_X} [X \not \in S_0]}{p - q} \\
+&\quad \quad \quad= \frac{2(q \cdot \bP_{X \sim f_X} [X \not \in S_0] - p \cdot \bP_{X \sim g_X} [X \not \in S_0])}{p - q} \\
+&\quad \quad \quad\le \frac{2 \cdot \bP_{X \sim f_X}[ X \not \in S]}{p - q}
+\end{align*}
+since $S_0 \subseteq S$. A similar computation shows that
+\begin{align*}
+\left\| \varphi_1 - \frac{(1 - q) \cdot f_X - (1 - p) \cdot g_X}{p - q} \right\|_1 &= \frac{2((1 - p) \cdot \bP_{X \sim g_X} [X \not \in S_1] - (1 - q) \cdot \bP_{X \sim f_X} [X \not \in S_1])}{p - q} \\
+&\le \frac{2 \cdot \bP_{X \sim g_X}[X \not \in S]}{p - q} \\
+\end{align*}
+Now note that
+$$f_X = p \cdot \frac{(1 - q) \cdot f_X - (1 - p) \cdot g_X}{p - q} + (1 - p) \cdot \frac{p \cdot g_X - q \cdot f_X}{p - q}$$
+Therefore by the triangle inequality, we have that
+\begin{align*}
+\TV\left( \textsc{rk}(\text{Bern}(p)), f_X \right) &\le \TV\left( \textsc{rk}(\text{Bern}(p)), p \cdot \varphi_1 + (1 - p) \cdot \varphi_0 \right) \\
+&\quad+ \TV\left( p \cdot \varphi_1 + (1 - p) \cdot \varphi_0, f_X \right) \\
+&\le p \cdot \TV\left( \textsc{rk}(1), \varphi_1\right) + p \cdot \left\| \varphi_1 - \frac{(1 - q) \cdot f_X - (1 - p) \cdot g_X}{p - q} \right\|_1 \\
+&\quad \quad + (1 - p) \cdot \TV\left( \textsc{rk}(0), \varphi_0 \right) + (1 - p) \cdot \left\| \varphi_0 - \frac{p \cdot g_X - q \cdot f_X}{p - q} \right\|_1 \\
+&\le p \cdot \left( \frac{2 \cdot \bP_{X \sim f_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim g_X}[X \not \in S] + \frac{q}{p} \right)^{N} \right) \\
+&\quad \quad + (1 - p) \cdot \left( \frac{2 \cdot \bP_{X \sim g_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim f_X}[X \not \in S] + \frac{1 - p}{1 - q} \right)^{N} \right) \\
+&\le \Delta
+\end{align*}
+Similarly, note that
+$$g_X = q \cdot \frac{(1 - q) \cdot f_X - (1 - p) \cdot g_X}{p - q} + (1 - q) \cdot \frac{p \cdot g_X - q \cdot f_X}{p - q}$$
+The same triangle inequality applications as above show that
+\begin{align*}
+\TV\left( \textsc{rk}(\text{Bern}(q)), g_X \right) &\le q \cdot \left( \frac{2 \cdot \bP_{X \sim f_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim g_X}[X \not \in S] + \frac{q}{p} \right)^{N} \right) \\
+&\quad \quad + (1 - q) \cdot \left( \frac{2 \cdot \bP_{X \sim g_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim f_X}[X \not \in S] + \frac{1 - p}{1 - q} \right)^{N} \right) \\
+&\le \Delta
+\end{align*}
+completing the proof of the lemma.
+\end{proof}
+
+We will denote $\textsc{rk}$ as defined with the parameters in the lemma above as $\textsc{rk}(p \to f_X, q \to g_X, N)$ from this point forward. We now give the particular rejection kernels we will need in our reductions and their total variation guarantees. The first rejection kernel maps from the edge indicators in planted clique to Poisson random variables and will be essential in Poisson lifting.
+
+\begin{lemma} \label{lem:5a}
+Let $n$ be a parameter and let $\epsilon > 0, c > 1$ and $p \in (0, 1)$ be fixed constants satisfying that $3\epsilon^{-1} \le \log_c p^{-1}$. If $\lambda = \lambda(n)$ satisfies that $0 < \lambda \le n^{-\epsilon}$, then the map
+$$\textsc{rk}_{\text{P1}} = \textsc{rk}(1 \to \text{Pois}(c\lambda), p \to \text{Pois}(\lambda), N)$$
+where $N = \lceil 6 \log_{p^{-1}} n \rceil$ can be computed in $O(\log n)$ time and satisfies that
+$$\TV\left(\textsc{rk}_{\text{P1}}(1), \text{Pois}(c\lambda) \right) = O_n(n^{-3}) \quad \text{and} \quad \TV\left(\textsc{rk}_{\text{P1}}(\text{Bern}(p)), \text{Pois}(\lambda) \right) = O_n(n^{-3})$$
+\end{lemma}
+
+\begin{proof}
+Let $f_X(m)$ and $g_X(m)$ be the PMFs of $\text{Pois}(c \lambda)$ and $\text{Pois}(\lambda)$, respectively. Note that
+$$f_X(m) = \frac{e^{-c \lambda} (c\lambda)^m}{m!} \quad \text{and} \quad g_X(m) = \frac{e^{-\lambda} (\lambda)^m}{m!}$$
+can be computed and sampled in $O(1)$ operations. Therefore Lemma \ref{lem:5zz} implies that $\textsc{rk}_{\text{P1}}$ can be computed in $O(N) = O(\log n)$ time. Let the set $S$ be as defined in Lemma \ref{lem:5zz}, let $M =  \log_c (2p)^{-1} \ge 3\epsilon^{-1}$ and define the set $S' = \left\{ m \in \mathbb{Z}_{\ge 0} : m \le M \right\}$. Now note that if $m \in S'$ then
+$$\frac{f_X(m)}{g_X(m)} = \frac{\frac{e^{-c \lambda} (c\lambda)^m}{m!}}{\frac{e^{-\lambda} (\lambda)^m}{m!}} = e^{-(c - 1)\lambda} c^m \le c^M \le p^{-1}$$
+and therefore it follows that $S' \subseteq S$. For sufficiently large $n$, we have that $M = \log_c p^{-1} \ge cn^{-\epsilon} \ge c\lambda > \lambda$ and therefore a standard Poisson tail bound yields that
+$$\bP_{X \sim g_X}[X \not \in S] \le \bP_{X \sim g_X}[X > M] \le e^{-\lambda} \left(\frac{e\lambda}{M} \right)^M \le \left(\frac{e}{M} \right)^M \lambda^{3\epsilon^{-1}} \le \left(\frac{e}{M} \right)^M n^{-3}$$
+since $\lambda \le n^{-\epsilon}$. Similarly, we have that $\bP_{X \sim f_X}[X \not \in S] \le \left(\frac{ce}{M} \right)^M n^{-3}$. Now note that for sufficiently large $n$, we have that
+\begin{align*}
+\frac{2 \cdot \bP_{X \sim f_X} [X \not \in S]}{1 - p} + \left( \bP_{X \sim g_X}[X \not \in S] + p \right)^{N} &\le \frac{2 \left(\frac{ce}{M} \right)^M n^{-3}}{1 - p} + \left( \left(\frac{e}{M} \right)^M n^{-3} + p \right)^N \\
+&\le \frac{2 \left(\frac{ce}{M} \right)^M n^{-3}}{1 - p} + \left( p^{1/2} \right)^N \\
+&\le \left( 2(1 - p)^{-1} \left(\frac{ce}{M} \right)^M + 1 \right) n^{-3}
+\end{align*}
+By similar reasoning, we have that for sufficiently large $n$
+$$\frac{2 \cdot \bP_{X \sim g_X} [X \not \in S]}{1 - p} + \left( \bP_{X \sim f_X}[X \not \in S] \right)^{N} \le \left( 2(1 - p)^{-1} \left(\frac{e}{M} \right)^M + 1 \right) n^{-3}$$
+Therefore $\Delta \le \left( 2(1 - p)^{-1} \left(\frac{ce}{M} \right)^M + 1 \right) n^{-3}$ for sufficiently large $n$ and applying Lemma \ref{lem:5zz} proves the lemma.
+\end{proof}
+
+The next lemma gives another approximate map to Poisson random variables from Bernoulli random variables corresponding to the edge indicators in the edge-dense regime of planted dense subgraph. We use the following lemma to apply Poisson lifting after Gaussian lifting in order to deduce hardness in the general regime of PDS. The proof is very similar to that of Lemma \ref{lem:5a}.
+
+\begin{lemma} \label{lem:5b}
+Let $\epsilon \in (0, 1)$ be a fixed constant and let $n$ be a parameter. Suppose that:
+\begin{itemize}
+\item $\lambda = \lambda(n)$ satisfies that $0 < \lambda \le n^{-\epsilon}$;
+\item $c = c(n) > 1$ satisfies that $c = O_n(1)$; and
+\item $\rho = \rho(n) \in (0, 1/2)$ satisfies that $\rho \ge n^{-K}$ for sufficiently large $n$ where $K = \Theta_n(1)$ is positive and
+$$(K + 3)\epsilon^{-1} \le \log_c (1 + 2\rho) = O_n(1)$$
+\end{itemize}
+Then the map
+$$\textsc{rk}_{\text{P2}} = \textsc{rk}\left(\frac{1}{2} + \rho \to \text{Pois}(c\lambda), \frac{1}{2} \to \text{Pois}(\lambda), N \right)$$
+where $N = \left\lceil 6\rho^{-1} \log n \right\rceil$ can be computed in $\text{poly}(n)$ time and satisfies
+\begin{align*}
+\TV\left(\textsc{rk}_{\text{P2}}(\text{Bern}(1/2 + \rho)), \text{Pois}(c\lambda) \right) &= O_n(n^{-3}), \quad \text{and} \\
+\TV\left(\textsc{rk}_{\text{P2}}(\text{Bern}(1/2)), \text{Pois}(\lambda) \right) &= O_n(n^{-3})
+\end{align*}
+\end{lemma}
+
+\begin{proof}
+As in Lemma \ref{lem:5a}, let $f_X(m)$ and $g_X(m)$ be the PMFs of $\text{Pois}(c \lambda)$ and $\text{Pois}(\lambda)$ and note that they can be computed and sampled in $O(1)$ operations. Lemma \ref{lem:5zz} implies that $\textsc{rk}_{\text{P2}}$ can be computed in $O(N) = O(n^K \log n) = \text{poly}(n)$ time. Let the set $S$ be as defined in Lemma \ref{lem:5zz}, let $M =  \log_c (1 + 2 \rho) \ge (K + 3)\epsilon^{-1}$ and define the set $S' = \left\{ m \in \mathbb{Z}_{\ge 0} : m \le M \right\}$. Now note that if $n > 1$, then $\lambda \le n^{-\epsilon} < 1$ and it follows that
+$$e^{-(c - 1)\lambda} \ge 1 - (c - 1)\lambda > 2 - c \ge 2 - (1 + 2\rho)^{\epsilon/(K + 3)} > 1 - 2\rho$$
+since $\epsilon \in (0, 1)$. Therefore if $m \in S'$, then
+$$1 - 2\rho < e^{-(c - 1)\lambda} \le \frac{f_X(m)}{g_X(m)} = e^{-(c - 1)\lambda} c^m \le c^M \le 1 + 2\rho$$
+and it follows that $S' \subseteq S$. By the same Poisson tail bounds as in Lemma \ref{lem:5a}, we have that for sufficiently large $n$
+$$\bP_{X \sim g_X}[X \not \in S] \le \left(\frac{e}{M} \right)^M n^{-K-3} \quad \text{and} \quad \bP_{X \sim f_X}[X \not \in S] \le \left(\frac{ce}{M} \right)^M n^{-K-3}$$
+Now note that for sufficiently large $n$, we have that $\rho^{-1} \le n^K$ and $\left(\frac{e}{M} \right)^M n^{-K - 3} \le \frac{1}{2} n^{-K} \le \frac{1}{2}\rho$ since $M = O_n(1)$. Therefore
+\begin{align*}
+2\rho^{-1} \cdot \bP_{X \sim f_X} [X \not \in S] + \left( \bP_{X \sim g_X}[X \not \in S] + \frac{1}{1 + 2\rho} \right)^{N} &\le 2\rho^{-1} \left(\frac{ce}{M} \right)^M n^{-K-3} \\
+&\quad \quad + \left( \left(\frac{e}{M} \right)^M n^{-K - 3} + 1 - \rho \right)^N \\
+&\le 2 \left(\frac{ce}{M} \right)^M n^{-3} + \left( 1 - \frac{\rho}{2} \right)^N \\
+&\le 2 \left(\frac{ce}{M} \right)^M n^{-3} + e^{-\rho N/2} \\
+&\le \left( 2 \left(\frac{ce}{M} \right)^M + 1 \right) n^{-3}
+\end{align*}
+By similar reasoning, we have that for sufficiently large $n$,
+$$2\rho^{-1} \cdot \bP_{X \sim g_X} [X \not \in S] + \left( \bP_{X \sim f_X}[X \not \in S] + 1 - 2\rho \right)^{N} \le \left( 2\left(\frac{e}{M} \right)^M + 1 \right) n^{-3}$$
+Therefore $\Delta \le \left( 2 \left(\frac{ce}{M} \right)^M + 1 \right) n^{-3}$ for sufficiently large $n$ and applying Lemma \ref{lem:5zz} proves the lemma.
+\end{proof}
+
+The next lemma of this section approximately maps from Bernoulli to discretized Gaussian random variables. Gaussian random variables appear in two different contexts in our reductions: (1) the problems $\textsc{ROS}, \textsc{SPCA}$ and $\textsc{BC}$ have observations sampled from multivariate Gaussians; and (2) random matrices with Gaussian entries are used as intermediate in our reductions to $\textsc{PDS}$ in the general regime and $\textsc{SSBM}$. In both cases, we will need the map in the following lemma. As in the proofs of the previous two lemmas, this next lemma also verifies the conditions of Lemma \ref{lem:5zz} for Gaussians and derives an upper bound on $\Delta$.
+
+\begin{lemma} \label{lem:5c}
+Let $n$ be a parameter and suppose that $p = p(n)$ and $q = q(n)$ satisfy that $p > q$, $p, q \in [0, 1]$, $\max(q, 1 - q) = \Omega_n(1)$ and $p - q \ge n^{-O_n(1)}$. Let $\delta = \min \left\{ \log \left( \frac{p}{q} \right), \log \left( \frac{1 - q}{1 - p} \right) \right\}$. Suppose that $\mu = \mu(n) \in (0, 1)$ is such that
+$$\mu \le \frac{\delta}{2 \sqrt{6\log n + 2\log (p-q)^{-1}}}$$
+Then the map
+$$\textsc{rk}_{\text{G}} = \textsc{rk}\left(p \to N(\mu, 1), q \to N(0, 1), N \right)$$
+where $N = \left\lceil 6\delta^{-1} \log n \right\rceil$ can be computed in $\text{poly}(n)$ time and satisfies
+$$\TV\left(\textsc{rk}_{\text{G}}(\text{Bern}(p)), N(\mu, 1) \right) = O_n(n^{-3}) \quad \text{and} \quad \TV\left(\textsc{rk}_{\text{G}}(\text{Bern}(q)), N(0, 1) \right) = O_n(n^{-3})$$
+\end{lemma}
+
+\begin{proof}
+Let $f_X(x)$ and $g_X(x)$ be the PDFs of $N(\mu, 1)$ and $N(0, 1)$, respectively, where
+$$f_X(x) = \frac{1}{\sqrt{2\pi}} e^{-(x - \mu)^2/2} \quad \text{and} \quad g_X(x) = \frac{1}{\sqrt{2\pi}} e^{-x^2/2}$$
+which can be computed and sampled in $O(1)$ operations in the given computational model. Now note that since $\log(1 + x) \ge x/2$ for $x \in (0, 1)$, we have that
+$$\log \left( \frac{p}{q} \right) \ge \frac{p - q}{2q} \ge \frac{1}{2}(p - q) \ge \frac{1}{2} n^{-O_n(1)}$$
+and similarly that $\log\left( \frac{1 - q}{1 - p} \right) \ge \frac{p - q}{2(1 - p)} \ge \frac{1}{2}(p - q) \ge \frac{1}{2} n^{-O_n(1)}$. Therefore $N = \text{poly}(n)$ and Lemma \ref{lem:5zz} implies that $\textsc{rk}_{\text{G}}$ can be computed in $\text{poly}(n)$ time. Let the set $S$ be as defined in Lemma \ref{lem:5zz}, let $M = \sqrt{6 \log n + 2\log(p - q)^{-1}}$ and define the set $S' = \left\{ x \in \mathbb{R} : |x| \le M \right\}$. Note that if $x \in S'$ then we have that since $M\mu = \delta/2$,
+$$\frac{1 - p}{1 - q} \le \exp\left( - 2M\mu \right) \le \exp\left( -M \mu - \frac{\mu^2}{2} \right) \le \frac{f_X(x)}{g_X(x)} = \exp\left( x\mu - \frac{\mu^2}{2} \right) \le \exp\left( M \mu \right) \le \frac{p}{q}$$
+for sufficiently large $n$ since $M \to \infty$ as $n \to \infty$ and $\mu \in (0, 1)$. This implies that $S' \subseteq S$. Using the bound $1 - \Phi(t) \le \frac{1}{\sqrt{2\pi}} \cdot t^{-1} e^{-t^2/2}$ for $t \ge 1$, we have that
+$$\bP_{X \sim g_X}[X \not \in S] \le \bP_{X \sim g_X}[X \not \in S'] = 2\left(1 - \Phi(M) \right) \le \frac{2}{\sqrt{2\pi}} \cdot M^{-1} e^{-M^2/2}$$
+Similarly, it follows that for sufficiently large $n$ we have that $M/(M - \mu) \le 2$ and thus
+\begin{align*}
+\bP_{X \sim f_X}[X \not \in S] \le \bP_{X \sim f_X}[X \not \in S'] &= \left(1 - \Phi(M - \mu) \right) + \left(1 - \Phi(M + \mu) \right) \\
+&\le \frac{1}{\sqrt{2\pi}} \cdot (M - \mu)^{-1} e^{-(M - \mu)^2/2} \\
+&\quad + \frac{1}{\sqrt{2\pi}} \cdot (M + \mu)^{-1} e^{-(M + \mu)^2/2} \\
+&\le \frac{1}{\sqrt{2\pi}} \cdot M^{-1} e^{-(\mu^2 + M^2)/2} \left[ \frac{M}{M - \mu} \cdot e^{M\mu} + 1 \right] \\
+&\le \frac{1}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) \cdot M^{-1} e^{-M^2/2}
+\end{align*}
+Now note that $M^{-1} e^{-M^2/2} \le e^{-M^2/2} \le (p - q)n^{-3}$ for sufficiently large $n$. If $n$ is large enough then $\frac{2}{\sqrt{2\pi}} \cdot n^{-3} \le \frac{q^{1/2}}{p(p^{1/2} + q^{1/2})} = \Omega_n(1)$ since $q = \Omega_n(1)$. Rearranging yields that $\frac{2}{\sqrt{2\pi}} (p - q) n^{-3} \le \sqrt{\frac{q}{p}} - \frac{q}{p}$. This implies that
+\begin{align*}
+\frac{2 \cdot \bP_{X \sim f_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim g_X}[X \not \in S] + \frac{q}{p} \right)^{N} &\le \frac{2}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right)n^{-3} \\
+&\quad+ \left( \frac{2}{\sqrt{2\pi}} (p - q) n^{-3} + \frac{q}{p} \right)^N \\
+&\le \frac{2}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right)n^{-3} + \left( \frac{q}{p} \right)^{N/2} \\
+&\le \left( 1 + \frac{2}{\sqrt{2\pi}} + \frac{4}{\sqrt{2\pi}} \sqrt{\frac{p}{q}} \right)n^{-3} = O_n(n^{-3})
+\end{align*}
+Now note that if $\frac{1}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) n^{-3} > \frac{(1 - p)^{1/2}}{(1 - q)((1 - q)^{1/2} + (1 - p)^{1/2})}$ then it follows that
+$$\frac{1 - p}{1 - q} \le \left( \frac{(1 - q)}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) \cdot n^3 - 1 \right)^{-1} \le Cn^{-3}$$
+for some constant $C > 0$ if $n$ is sufficiently large, since $1 - q = \Omega_n(1)$. Otherwise, the same manipulation as above implies that $\frac{1}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) n^{-3} \le \sqrt{\frac{1 - p}{1 - q}} - \frac{1 - p}{1 - q}$. Therefore we have in either case that
+$$\frac{1}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) n^{-3} + \frac{1 - p}{1 - q} \le \max \left\{ \sqrt{\frac{1 - p}{1 - q}}, \frac{1}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) n^{-3} +Cn^{-3} \right\}$$
+For sufficiently large $n$, the second term in the maximum above is at most $n^{-2}$. Therefore
+\begin{align*}
+\frac{2 \cdot \bP_{X \sim g_X} [X \not \in S]}{p - q} + \left( \bP_{X \sim f_X}[X \not \in S] + \frac{1 - p}{1 - q}\right)^{N} &\le \left( \frac{4}{\sqrt{2\pi}} \right) n^{-3} \\
+&\quad+ \left( \frac{1}{\sqrt{2\pi}} \left( 1 + 2\sqrt{\frac{p}{q}} \right) n^{-3} + \frac{1 - p}{1 - q} \right)^N \\
+&\le \left( \frac{4}{\sqrt{2\pi}} \right) n^{-3} \\
+&\quad+ \max \left\{ \left( \frac{1 - p}{1 - q} \right)^{N/2}, n^{-2N} \right\} \\
+&= O_n(n^{-3})
+\end{align*}
+Therefore $\Delta = O_n(n^{-3})$ for sufficiently large $n$ since $q = \Omega_n(1)$. Now applying Lemma \ref{lem:5zz} proves the lemma.
+\end{proof}
+
+\subsection{Distributional Lifting}
+
+The general distributional lifting procedure begins with an instance $G \in \mG_n$ of a planted dense subgraph problem such as planted clique and applies a rejection kernel element-wise to its adjacency matrix. This yields a symmetric matrix $M$ with zeros on its main diagonal, i.i.d. entries sampled from $P_{\lambda_0}$ on entries corresponding to clique edges and i.i.d. entries sampled from $Q_{\lambda_0}$ elsewhere. As an input to the procedure, we assume a random cloning map $f_{\text{cl}}$ that exactly satisfies
+$$f_{\text{cl}}(P_\lambda) \sim P_{g_{\text{cl}(\lambda)}}^{\otimes 4} \quad \text{and} \quad f_{\text{cl}}(Q_\lambda) \sim Q_{g_{\text{cl}(\lambda)}}^{\otimes 4}$$
+for some parameter update function $g_{\text{cl}}$. Applying this cloning map entry-wise to $M$ and arranging the resulting entries correctly yields a matrix $M$ of size $2n \times 2n$ with a planted submatrix of size $2k \times 2k$. The only distributional issue that arises are the anti-diagonal entries, which are now all from $Q_{g_{\text{cl}(\lambda)}}$ although some should be from $P_{g_{\text{cl}(\lambda)}}$. We handle these approximately in total variation by randomly permuting the rows and columns and applying Lemma \ref{lem:4a}. Iterating this procedure $\ell$ times yields a matrix $M'$ of size $2^\ell n \times 2^\ell n$ with a planted submatrix of size $2^\ell k \times 2^\ell k$. If $\lambda_{i+1} = g_{\text{cl}}(\lambda_i)$, then $M'$ has all i.i.d. entries from $Q_{\lambda_\ell}$ under $H_0$ and a planted submatrix with i.i.d. entries from $P_{\lambda_\ell}$ under $H_1$. We then truncate the entries of $M'$ to produce the adjacency matrix of a graph with i.i.d. edge indicators, conditioned on the vertices in the planted subgraph. This yields a general procedure to reduce from an instance of planted clique to subgraph problems with larger planted subgraphs.
+
+A natural question is: what is the purpose of the distributions $P_{\lambda}$ and $Q_{\lambda}$? If the initial and final distributions are both graph distributions with Bernoulli edge indicators, it a priori seems unnecessary to use matrix distributions without Bernoulli entries as intermediates. Our main reason for introducing these intermediate distributions is that they achieve the right parameter tradeoffs to match the best known algorithms for PDS where cloning procedures that stay within the set of graph distributions do not. Consider the target planted dense subgraph instance of $\text{PDS}(n, k, p, q)$ where $p = 2 q$ and $q = \tilde{\Theta}(n^{-\alpha})$. To produce lower bounds tight with the computational barrier in Theorem \ref{lem:2a}, a lifting procedure mapping $n \to 2n$ and $k \to 2k$ at each step would need its cloning map to satisfy
+$$f_{\text{cl}}(\text{Bern}(q)) \sim Q = \text{Bern}(q/4)^{\otimes 4} \quad \text{and} \quad f_{\text{cl}}(\text{Bern}(p)) \sim P = \text{Bern}(p/4)^{\otimes 4}$$
+where $p = 2q$. It is not difficult to verify that for any random map $f_{\text{cl}} : \{0, 1\} \to \{0, 1\}^4$, it would need to hold that
+$$\frac{1 - p}{1 - q} \le \frac{P(x)}{Q(x)} \le \frac{p}{q} \quad \text{for all } x \in \{0, 1\}^4$$
+However, $P(1, 1, 1, 1)/Q(1, 1, 1, 1) = 16 > 2 = p/q$, so no such map can exist. Another approach is to relax $f_{\text{cl}}$ to be an approximate map like a rejection kernel. However, this seems to induce a large loss in total variation from the target distribution on $M'$. Our solution is to use a rejection kernel to map to distributions with natural cloning maps $f_{\text{cl}}$, such as a Poisson or Gaussian distribution, to front-load the total variation loss to this approximate mapping step and induce no entry-wise total variation loss later in the cloning procedure. We choose the precise distributions $P_{\lambda}$ and $Q_{\lambda}$ to match the parameter tradeoff along the computational barrier. Note that this general distributional lifting procedure can also be used to map to problems other than variants of subgraph detection, such as biclustering, by not truncating in Step 4.
+
+We remark that the $\textsc{PC-Lifting}$ reduction presented in the previous section is almost an instance of distributional lifting with $P_{\lambda} = \text{Bern}(1)$ for all $\lambda$ and $Q_{\lambda} = \text{Bern}(\lambda)$, with the parameter update $g_{\text{cl}}(\lambda) = \lambda^{1/4}$. However in $\textsc{PC-Lifting}$, the planted anti-diagonal entries between the vertices $i$ and $2m + 1 - i$ in Step 3b are from the planted distribution $P_\lambda$, rather than $Q_\lambda$ as in distributional lifting. This requires a slightly different analysis of the planted anti-diagonal entries with Lemma \ref{lem:4a}.
+
+We now proceed to describe distributional lifting and prove its guarantees. Given two distributions $P$ and $Q$, let $M_n(Q)$ denote the distribution on $n \times n$ symmetric matrices with zero diagonal entries and every entry below the diagonal sampled independently from $Q$. Similarly, let $M_n(S, P, Q)$ denote the distribution on random $n \times n$ symmetric matrices formed by:
+\begin{enumerate}
+\item sampling the entries of the principal submatrix with indices in $S$ below its main diagonal independently from $P$;
+\item sampling all other entries below the main diagonal independently from $Q$; and
+\item placing zeros on the diagonal.
+\end{enumerate}
+Let $M_n(k, P, Q)$ denote the distribution of matrices $M_n(S, P, Q)$ where $S$ is a size $k$ subset of $[n]$ selected uniformly at random. Given a matrix $M \in \mathbb{R}^{n \times n}$ and index sets $S, T \subseteq [n]$, let $M[S \times T]$ denote the $|S| \times |T|$ submatrix of $M$ with row indices in $S$ and column indices in $T$. Also let $G(n, p, q, S)$ where $S$ is a $k$-subset of $[n]$ denote an instance of $G(n, k, p, q)$ where the planted dense subgraph is conditioned to be on $S$. The guarantees of distributional lifting are as follows.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{Distributional-Lifting}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, number of iterations $\ell$, parameterized families of target planted and noise distributions $P_\lambda$ and $Q_{\lambda}$, a TV-approximation $Q'_{\lambda}$ to $Q_{\lambda}$ that can be efficiently sampled, rejection kernel $\textsc{rk}$ approximately mapping $\text{Bern}(p') \to P_{\lambda_0}$ and $\text{Bern}(q') \to Q_{\lambda_0}$, threshold $t$, cloning map $f_{\text{cl}}$ and corresponding parameter map $g_{\text{cl}}$
+\begin{enumerate}
+\item Form the symmetric matrix $M \in \mathbb{R}^{n \times n}$ with $M_{ii} = 0$ and off-diagonal terms
+$$M_{ij} = \textsc{rk}\left(\mathbf{1}_{\{i, j \} \in E(G)}\right)$$
+\item Initialize $W \gets M$ and $m \gets n$
+\item For $i = 0, 1, \dots, \ell - 1$ do:
+\begin{enumerate}
+\item[a.] For each pair of distinct $i, j \in [m]$, let $(x_{ij}^1, x_{ij}^2, x_{ij}^3, x_{ij}^4) = f_{\text{cl}}(W_{ij})$
+\item[b.] Let $W' \in\mathbb{R}^{2m \times 2m}$ be the symmetric matrix with $W_{ii}' = 0$ and
+\begin{align*}
+W'_{ij} &= x^1_{ij} \\
+W'_{(2m+1 - i)j} &=  x^2_{ij} \\
+W'_{i(2m + 1 - j)} &=  x^3_{ij} \\
+W'_{(2m+1 - i)(2m + 1 - j)} &=  x^4_{ij}
+\end{align*}
+for all distinct $i, j \in [m]$ and
+$$W'_{i, 2m+1 - i} \sim_{\text{i.i.d.}} Q'_{\lambda}$$
+for all $i \in [m]$
+\item[c.] Generate a permutation $\sigma$ on $[2m]$ uniformly at random
+\item[d.] Update $W \gets (W')^{\sigma, \sigma}$, $m \gets 2m$ and $\lambda \gets g_{\text{cl}}(\lambda)$
+\end{enumerate}
+\item Output the graph $H$ with $\{i, j \} \in E(H)$ if $W_{ij} > t$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Distributional lifting procedure in Theorem \ref{lem:5cc}.}
+\end{figure}
+
+\begin{theorem}[Distributional Lifting] \label{lem:5cc}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large. Let $p', q' \in [0, 1]$ and define the parameters:
+\begin{itemize}
+\item target planted and noise distribution families $P_{\lambda}$ and $Q_{\lambda}$ parameterized by $\lambda$;
+\item a rejection kernel $\textsc{rk}$ that can be computed in randomized $\text{poly}(n)$ time and parameter $\lambda_0$ such that $\textsc{rk}(\text{Bern}(p')) \sim \tilde{P}_{\lambda_0}$ and $\textsc{rk}(\text{Bern}(q')) \sim \tilde{Q}_{\lambda_0}$;
+\item a cloning map $f_{\text{cl}}$ that can be computed in randomized $\text{poly}(n)$ time and parameter map $g_{\text{cl}}$ such that
+$$f_{\text{cl}}(P_\lambda) \sim P_{g_{\text{cl}(\lambda)}}^{\otimes 4} \quad \text{and} \quad f_{\text{cl}}(Q_\lambda) \sim Q_{g_{\text{cl}(\lambda)}}^{\otimes 4}$$
+for each parameter $\lambda$;
+\item a randomized $\text{poly}(n)$ time algorithm for sampling from $Q'_{\lambda_i}$ for each $1 \le i \le \ell$ where the sequence of parameters $\lambda_i$ are such that $\lambda_{i+1} = g_{\text{cl}}(\lambda_i)$ for each $i$; and
+\item a threshold $t \in \mathbb{R}$.
+\end{itemize}
+Then $ \phi = \textsc{Distributional-Lifting}$ with these parameters is a randomized polynomial time computable map $\phi : \mG_n \to \mG_{2^\ell n}$ such that under both $H_0$ and $H_1$, it holds that
+\begin{align*}
+\TV\left( \phi(\textsc{PDS}(n, k, p', q')), \textsc{PDS}\left(2^\ell n, 2^\ell k, p, q \right) \right) &\le \binom{n}{2} \cdot \max\left\{ \TV\left( \tilde{P}_{\lambda_0}, P_{\lambda_0} \right), \TV\left( \tilde{Q}_{\lambda_0}, Q_{\lambda_0} \right) \right\} \\
+& + \sum_{i = 1}^{\ell} \left( 2^i n \cdot \TV\left(Q_{\lambda_i}, Q'_{\lambda_i}\right) + \sqrt{\frac{\chi^2(Q_{\lambda_i}, P_{\lambda_i})}{2}} \right)
+\end{align*}
+where $p = \bP_{X \sim P_{\lambda_\ell}}[ X > t]$ and $q = \bP_{X \sim Q_{\lambda_\ell}}[ X > t]$.
+\end{theorem}
+
+\begin{proof}
+If $\ell = O(\log n)$, the algorithm $\textsc{Distributional-Lifting}$ runs in randomized polynomial time. Let $\phi_i(W)$ be the algorithm that outputs the value of $W$ after $i$ iterations of Step 4 given the original value of $W$ and Let $\phi'_i(G)$ be the algorithm that outputs the value of $W$ after $i$ iterations of Step 4 given the original graph $G$. Note that $\phi'_0$ outputs the value of $M$ after Step 1.
+
+We first consider an iteration of Step 3 applied to $M \sim M_m(S, P_{\lambda}, Q_{\lambda})$ where $|S| = k$. By the definition of $f_{\text{cl}}$, if $i, j$ are distinct and both in $S$, then $(x^1_{ij}, x^2_{ij}, x^3_{ij}, x^4_{ij}) \sim P_{g_{\text{cl}}(\lambda)}^{\otimes 4}$. Similarly, if at least one of $i$ or $j$ is not in $S$, then $(x^1_{ij}, x^2_{ij}, x^3_{ij}, x^4_{ij}) \sim Q_{g_{\text{cl}}(\lambda)}^{\otimes 4}$. Therefore the symmetric matrix $W'$ constructed in Step 4b has independent entries below its main diagonal and satisfies that:
+\begin{itemize}
+\item $W'_{ij} \sim P_{g_{\text{cl}}(\lambda)}$ for all distinct $i, j \in S' = S \cup \{ 2m + 1 - i : i \in S\}$ with $i + j \neq 2m + 1$;
+\item $W'_{ij} \sim Q_{g_{\text{cl}}(\lambda)}$ for all distinct $(i, j) \not \in S' \times S'$;
+\item $W'_{ij} \sim Q'_{g_{\text{cl}}(\lambda)}$ with $i + j = 2m + 1$; and
+\item $W'_{ii} = 0$.
+\end{itemize}
+Let $W_r'$ be the matrix with each of its entries identically distributed to those of $W'$ except $(W_r')_{ij} \sim Q_{g_{\text{cl}}(\lambda)}$ if $i + j = 2m + 1$. Coupling entries individually yields that
+$$\TV(\mL(W'), \mL(W_r')) \le m \cdot \TV\left( Q_{g_{\text{cl}}(\lambda)}, Q'_{g_{\text{cl}}(\lambda)} \right)$$
+Now consider the matrix $W_r = (W_r')^{\sigma, \sigma}$ conditioned on the two sets $\sigma(S)$ and $\sigma(S' \backslash S)$ where $\sigma$ is a uniformly at random chosen permutation on $[2m]$. We will show that this matrix is close in total variation to $M_{2m}(\sigma(S'), P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)})$. Note that fully conditioned on $\sigma$, the entries of $W_r$ below the main diagonal are independent and identically distributed to $M_{2m}(\sigma(S'), P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)})$ other than the entries with indices $(\sigma(i), \sigma(2m + 1 - i))$ where $i \in S'$. These entries are distributed as $Q_{g_{\text{cl}}(\lambda)}$ in $W_r | \sigma$ and as $P_{g_{\text{cl}}(\lambda)}$ in the target distribution $M_{2m}(\sigma(S'), P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)})$. Marginalizing to only condition on the sets $\sigma(S)$ and $\sigma(S', S)$, yields that all entries $(W_r)_{ij}$ with $(i, j) \not \in \sigma(S) \times \sigma(S', S) \cup \sigma(S', S) \times \sigma(S)$ are identically distributed in $W_r | \{ \sigma(S), \sigma(S' \backslash S)\}$ and the target distribution. Coupling these corresponding entries yields that the total variation between $W_r | \{ \sigma(S), \sigma(S' \backslash S)\}$ and the target distribution satisfies that
+\begin{align*}
+\TV\left( \mL(W_r|\sigma(S), \sigma(S' \backslash S)), \right. &\left. M_{2m}(\sigma(S'), P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)}) \right) \\
+&= \TV\left( \mL(W_r[\sigma(S) \times \sigma(S' \backslash S)]), M_k(P_{g_{\text{cl}}(\lambda)}) \right)
+\end{align*}
+Now observe that $W_r[\sigma(S) \times \sigma(S' \backslash S)]$ is distributed as $\mL(A^{\text{id}, \tau})$ where $\tau$ is permutation of $[k]$ selected uniformly at random and $A$ is a matrix with its diagonal entries i.i.d. $Q_{g_{\text{cl}}(\lambda)}$ and its other entries i.i.d. $P_{g_{\text{cl}}(\lambda)}$. By Lemma \ref{lem:4a}, we therefore have that
+\begin{align*}
+\TV\left( \mL(W_r[\sigma(S) \times \sigma(S' \backslash S)]), M_k(P_{g_{\text{cl}}(\lambda)}) \right) &= \TV\left( \mL(A^{\text{id}, \tau}), M_k(P_{g_{\text{cl}}(\lambda)}) \right) \\
+&\le \sqrt{\frac{1}{2} \cdot \chi^2\left( Q_{g_{\text{cl}}(\lambda)}, P_{g_{\text{cl}}(\lambda)}\right)}
+\end{align*}
+Now consider the matrix $\phi_1(M) = W = (W')^{\sigma, \sigma}$. By the data processing inequality, we have that
+\begin{align*}
+\TV\left( \mL(W_r|\sigma(S), \sigma(S' \backslash S)), \mL(W|\sigma(S), \sigma(S' \backslash S)\right) &\le \TV(\mL(W'), \mL(W_r')) \\
+&\le m \cdot \TV\left( Q_{g_{\text{cl}}(\lambda)}, Q'_{g_{\text{cl}}(\lambda)} \right)
+\end{align*}
+The triangle inequality now implies that
+\begin{align*}
+\TV\left( \mL(W|\sigma(S), \sigma(S' \backslash S)), \right. &\left. M_{2m}(\sigma(S'), P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)}) \right) \\
+&\le m \cdot \TV\left( Q_{g_{\text{cl}}(\lambda)}, Q'_{g_{\text{cl}}(\lambda)} \right) + \sqrt{\frac{1}{2} \cdot \chi^2\left( Q_{g_{\text{cl}}(\lambda)}, P_{g_{\text{cl}}(\lambda)}\right)}
+\end{align*}
+Letting $S$ be chosen uniformly at random over all subsets of $[n]$ of size $k$ and the triangle inequality now imply that
+\begin{align*}
+&\TV\left( \phi_1(M_m(k, P_{\lambda}, Q_{\lambda})), M_{2m}(2k, P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)}) \right) \\
+&\quad \quad \quad \le \bE_{S} \bE_{\sigma(S), \sigma(S'\backslash S)} \left[ \TV\left( \mL(W|\sigma(S), \sigma(S' \backslash S)), M_{2m}(\sigma(S'), P_{g_{\text{cl}}(\lambda)}, Q_{g_{\text{cl}}(\lambda)}) \right) \right] \\
+&\quad \quad \quad \le m \cdot \TV\left( Q_{g_{\text{cl}}(\lambda)}, Q'_{g_{\text{cl}}(\lambda)} \right) + \sqrt{\frac{1}{2} \cdot \chi^2\left( Q_{g_{\text{cl}}(\lambda)}, P_{g_{\text{cl}}(\lambda)}\right)}
+\end{align*}
+For each $i \ge 0$, combining this inequality with the triangle inequality and data processing inequality yields that
+\begin{align*}
+&\TV\left( \phi_{i+1}(M_m(k, P_{\lambda_0}, Q_{\lambda_0})), M_{2^{i+1} m}\left(2^{i+1} k, P_{\lambda_{i+1}}, Q_{\lambda_{i+1}}\right) \right) \\
+&\quad \quad \quad \le \TV\left( \phi_1 \circ \phi_{i}(M_m(k, P_{\lambda_0}, Q_{\lambda_0})), \phi_1\left( M_{2^{i} m}\left(2^{i} k, P_{\lambda_{i}}, Q_{\lambda_{i}}\right) \right) \right) \\
+&\quad \quad \quad \quad + \TV\left( \phi_1\left( M_{2^{i} m}\left(2^{i} k, P_{\lambda_{i}}, Q_{\lambda_{i}}\right) \right), M_{2^{i+1} m}\left(2^{i+1} k, P_{\lambda_{i+1}}, Q_{\lambda_{i+1}}\right) \right) \\
+&\quad \quad \quad \le \TV\left( \phi_{i}(M_m(k, P_{\lambda_0}, Q_{\lambda_0})), M_{2^{i} m}\left(2^{i} k, P_{\lambda_{i}}, Q_{\lambda_{i}}\right) \right) \\
+&\quad \quad \quad \quad + 2^i m \cdot \TV\left( Q_{\lambda_{i+1}}, Q'_{\lambda_{i+1}} \right) + \sqrt{\frac{1}{2} \cdot \chi^2\left( Q_{\lambda_{i+1}}, P_{\lambda_{i+1}}\right)}
+\end{align*}
+Now note that the adjacency matrix $A_{ij}(G) = \mathbf{1}_{\{i, j \} \in E(G)}$ of $G \sim G(n, p', q', S)$ is distributed as $M_n(S, \text{Bern}(p'), \text{Bern}(q'))$. Note that $\phi_0'$ applies $\textsc{rk}$ element-wise to the entries below the main diagonal of $A_{ij}(G)$. Coupling each of the independent entries below the diagonals of $\phi_0'(G(n, p', q', S))$ and $M_n(S, P_{\lambda_0}, Q_{\lambda_0})$ separately, we have that if $|S| = k$ then
+\begin{align*}
+\TV\left( \phi_0'(G(n, p', q', S)), M_n(S, P_{\lambda_0}, Q_{\lambda_0}) \right) &\le \binom{k}{2} \cdot \TV\left( \tilde{P}_{\lambda_0}, P_{\lambda_0} \right) \\
+&\quad+\left( \binom{n}{2} - \binom{k}{2} \right) \cdot \TV\left( \tilde{Q}_{\lambda_0}, Q_{\lambda_0} \right)
+\end{align*}
+Taking $S$ to be uniformly distributed over all $k$ element subsets of $[n]$ yields by triangle inequality,
+\begin{align*}
+\TV\left( \phi_0'(G(n, k, p', q')), \right. &\left. M_n(k, P_{\lambda_0}, Q_{\lambda_0}) \right) \\
+&\le \bE_S \left[ \TV\left( \phi_0'(G(n, p', q', S)), M_n(S, P_{\lambda_0}, Q_{\lambda_0}) \right) \right] \\
+&\le \binom{n}{2} \cdot \max\left\{ \TV\left( \tilde{P}_{\lambda_0}, P_{\lambda_0} \right), \TV\left( \tilde{Q}_{\lambda_0}, Q_{\lambda_0} \right) \right\}
+\end{align*}
+Applying the bounds above iteratively, the triangle inequality and the data processing inequality now yields that
+\begin{align*}
+&\TV\left( \phi_\ell'(G(n, k, p', q')), M_{2^{\ell} n}(2^{\ell} k, P_{\lambda_\ell}, Q_{\lambda_\ell}) \right) \\
+&\quad \le \TV\left( \phi_\ell \circ \phi_0'(G(n, k, p)), \phi_\ell \left( M_n(k, P_{\lambda_0}, Q_{\lambda_0}) \right) \right) \\
+&\quad\quad+ \TV\left( \phi_{\ell}(M_n(k, P_{\lambda_0}, Q_{\lambda_0})), M_{2^{\ell} n}(2^{\ell} k, P_{\lambda_\ell}, Q_{\lambda_\ell}) \right) \\
+&\quad \le \TV\left( \phi_0'(G(n, k, p)), M_n(k, P_{\lambda_0}, Q_{\lambda_0}) \right) + \sum_{i = 1}^{\ell} \left( 2^{i-1}n \cdot \TV\left( Q_{\lambda_{i}}, Q'_{\lambda_{i}} \right) + \sqrt{\frac{\chi^2(Q_{\lambda_i}, P_{\lambda_i})}{2}} \right) \\
+&\quad \le \binom{n}{2} \cdot \max\left\{ \TV\left( \tilde{P}_{\lambda_0}, P_{\lambda_0} \right), \TV\left( \tilde{Q}_{\lambda_0}, Q_{\lambda_0} \right) \right\} \\
+&\quad\quad+ \sum_{i = 1}^{\ell} \left( 2^{i-1} n \cdot \TV\left( Q_{\lambda_{i}}, Q'_{\lambda_{i}} \right) + \sqrt{\frac{\chi^2(Q_{\lambda_i}, P_{\lambda_i})}{2}} \right)
+\end{align*}
+By the same reasoning, we have that
+$$\TV\left( \phi_0'(G(n, q')), M_n(Q_{\lambda_0}) \right) \le \binom{n}{2} \cdot \TV\left( \tilde{Q}_{\lambda_0}, Q_{\lambda_0} \right)$$
+Now note that if $M \sim M_m(Q_{\lambda_0})$, every entry of $W'_{ij}$ in Step 3b below the main diagonal is i.i.d. sampled from $Q_{\lambda_1}$ other than those with $i + j = 2m + 1$, which are sampled from $Q'_{\lambda_1}$. Coupling entries individually implies that
+$$\TV\left( \phi_1(M), M_{2m}(Q_{\lambda_1}) \right) \le m \cdot \TV\left( Q_{\lambda_1}, Q'_{\lambda_1} \right)$$
+By induction we have that the data processing and triangle inequalities imply that
+$$\TV\left( \phi_\ell(M), M_{2m}(Q_{\lambda_\ell}) \right) \le \sum_{i = 1}^\ell 2^{i-1} m \cdot \TV\left( Q_{\lambda_i}, Q'_{\lambda_i} \right)$$
+Therefore it follows that
+\begin{align*}
+\TV\left( \phi_\ell'(G(n, q')), M_{2^\ell n}(Q_{\lambda_\ell}) \right) &\le \TV\left( \phi_\ell \circ \phi_0'(G(n, q')), \phi_\ell\left(M_n(Q_{\lambda_0})\right) \right) \\
+&\quad \quad \quad \quad + \TV\left( \phi_\ell(M_n(Q_{\lambda_0})), M_{2^\ell n}(Q_{\lambda_\ell}) \right) \\
+&\le \TV\left( \phi_0'(G(n, q')), M_n(Q_{\lambda_0}) \right) + \sum_{i = 1}^\ell 2^{i-1} m \cdot \TV\left( Q_{\lambda_i}, Q'_{\lambda_i} \right) \\
+&\le \binom{n}{2} \cdot \TV\left( \tilde{Q}_{\lambda_0}, Q_{\lambda_0} \right) + \sum_{i = 1}^\ell 2^{i-1} m \cdot \TV\left( Q_{\lambda_i}, Q'_{\lambda_i} \right)
+\end{align*}
+If $W \sim M_{2^{\ell} n}(2^{\ell} k, P_{\lambda_\ell}, Q_{\lambda_\ell})$, then the graph with adjacency matrix $A_{ij} = \mathbf{1}_{\{W_{ij} > t\}}$ is distributed as $G(2^\ell n, 2^\ell k, p, q)$ where $p = \bP_{X \sim P_{\lambda_\ell}}[ X > t]$ and $q = \bP_{X \sim Q_{\lambda_\ell}}[ X > t]$. Similarly if $W \sim M_{2^\ell n}(Q_{\lambda_\ell})$ then the graph with adjacency matrix $A_{ij} = \mathbf{1}_{\{W_{ij} > t\}}$ is distributed as $G(2^\ell n, q)$. Now combining the total variation bounds above with the data processing inequality proves the theorem.
+\end{proof}

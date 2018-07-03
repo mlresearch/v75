@@ -1,0 +1,312 @@
+% !TEX root = Main.tex
+\section{Introduction}
+In best-arm identification~\citep{Maron93HR,Bubeck09PE}, 
+the \emph{learner} tries to identify the \emph{arm} (option,
+decision) with the highest (expected) average \emph{reward} among $\nArms$
+given arms.  At each round $t$ of the \emph{game} (the interaction
+of the learner with its environment), each arm $k$ is assigned a
+reward $\gainVector_{k,t}$. On this very same round $t$, a learner
+chooses an arm $\pulledArm_t$ and \emph{only} observes the reward of
+that arm, $\gainVector_{\pulledArm_t,t}$, while the rest of the vector
+$\gainVector_{t}$ is hidden from the learner.
+
+Typically, we assume stochastic rewards: Each arm $k$ is associated with
+a distribution $\nu_k$ and, for all $k$ and $t$, the
+$\gainVector_{k,t}$ is sampled i.i.d.\,from $\nu_k$. In this paper, we
+aim for a robust solution for this setting and we allow the possibility
+that the rewards are non-stochastic. The rewards could  have been chosen even by an oblivious \emph{adversary}: The
+rewards are fixed before the start of the game but they are not necessarily
+drawn i.i.d.\,from a distribution. We focus on \emph{fixed-budget}, where a
+total number of arm pulls $\timeHorizon$ is fixed and the learner
+wishes to identify, as accurately as possible, the arm that attains the
+highest cumulative reward. However, the results extend to a fixed-confidence 
+case as we discuss in Section~\ref{s:exte}, together with \textit{adaptive} 
+adversaries and other cases. % are also discussed therein.% Section~\ref{s:exte}.
+
+% Because there is no underlying distribution
+% generating the rewards, it is difficult to define the
+% \emph{fixed-confidence} version of the problem: the high probability
+% guarantees are usually with respect to the randomness of the algorithm
+% and the rewards, but the later do not have a probability measure
+% defined on them.
+
+Given $\gainVector$ and round $\timeHorizon$, we define the
+cumulative gain of arm $k$ as
+$\cumulGain_k=\sum_{t=1}^{\timeHorizon}\gainVector_{k,t}$.  Same
+as for adversarial bandits for cumulative-regret~\citep{Auer02NM}, the best arm in hindsight is defined as
+$\bestArm_{\gainVector}= \argmax_{k\in\setArms}
+\cumulGain_{k}$.\footnote{An alternative definition of best-arm identification
+	could be predicting
+	$\argmax_{k\in\setArms}\gainVector_{k,\timeHorizon+1}$. However, this
+	is impossible in the adversarial case where
+	$\gainVector_{k,\timeHorizon+1}$ can be chosen arbitrarily without
+	any dependence on $\gainVector_{k,[\timeHorizon]}$.}
+%\todomi{is there any other paper that we can cite, that uses this definition of an adversarial best arm?
+%if not, maybe we could spend couple sentences arguing, why is this a good definition. 
+%Or at least to the motivation examples below.
+%}
+% Note that in 
+%the stochastic case the best arm is the arm with the highest mean 
+%$\bestArm_{\gainVector}= \argmax_{k\in\setArms} \mean_{k}$.
+In a similar way, we define the gaps in hindsight with respect to~$\gainVector$ between two arms $k$ and 
+$j$ as $\gap^\gainVector_{k,j}\triangleq\frac{1}{\timeHorizon}
+\sum_{t=1}^{\timeHorizon}(\gainVector_{k,t}-\gainVector_{j,t})$, 
+giving a good proxy for the difficulty of discriminating between
+these two arms even in an adversarial environment. 
+We design a learner and show that the probability\footnote{Note that in our setup, 
+	given~$\gainVector$, the randomness comes solely from the potential 
+	internal randomization of the learner.} of error at round $\timeHorizon$ \emph{given} $\gainVector$ 
+	against 
+any fixed adversarial reward design~$\gainVector$
+	is 
+bounded by a measure of complexity depending on the 
+gaps in hindsight with respect to~$\gainVector$ and~$\timeHorizon$. 
+%We consider primarily the fixed-budget, i.e., the number of rounds 
+%of the game is fixed in advance
+% to $\timeHorizon$ and known both by the adversary and the 
+%learner. 
+
+Next, we discuss the motivations for studying non-stochastic best-arm identification. 
+First, learning in the presence of adversarial data implies robustness. In a real-world best-arm 
+identification, such as clinical trials or online ad recommendation, 
+the assumption of i.i.d.\,data may not be valid. For instance, there could a 
+correlation between subsequent pulls of an arm. It is also possible that an  
+adversary is trying to obscure the correct results: For example, the adversary might use a 
+botnet to make the learner sell more ads. %\todovout{maybe we should talk about this eaxmple}. 
+As discussed 
+by~\citet[Section~3]{Bubeck12RA},
+a deterministic learner or a learner that eliminates arms with low observed cumulative reward in an early stage of the game
+could be easily fooled by an 
+adversary feeding it uninformative rewards in each of 
+its deterministic pulls or in early stages of the game. 
+Therefore, an efficient learner needs to
+employ internal randomization and pull each arm with a positive probability 
+$\learnerDist_{k,t}\triangleq\Pro(\pulledArm_t=k)$.
+%Additionally, if the learner stops pulling an 
+%arm after some time because it is believed to be clearly 
+%suboptimal, the adversary could then change the value of 
+%the arm for the rest of the game and fooling again the 
+%learner. Therefore the learner will have to pull every 
+%arm with a minimal probability.
+%\todov{'only?' no! 'already' maybe (P1 is not very conservative and also is near optimal)}
+
+Best-arm identification with
+completely adversarial rewards is so difficult that a very conservative approach is already near-optimal. In Section~\ref{s:ULGenAd} we show that by playing the arms \emph{uniformly at random}, the  
+learner obtains the optimal gap-dependent rates of error 
+against worst-case adversarial sequence.
+In the stochastic case, however, picking arms uniformly at random is 
+suboptimal. This reveals the \textbf{\textcolor{pearOne}{best of both worlds (BOB)}} 
+question: \emph{Is there a learner that attains the 
+	optimal error rates in both the stochastic and adversarial settings 
+	without knowledge of the environment?}
+
+%Such an algorithm would  solve our motivating examples: we 
+%want to solve best-arm identification but in a way that is robust to 
+%non-stochastic rewards, and such a BOB learner would allow this robustness 
+%without any loss of correctness guarantees. There is also hope, as 
+%near optimal BOB results exist in the cumulative regret setting~\citep{Bubeck12BB,Auer16AA}.
+
+%\todoa{I think this entire paragraph should go, except for the last
+% sentence or two\\ Victor : not sure, when I talked to people about it, they thought first that it was an easy problem and we were thinking that too for a long time!}
+
+To study the above question, we face a number of \textbf{challenges}: 
+How to efficiently mix the needs for randomization and exploration with
+the urge to pull the most promising arms? 
+Can the learner detect
+if the rewards are stochastic or adversarial? What is an appropriate estimate 
+of $\cumulGain_{k}$? % is to be used for the arm $k$? 
+In the stochastic case,
+$\estBiasCumulGain_{k} \triangleq
+\frac{\timeHorizon\sum_{t=1}^{\timeHorizon}
+	\indicator{\pulledArm_{t}=k}\gainVector_{k,t}}{\sum_{t'=1}^{\timeHorizon}\indicator{\pulledArm_{t'}=k}}
+$ %\todom{more clean?}
+is commonly used, but if not used carefully, it can be easily biased 
+by an adversary. In the adversarial case,
+$\estCumulGainVector_{k} \triangleq \sum_{t=1}^{\timeHorizon}
+\frac{\gainVector_{k,t}}
+{\learnerDist_{k,t}} \indicator{\pulledArm_{t} = k} $ is usual but it can have a 
+high variance if $\learnerDist_{k,t}$ is small (scaling with
+$\sum_{t=1}^{\timeHorizon} (1/ \learnerDist_{k,t})$).  Controlling this
+potentially large variance, especially when dealing with a stochastic
+problem, is one of the main challenges that we face. In particular,
+high variance can happen %in the beginning of the game 
+if
+a learner explores uniformly for too long.
+
+\paragraph{Our contributions}
+%To the best of our knowledge, %\todovout{is it fair to say that, knowing there is a competing submission at ICML?}
+We consider a new 
+%we are the first to consider this 
+formulation of the adversarial 
+best-arm identification. 
+%and show that uniform sampling is optimal. 
+We study whether 
+a BOB result is possible for fixed-budget best-arm
+identification. We answer the question negatively and show that for a class of stochastic problems,
+no robust (to adversary) learner can achieve the optimal stochastic error rates.
+%that BOB results are only possible in certain 
+%scenarios depending on the structure of the gaps in the stochastic problems.
+To prove this result, we introduce a new measure of complexity of the 
+stochastic part of the task. This measure of complexity gives the 
+problem-dependent error rates that a robust learner
+can guarantee in any stochastic problem. 
+% This complexity is related to a lower-bound on the
+%probability of error that one learner can obtain in the stochastic
+%case while still being consistent in the adversarial case. 
+We study
+this new complexity in different stochastic regimes and provide several 
+positive examples where BOB is possible but also several negative ones. 
+%This results proves that their
+%exist regimes in which any optimal learner for the stochastic case can
+%be tricked by adversaries while there also exist regimes in which
+We notice that even in stochastic problems where our lower bound seems 
+to indicate that BOB is achievable, the robust uniform learner is clearly suboptimal.
+Therefore there is a need for a
+new algorithm to bridge the gap.  In Section~\ref{s:UpperBOB}, we
+design a simple parameter-free learner and show that its error rate matches, up to log
+factors, the lower bound in the stochastic case
+as well as those of the uniform strategy in the adversarial case.  
+%In
+%Section~\ref{s:exte}, we discuss extensions of our
+%results.\vspace{.2cm}
+%
+%\subsection{Related Work}
+%
+\paragraph{Related work} The stochastic best-arm identification was introduced in 
+the fixed-budget setting by~\cite{Bubeck09PE} and~\cite{Audibert10BA}.
+Refined upper and lower bounds 
+can be found respectively in the works of~\cite{Karnin13AO} and~\cite{Carpentier16TB}. 
+For cumulative regret, the BOB
+question was raised by~\cite{Bubeck12BB}. \cite{Seldin14OP} 
+gave a practical algorithm for addressing the same problem 
+(see also~\citealp{Seldin17IP}). A lower bound and a refined upper bound for the 
+problem was given by~\cite{Auer16AA}.
+
+Best-arm identification has been studied in a different
+non-stochastic setting by~\cite{Jamieson16NS} and~\cite{Li16HA}. 
+At round $t$ for its $m$-th pull of arm $k$, 
+their learner observe $\gainVector_{k,m}$, whereas
+our learner  observes $\gainVector_{k,t}$.
+% Therefore 
+%in their setting, as $\timeHorizon$ grows, all 
+%$\gainVector_{k,t}$ are observed and 
+%no information is left hidden forever,\todom{our setting is potentially harder, but can we claim is it provable harder?\\
+%Victor: dont know} it is 
+%delayed until next pull. 
+Moreover, their work % of~\cite{Jamieson16NS}
+is specifically tailored for online hyperparameter 
+optimization of learning methods, where the value of each 
+hyperparameter is assumed to converge, at some unknown rate, 
+to its true value as it is given more resources (e.g., data or time). 
+Therefore, their objective is to identify the best arm once the 
+convergence has happened while in our setting, we do not assume 
+any convergence and are interested instead in comparing the 
+cumulative rewards $\cumulGain_k$ of each arm. By assuming 
+convergence of the arms and asymptotically having the learner 
+observe all the rewards, they prove that a state-of-the-art deterministic learner from the vanilla stochastic best-arm identification also solves their setting.
+
+
+%\todov{it would be good to understand what differentiates us from Jamieson more deeply. Is it that in our case the time has more importance? important also to get to have a good motivation example section! or somehow the fact that if we access one data we miss the rest}
+
+\cite{Allesiardo2017SL} and \cite{Allesiardo17NS} analyze
+a non-stationary stochastic best-arm problem in a fixed-confidence 
+setting but under the assumption that the game can be split into independent
+sub-games where the identity of the best arm does not change. This 
+assumption precludes many of the hard examples where the adversary 
+tricks the learner in the early stages of the game. The
+learner can then simply use a randomized version
+of Hoeffding Races and safely stop pulling arms. 
+Also, while our notion of gaps is defined for round $\timeHorizon$, 
+they define gaps at any intermediate round of the game 
+but then consider the minimum gaps over time for each arm.
+This leads to a larger notion of complexity and permits ignoring the variance of the estimates.
+%They also study a stochastic problem with added corruption 
+%which is outside the scope of this paper.
+\vspace{.2cm}
+
+%%\cite{Allesiardo2017SL,Allesiardo17NS} analyze
+%a fixed confidence setting where several notions of 
+%non-stochasticity are assumed. First the identity of 
+%the best arm does not change throughout the game, second, 
+%the adversary uses a limited and known amount of corruption that can be added 
+%to the stochastic rewards, third, the best arm can change a 
+%limited number of times during the game and needs to be 
+%tracked. The proposed algorithms are randomized variants 
+%of Hoeffding races with no specific guarantee in the 
+%stochastic cases.\vspace{.2cm}
+%
+%
+%\subsection{Motivating Examples}\label{ssec:MotivMe}
+%
+\paragraph{Two  types of applications}  
+%\todov{it would be nice to have good section here with good 
+%example and a good understanding of what our algorithm is good for}
+%Our setting is well suited for problems when $\timeHorizon$ 
+%different tests can be run but only for one option out of 
+%$\nArms$ at a a time while we would like to discriminate the 
+%best option compared on all the potential test. \todom{here it looks like the "tests" could be potentially different}
+%We make no  
+%stationarity or independence assumption on the rewards as 
+%those do not
+%hold in practice for many applications. 
+%For instance one could test one product out of $\nArms$ 
+%every day for  year before deciding to commercialize only 
+%one. There could be $\timeHorizon$ different configurations 
+%on which we have to test $\nArms$ ads but can only test per 
+%configurations.
+%Our method will be then robust to dependence on the season, 
+%the time of the day, or 
+%internal complex dependencies.
+% However adopting 
+% a worse case approach can lead to having over-conservative 
+% learner. 
+% Here we are looking for learner with robustness guarantees 
+% and able to take advantage of \emph{easy data} in case there is 
+% no such complex dependence or non-stationarity.
+
+%In the best arm identification task, the learner identifies the 
+%best arm from a limited 
+%Our algorithm is applicable to two types of problems. 
+In the first type, the learner believes that future rewards will be similar to the ones already observed. 
+Here, from the $\timeHorizon$ observations, the learner could use the estimated best arm in the upcoming rounds. 
+In an expert setting, we might test the quality 
+of experts for a limited time before committing to one.
+We may also optimize the hyperparameters of algorithms. 
+Contrary to \cite{Jamieson16NS}, our objective is to find the 
+arm (hyperparameter) with the highest cumulative value over a test set, rather than the performance that is achieved by the hyperparameter after convergence. %and not a performance that this hyperparameter reaches after convergence. %\todom{above we say that we are different from hyperband}
+In the second type, there are no new upcoming rounds.
+The identity of the best arm is used to take an action based on the collected data.
+%In the first case,
+% this would hold even hold if the environment is not fully i.i.d~ stochastic.
+%In a fixed-budget setting the learner uses a test phase composed of $\timeHorizon$ rounds to find the best arm. This learner might only want to know the identity of the best arm for this fixed set of data or might want to use this knowledge for new upcoming data. In the latter case,
+% thought 
+%we do not assume formally any relation between the samples in the test
+%phase and the rest of the time after the test phase, we still can expect that 
+%there is a link between those and that finding the best 
+%arm for the initial phase might have a link with the rest 
+%of time. Therefore one should just try to identify as well as possible the best for the given exploration part.
+%
+%In the this latter case, one can think of a
+%. A company checking 
+%regularly over the quality of different manufacturing 
+%devices might want to operate change at the end of the 
+%year on the most deficient one.
+As an example, consider a law-enforcing agency that collects 
+information periodically from different targets, one target per week, and at the end of the year, it  
+decides which target to investigate 
+thoroughly over its activities in the past year.
+This problem can 
+be seen as a game between the agency and the malignant 
+targets. Therefore, it would be useful to have algorithms that are 
+robust to worst-case scenarios but still take advantage 
+of easy data in case malignant targets actually do not take precautions to avoid being caught. %\todom{want? perhaps: ? }
+%
+Finally, in our setting, we are not trying to be robust to 
+corruption of the data, as we want to find the best arm whether it includes corruption or not,
+ unlike %\vspace{.2cm}
+\citet{Altschuler18BA} who study corrupted bandits.
+%\todom{and new paper of Emilie and Pratik?Victor: \\
+%its cumulative regret}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%

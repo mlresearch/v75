@@ -1,0 +1,236 @@
+\documentclass[final,12pt]{colt2018}
+
+\title[The Externalities of Exploration and How Data Diversity Helps Exploitation]{The Externalities of Exploration and \\ How Data Diversity Helps Exploitation\titletag{\thanks{Extended abstract. Full version appears as \href{https://arxiv.org/abs/1806.00543}{CoRR arXiv:1806.00543 v\#1.}}}}
+
+\usepackage{times}
+
+\coltauthor{\Name{Manish Raghavan}\thanks{MR is supported by an NSF Graduate Research Fellowship (DGE-1650441). Work done while at Microsoft Research.} \Email{manish@cs.cornell.edu}\\
+     \addr Cornell University
+ \AND
+ \Name{Aleksandrs Slivkins} \Email{slivkins@microsoft.com}\\
+ \addr Microsoft Research
+ \AND
+ \Name{Jennifer Wortman Vaughan} \Email{jenn@microsoft.com}\\
+ \addr Microsoft Research
+ \AND
+ \Name{Zhiwei Steven Wu} \Email{zsw@umn.edu}\\
+ \addr Microsoft Research
+ }
+
+
+%%% Alex's macro
+\newcommand{\ie}{{i.e.,~\xspace}}
+\newcommand{\eg}{{e.g.,~\xspace}}
+\newcommand{\Eg}{{E.g.,~\xspace}}
+\newcommand{\xhdr}[1]{\vspace{2mm} \noindent{\bf #1}}
+\newcommand{\polylog}{\operatornamewithlimits{polylog}}
+\newcommand{\LDOTS}{\, ,\ \ldots\ ,}     % smart "..."
+\newcommand{\Cel}[1]{{\lceil {#1} \rceil}}
+\newcommand{\Flr}[1]{{\lfloor {#1} \rfloor}}
+\newcommand{\eps}{\varepsilon}
+
+\newcommand{\mE}{\mathcal{E}}
+\newcommand{\mH}{\mathcal{H}}
+\newcommand{\mX}{\mathcal{X}}
+
+% OneLiners itemized list
+\newcommand{\initOneLiners}{%
+ 	\setlength{\itemsep}{0pt}
+	\setlength{\parsep }{0pt}
+  	\setlength{\topsep }{0pt}     	
+%      \usecounter{myLISTctr}
+}
+\newenvironment{OneLiners}[1][\ensuremath{\bullet}]
+    {\begin{list}
+        {#1}
+        {\initOneLiners}}
+    {\end{list}}
+
+\newenvironment{proofof}[1][]
+	{\begin{proof}{\bf of #1}}
+	{\end{proof}}
+
+% More Alex's notation -- algorithms
+\newcommand{\term}[1]{\ensuremath{\mathtt{#1}}\xspace}
+\newcommand{\OPT}{\term{OPT}}
+\newcommand{\ALG}{\term{ALG}}
+
+\newcommand{\simF}{\term{sim}} % simulation function for D3.
+
+% context tuples
+\newcommand{\con}{\term{con}} % one context tuple
+\newcommand{\CON}{\term{CON}} % set of all possible context tuples
+
+
+
+
+\newcommand{\PReg}{\term{PReg}} % "prediction regret" in Greedy analysis
+\newcommand{\rPReg}[1][{\rounds}]{\PReg^{#1}}  % restricted prediction regret
+\newcommand{\rReg}[1][{\rounds}]{R^{#1}} % restricted regret
+
+\newcommand{\PRegat}{\PReg^{\ALG}(\rounds)} % "prediction regret" in Greedy analysis
+
+\newcommand{\bpreg}[1]{\PReg^{\rounds}(#1)}
+\newcommand{\bpregi}[1]{\PReg^{#1}}
+\newcommand{\bpregih}[2]{\PReg^{#1}(#2)}
+\newcommand{\basereg}[1]{R_0^{\rounds}\left(#1\right)}
+\newcommand{\baseregi}[1]{R_0^{#1}}
+\newcommand{\reg}[1]{R(#1)}
+\newcommand{\regi}[1]{R^{#1}}
+\newcommand{\baseregih}[2]{R_0^{#1}(#2)}
+
+\newcommand{\FRMR}{\term{FRmin\text{-}Reg}}
+\newcommand{\MRMR}{\term{MRmin\text{-}Reg}}
+
+\newcommand{\BayesGreedy}{BatchBayesGreedy\xspace}
+\newcommand{\FreqGreedy}{BatchFreqGreedy\xspace}
+\newcommand{\GreedyStyle}{batch-greedy-style\xspace}
+
+\newcommand{\Rew}[1][\theta]{\mathtt{Rew}_{#1}} % reward function from Greedy analysis
+
+\def\rounds{\mc T}
+
+
+\usepackage{cleveref}
+\usepackage{color}
+\usepackage{tikz}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{claim}[theorem]{Claim}
+\def\R{\mathbb{R}}
+\def\tran{^\top}
+
+\newcommand{\p}[1]{\left(#1\right)}
+\newcommand{\kl}[2]{\ensuremath{\text{KL}(#1 \, ||\, #2)}}
+ \def\given{\;|\;}
+
+\newcommand{\thetazero}{\theta^{(0)}}
+\newcommand{\thetaone}{\theta^{(1)}}
+
+\renewcommand{\b}[1]{\left[#1\right]}
+\newcommand{\E}[1]{\mathbb{E}\b{#1}}
+\newcommand{\D}{D}
+\newcommand{\Dmin}{D_{\textrm{min}}}
+\newcommand{\Dmaj}{D_{\textrm{maj}}}
+\newcommand{\Mmin}{M_{\textrm{min}}}
+\newcommand{\Mmaj}{M_{\textrm{maj}}}
+%%% Manish's macros go here.
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\def\R{\mathbb{R}}
+\def\ty{{\lfloor t/Y \rfloor}}
+\def\toy{(t-1)/Y}
+\def\toyo{(t-1)/Y + 1}
+\def\toyof{\lfloor (t-1)/Y \rfloor + 1}
+\def\tOyo{\frac{t-1}{Y} + 1}
+\def\tOyof{\left\lfloor \frac{t-1}{Y} \right \rfloor + 1}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\def\tran{^{\top}}
+\def\dx{\;dx}
+\def\given{\;|\;}
+
+\def\xat{x_{a,t}}
+\def\pmt{\overline \theta}
+\def\pvt{\Sigma}
+\def\bmt{\theta_t^{\textrm{bay}}}
+\def\bmtY{\theta_{t-Y}^{\textrm{bay}}}
+\def\ab{a_t'}
+
+\newcommand{\fmt}[1][t]{\theta_{#1}^{\textrm{fre}}}
+
+\def\fmtY{\theta_{t-Y}^{\textrm{fre}}}
+\def\fmti{(\fmt)_i}
+\def\fmto{(\fmt)_1}
+\def\fmtt{(\fmt)_2}
+\def\af{a_t}
+\def\vrt{r_B}
+\def\vrto{\mathbf{r}_{1:t_0-1}}
+\def\Xto{X_{t_0-1}}
+\def\Zto{Z_{t_0-1}}
+\def\weights{w_B}
+\def\prior{\mc P}
+\def\thetahatt{\hat{\theta}_t}
+\def\thetahatti{(\thetahatt)_i}
+
+
+\newcommand{\creg}[2]{\text{Regret}^{#1}(#2)}
+\newcommand{\cregg}[2]{\text{Regret}^{#1}_{\mc T}(#2)}
+\newcommand{\ireg}[2]{\text{Regret}_{#1}^{#2}}
+\newcommand{\ipreg}[2]{\PReg_{#1}^{#2}}
+\newcommand{\breg}[2]{\text{BRegret}_{#1}^{#2}}
+\newcommand{\iR}[1]{R_{#1}} % shorter version for inst regret
+
+\def\minrun{\textrm{min-run}}
+\def\minp{\textrm{min}}
+
+\def\ra{\text{Regret}_{A}}
+\def\hcat{\hat{c}_{a,t}}
+\def\rgood{\ensuremath{r\mbox{-}\widehat{\text{good}}}}
+\def\XY{X_{:Y}}
+\def\XYo{X_{:Y-1}}
+\def\ZB{Z_B}
+\def\WB{W_B}
+\def\vrY{\mathbf{r}_{:Y}}
+\def\xAt{x^{0}_t}
+
+\def\rfg{\text{Regret}_{\fg}}
+\def\rfgt{\text{Regret}_{\fg,t}}
+\def\pfg{\ensuremath{PFG}}
+\def\bg{\BayesGreedy}
+\def\bbg{BBG}
+\def\fg{\FreqGreedy}
+\def\bfg{BFG}
+\def\oful{\ensuremath{LinUCB}}
+
+\def\elt{\ensuremath{E_{\ell, t}}}
+
+\sloppy
+
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+  \input{sections/abstract}
+\end{abstract}
+\section{Introduction}
+\label{sec:intro}
+\input{sections/intro}
+
+\section{Preliminaries}
+\label{sec:model}
+\input{sections/model}
+
+\section{Group Externality of Exploration}
+\label{sec:negative}
+\input{sections/negative}
+
+\section{Greedy Algorithms with Perturbed Contexts}
+\label{sec:bayesian_greedy}
+\input{sections/bayesian_greedy}
+\acks{We thank Solon Barocas, Dylan Foster, Jon Kleinberg, Aaron Roth, and Hanna Wallach for helpful discussions about these topics.}
+\bibliography{refs}
+
+\appendix
+
+\input{sections/appnegative}
+
+\section{Regret bound for LinUCB: proof of Theorem~\ref{thm:main-worst-case}(a)}
+\label{app:linucb}
+\input{sections/linucb}
+
+\section{Greedy algorithms with perturbed contexts: analysis for Section~\ref{sec:bayesian_greedy}}
+\label{app:pf_bg}
+\input{sections/bg_proofs}
+
+\section{Auxiliary Lemmas}
+\label{app:lemmas}
+\input{sections/lemmas}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

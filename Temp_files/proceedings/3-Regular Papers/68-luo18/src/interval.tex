@@ -1,0 +1,386 @@
+\section{Interval Regret}\label{sec:interval_regret}
+
+In this section we present several algorithms with interval regret
+guarantees.  As a starter and a baseline, we first point out that a
+generalization of the Exp3.S algorithm~\citep{AuerCeFrSc02} and
+Fixed-Share~\citep{HerbsterWa98} to the contextual bandit setting,
+which we call Exp4.S, already provides a strong interval regret
+guarantee as shown by the following theorem. We include the algorithm
+and the proof in Appendix~\ref{app:Exp4.S}.  Crucially, Exp4.S
+requires maintaining weights for each policy and is thus not oralce-efficient.
+
+\begin{theorem}\label{thm:Exp4.S}
+Exp4.S with parameter $L$ ensures that for any time interval $\calI$
+such that $|\calI| \leq L$, we have $\E\left[
+  \sum_{t\in\calI}r_t(\pi(x_t)) - r_t(a_t) \right] \leq
+\order(\sqrt{LK\ln(NL)})$ for any $\pi \in \Pi$, where the expectation
+is with respect to the randomness of both the algorithm and the
+environment.
+\end{theorem}
+
+Note that in bandit settings, it is impossible to achieve regret
+$\order(\sqrt{|\calI|})$ for all interval $\calI$ simultaneously~\citep{DanielyGoSh15}.
+When $|\calI|$ is unknown, a safe choice is to pick $L = T$
+(this is how we obtain the results in the ``param-free'' column of Table~\ref{tab:results} for interval regret).
+Next we prove statements similar to Theorem~\ref{thm:Exp4.S} but with
+oracle-efficient algorithms. 
+
+\paragraph{A general approach.}
+In the full information setting, a general approach to convert an algorithm with classic regret guarantee
+to another with interval regret is to combine different copies of the algorithm with an expert algorithm,
+each of which starts at a different time step to learn over different time intervals.
+This works well in the full information setting where one has correct feedback to update all the base algorithms,
+but becomes challenging in the bandit setting.
+We show in Appendix~\ref{app:BISTRO+} how to leverage recent results by~\citet{AgarwalLuNeSc17}
+and~\citet{wei2018more} to deal with such challenges.
+As an example we use the \bistro algorithm~\citep{SyrgkanisLuKrSc16, rakhlin2016bistro} as the base algorithm
+since it is oracle-efficient and allows adversarial rewards.
+
+\begin{theorem}\label{thm:corralling_BISTRO+}
+In the transductive setting, Algorithm~\ref{alg:corralling_BISTRO+} in Appendix~\ref{app:BISTRO+} guarantees
+that for any time interval $\calI$ such that $|\calI| \leq L$ and any policy $\pi \in \Pi$, we have $\E\left[
+  \sum_{t\in\calI}r_t(\pi(x_t)) - r_t(a_t) \right] \leq
+\otil(T^{\frac{1}{4}}(LK)^{\frac{1}{2}}(\ln N)^{\frac{1}{4}})$.
+\end{theorem}
+
+Unlike the full information setting, this general approach results in worse regret rates and is unsatisfying
+(\bistro achieves $\otil(T^{2/3})$ for the classic regret and here we only obtain $\otil(T^{3/4})$).
+In the following subsections, we turn to different approaches. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     New Algorithms
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\AdaEG}
+
+The simplest oracle-efficient contextual bandit algorithm is the \EG
+method~\citep{LangfordZh08} which assumes i.i.d. data. 
+In this section, we extend the related \EPG
+algorithm to enjoy a small interval regret on any interval with a
+small variation.
+
+\EPG plays uniformly at random with a small probability and
+otherwise follows the empirically best policy $\pi_t=\argmax_{\pi\in\Pi}
+\avgR_{[1,t-1]}(\pi)$. The number of oracle calls can be greatly reduced if the learner updates the best policy only at $t=1, 2, 4, 8, \ldots$ (that is, $\pi_t=\argmax_{\pi\in\Pi}
+\avgR_{[1,2^{\floor{\log_2{t}}}-1]}(\pi)$). 
+\AdaEG, described in Algorithm~\ref{alg:AdaGreedy2}, behaves similarly to this version of \EPG. 
+The difference is that at each round, an additional \textit{non-stationarity test} is executed. 
+The test monitors whether there is a policy performing significantly better on recent samples (collected in a doubling manner), 
+compared to the policy that the algorithm is using. 
+Intuitively, if such a policy exists, there should have been a significant shift in the distribution.
+In this case, the algorithm restarts from scratch. 
+
+In addition, the algorithm also resets every $L$ rounds for some parameter $L$ (Line~\ref*{line:trigger_rerun}). 
+This prevents the risk of slow detection of a distribution change, but at the same time also causes some extra penalty when the environment is stationary.
+The parameter $L$ trades these two kinds of costs, and can be selected based on prior knowledge about the environment. 
+
+We call the rounds between resets an {\it epoch} (so epoch $i$ is the interval $[T_i+1, T_{i+1}]$), 
+and the rounds between updates of the empirically best policy a {\it block} (so block $j$ of epoch $i$ is the interval $[T_i+2^{j-1}, T_i+2^{j}-1]$).
+
+%\paragraph{Oracle-Efficiency.} 
+Note that there are only two places where we need to invoke the oracle: computing $\hat{\pi}_{(i,j)}$ and $\hat{\pi}_{A}$ 
+($\hat{\pi}_{B}$ is simply equal to $\hat{\pi}_{(i,j)}$),
+and it is thus clear that at most $\order(\ln L) = \order(\ln T)$ oracle calls are used per round.
+%Since $t-T_i\leq L$ and we only check for $\ell=1, 2, 4, 8\ldots$, there will be at most $\order(\ln L)$ oracle calls per round. %In fact, the number of oracle calls per round can be reduced to $\order(1)$ without hurting the regret bounds with a more economical but sophisticated test length scheduling. We state this version of non-stationarity test in Appendix XXXXX.
+
+%For convenience, we call an interval with a specific $i$ in the algorithm an \textit{epoch}. In an epoch, we call an interval with a specific $j$ a \textit{block}. 
+%Also, we use $B(i,j)$ to denote the time interval $[T_i+1, T_i+2^{j-1}-1]$ (sometimes when $i, j$ are clear, we only use $B$). In \AdaEG, $\pi_t$ is set to be $\hat{\pi}_{B(i,j)}$ for any $t$ in epoch $i$ and block $j$.
+
+We prove the following result for \AdaEG, stating a regret bound for all intervals with length smaller than $L$
+and variation smaller than another parameter $v$ of the algorithm.
+\begin{theorem}\label{thm:AdaEG2}
+With probability at least $1 - \delta$, for all time intervals $\calI$
+such that $|\calI| \leq L$ and $\var_\calI \leq v$, \AdaEG with
+parameters $L$, $v$ and $\delta$ guarantees for any $\pi \in
+\Pi$,%
+\footnote{We use notation $\otil$ to suppress dependence on
+  logarithmic factors in $L, T, K$ and $\ln(N/\delta)$. } 
+\[
+\sum_{t \in \calI} r_t(\pi(x_t)) - r_t(a_t) \leq \otil\left(\abs{\calI}v +
+L^\frac{1}{6}\sqrt{K\abs{\calI}\ln(N/\delta)} + K\ln(N/\delta)\right).
+\]
+\end{theorem}
+
+\begin{algorithm}[t]
+\SetAlgoLined
+\setcounter{AlgoLine}{0}
+\SetAlgoVlined
+\DontPrintSemicolon
+\caption{\AdaEG}\label{alg:AdaGreedy2}
+\nl {\bf Input}: largest allowed interval length $L$ and variation $v$, allowed failure probability $\delta$  \\ 
+\nl {\bf Define}:
+$\mu=\min\Big\{ 
+\frac{1}{K}, 
+L^{-\frac{1}{3}} \sqrt{\frac{\ln(N/\delta)}{K}} 
+\Big\}, 
+\beta_\calI= 
+2\sqrt{\frac{ \ln(4T^2N/\delta) }{ \mu\abs{\calI}} } 
++ \frac{ \ln(4T^2N/\delta) }{ \mu\abs{\calI} }$\\
+\nl {\bf Initialize}: $i=1$, $T_1=0$. \Comment{$i$ indexes an epoch}\label{line:rerun_beginning2}\\
+\nl\label{line:adagreedy restart}\For(\Comment{$j$ indexes a block}){$j=1, 2, \ldots$}{ 
+%\nl Define $B(i,j)=[T_i+1, T_i+2^{j-1}-1]$ \\
+\nl Compute $\hat{\pi}_{(i,j)} = \argmax_{\pi\in\Pi} \avgR_{[T_i+1, T_i+2^{j-1}-1]}(\pi)$ 
+\Comment{or arbitrary if $j=1$}\\
+\nl \For{$t = T_i+2^{j-1}, \ldots, T_i+2^{j}-1$}{
+%\nl Let $\pi_t=\hat{\pi}_{B(i,j)}$\\
+\nl Set $p_t(a)=\mu + (1-K\mu) \one \{ a=\hat{\pi}_{(i,j)}(x_t) \}, 
+\forall a\in [K]$ \\%, where $\pi_t=\hat{\pi}_{(i,j)}$\\
+\nl Play $a_t\sim p_t$ and receive $r_t(a_t)$ \\
+\nl\label{line:trigger_rerun}\If{$(t\geq T_i+L) \text{ or } (j>1 \text{ and } \test(t)=\true)$}{
+\nl                  $T_{i+1}\leftarrow t$, $i\leftarrow i+1$ \\ 
+\nl                  \textbf{goto} Line~\ref{line:adagreedy restart}
+              }   
+          }
+      }
+\ \\
+\textbf{Procedure\ }$\test(t)$\\
+\nl $\ell=1$ \\
+\nl \While{$\ell\leq t-T_i$}{
+\nl    Let $A\triangleq [t-\ell+1, t]$ and $B\triangleq [T_i+1, T_i+2^{j-1}-1]$ \\ %\Comment{$\hat{\pi}_B = \hat{\pi}_{(i,j)}$ is computed already}
+\nl\label{eqn:ada_compare1}\lIf{$ \avgR_{A}(\hat{\pi}_{A}) > \avgR_{A}(\hat{\pi}_B) + 2(\beta_{A} + \beta_{B}+ 2v)$}{
+       \textbf{return} \true 
+    }
+\nl    $\ell \leftarrow 2\ell$
+}
+\nl \textbf{return} \false
+\end{algorithm}
+
+%\footnotetext{The game should proceed for only $T$ rounds. However for conciseness we do not specify this ending condition in the algorithm.}
+%\stepcounter{footnote}
+%\footnotetext{In \test(t) we only utilize samples up to $t-1$. This is only to make the analysis simpler.}
+
+Note that whenever $v =O(L^{-\frac{1}{3}})$, the rate of the regret above is of order $\otil(L^{2/3})$ (since $|\calI| \leq L$), 
+which matches the ordinary regret bound of \EG ($\otil(T^{2/3})$). 
+While a condition on both the interval length and variation is seemingly strong
+and the bound seems to be meaningful only for very small $v$,
+we emphasize that 1) sublinear regret via oracle-efficient algorithms is impossible under a fully adversarial setting 
+even for the classic regret~\citep{Hazan2016} and 2) based on Theorem~\ref{thm:AdaEG2} we can in fact derive strong dynamic regret bounds that hold without 
+any assumption on the distribution sequence (see Section~\ref{sec:implications}).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%    Ada ILTCB
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{\AdaILTCB}
+\begin{algorithm}[t]
+\SetAlgoLined
+\setcounter{AlgoLine}{0}
+\SetAlgoVlined
+\DontPrintSemicolon
+\caption{\AdaILTCB}\label{alg:AdaILTCB2}
+\nl {\bf Input}: largest allowed interval length $L$ and variation $v$, allowed failure probability $\delta$ \\ 
+\nl {\bf Define}:
+$\mu=\min\Big\{ \frac{1}{2K}, L^{-\frac{1}{2}}\sqrt{\frac{\ln(8T^2N^2/\delta)\ln(L)}{K}} \Big\}, C_1=4, C_2=10^6, C_3=1.1\times 10^3, C_4=41, C_5=1200, C_6=6.4$ \\
+\nl {\bf Initialize}: $i=1$, $T_1=0$ \Comment{$i$ indexes an epoch}\label{line:rerun_beginning2}\\
+\nl\label{line:adaILTCB restart}\For(\Comment{$j$ indexes a block}){$j=1,2,\ldots$} {
+%\nl       Define $B(i,j)=[T_i+1, T_i+2^{j-1}-1]$\\
+\nl       Let $Q_{(i,j)}$ be a solution to (OP) with parameter $\mu$ and data from $[T_i+1, T_i+2^{j-1}-1]$ \\
+%        \Comment{or arbitrary if $j=1$} \\ 
+\nl       \For{$t = T_i+2^{j-1}, \ldots, T_i+2^{j}-1$}{
+%\nl           Let $Q_t=Q^*$\\
+\nl          Set $p_t(a)=Q_t^{\mu}(a|x_t), \forall a\in [K]$ where  $Q_t = Q_{(i,j)}$\\
+\nl          Play $a_t\sim p_t$ and receive $r_t(a_t)$ \\
+\nl \label{line:trigger_rerun}  \If{$(t\geq T_i+L) \text{ or } (\test(t)=\true)$}{
+\nl                  $T_{i+1}\leftarrow t$, $i\leftarrow i+1$ \\ 
+\nl                  \textbf{goto} Line~\ref{line:adaILTCB restart}
+              }   
+          }
+      }
+\ \\
+\textbf{Procedure\ }$\test(t)$\\
+\nl $\ell=1$ \\
+\nl \While{$\ell\leq t-T_i-1$}{
+\nl   Let $A\triangleq [t-\ell,t-1]$ and $B\triangleq [T_i+1, T_i+2^{j-1}-1]$ \\
+\nl\label{line:ILTCB:check_reg}\lIf{$\max_{\pi\in\Pi}\left\{\whReg_{B}(\pi)-C_1\whReg_{A}(\pi)\right\} > \frac{C_2LK\mu}{\ell} + C_3v$}{
+       \textbf{return} \true
+    }
+\nl\label{line:ILTCB:check_reg_another}\lIf{$\max_{\pi\in\Pi}\left\{\whReg_{A}(\pi)-C_1\whReg_{B}(\pi)\right\} > \frac{C_2LK\mu}{\ell} + C_3v$}{
+       \textbf{return} \true
+    }
+\nl\label{line:ILTCB:check_var}\lIf{$\max_{\pi\in\Pi}\left\{ \whV_{A}(Q_t,\pi) - C_4\whV_{B}(Q_t,\pi) \right\} > \frac{C_5LK}{\ell} + \frac{C_6 v}{\mu}$} {
+       \textbf{return} \true
+   }
+   
+\nl    $\ell \leftarrow 2\ell$
+}
+\nl \textbf{return} \false
+\end{algorithm}
+%\footnotetext{Here we only check for samples up to time $t-1$ (\textit{cf.} \AdaEG). This is only to simplify the analysis. }
+
+Although being fairly simple, \AdaEG is suboptimal just as \EG is
+suboptimal for stationary environments.  In this section we propose
+\AdaILTCB, a variant of \minimonster~\citep{AgarwalHsKaLaLiSc14},
+which achieves the optimal regret rate while also being
+oracle-efficient.  The idea is similar to \AdaEG, but the statistical
+checks are more involved.  
+
+For a policy $\pi$ and an interval $\calI$, we denote the expected and
+empirical regret of $\pi$ by $\Reg_\calI(\pi) = \max_{\pi' \in
+  \Pi}\calR_\calI(\pi') - \calR_\calI(\pi)$ and $\whReg_\calI(\pi) =
+\max_{\pi' \in \Pi}\avgR_\calI(\pi')- \avgR_\calI(\pi)$ respectively.
+For a context $x$ and a distribution over the policies $Q \in
+\Delta^\Pi \coloneqq \{Q \in \fR^N_+: \sum_{\pi \in \Pi} Q(\pi) =
+1\}$, the projected distribution over the actions is denoted by
+$Q(\cdot|x)$ such that $Q(a|x) = \sum_{\pi: \pi(x)=a} Q(\pi), \;
+\forall a \in [K]$. The smoothed projected distribution with a minimum
+probability $\mu$ is defined as $Q^\mu(\cdot|x) = \mu\one +
+(1-K\mu)Q(\cdot|x)$ where $\one$ is the all-one
+vector. Like~\citep{AgarwalHsKaLaLiSc14}, we keep track of a bound
+on the variance of the reward estimates and define for a policy $\pi$, an
+interval $\calI$ and a distribution $Q \in \Delta^\Pi$
+\[
+\whV_\calI (Q, \pi) = \frac{1}{|\calI|} \sum_{t \in \calI} \left[ \frac{1}{Q^{\mu}(\pi(x_t) | x_t)} \right], 
+\quad V_\calI(Q, \pi) = \frac{1}{|\calI|} \sum_{t \in \calI} \E_{x \sim D_t^\calX} \left[ \frac{1}{Q^{\mu}(\pi(x) | x)} \right].
+\]
+
+Similar to \AdaEG, the proposed algorithm \AdaILTCB (Algorithm~\ref{alg:AdaILTCB2}) proceeds like the base algorithm (\sloppy \minimonster in this case) with additional tests to detect the non-stationarity of the environment. We define an epoch and a block similar to those of \AdaEG. The algorithm solves the optimization (OP) defined in~\citep{AgarwalHsKaLaLiSc14} (and included in
+Appendix~\ref{app:AdaILTCB2}) at the beginning of each block using the data collected in that epoch so far. 
+The solution of (OP) is denoted by $Q_t$, a \textit{sparse} distribution over $\Pi$, and the learner samples actions based on $Q_t^{\mu}(\cdot|x_t)$. 
+
+At each round, the \test checks whether the empirical regret or the variance of reward estimates of any policy has changed significantly in a recent interval (i.e., $[t-\ell,t-1]$), compared to the interval from which we compute $Q_t$ (i.e., $[T_i+1, T_i+2^{j-1}-1]$). If so, the algorithm restarts with a new epoch. Note that detecting the change of regret is similar to detecting the change of reward; but different from \AdaEG, here we also check the change of reward estimate variance. This inherits from the tighter variance control in \minimonster, the key to obtaining better regret compared to \EPG. 
+
+\paragraph{Oracle-Efficiency.}
+Note that Lines~\ref*{line:ILTCB:check_reg}, \ref*{line:ILTCB:check_reg_another} and \ref*{line:ILTCB:check_var}
+can all be implemented by one call of
+the AMO oracle each, after using two extra oracle calls to compute $\max_{\pi' \in \Pi}\avgR_{B}(\pi')$ and $\max_{\pi' \in \Pi}\avgR_{A}(\pi')$ in advance. % for each new $\ell$. 
+Specifically, let $\calS = \{(x_\tau,
+\frac{-1}{2^{j-1}-1}\ips_\tau)\}_{\tau\in B} \cup \{(x_\tau,
+\frac{C_1}{\ell} \ips_\tau)\}_{\tau\in A}$, then the left hand
+side of the inequality in Line~\ref*{line:ILTCB:check_reg} can be rewritten
+as $\max_\pi \sum_{(x,r) \in \calS} r(\pi(x)) + \max_{\pi' \in
+  \Pi}\avgR_{B}(\pi') - C_1\max_{\pi' \in
+  \Pi}\avgR_{A}(\pi')$, where clearly the first term can be
+computed by one oracle call and the rests are precomputed already.
+Similarly, Line~\ref*{line:ILTCB:check_var} can be computed by feeding
+the oracle with examples $ \{(x_\tau,
+\frac{1}{\ell}\frac{1}{Q_\tau^{\mu}(\cdot| x_\tau)})\}_{\tau\in A} \cup
+\{(x_\tau, \frac{-C_4}{2^{j-1}-1} \frac{1}{Q_\tau^{\mu}(\cdot |
+  x_\tau)})\}_{\tau\in B}$. 
+  
+\citet{AgarwalHsKaLaLiSc14} showed that the optimization problem (OP) can be
+solved by $\otil(1/\mu)$ oracle calls and the solution
+has only $\otil(1/\mu)$ non-zero coordinates. Note that we only solve (OP) at the beginning of each block. Since there are $\order(\ln L)$ blocks in an epoch, the total oracle calls in an epoch is bounded by $\otil\big(\ln(L)/\mu \big) = \otil(\sqrt{LK})$, which amortizes to $\otil(S^\p\sqrt{LK}/T)$ per round if there are $S^\p$ epochs
+(in Section~\ref{sec:implications} we relate $S'$ to $S$ or $\bvar$). 
+%Summing up two cases, the required number of oracle calls is $\otil(S^\p \sqrt{LK}/{T}+1)$ per round in average.
+
+We next present the interval regret guarantee of \AdaILTCB,
+which improves from $\otil(L^\frac{2}{3})$ to $\otil(\sqrt{L})$ compared to \AdaEG
+(see Appendix~\ref{app:AdaILTCB2} for the proof),
+except that it holds for interval with total variation $\bvar_\calI$ (instead of reward variation $\var_\calI$) bounded by $v$
+due to the fact that variation in the context is important for the variance control (Line \ref*{line:ILTCB:check_var}).
+
+\begin{theorem}\label{thm:AdaILTCB2}
+With probability at least $1 - \delta$, for any interval $\calI$ such
+that $|\calI| \leq L$ and $\bar{\var}_\calI\leq v$, 
+\AdaILTCB with parameters $L$, $v$, and $\delta$
+guarantees for any $\pi \in \Pi$,
+\[
+\sum_{t \in \calI} r_t(\pi(x_t)) - r_t(a_t) \leq
+\otil\left(\abs{\calI}v + \sqrt{LK\ln(N/\delta)}\right). 
+\]
+\end{theorem}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% later part (iffalse)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\iffalse
+\subsection{\textsc{Ada-Greedy2}}
+\textsc{Ada-Greedy2} proceeds in \textit{blocks}, which are the intervals indexed by $j$ in the algorithm. In block $j$, the learner follows the leader of blocks $1$ to $j-1$. Note that by the block length scheduling, $\sigma(t)$ is the first round of the block in which $t$ lies. Therefore, the learner always follows the leader in $[1,\sigma(t)-1]$, and we always have $\sigma(t)\geq \floor{\frac{t}{2}}+1$. We define an \textit{epoch} to be an interval between reruns. 
+\begin{lemma}
+\label{lemma:adagreedy2:no rerun}
+If there is no distribution switch from time $1$ to $t$, and $t<L$, then with high probability, \textsc{Ada-Greedy2} will not rerun at time $t$. 
+\end{lemma}
+\begin{proof}
+If the distribution does not change in the interval $[1,t]$, then $\bigabs{\avgR_{[1,\sigma(t)-1]}(\pi)-\avgR_{[\tau,t]}(\pi)}\leq \bigabs{\avgR_{[1,\sigma(t)-1]}(\pi)-\calR_{[1,\sigma(t)-1]}(\pi)}+\bigabs{\calR_{[1,\sigma(t)-1]}(\pi)-\calR_{[\tau,t]}(\pi)}+\bigabs{\calR_{[\tau,t]}(\pi)-\avgR_{[\tau,t]}(\pi)}\leq \beta_{[1,\sigma(t)-1]}+0+\beta_{[\tau,t]}$ for all $\tau$ with high probability by Freedman's inequality. Therefore, \test will not cause a rerun with high probability. 
+\end{proof}
+\begin{theorem}
+With high probability, \textsc{Ada-Greedy2} achieves switching regret of order $\tilde{\mathcal{O}}( S^{\frac{1}{3}}T^{\frac{2}{3}} )$ if $L$ is set to $T/S$; $\tilde{\mathcal{O}}( S^{\frac{1}{2}}T^{\frac{2}{3}} )$ if $L$ is set to $T$. 
+\end{theorem}
+\begin{proof}
+By Freedman's inequality, we have $\bigabs{\avgR_\calI(\pi)-\calR_\calI(\pi)}\leq \beta_{\calI}$ for all $\pi$ and $\calI$ with high probability. For simplicity, we assume that it indeed holds in the following analysis. 
+
+Let $[s,t]$ be a stationary interval, and assume that at time $t$, rerun is not triggered. Then for all $\pi$, 
+\begin{align*}
+\calR_{t}(\pi)&=\calR_{[s,t]}(\pi) \\
+&\leq \avgR_{[s,t]}(\pi) + \beta_{[s,t]} \tag{Freedman's inequality} \\
+&\leq \avgR_{[1,\sigma(t)-1]}(\pi)+\beta_{[1,\sigma(t)-1]}+2\beta_{[s,t]} \tag{\textsc{StationaryTest}}\\
+&\leq \avgR_{[1,\sigma(t)-1]}(\pi_t)+\beta_{[1,\sigma(t)-1]}+2\beta_{[s,t]} \tag{the optimality of $\pi_t$}\\
+&\leq \avgR_{[s,t]}(\pi_t)+2\beta_{[1,\sigma(t)-1]}+3\beta_{[s,t]} \tag{\textsc{StationaryTest}}\\
+&\leq \calR_{[s,t]}(\pi_t)+2\beta_{[1,\sigma(t)-1]}+4\beta_{[s,t]} \tag{Freedman's inequality}\\
+&= \calR_{t}(\pi_t)+2\beta_{[1,\sigma(t)-1]}+4\beta_{[s,t]}.
+\end{align*}
+Therefore, in a stationary interval $[s,e]$ which is not interrupted by rerun and totally lies in an epoch $\calE$, the regret is bounded by
+\begin{align*}
+\sum_{t=s}^e \mathbb{E}_t\left[r_t(\pi(x_t))-r_t(a_t)\right]
+&\leq \tilde{\mathcal{O}}\left( \sum_{t=s}^e \beta_{[1,\sigma(t)-1]}+\beta_{[s,t]}+K\mu_t \right)\\
+&\leq \tilde{\mathcal{O}}\left( \sum_{t=s}^e \left(\beta_{[1,\sigma(t)-1]}+K\mu_t \right)+\abs{\calE}^{\frac{1}{6}}\sqrt{K(e-s+1)} + \sqrt{K}\abs{\calE}^{\frac{1}{3}} \right).\end{align*}
+Now consider the regret in an epoch $\calE$. Let there be $S_\calE$ stationary intervals in it. Then the regret in $\calE$ is the sum of interval regret (we used Cauchy's inequality): 
+\begin{align*}
+\sum_{t\in\calE} \mathbb{E}_t\left[r_t(\pi_t^*(x_t))-r_t(a_t)\right] 
+&\leq 1+\tilde{\mathcal{O}}\left( \sum_{t=1}^{\abs{\calE}-1} \left( \beta_{[1,\sigma(t)-1]}+K\mu_t \right) +\abs{\calE}^{\frac{1}{6}}\sqrt{KS_\calE \abs{\calE}} + \sqrt{K}S_\calE\abs{\calE}^{\frac{1}{3}} \right)\\
+&\leq \tilde{\mathcal{O}}\left( \sqrt{K} \left(S_\calE^{\frac{1}{2}} \abs{\calE}^{\frac{2}{3}} + S_\calE \abs{\calE}^{\frac{1}{3}} \right) \right).
+\end{align*}
+Finally, we sum up the regret in all epochs. Note that the number of epochs $S^\p$ is less or equal to $S+\frac{T}{L}$ because of Lemma~\ref{lemma:adagreedy2:no rerun}. Let the epochs be $\calE_1, \calE_2, \ldots, \calE_{S^\p}$, and in epoch $\calE_i$, there are $S_i$ stationary distributions. Then we have $S_1+\ldots+S_{S^\p}\leq S+S^\p\leq 2S+\frac{T}{L}$. Therefore the total regret is bounded by 
+\begin{align*}
+\tilde{\mathcal{O}}\left( \sqrt{K}\sum_{i=1}^{S^\p} \left(S_i^{\frac{1}{2}}\abs{\calE_i}^{\frac{2}{3}} + S_i\abs{\calE_i}^{\frac{1}{3}}\right) \right)\leq \tilde{\mathcal{O}}\left( \sqrt{K}L^{\frac{1}{6}}\left(S+\frac{T}{L}\right)^{\frac{1}{2}}T^{\frac{1}{2}} +\sqrt{K}L^{\frac{1}{3}}\left(S+\frac{T}{L}\right) \right). 
+\end{align*}
+We can get the corresponding bounds by making $L=T/S$ or $L=T$. 
+\end{proof}
+
+\subsection{\textsc{Ada-Greedy3} under switching distributions}
+\begin{algorithm}[t]
+\DontPrintSemicolon
+\caption{\textsc{Ada-Greedy3}}\label{alg:AdaGreedy3}
+{\bf Input}: allowed failure probability $\delta$. \\ 
+
+{\bf Define}:
+$\gamma=\frac{1}{2}$, 
+$\theta=\frac{1}{2}$,  
+$\mu_t=\min\Big\{\frac{1}{K}, t^{-\frac{1}{3}}\sqrt{\frac{\ln(N/\delta)}{K}}\Big\}, 
+\beta_\calI= 2\sqrt{\frac{\ln(4T^2N/\delta)}{\mu_\calI \abs{\calI}}}+\frac{\ln(4T^2N/\delta)}{\mu_\calI \abs{\calI}}, 
+\text{ where } \mu_{\calI}\triangleq \min_{t\in\calI} \mu_t, 
+\sigma(t)=2^{\floor{\log_2 t} }, 
+\alpha_\calI=2\sqrt{\frac{K\ln(4T^2N/\delta)}{\abs{\calI}}}+\frac{K\ln(4T^2N/\delta)}{\abs{\calI}}$.\\
+{\bf Initialize}: $t=1$. \label{line:rerun_beginning3}\\ 
+\For{$j=1, 2, \ldots$}{
+       $E\leftarrow 2^{j-1}$.\\
+       In the following $E$ rounds, play in bins, each of length $E^\gamma$. Let $b$ denote the bin index. \\
+       \For{$b=1, 2, \ldots, E^{1-\gamma}$}{
+            Make bin $b$ an \textit{exploration bin} with probability $b^{-\theta}$; otherwise an \textit{exploitation bin}. \\
+             \For{$\tau=1, \ldots, E^\gamma$}{
+                     Let $\pi_t=\argmax_{\pi\in\Pi}\avgR_{[1,\sigma(t)-1]}(\pi)$. \\
+                     Set $p_t(a)=\begin{cases}
+                             \frac{1}{K}, &\text{if bin $b$ is an exploration bin}, \\
+                             \mu_t+(1-K\mu_t)\one \{ a=\pi_t(x_t) \},    &\text{if bin $b$ is an exploitation bin}.
+                     \end{cases}
+                     $\\
+                     Play $a_t\sim p_t$. \\
+                     Run \textbf{\textsc{StationaryTest}}$(t)$ if bin $b$ is a exploration bin. \\
+                     %Run \textbf{\textsc{StationaryTest2}}$(t)$ if bin $b$ is a exploitation bin. \\
+                     Goto Line \ref{line:rerun_beginning3} if it fails.   
+                     \\$t\leftarrow t+1$.   
+            }
+            
+       }
+}
+
+$\textbf{\textsc{StationaryTest}}(t)$\\
+Check if there exist $\tau\leq t$ with $[\tau, t]$ \textit{totally lies in the current bin}, and $\pi\in\Pi$ such that
+\begin{equation*}
+\Big\lvert \avgR_{[1, \sigma(t)-1]}(\pi)-\avgR_{[\tau,t]}(\pi)\Big\rvert > \beta_{[1, \sigma(t)-1]}+2\alpha_{[\tau,t]}, 
+\end{equation*}
+\\Return \textit{fail} if such $\tau$ and $\pi$ exist. \\
+(To reduce complexity, one can only check for $\tau=t-1, t-2, t-4, \ldots$) 
+
+%$\textbf{\textsc{StationaryTest2}}(t)$\\
+%Check if there exist $\tau\leq t$ and $\pi\in\Pi$ such that
+%\begin{equation*}
+%\Big\lvert \avgR_{[1, \sigma(t)-1]}(\pi)-\avgR_{[\tau,t]}(\pi)\Big\rvert > \beta_{[1, %\sigma(t)-1]}+\beta_{[\tau,t]}, 
+%\end{equation*}
+%\\Return \textit{fail} if such $\tau$ and $\pi$ exist. 
+\end{algorithm}
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% fi 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

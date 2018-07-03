@@ -1,0 +1,202 @@
+% !TEX root = paper.tex
+
+Two of the most appealing features of online learning methods are
+	 (a) robustness, due to the absence of assumptions on the data-generating process, and (b) the ability to efficiently incorporate data on the fly. According to this latter desideratum, online methods should not store all the data observed so far in memory, but instead maintain some ``compressed'' representation, sufficient for making online predictions. The focus of this work is the study of such \emph{sufficient statistics} for online learning, and the design of computationally efficient methods that employ them.
+	
+It is natural to turn to Statistics for inspiration: a classical notion of \emph{sufficient statistics} \citep{ra1922mathematical} ensures that a statistician can search for methods that work on ``compressed'' representations of the data. Sufficient statistics have also been studied in sequential decision theory \citep{bahadur1954sufficiency}. However, the very notion of sufficiency is inherently tied to the posited probabilistic model, and the corresponding notion for arbitrary sequences---as postulated by the above desideratum (a)---is all but obvious.
+
+
+The current theory of online learning offers little guidance as to what summaries of past data should be recorded by an online algorithm. For instance, the Exponential Weights algorithm \citep{vovk1990aggregating,littlestone1994weighted} keeps in memory the cumulative losses of the experts, while the general potential-based forecaster \citep{PLG} updates the cumulative regret of the algorithm with respect to each expert. The methods from the Follow-the-Regularized-Leader family (also known as Dual Averaging methods) work with the sum of gradients of convex functions, while the Online Newton Step \citep{hazan2007logarithmic} method and the Vovk-Azoury-Warmuth forecaster \citep{PLG} also store the ``covariance'' matrix of outer products. The well-known adaptive gradient descent procedure (e.g. \citep{rakhlin2015equivalence}) tunes the step size for online gradient descent according to the cumulative squared norms of gradients, a statistic that appears to be necessary for achieving the adaptive bound, while the ZigZag method of \cite{foster2017zigzag} keeps track of a sign-transformed sequence of the gradients to achieve the empirical Rademacher complexity as a regret bound.
+
+The question of sufficient statistics for online methods appears to be unexplored and poorly understood, and it will take significant effort to answer it. In this paper we propose an approach that appears to be general yet, inevitably, incomplete. We propose a definition that brings many existing methods under the same umbrella, and allows us to develop new efficient strategies that have otherwise been out of reach. The key workhorse for our development is the Burkholder method, studied in probability theory and harmonic analysis.
+
+Beyond studying a notion of sufficient statistic for online methods, our work can be seen as providing further understanding of emerging connections between online learning, martingale inequalities, and deterministic geometric quantities. At the risk of being imprecise, let us describe the bird's-eye view of our overall approach:
+\begin{figure}[H]
+	\label{fig:high_level_equiv}
+  \centering
+    \includegraphics[width=\textwidth]{equivalence2.pdf}
+	\vspace{-9mm}
+\end{figure}
+Based on the definition of sufficient statistics for online methods, we first derive corresponding martingale inequalities with the help of the minimax theorem. We then turn to the Burkholder method, and show equivalence of these martingale inequalities for sufficient statistics and existence of a special Burkholder (or Bellman) function, a purely geometric object. We then use this function for the problem of online prediction, thus completing the circle. Crucially, the sufficient statistics we start with are reflected in the Burkholder function, and, hence, the proposed algorithm is only required to update these compressed representations of the data. We exhibit the power of this approach by deriving several new efficient prediction methods.
+
+We remark that \citep{foster2017zigzag} studied a particular case of the Burkholder method related to the UMD property for Banach spaces. The present work shows that the approach can be generalized significantly and used to address the question of sufficient statistics. For example, the explicit construction of the UMD-style Burkholder function for certain matrix prediction problems was noted to be challenging in \citep{foster2017zigzag} and indeed does not appear to be known in the analysis community \citep{osekowski2017personal}. In spite of this, the approach in the present paper uses different sufficient statistics to attain the same results with an explicit (and efficient) Burkholder function.
+
+\section{Problem Setup and Sufficient Statistics}
+\label{sec:problem}
+
+Consider the \emph{Online Supervised Learning} setting where, for each round $t=1,\ldots,n$, the forecaster observes side information $x_t\in\X$, makes a prediction $\pred_t\in\Y\subset \reals$, observes an outcome $y_t\in\Y$, and incurs a loss of $\loss(\pred_t,y_t)$, where $\ls:\bbR\times{}\bbR\to\bbR$. In a general form, the goal of the forecaster is to ensure that
+\begin{align}
+	\label{eq:def_phi_regret}
+	\En\left[\sum_{t=1}^n \loss(\pred_t,y_t)\right] \leq \phi(x_1,y_1,\ldots,x_n,y_n)
+\end{align}
+for any sequence $(x_1,y_1),\ldots,(x_n,y_n)$, where the expectation is with respect to forecaster's randomization. The choice of $\phi$ models the problem at hand, and examples in this paper focus on
+\begin{align}
+	\label{eq:phi_comp_adap}
+	\phi(x_1,y_1,\ldots,x_n,y_n) = \min_{f\in\F} \left\{ \sum_{t=1}^n \loss(f(x_t),y_t) + \cA(f, x_1,\ldots,x_n)\right\},
+\end{align}
+for some class of functions $\F:\X\to\reals$ and an \emph{adaptive bound} $\cA:\F\times\X^n\to\reals$. In this case, the difference of the cumulative losses of the forecaster and of $f\in\F$ is commonly referred to as \emph{regret},
+$$\reg(f) = \sum_{t=1}^n\loss(\pred_t,y_t)-\loss(f(x_t),y_t).$$
+We assume that $\phi$ is uniformly bounded over $(\cX\times{}\cY)^{n}$. We further assume that $\loss$ is convex and $L$-Lipschitz in the first argument over $\cY$. We denote the derivative (or a subderivative) of $\loss(\cdot,y)$ at $\pred$ by $\partial \loss(\pred,y)\in[-L,L]$. We will abbreviate $\delta_t = \partial\loss(\pred_t,y_t)$ when it is clear from context, but keep in mind that this value depends on the two variables $\yh_t$ and $y_t$. 
+We assume that for any distribution $p$ on $\Y$, $\arg\min_{\pred\in\bbR} \En_{y \sim p}\loss(\pred,y) \in \cY$, and that $\cY$ is compact. We let $\Delta_{\cY}$ denote the space of all Borel probability measures on $\cY$ (more generally, $\Delta_{A}$ will denote the set of Borel probability measures over some set $A$). Since $\cY$ is compact, Prokhorov's theorem implies that $\Delta_{\cY}$ is compact in the weak topology. This enables application of the minimax theorem as in previous works in this direction \citep{RakSriTew10,RakSriTew14jmlr,FosRakSri15}.
+
+%\textbf{Additional notation}~~~~
+\paragraph{Additional notation}
+ Given a function $f:S\to\bbR$, its Fenchel dual $f^{\star}$ is defined via $f^{\star}(w) = \sup_{x\in{}S}\crl*{\tri*{w,x}-f(x)}$. For any norm $\nrm*{\cdot}$, the dual norm will be denoted by $\nrm*{\cdot}_{\star}$. $\sB_p^d$ will denote the $d$-dimension unit $\ls_p$ ball and the shorthand $\Delta_{d}$ will denote the simplex in $d$ dimensions. For any interval $\brk*{a,b}$, we let $\mathrm{proj}_{\brk*{a,b}}(x) = \min\crl*{b, \max\crl*{a, x}}$.
+
+\subsection{Sufficient Statistics}
+
+Since there is no probabilistic model for data in the online learning setting, the notion of ``sufficiency'' has to be tied to the particular choice of $\phi$. It is then tempting to define a sufficient statistic as a ``compressed'' representation which may be used by some strategy to ensure \pref{eq:def_phi_regret}. While natural, such a definition does not provide any additional structure to narrow the search for an algorithm.
+
+The definition we propose is as follows:
+\begin{definition}
+	\label{def:sufficiency}
+	Let $\T$ be some vector space. A function $\suff: \X \times \Y \times [-L,L] \to \T$ is an \emph{additive sufficient statistic} for $\phi$ if there exists $V: \T \to \reals$ such that
+\begin{align}
+	\label{eq:suffiency_def}
+\sum_{t=1}^n \loss(\pred_t,y_t)- \phi(x_1,y_1,\ldots,x_n,y_n) \le  V\left(\sum_{t=1}^n \suff(x_t,\pred_t,\partial \loss(\pred_t,y_t))\right) 
+\end{align}
+for any sequence $x_1,\pred_1,y_1, \ldots, x_n,\pred_n,y_n$. We refer to $(\suff, V)$ as a \emph{sufficient statistic pair}.
+\end{definition}
+In \pref{app:discussion}, we consider a more general non-additive definition. All examples in this paper, however, are already covered by \pref{def:sufficiency}, and we will drop the word ``additive'' for now. We will also make the mild assumption that there exists $(x^0,y^0)\in\X\times\Y$ such that $\suff(x^0,y^0,0)=0\in \T$.
+\begin{example}[Prediction with expert advice]
+	\label{ex:experts}
+	Consider $\phi$ as in Eq. \pref{eq:phi_comp_adap} with $\cF$ as the set of linear functions $f(x)=\inner{f,x}$ for $f\in\Delta_d$, with $\X=[-1,1]^d$, and with non-adaptive rate $\cA \ldef c\sqrt{n\log d}$. Then the left-hand-side of \pref{eq:suffiency_def} can be upper bounded via linearization of the convex loss by 
+	$$\max_{j \in 1,\ldots,d}\sum_{t=1}^n \partial\loss(\pred_t,y_t) \cdot (\pred_t-\inner{e_j,x_t}) - c\sqrt{n\log d}.$$
+	It follows that $\reals^d$-valued map $\suff$ defined by $[\suff(x_t,\pred_t,\delta_t)]_j = \delta_t\cdot (\pred_t-\inner{e_j,x_t})$ is a sufficient statistic.
+\end{example}
+\begin{example}[Adaptive Gradient Descent]
+	Consider $\phi$ as in Eq. \pref{eq:phi_comp_adap} with $\cF$ as the set of linear functions $f(x)=\inner{f,x}$ for $f\in \sB_2^d$, $\X=\reals^d$, and adaptive bound $\cA(\nabla_{1},\ldots\nabla_n) \ldef (\sum_{t=1}^n \norm{\nabla_t}^2)^{1/2}$, where $\nabla_t \ldef \delta_t x_t$. The left-hand-side of \pref{eq:suffiency_def} is at most
+	\begin{equation}\max_{f\in \sB_2^d}\sum_{t=1}^n \delta_t \cdot (\pred_t-\inner{f,x_t}) - (\sum_{t=1}^n \norm{\nabla_t}^2)^{1/2} = \sum_{t=1}^n \delta_t \cdot \pred_t+\norm{\sum_{t=1}^n \nabla_t} - (\sum_{t=1}^n \norm{\nabla_t}^2)^{1/2}.
+	\label{eq:adaptive}\end{equation}
+	This implies that $\suff(x_t,\pred_t,\delta_t) = \left( \delta_t\pred_t, \nabla_t, \norm{\nabla_t}^2 \right)\in\reals\times \X\times \reals$ is a sufficient statistic.
+\end{example}
+
+\section{Martingale Inequalities and the Burkholder Method}
+\label{sec:burkholder}
+
+The notion of sufficient statistic introduced in the previous section will only be useful if we exhibit a prediction strategy employing this representation. Before doing so, we need to build the two bridges outlined in the diagram on the previous page.
+These are \pref{lem:suff_to_martingale} and \pref{lem:equivalence_burkholder} below.
+
+First, we show that existence of a prediction strategy that guarantees the regret inequality \pref{eq:def_phi_regret} for all sequences can be ensured by checking a martingale inequality involving only the sufficient statistics. The key tool in proving the lemma is the minimax theorem. 
+
+Note that in a slight abuse of notation, we will concatenate the first two arguments of any sufficient statistic $\suff$ and write them as $z_{t}\ldef(x_t, \pred_t)$ going forward.
+
+\begin{lemma}
+	\label{lem:suff_to_martingale}
+Suppose $(\suff,V)$ is a sufficient statistic pair for $\phi$. Let $\delta=(\delta_1,\ldots,\delta_n)$ be a $[-L,L]$-valued martingale difference sequence (i.e. $\En[\delta_t\mid\cG_{t-1}]=0$, where $\cG_{t-1}=\sigma(\delta_1,\ldots,\delta_{t-1})$). Let $\bz=(\bz_1,\ldots,\bz_n)$ be a sequence of functions $\bz_t: [-L,L]^{t-1} \to \X \times \Y$, each viewed as a predictable process with respect to $\cG_{t-1}$. Then a sufficient condition for existence of a prediction strategy such that \pref{eq:def_phi_regret} holds for all sequences $(x_1,y_1),\ldots,(x_n,y_n)$ is that
+\begin{align}
+	\label{eq:suff_prob_ineq}
+	\En\left[  V\left(\sum_{t=1}^n \suff(\bz_t, \delta_t) \right) \right] \le 0
+\end{align}
+holds for any $\bz$ and any law of $\delta$. Moreover, when $\alpha \mapsto V(\tau+\suff(z,\alpha))$ is convex for any $z\in\X\times\Y,\tau\in\T$, it is enough to check \pref{eq:suff_prob_ineq} for $\delta_t=\epsilon_t \cdot 2L$, $\forall{}t=1,\ldots,n$, where $\epsilon_t$s are independent Rademacher random variables.
+\end{lemma}	
+
+\pref{lem:suff_to_martingale} is in the spirit of results in \citep{RakSriTew10,RakSriTew14jmlr,FosRakSri15} whereby existence of a strategy (or, ``learnability'') is certified non-constructively by proving a martingale inequality. 
+
+The next lemma provides a key insight into existence of certain deterministic functions with ``geometric'' properties (in particular, \emph{restricted concavity}) and can be seen as a variation on the so-called \emph{Burkholder method}  (also sometimes called the \emph{Bellman function method}; see \citep{osekowski2012sharp} for the detailed treatment and examples).
+
+\begin{lemma}
+	\label{lem:equivalence_burkholder}
+Let $\delta=(\delta_1,\ldots,\delta_n)$ be a $[-L,L]$-valued martingale difference sequence with joint law $\bp$ and let $\bz=(\bz_1,\ldots,\bz_n)$ be a predictable process ($\bz_t: [-L,L]^{t-1} \to \X \times \Y$) with respect to $\cG_{t-1}=\sigma(\delta_1,\ldots,\delta_{t-1})$. The probabilistic inequality 
+\begin{align}
+	\label{eq:martingale_nonpositive}
+	\En\left[  V\left(\sum_{t=1}^n \suff(\bz_t,\delta_t)\right) \right] \le 0
+\end{align}
+holds for any $n\geq 1$, $\bz$, and $\bp$ \emph{if and only if} one can find a function $\burk:\T\to\reals$ that satisfies the following three properties:
+\begin{enumerate}
+ \item[$1^o$] $\burk(0) \le 0$.
+ \item[$2^o$] For any $\tau \in \T$, $\burk(\tau) \ge V(\tau)$.
+ \item[$3^o$] For any $\tau \in \T$, $z \in \X \times \Y$, and any mean-zero distribution $p$ on $[-L,L]$, 
+ \begin{align}
+ \En_{\alpha\sim p}\left[\burk(\tau + \suff(z,\alpha))\right] \le \burk(\tau). \hspace{-20mm} \tag{restricted concavity}
+ \end{align}
+\end{enumerate}
+Furthermore, if for any $\tau \in \T$ and $z \in \X \times \Y$ the mapping $\alpha \mapsto V(\tau + \suff(z,\alpha))$ is convex, then the condition \pref{eq:martingale_nonpositive} is implied by $\En\left[  V\left(\sum_{t=1}^n \suff(\bz_t,\eps_t\cdot{}2L)\right) \right] \le 0$, where $(\epsilon_1,\ldots,\epsilon_n)$ are Rademacher random variables. For this new condition, property $3^o$ is replaced by
+\begin{enumerate}
+ \item[$3'$] The mapping $\alpha \mapsto \burk(\tau + \suff(z,\alpha))$ is convex and:
+ $$
+ \forall \tau \in \T, z \in \X \times \Y,~~~ \En_\epsilon \burk(\tau + \suff(z,\epsilon \cdot{}2L))  \le \burk(\tau),
+ $$
+ where $\epsilon$ is a Rademacher random variable. 
+\end{enumerate}
+\end{lemma}
+
+\begin{definition}
+We call any function $\burk$ satsifying the properties $1^o$, $2^o$, and $3^o$/$3'$ a \emph{Burkholder function for $(\suff,V)$}.
+\end{definition}
+
+In plain language, the lemma says that one can prove a certain probabilistic inequality if and only if there is a deterministic function with certain properties. The proof of the lemma, in fact, provides a construction for the ``optimal'' function $\burk$, but it is not clear how to directly evaluate the optimal function efficiently (see \pref{app:discussion} for a discussion of the computational prospects of automating this process).
+
+We remark that the Burkholder functions guaranteed by the lemma are not unique, and some may be easier to find than others. We also note that any Burkholder function $\burk$ for $(\suff,V)$ yields another sufficient statistic pair $(\suff, \burk)$ guaranteeing the same regret bound. The power of \pref{lem:equivalence_burkholder} is to guarantee the existence of a function $\burk$ satisfying property \propthree{} when the function $V$ under consideration does not have these properties. This situation, where the choice of $V$ is ``obvious'' but the discovery of $\burk$ requires nontrivial analysis, occurs frequently when one attempts to design adaptive algorithms for a new task.
+
+To showcase the power of this lemma, we consider a particular martingale inequality that gives rise to the geometric notions of strong convexity and smoothness. These geometric properties are extensively employed in Online Convex Optimization: to instantiate the Mirror Descent algorithm with a given norm, one needs to exhibit a function that is strongly convex with respect to a given norm of interest. For example, for the $\ls_{1}$ norm a standard choice is the negative entropy function. The next example shows that for any norm, the optimal strongly convex function is precisely the dual of the special Burkholder function for a particular martingale inequality. This example is the focus of \cite{Pisier75}, yet for us it is one point on the spectrum of sufficient statistics.
+
+\begin{example}[Smoothness and Strong Convexity] 
+	\label{ex:smoothness}
+	Assume $L=1$ for brevity. Suppose $\X=\reals^d$ (more generally, we may take $\cX$ to be a Banach space), equipped with a norm $\norm{\cdot}$. Let $V:\X\times \reals\to\reals$ be defined by $(x,a) \mapsto \norm{x}^2-C \cdot a$ ~ for $C>0$. Take $\suff(x_t,\pred_t,\delta_t)=(\delta_t x_t, \norm{x_t}^2)$. Since $\alpha\mapsto V(\tau+\suff(x_t,\pred_t,\alpha))$ is convex, it is enough to consider \pref{eq:martingale_nonpositive} for independent Rademacher random variables. The martingale inequality \pref{eq:martingale_nonpositive} then reads
+\begin{align}
+	\label{eq:smoothness_martingale_ineq}
+	\En\left[ \norm{\sum_{t=1}^n \epsilon_t\bx_t}^2 - C\sum_{t=1}^n \norm{\bx_t}^2\right] \leq 0
+\end{align}
+for any $\X$-valued predictable process $(\bx_t)$ with respect to the dyadic filtration $\F_{t-1} = \sigma(\epsilon_1,\ldots,\epsilon_{t-1})$. If \pref{eq:smoothness_martingale_ineq} holds, \pref{lem:equivalence_burkholder} guarantees existence of a Burkholder function $\burk$, and property $3'$ reads 
+$$\En_\epsilon \burk(\tau_1 + \epsilon x, \tau_2 + \norm{x}^2)  \le \burk(\tau_1,\tau_2),$$
+for any $\tau=(\tau_1,\tau_2)\in\X\times \reals$ and $x\in\X$. From the construction of $\burk$ in the proof of \pref{lem:equivalence_burkholder}, with our particular choice of $V$, one can deduce that $\burk(\tau_1,\tau_2)= \burk(\tau_1,0)+\tau_2$. Hence,
+$$\frac{1}{2}\left( \burk(\tau_1 + x, 0)+ \burk(\tau_1-x, 0) \right) + C\norm{x}^2 = \frac{1}{2}\left( \burk(\tau_1 + x, C\norm{x}^2)+ \burk(\tau_1-x, C\norm{x}^2) \right) \leq \burk(\tau_1,0)$$
+and, thus, $x\mapsto \burk(x,0)$ is smooth with respect to the norm and its dual is strongly convex with respect to $\nrm*{\cdot}_{\star}$. In summary, the Burkholder method captures the geometry necessary for defining Gradient-Descent-style methods, as the dual of $\burk(x,0)$ provides the universal construction for a strongly convex function with respect to a given norm. See \cite{srebro2011universality} for an in-depth treatment of Mirror Descent and universal construction of strongly convex regularizers.
+\end{example}
+
+What should an algorithm designer take away from the developments thus far? Let us provide a brief summary. One first starts with a desired regret inequality for the online learning setting, such as \pref{eq:def_phi_regret}. The next step is to find an upper bound on the regret inequality that can be expressed in terms of additive sufficient statistics. \pref{lem:suff_to_martingale} and \pref{lem:equivalence_burkholder} then guarantee, respectively, that there is a certain martingale inequality that must hold if the upper bound in terms of sufficient statistics is achievable, and that there must exist a Burkholder function with certain geometric properties. In the next section we close the loop by showing that whenever such a Burkholder function can be evaluated efficiently, it yields an efficient algorithm that only keeps the sufficient statistics in memory.
+
+Before proceeding, we briefly remark that if the sufficient statistic expansion $V$ also serves as a lower bound on the regret inequality, then there is a formal sense in which the special Burkholder function exists if and only if there exists a strategy achieving the original regret inequality of interest; this is the focus of \pref{app:necessary}. In the reverse direction, one may start with a probabilistic inequality and determine the statistics that should be used to define the online prediction goal.\footnote{This was precisely the approach used to develop a matrix prediction method we present in \pref{sec:matrix}.}
+
+\section{The Burkholder Algorithm}
+\label{sec:algorithm}
+
+\pref{ex:smoothness} in the previous section already suggests that the Burkholder $\burk$ functions capture the ``geometry'' needed for forming online predictions. Indeed, the method applies to settings in which more complicated sufficient statistics (beyond the norm of the sum and the sum of the squared norms) are necessary. %Thankfully, the function $\burk$ reflects any sufficient statistics for the online prediction problem. 
+We now define a ``universal'' algorithm for online prediction based on $\burk$.
+
+To define the algorithm, first let
+$\zeta_{t-1} = \sum_{j=1}^{t-1} \suff(x_j,\pred_j,\delta_j)$
+be the cumulative value of the sufficient statistic computed after $t-1$ rounds. Since $\T$ is a vector space, $\zeta_{t}$s are elements of $\T$, and this is the only information the algorithm stores in memory. 
+
+The \emph{Burkholder algorithm} is defined by the update:
+\begin{align}
+	\label{eq:univ_algo}
+\textbf{Compute}\;\; q_t  = \argmin_{q\in\Delta_{\cY}} ~\sup_{y\in\cY}~ \En_{\pred\sim q} \burk\Big(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y))\Big).
+\quad\quad\quad\textbf{Sample}\;\;\pred_{t}\sim{}q_t.
+\end{align}
+
+\begin{lemma}
+  \label{lem:universal_algo}
+	For a sufficient statistic pair $(\suff,V)$, if there exists a Burkholder function $\burk$ satisfying Properties $1^o$, $2^o$, and $3^o$ (or $3'$) of \pref{lem:equivalence_burkholder}, then the Burkholder algorithm \pref{eq:univ_algo} obtains the regret bound \pref{eq:def_phi_regret} in expectation for all sequences $(x_1,y_1),\ldots,(x_n,y_n)$. 
+\end{lemma}
+
+\begin{proof}
+To check that the above strategy works, fix a value $x_t$ and observe that by the minimax theorem,\footnote{The minimax theorem can be applied because $\Delta_{\cY}$ is compact; see discussion in the proof of \pref{lem:suff_to_martingale}.}
+\begin{align*}
+\inf_{q\in\Delta_{\cY}} \sup_{y\in\cY} & \En_{\pred \sim q\in\Delta{\cY}} \burk\left(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y))\right) = \sup_{p\in\Delta_{\cY}} \inf_{\pred\in\cY}  \En_{y \sim p} \burk\left(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y))\right)
+\end{align*}
+For any fixed $p$, let $\pred^{\star} \ldef \argmin_{\pred\in\cY} \En_{y \sim p} \loss(\pred,y)$, which implies $\partial \loss(\pred^{\star},y)$ is a mean-zero variable (see the proof of \pref{lem:suff_to_martingale}). Taking the worst case value for $p$ and choosing $\yh^{\star}$ as the learner's strategy for each $p$ yields an upper bound of $\sup_{p\in\Delta_{\cY}} \En_{y \sim p} \burk\left(\zeta_{t-1} + \suff(x_t,\pred^{\star},\partial \loss(\pred^{\star},y))\right)$,
+which in turn is upper bounded by
+\begin{align*}
+\sup_{\pred^{\star}\in\cY}\sup_{p\in\Delta_{\brk*{-L,L}} \;:\; \En_{\alpha \sim p}[\alpha]=0}   \En_{\alpha \sim p} \burk\left(\zeta_{t-1} + \suff(x_t,\pred^{\star},\alpha)\right)
+\end{align*}
+by observing that the distribution over $\partial \loss(\pred^{\star},y)$ belongs to the set of all zero-mean distributions supported on $[-L,L]$. The third property of $\burk$ now leads to the upper bound,
+\[
+\sup_{\pred^{\star}\in\cY}\sup_{p\in\Delta_{\brk*{-L,L}} \;:\; \En_{\alpha \sim p}[\alpha]=0}   \En_{\alpha \sim p} \burk\left(\zeta_{t-1} + \suff(x_t,\pred^{\star},\alpha)\right) \leq{} \burk\left(\zeta_{t-1}\right).
+\]
+Applying this argument from $t=n$ down to $t=0$ yields the value $\burk(0)\leq 0$.
+\end{proof}
+
+We remark that the approach presented here extends beyond the relaxation framework of \citep{rakhlin2012relax}. In particular, the present approach can handle recursions which cannot be written in the form ``$\loss(\pred_t,y_t)+\text{Rel}(x_{1:t},y_{1:t})$'', e.g. when the potential function depends on past forecasts $(\pred_t)$.
+
+\noindent\textbf{Implementation}~~ When $\burk$ is convex in $\pred$ and the set $\Y$ is convex, the minimum over $q$ is achieved at a deterministic strategy, and so the  minimization problem simplifies to $\argmin_{\pred\in\Y}$. All of the Burkholder functions we explore in this paper enjoy this or similar simplified and efficient representations for the algorithm. These simplifications are detailed in \pref{app:efficient}. Even without convexity, the general form for the Burkholder algorithm in \pref{eq:univ_algo} can be implemented efficiently via convex programming, assuming only Lipschitz continuity of $\burk$.
+\begin{proposition}
+Suppose $\burk$ is Lipschitz and bounded and can be evaluated in constant time. Then \pref{eq:univ_algo} can be implemented approximately so as to achieve the regret inequality \pref{eq:def_phi_regret} up to additive constants in time $\textrm{poly}(n)$.
+\end{proposition}
+See \pref{prop:burkholder_efficient} in the appendix for a precise version of this statement.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

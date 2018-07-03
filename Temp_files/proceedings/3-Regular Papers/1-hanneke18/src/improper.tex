@@ -1,0 +1,112 @@
+% !TeX root = main.tex
+\section{Improper Learning}
+\label{sec:improper}
+
+In this section, we show that if we are allowed to output a distribution that is not in the original family $Q$, we can efficiently identify a distribution that achieves close to optimal loss and almost-full validity using only polynomially many samples from $p$ and invalidity queries.
+
+\subsection{Algorithm}
+
+We provide an algorithm, Algorithm \ref{alg:full-validity}, that can solve the task computationally efficiently assuming access to an optimization oracle $\text{Oracle}(X_P,X_N)$. $\text{Oracle}(X_P,X_N)$ takes as input sets $X_P$ and $X_N$ of positive and negative (invalid) points and outputs a distribution $q$ from the family of distributions $Q$ that minimizes the empirical loss with respect to $X_P$ such that $\Supp(q) \cap X_N = \emptyset$, i.e. no negative point in $X_N$ is in the support of $q$.
+
+\begin{algorithm}[ht]
+   \caption{Improperly learning to generate valid samples}
+   \label{alg:full-validity}
+\begin{algorithmic}[1]
+   \STATE {\bfseries Input:} Distribution family $Q$, sample and invalidity access to $p$, and parameters $\ve_1, \ve_2 > 0$.
+   \STATE Draw a set $X_P$ of $P$ samples from $p$.
+   \STATE Set $X_N \leftarrow \emptyset$
+   \FOR{$i=1,...,R$}
+     \STATE Let $q^i \leftarrow \text{Oracle}(X_P,X_N)$.
+     \STATE Generate $T$ samples from $q^i$ and query the invalidity of each of them.
+     \STATE Let $x^-_1,...,x^-_k$ be the invalid samples.
+     \IF{there are no invalid samples, i.e. $k=0$}
+        \RETURN $q^i$
+     \ELSE
+       \STATE Set $X_N \leftarrow X_N \cup \{x^-_1,...,x^-_k\}$
+     \ENDIF
+   \ENDFOR
+   \STATE Sample $i \sim \Unif(\{1,...,R\})$
+   \STATE Let $A^i \leftarrow {\{x: \exists j > i \text{ with } x \in \Supp(q^j)\}}$
+   \RETURN the distribution that samples $x \sim q^i$ and outputs $x$ if $x \in A^i$ and any valid point $x^*$ o/w
+\end{algorithmic}
+\end{algorithm}
+
+The algorithm repeatedly finds the distribution with minimum loss that doesn't contain any of the invalid points seen so far and tests whether it achieves almost full-validity. If it does, then it outputs that distribution. Otherwise it tries again using the new set of invalid points. However, this process could repeat for a very long time without finding a distribution. To avoid this, after running for a few rounds, if it has failed to output a distribution, the algorithm is able to generate an improper distribution that provides the required guarantee to solve the task. This meta-distribution is obtained by randomly picking one of the candidate distributions examined so far and filtering out points that no other distributions agree on.
+
+\subsection{Analysis}
+
+We show that this Algorithm~\ref{alg:full-validity} outputs with high probability a distribution $\hat q$ that has $\Loss(\hat q) \le \Loss(q^*) + \eps_1$ and $\Inv(\hat q) \le \eps_2$. 
+
+\begin{theorem}\label{thm:full-validity}
+  The choice of parameters
+  
+  \begin{equation}
+    P=\Theta\left(\frac{M^2}{\ve_1^2} \log |Q| \right), \quad R = \Theta \left( \frac { M } {\eps_1} \right), \quad  T = \Theta\left(\frac{R}{\ve_2} \log |Q| \right)
+    \end{equation}
+  guarantees that Algorithm~\ref{alg:full-validity} outputs w.p. $3/4$ a distribution $\hat q$ with $\Loss(\hat q) \le \Loss(q^*) + \eps_1$ and $\Inv(\hat q) \le \eps_2$ using $\Theta\left(\frac{M^2}{\ve_1^2} \log |Q| \right)$ samples from $p$ and $\Theta\left(\frac{M^2}{ \ve_1^2 \ve_2} \log |Q|\right)$ invalidity queries.
+  
+  The algorithm runs in time polynomial in $M$, $\ve_1^{-1}$, $\ve_2^{-1}$, and $\log |Q|$ assuming that the following each can be  performed at unit cost: (a) queries to \text{Oracle}, (b) sampling from the distributions output by $\text{Oracle}$, and (c) checking whether a point $x$ is in the support of a distribution output by $\text{Oracle}$.
+\end{theorem}
+
+Of course, the success probability can be boosted from 3/4 to arbitrarily close to $1-\delta$ by repeating the algorithm $O(\log 1/\delta)$ times and taking the best output. We prove Theorem~\ref{thm:full-validity} by showing two lemmas, Lemma~\ref{lem:full-validity-inv} and Lemma~\ref{lem:full-validity-loss}, bounding the invalidity and loss of the returned distribution.
+
+\begin{lemma}\label{lem:full-validity-inv}
+The returned distribution $\hat q$ by Algorithm~\ref{alg:full-validity} satisfies $\Inv(\hat q) \le \eps_2$ w.p. $7/8$.
+\end{lemma}
+
+\begin{proof}
+  Let $ \text{Invalid} = \{x : \Inv(x) = 1 \}$ be the set of invalid points.
+  Consider $q^i$ for some $i$ and any distribution $q \in Q$. If $q^i( \Supp(q) \cap \text{Invalid} ) \ge \frac { \eps_2 } { R }$, then with probability at least $\frac { \eps_2 } { R }$ a sample generated from $q^i$ lies in $\Supp(q) \cap \text{Invalid}$. Thus, with $T = \Theta( \frac  { R } { \eps_2 } \log |Q| )$ samples at least one lies in $\Supp(q) \cap \text{Invalid}$ w.p. $1 - \frac 1 {8 |Q| R}$. By a union bound for all $i$ and $q \in Q$, we get that with probability $7/8$ for all $q_i$ and all distributions $q \in Q$, if $q^i( \Supp(q) \cap \text{Invalid} ) \ge \frac { \eps_2 } { R }$ then at least one of the $T$ samples drawn from $q^i$ lies in $\Supp(q) \cap \text{Invalid}$.
+  We therefore assume that this holds.
+  
+  Then, if the returned distribution $\hat q = q^i$ for some $i$, we get $$\Inv(q^i) = q^i( \Supp(q^i) \cap \text{Invalid} ) < \frac { \eps_2 } { R } \le \eps_2 $$ as required.
+  To complete the proof we show the required property when returned distribution $\hat q$ is the improper meta-distribution.
+  
+  We have that for all $j > i$, $q^i( \Supp(q^j) \cap \text{Invalid} ) < \frac { \eps_2 } { R }$ since after round $i$ for any $q \in Q$ with $q^i( \Supp(q) \cap \text{Invalid} ) \ge \frac { \eps_2 } { R }$ the set $X_N$ will contain at least one point in $\Supp(q) \cap \text{Invalid}$ and thus any such $q$ will not be considered.
+  
+  Therefore, we have that 
+ \begin{align*}
+&    \Inv(\hat q) 
+= \Exp_{x\sim\hat q}\left[ \Inv(x) \right]
+= \Exp_{x\sim q^i}\left[ \Inv(x) \cdot \Ind\left[\exists j > i: x \in \Supp(q^j) \right]\right] \\
+&\le  \sum_{j=i+1}^R \Exp_{x\sim q^i}\left[ \Inv(x) \cdot \Ind\left[ x \in \Supp(q^j) \right] \right]
+= \sum_{j=i+1}^R q^i( \Supp(q^j) \cap \text{Invalid} ) \le  \sum_{j=i+1}^R \frac { \eps_2 } { R } <  \eps_2.
+  \end{align*}
+\end{proof}
+
+
+\begin{lemma}\label{lem:full-validity-loss}
+The returned distribution $\hat q$ by Algorithm~\ref{alg:full-validity} satisfies $\Loss(\hat q) \le \Loss(q^*) + \eps_1$ w.p. $7/8$.
+\end{lemma}
+\begin{proof}
+  Since we draw $P=\Theta\left(\frac{M^2}{\ve_1^2} \log |Q| \right)$ samples from $p$, we have that the empirical loss $\overline \Loss(q) \in \Loss(q) \pm \frac {\eps_1} 4$ for all $q \in Q$ with probability $1-1/16$. We thus assume from here on that this is true.
+  
+  In that case, must be that $\overline \Loss(q^i) \le \overline \Loss(q^*)$. This is because the algorithm terminates if $q^i = q^*$ since $q^*$ generates no invalid samples and no $q^i$ with $\overline \Loss(q^i) > \overline \Loss(q^*)$ will be considered before examining $q^*$.
+  
+  This implies that at any point, we have that $\Loss(q^i) \le \overline \Loss(q^i) + \frac {\eps_1} 4 \le \overline \Loss(q^*) + \frac {\eps_1} 4 \le \Loss(q^*) + \frac {\eps_1} 2$. 
+  
+  Therefore, in the case that the distribution that is output is $\hat q = q^i$ it will satisfy the given condition.
+  To complete the proof we show the required property when returned distribution $\hat q$ is the improper meta-distribution.
+  
+  In that case, we have that for any $i \in [R]$:
+    \begin{align*}
+      \Loss(\hat q) 
+  &\le \Exp_{x\sim p}\left[ L\left(q_x^i \cdot \Ind\left[\exists j > i: x \in \Supp(q^j) \right] \right) \right] \\
+  &\le \Loss(q^i) + M \cdot \Pr_{x\sim p}\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right] \\
+  &\le \Loss(q^*) + \frac {\eps_1} 2 + M \cdot \Pr_{x\sim p}\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right]
+    \end{align*}
+However, since a random index $i \sim \Unif(\{1,...,R\})$ is chosen, we have that in expectation over this random choice
+    \begin{align*}
+\Exp_i&\left[ \Pr_{x\sim p}\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right] \right] \\
+&\le \frac 1 R \sum_{i=1}^R \Pr_{x\sim p}\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right] \\
+&\le \frac 1 R \Exp_{x\sim p} \left[ \sum_{i=1}^R \Ind\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right] \right] 
+\le \frac 1 R
+   \end{align*}
+  where the last inequality follows since $\sum_{i=1}^R \Ind\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right] \le 1 $ as only the largest $i$ with $x \in \Supp(q^i)$ has that for all $j > i$, $x \notin \Supp(q^j)$.
+
+By Markov's inequality, we have that with probability $1-1/16$, a random $i$ will have $$\Pr_{x\sim p}\left[ x \in \Supp(q^i) \wedge \forall j > i: x \notin \Supp(q^j) \right] \le \frac {16} R.$$
+
+Therefore, the choice of $R = 32 \frac M {\ve_1} = \Theta \left( \frac { M } {\eps_1} \right)$ guarantees that $\Loss(\hat q) \le \Loss(q^*) + {\eps_1}$.
+The overall failure probability is at most $1/16+ 1/16 = 1/8$.
+
+\end{proof}

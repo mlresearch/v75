@@ -1,0 +1,139 @@
+%!TEX root = paper.tex
+
+Another application of our techniques is to derive adaptive online boosting algorithms with optimal sample complexity,
+which improves the AdaBoost.OL algorithm of~\citet{beygelzimer2015optimal} for the binary classification setting
+as well as its multiclass extension AdaBoost.OLM of~\citet{jung2017onlinemulticlass}.
+We state our improved online boosting algorithm in the multiclass setting for maximum generality,
+following the exposition and notation of~\citet{jung2017onlinemulticlass} fairly closely.
+
+We consider the following online multiclass prediction setting with 0-1 loss.
+In each round $t$, $t=1,\ldots,n$, the learner receives an instance $x_t\in\cX$, then selects a class $\yh_t \in \brk{K}$ ,
+and finally observes the true class $y_t \in\brk{K}$. The goal is to minimize the total number of mistakes
+$
+\sum_{t=1}^{n}\ind\crl*{\yh_t\neq{}y_t}.
+$
+
+In the boosting setup, we are interested in obtaining strong mistake bounds with the help of \emph{weak learners}.
+Specifically, the learner is given access to $N$ copies of a weak learning algorithm for a cost-sensitive classification task.
+Each weak learner $i\in\brk{N}$ works in the following protocol:
+for time $t=1,\ldots,n$, 1) receive $x_t\in\cX$ and cost matrix $C_{t}^{i} \in \cC$;
+2) predict class $l_t^{i}\in\brk{K}$;
+3) receive true class $y_t\in\brk{K}$ and suffer loss $C_{t}^i(y_t, l_t^i)$. Here $\cC$ is some fixed cost matrices class and we follow~\citep{jung2017onlinemulticlass} to restrict to $\mc{C} = \crl*{C\in\bbR_+^{K\times{}K}\mid{} \forall{}y \in [K], C(y,y) = 0 \text{ and }  \nrm*{C(y, \cdot)}_{1}\leq{}1\;}$.
+
+To state the weak learning condition, we define a randomized baseline $u_{\gamma,y}\in\Delta_{K}$ 
+for some edge parameter $\gamma \in [0,1]$ and some class $y \in\brk{K}$,
+so that $u_{\gamma,y}(k) = (1-\gamma)/K$ for $k\neq{}y$
+and $u_{\gamma,y}(k) = (1-\gamma)/K + \gamma$ for $k=y$.
+In other words, $u_{\gamma,y}$ puts equal weight to all classes except for the class $y$ which gets $\gamma$ more weight.
+The assumption we impose on the weak learners is then that their performance is comparable to that of 
+a baseline which always picks the true class with slightly higher probability than the others, formally stated below.
+\begin{definition}[Weak Learning Condition~\citep{jung2017onlinemulticlass}]
+\label{def:WLC}
+An environment and a learner outputting $(l_t)_{t\leq{}n}$ satisfy the multiclass weak learning condition 
+with edge $\gamma$ and sample complexity $S$ if for all outcomes $(y_t)_{t\leq{}n}$ and cost matrices $(C_{t})_{t\leq{}n}$ from the set $\cC$
+adaptively chosen by the environment, we have%
+\footnote{This is in fact a weaker weak learning condition than that of~\citep{jung2017onlinemulticlass}, which also allows weights.}
+$\sum_{t=1}^{n}C_{t}(y_t, l_t) \leq{} \sum_{t=1}^{n}\En_{k\sim{}u_{\gamma, y_{t}}}\brk*{C_{t}(y_t, k)} + S$.
+\end{definition}
+
+\subsection{AdaBoost.OLM++}
+The high level idea of our algorithm is similar to that of AdaBoost.OL and AdaBoost.OLM:
+find a weighted combination of weak learners to minimize some version of the logistic loss in an online manner.
+The key difference is that previous works use simple gradient descent to find the weight for each weak learner via proper learning,
+while we translate the problem into the framework discussed in \pref{sec:logistic} and deploy the proposed improper learning techniques 
+to obtain an improvement on the regret for learning these weights, which then leads to better and in fact optimal sample complexity.
+
+Another difference compared to~\citep{jung2017onlinemulticlass} is that the logistic loss we use
+here is more suitable for the multiclass problem than the one they use.\footnote{%
+The loss~\citet{jung2017onlinemulticlass} use moves the sum over the incorrect classes outside the log, that is, $\ls(z, y) = \sum_{k\neq y}\log\prn*{1 + e^{z_k-z_y}}$.
+}
+This simple modification leads to exponential improvement in the number of classes $K$ for the number of weak learners required.
+
+We now describe our algorithm, called AdaBoost.OLM++, in more detail (see \pref{alg:boosting_multiclass} in \pref{app:online_boosting}). 
+We denote the $i$-th weak learner as $\wl^{i}$, which is seen as a stateful object and supports two operations:
+$\wl^{i}.\predict(x, C)$ predicts a class given an instance and a cost matrix but does not update its internal state;
+$\wl^{i}.\update(x, C, y)$ updates the state given an instance, a cost matrix and the true class $y$. 
+To keep track of the state we use the notation $\wl^{i}_{t}$ to imply that it has been updated for $t-1$ times.
+
+For each weak learner, the algorithm also maintains an instance of \pref{alg:mixing_multiclass}, denoted by $\logistic^i$,
+to improperly learn the aforementioned weight for this weak learner.
+Similarly, we use $\logistic^i.\predict(x)$ to denote the prediction step (step 4) in \pref{alg:mixing_multiclass} and $\logistic^i.\update(x, y)$ to denote the update step (i.e. step 5).
+The notation $\logistic^i_t$ again implies that the state has been updated for $t-1$ times.
+
+Our algorithm maintains a variable $s_t^i \in \bbR^{K}$ which stands for the weighted accumulated scores of the first $i$ weak learners for instance $x_t$.
+When updating $s_t^{i}$ from $s_t^{i-1}$ given the prediction $l_t^i \in [K]$ of weak learner $i$,
+our goal is to have the total loss $\sum_{t=1}^n \ls(s_t^{i}, y_t)$ close to $\sum_{t=1}^n \ls(s_t^{i-1}+\alpha e_{l_t^i} , y_t)$
+for the best $\alpha$ within some range ($\brk*{-2,2}$ suffices).
+Previous works therefore try to learn this weight $\alpha$ via standard online learning approaches.
+However, realizing $s_t^{i-1}+\alpha e_{l_t^i}$ can be written as $W\wt{x}_{t}^{i}$
+for $W = (\alpha{}I_{K\times{}K}, I_{K\times{}K}) \in \bbR^{K\times{}2K}$
+and $\wt{x}_{t}^{i} = (e_{l_{t}^{i}}, s_{t}^{i-1})\in\bbR^{2K}$,
+in light of \pref{thm:multiclass_logistic_regret}
+we can in fact apply \pref{alg:mixing_multiclass} to learn $s_t^{i}$ if we let the decision set be
+$
+\cW = \crl*{ (\alpha{}I_{K\times{}K}, I_{K\times{}K}) \in \bbR^{K\times{}2K}\mid{} \alpha\in\brk*{-2,2}}.
+$
+To make sure that $\wt{x}_{t}^{i}$ has bounded norm, we also set the smoothing parameter $\mu$ to be $1/n$.
+
+With the weighted score $s_t^i$, the prediction coming from the first $i$ weak learner is naturally define as $\yh_t^i = \argmax_{k}s_{t}^{i}(k)$,
+the class with the largest score. 
+As in AdaBoost.OL and AdaBoost.OLM, 
+these predictions $(\yh_t^i)_{i\leq N}$ are treated as $N$ experts and 
+the final prediction $y_t$ is determined by the classic Hedge algorithm~\citep{freund1997decision} 
+over these experts (Lines~\ref*{line:sample} and~\ref*{line:multiplicative_weights}).
+
+Finally, the cost matrices fed to the weak learners are closely related to the gradient of the loss function.
+Formally, define the auxiliary cost matrix $\hC_{t}^{i}$ such that $\hC_{t}^{i}(y, k) = \frac{\partial \ls(z, y)}{\partial z_k} |_{z=s_t^{i-1}}$,
+which is simply $\mb{\sigma}(s_{t}^{i-1})_k$ for $k\neq y$ and $\mb{\sigma}(s_{t}^{i-1})_y - 1$ otherwise.
+The actual cost matrix is then a translated and scaled version of $\hC_{t}^{i}(y, k)$ so that it belongs to the class $\cC$:
+\begin{equation}
+\label{eq:boosting_cost_matrix}
+C_{t}^{i}(y, k) = \frac{1}{K}\left(\hC_{t}^{i}(y, k) - \hC_{t}^{i}(y, y)\right) \in \cC.
+\end{equation}
+
+We now give a mistake bound for AdaBoost.OLM++, which holds even without the weak learning condition and is adaptive to the empirical edge of the weak learners.\footnote{We use notation $\tilde{O}$ and $\tilde{\Omega}$ to hide dependence logarithmic in $n, N, K$ and $1/\delta$.
+} All proofs in this section appear in \pref{app:online_boosting}.
+\begin{theorem}
+\label{thm:multiclass_boosting}
+With probability at least $1-\delta$, the predictions $(\yh_t)_{t\leq{}n}$ generated by \pref{alg:boosting_multiclass} satisfy
+\begin{equation}
+\label{eq:boosting_regret}
+\sum_{t=1}^{n}\ind\crl*{\yh_{t}\neq{}y_t} 
+= \tilde{O}\prn*{\frac{n}{\sum_{i=1}^{N}\gamma_{i}^{2}}  + \frac{N}{\sum_{i=1}^{N}\gamma_{i}^{2}}},
+\end{equation}
+where $\gamma_i = \frac{\sum_{t=1}^{n}\hC_{t}^{i}(y_t, l_t^{i})}{\sum_{t=1}^{n}\hC_{t}^{i}(y_t, y_t)} \in [-1, 1]$ is the empirical edge of weak learner $i$.
+\end{theorem}
+
+We can now relate the empirical edges to the edge defined in the weak learning condition.
+\begin{proposition}
+\label{prop:weak_learning_edge}
+Suppose all weak learners satisfy the weak learning condition with edge $\gamma$ and sample complexity $S$ (\pref{def:WLC}). 
+Then with probability at least $1-\delta$, the predictions $(\yh_t)_{t\leq{}n}$ generated by \pref{alg:boosting_multiclass} satisfy
+\begin{equation}
+\label{eq:boosting_regret_weak}
+\sum_{t=1}^{n}\ind\crl*{\yh_{t}\neq{}y_t} 
+= \tilde{O}\prn*{\frac{n}{N\gamma^{2}}  + \frac{1}{\gamma^{2}} + \frac{KS}{\gamma}}.
+\end{equation}
+Thus, to achieve a target error rate $\veps$, it suffices to take $N=\tilde{\Omega}\prn*{\frac{1}{\veps\gamma^{2}}}$ and 
+$n = \tilde{\Omega}(\frac{1}{\veps\gamma^{2}} +  \frac{KS}{\veps\gamma})$.
+\end{proposition}
+
+\paragraph{Comparison with prior algorithms}
+Compared to~\citep{jung2017onlinemulticlass},
+our sample complexity on $n$ improves the dependence on $K$ (for OnlineMBBM) and also $\veps$ and $\gamma$ (for AdaBoost.OLM),
+and is in fact optimal according to their lower bound (Theorem~4).
+Our bound on the number of weak learners, on the other hand, 
+is weaker compared to the non-adaptive algorithm OnlineMBBM (which has a logarithmic dependence on $1/\veps$),
+but is still much stronger than that of AdaBoost.OLM since it improves the dependence on $K$ from linear to $\log(K)$.
+Although not stated explicitly, our results also apply to the binary setting considered in~\citep{beygelzimer2015optimal}
+and improve the sample complexity of their AdaBoost.OL algorithm to the optimal bound $\tilde{\Omega}(\frac{1}{\veps\gamma^{2}} +  \frac{S}{\veps\gamma})$.
+Overall, our results significantly reduce the gap between optimal and adaptive online boosting algorithms.
+
+As a final remark, the same technique used here also readily applies to the online boosting setting for the multi-label ranking problem
+recently studied by~\citet{jung2017online}. Details are omitted.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

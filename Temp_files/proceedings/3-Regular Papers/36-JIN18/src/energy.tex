@@ -1,0 +1,222 @@
+%!TEX root = main.tex
+
+\section{Proof of Hamiltonian Lemmas}
+In this section, we prove Lemma \ref{lem:energy_nonconvex}, Lemma \ref{lem:energy_NCE} and Corollary \ref{cor:localball}, which are presented in Section \ref{sec:hamiltonian} and 
+Section \ref{sec:imp_local}.  In section \ref{sec:counterex} we also give an example 
+where standard AGD with negative curvature exploitation can increase the Hamiltonian.
+
+
+Recall that we define the Hamiltonian as $E_t \defeq f(\x_{t}) + \frac{1}{2\eta}\norm{\v_{t}}^2$, where, for AGD, we define $\v_t = \x_t - \x_{t-1}$.
+The first lemma shows that this Hamiltonian decreases in every step of~\nag~for mildly nonconvex functions.
+
+\begingroup
+\def\thetheorem{\ref{lem:energy_nonconvex}}
+\begin{lemma}[Hamiltonian decreases monotonically]
+  Assume that the function $f(\cdot)$ is $\ell$-smooth and set the learning rate to
+be $\eta \le \frac{1}{2\ell}$, $\theta\in [2\eta \gamma,\frac{1}{2}]$ in ~\nag~(Algorithm \ref{algo:AGD}). Then, for every iteration $t$ where~\eqref{eq:certificate} does not hold, we have:
+  \begin{equation*}
+  E_{t+1} \le E_t - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2.
+  \end{equation*}
+\end{lemma}
+\addtocounter{theorem}{-1}
+\endgroup
+
+\begin{proof}
+Recall that the update equation of accelerated gradient descent has following form:
+\begin{align*}
+\x_{t+1} &\leftarrow \y_t - \eta \grad f (\y_t) \\
+\y_{t+1} &\leftarrow \x_{t+1} + (1-\theta) (\x_{t+1} - \x_t).
+\end{align*}
+By smoothness, with $\eta \le \frac{1}{2\ell}$:
+\begin{align}
+f(\x_{t+1}) \le f(\y_t) - \eta\norm{\grad f(\y_t)}^2 + \frac{\ell\eta^2}{2}\norm{\grad f(\y_t)}^2
+\le f(\y_t) - \frac{3\eta}{4}\norm{\grad f(\y_t)}^2, \label{eq:energy_smooth}
+\end{align}
+assuming that the precondition \eqref{eq:certificate} does not hold:
+\begin{align}
+f(\x_t) \ge f(\y_t) + \la \grad f(\y_t), \x_t - \y_t\ra -
+\frac{\gamma}{2}\norm{\y_t - \x_t}^2,
+\label{eq:energy_almost_convex}
+\end{align}
+and given the following update equation:
+\begin{align}
+\norm{\x_{t+1} - \x_t}^2
+ =& \norm{\y_t - \x_t  - \eta \grad f (\y_t)}^2  \nn\\
+ =& \left[(1-\theta)^2\norm{\x_t - \x_{t-1}}^2
+ - 2\eta\la \grad f(\y_t), \y_t - \x_t \ra
+ + \eta^2 \norm{\grad f(\y_t)}^2 \right], \label{eq:energy_momentum}
+\end{align}
+% Adding up Eq.\eqref{eq:energy_smooth} and \eqref{eq:energy_convex}, we have:
+% \begin{equation}
+% f(\x_{t+1}) \le  f(\x_t) + \la \grad f(\y_t), \y_t - \x_t \ra + \frac{\ell}{2} \norm{\y_t - \x_t}^2 - \frac{\eta}{2}\norm{\grad f(\y_t)}^2 \label{eq:momentum} 
+% \end{equation}
+we have:
+\begin{align*}
+f(\x_{t+1})
++ \frac{1}{2\eta}\norm{\x_{t+1} - \x_{t}}^2
+\le& f(\x_t) + \la \grad f(\y_t), \y_t - \x_t \ra - \frac{3\eta}{4}\norm{\grad f(\y_t)}^2 \\
+&+\frac{1+ \eta\gamma}{2\eta}(1-\theta)^2 \norm{\x_t - \x_{t-1}}^2 - \la \grad f(\y_t), \y_t - \x_t \ra
+ + \frac{\eta}{2} \norm{\grad f(\y_t)}^2\\
+\le& f(\x_{t}) + \frac{1}{2\eta}\norm{\x_{t} - \x_{t-1}}^2
+ - \frac{2\theta-\theta^2 - \eta\gamma(1-\theta)^2}{2\eta}\norm{\v_{t}}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2 \\
+\le& f(\x_{t}) + \frac{1}{2\eta}\norm{\x_{t} - \x_{t-1}}^2 - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2.
+\end{align*}
+The last inequality uses the fact that $\theta \in [2\eta \gamma, \frac{1}{2}]$ 
+so that $\theta^2 \le \frac{\theta}{2}$ and $\eta\gamma \le \frac{\theta}{2}$. 
+We substitute in the definition of $\v_t$ and $E_t$ to finish the proof.
+% \begin{align*}
+% E_{t+1} \le& E_t
+% - \frac{2\theta-\theta^2 - \eta\gamma(1-\theta)^2}{2\eta}\norm{\v_{t}}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2 \\
+% \le &  E_t
+% - \frac{\theta}{2\eta}\norm{\v_t}^2 - \frac{\eta}{4}\norm{\grad f(\y_{t})}^2
+% \end{align*}
+\end{proof}
+We see from this proof that~\eqref{eq:energy_almost_convex} relies on approximate convexity of $f(\cdot)$, which explains why in all existing proofs, the convexity between $\x_t$ and $\y_t$ is so important. A perhaps surprising fact to note is that the above proof can in fact go through even with mild nonconvexity (captured in line $8$ of Algorithm~\ref{algo:PAGD}).
+Thus, high nonconvexity is the problematic situation.
+%Nestrov's AGD is designed to work for convex case. In the nonconvex setting,
+To overcome this, we need to slightly modify AGD so that the Hamiltonian is
+decreasing. This is formalized in the following lemma.
+
+
+\begingroup
+\def\thetheorem{\ref{lem:energy_NCE}}
+\begin{lemma}
+Assume that $f(\cdot)$ is $\ell$-smooth and $\rho$-Hessian Lipschitz. For every iteration $t$ of Algorithm~\ref{algo:PAGD} where~\eqref{eq:certificate} holds (thus running NCE), we have:
+\begin{equation*}
+E_{t+1}\le E_t -\min\{\frac{s^2}{2\eta},  \frac{1}{2}(\gamma - 2\rho s) s^2\}.
+\end{equation*}
+\end{lemma}
+\addtocounter{theorem}{-1}
+\endgroup
+
+
+\begin{proof}
+When we perform an NCE step, we know that \eqref{eq:certificate} holds. In the first case ($\norm{\v_t} \ge s$), we set $\x_{t+1}  = \x_t$ and set the momentum $\v_{t+1}$ to zero, which gives:
+\begin{align*}
+E_{t+1} = f(\x_{t+1}) = f(\x_t) = E_{t} - \frac{1}{2\eta}\norm{\v_t}^2
+\le E_{t} - \frac{s^2}{2\eta}.
+\end{align*}
+In the second case ($\norm{\v_t} \le s$), expanding in a Taylor series with Lagrange remainder, we have:
+\begin{equation*}
+f(\x_t) =  f(\y_t) + \la \grad f(\y_t), \x_t - \y_t \ra + \frac{1}{2} (\x_t - \y_t)\trans 
+\hess f(\zeta_t) (\x_t - \y_t),
+\end{equation*}
+where $\zeta_t = \phi\x_t + (1-\phi)\y_t$ and $\phi \in [0, 1]$. Due to the certificate \eqref{eq:certificate} we have
+\begin{equation*}
+\frac{1}{2} (\x_t - \y_t)\trans 
+\hess f(\zeta_t) (\x_t - \y_t) \le - \frac{\gamma}{2} \norm{\x_t - \y_t}^2.
+\end{equation*}
+On the other hand, clearly $\min\{\la \grad f(\x_t), \delta\ra, \la \grad f(\x_t), -\delta\ra  \} \le 0$. WLOG, suppose $\la \grad f(\x_t), \delta\ra \le 0$,
+then, by definition of $\x_{t+1}$, we have:
+\begin{equation*}
+f(\x_{t+1}) \le f(\x_{t} + \delta) 
+= f(\x_t) + \la \grad f(\x_t), \delta\ra + \frac{1}{2} \delta\trans \hess f(\zeta'_t) \delta
+\le  f(\x_t) + \frac{1}{2} \delta\trans 
+\hess f(\zeta'_t) \delta,
+\end{equation*}
+where $\zeta'_t = \x_t + \phi'\delta$ and $\phi' \in [0, 1]$. 
+Since $\norm{\zeta_t - \zeta'_t} \le 2s$, $\delta$ also lines up
+with $\y_t - \x_t$:
+\begin{equation*}
+\delta\trans 
+\hess f(\zeta'_t) \delta
+\le \delta\trans 
+\hess f(\zeta_t) \delta
++ \norm{\hess f(\zeta'_t) - \hess f(\zeta_t) }\norm{\delta}^2
+\le - \gamma \norm{\delta}^2 + 2\rho s\norm{\delta}^2.
+\end{equation*}
+Therefore, this gives
+\begin{align*}
+E_{t+1} = f(\x_{t+1}) \le f(\x_t) 
+- \frac{1}{2}(\gamma - \rho s) s^2
+\le E_{t} - \frac{1}{2}(\gamma - 2\rho s) s^2,
+\end{align*}
+which finishes the proof.
+\end{proof}
+
+The Hamiltonian decrease has an important consequence: if the Hamiltonian does not decrease much, then all the iterates are localized in a small ball around the starting point. Moreover, the iterates do not oscillate much in this ball. We called this the improve-or-localize phenomenon.
+
+\begingroup
+\def\thetheorem{\ref{cor:localball}}
+\begin{corollary}[Improve or localize]
+Under the same setting as in Lemma \ref{lem:energy_nonconvex}, if \eqref{eq:certificate} does not hold for all steps in $[t, t+T]$, we have:
+\begin{equation*}
+\sum_{\tau = t+1}^{t+T}\norm{\x_\tau - \x_{\tau-1}}^2
+\le \frac{2\eta}{\theta} (E_t - E_{t+T}).
+% \text{~~~and~~~} \norm{\x_{t+T} -\x_t}^2 \le \frac{2\eta T}{\theta}(E_t - E_{t+T}).
+\end{equation*}
+\end{corollary}
+% \begin{corollary}
+% Under the same setting as in Lemma \ref{lem:energy_nonconvex}, if NCE is not triggered in step $[t, t+T]$, then:
+% \begin{equation*}
+% \sum_{\tau = t+1}^{t+T}\norm{\x_\tau - \x_{\tau-1}}^2
+% \le \frac{2\eta}{\theta} (E_t - E_{t+T})
+% \text{~~~and~~~} \norm{\x_{t+T} -\x_t}^2 \le \frac{2\eta T}{\theta}(E_t - E_{t+T})
+% \end{equation*}
+% \end{corollary}
+\addtocounter{theorem}{-1}
+\endgroup
+
+
+\begin{proof}
+The proof follows immediately from telescoping the argument of Lemma \ref{lem:energy_nonconvex}.
+% The proof of second inequality follows from triangle inequality and Cauchy-Swartz to first inequality as follows:
+% \begin{equation*}
+% \norm{\x_{t+T} -\x_t}^2 \le \left(\sum_{\tau = t+1}^{t+T}\norm{\x_\tau - \x_{\tau-1}}\right)^2
+% \le T \left(\sum_{\tau = t+1}^{t+T}\norm{\x_\tau - \x_{\tau-1}}^2\right)
+% \le \frac{2\eta T}{\theta}(E_t - E_{t+T})
+% \end{equation*}
+\end{proof}
+
+
+
+
+% \begin{lemma}\label{lem:localball}
+% For function $f$ satisfy assumption 1, 2, for $T \le O(\frac{1}{\theta})$, assume
+% \begin{equation*}
+% E_{t+T} - E_t \ge - O(c\sqrt{\frac{\epsilon^3}{\rho}})
+% \end{equation*}
+% then, we have:
+% \begin{equation*}
+% \norm{\x_{t+T} -\x_t} \le O(\sqrt{\frac{c\epsilon}{\rho}})
+% \quad \text{~and~} \quad
+% \sum_{\tau=t+1}^{t+T} \norm{\x_\tau - \x_{\tau-1}}^2
+% \le \frac{\eta}{\theta}O(c\sqrt{\frac{\epsilon^3}{\rho}})
+% \end{equation*}
+% \end{lemma}
+% \begin{proof}
+% Cleary NEC must have not been triggered (otherwise, decrease enough energy).
+% Therefore, by theorem \ref{thm:energy_nonconvex}, we know the cumulative energy dissipation:
+% \begin{align*}
+% \sum_{\tau=t+1}^{t+T} \frac{\theta}{2\eta}\norm{\v_\tau}^2 
+% =\sum_{\tau=t+1}^{t+T} \frac{\theta}{2\eta}\norm{\x_\tau - \x_{\tau-1}}^2
+% \le O(c\sqrt{\frac{\epsilon^3}{\rho}})
+% \end{align*}
+% By Cauchy-Swartz, we have:
+% \begin{align*}
+% \sum_{\tau=t+1}^{t+T} \norm{\x_\tau - \x_{\tau+1}} 
+% \le \sqrt{T}\sqrt{\sum_{\tau=t+1}^{t+T}\norm{\x_\tau - \x_{\tau-1}}^2}
+% \le O(\left(\frac{\eta}{\theta^2} c\sqrt{\frac{\epsilon^3}{\rho}}\right)^{\frac{1}{2}})
+% = O(\sqrt{\frac{c\epsilon}{\rho}})
+% \end{align*}
+% \end{proof}
+
+
+\subsection{AGD can increase the Hamiltonian under nonconvexity}
+\label{sec:counterex}
+In the previous section, we proved Lemma \ref{lem:energy_nonconvex} which requires $\theta \ge 2\eta\gamma$, that is, $\gamma \le \theta/(2\eta)$.
+In this section, we show Lemma \ref{lem:energy_nonconvex} is almost tight in the sense 
+that when $\gamma \ge 4\theta/\eta$ in \eqref{eq:certificate}, we have:
+\begin{equation*}
+f(\x_t) \le  f(\y_t) + \la \grad f(\y_t), \x_t - \y_t \ra - \frac{\gamma}{2} \norm{\x_t - \y_t}^2.
+\end{equation*}
+Monotonic decrease of the Hamiltonian may no longer hold, indeed, AGD can increase the Hamiltonian for those steps.
+
+Consider a simple one-dimensional example, $f(x) = -\frac{1}{2}\gamma x^2$, where \eqref{eq:certificate} always holds. Define the initial condition $x_0 = -1, v_0 = 1/(1-\theta)$. By update equation in Algorithm \ref{algo:AGD}, the next iterate will be $x_1 = y_0 = 0$, and $v_1 = x_1 - x_0 = 1$. By the definition of Hamiltonian, we have：
+\begin{align*}
+E_0 =& f(x_0) + \frac{1}{2\eta}|v_0|^2 = -\frac{\gamma}{2} + \frac{1}{2\eta (1-\theta)^2}\\
+E_1 =& f(x_1) + \frac{1}{2\eta}|v_1|^2 = \frac{1}{2\eta},
+\end{align*}
+since $\theta \le 1/4$. It is not hard to verify that whenever $\gamma \ge 4 \theta/\eta$, we will have $E_1 \ge E_0$; that is, the Hamiltonian increases in this step.
+
+This fact implies that when we pick a large learning rate $\eta$ and small momentum parameter $\theta$ (both are essential for acceleration), standard AGD does not decrease the Hamiltonian in a very nonconvex region. We need another mechanism such as NCE to fix the monotonically decreasing property.

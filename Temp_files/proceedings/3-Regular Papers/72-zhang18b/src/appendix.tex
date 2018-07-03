@@ -1,0 +1,789 @@
+\section{Detailed choices of learning and problem parameters}
+\label{sec:params}
+
+In this section, we give the exact settings of $c_1, c_2, c_3$ that appears in Algorithm~\ref{alg:ae_al}, and $\mu_1, \mu_2$, the noise rates
+that can be tolerated by Algorithm~\ref{alg:ae_al} under the two noise conditions.
+
+Define $D_k$ as
+the distribution $D$ over $(x,y)$ conditioned on that $x$ lies in $B_k$.
+Although cannot be sampled from directly, for analysis purposes, we define $\tilde{D}$ as the joint distribution of $(x, \sign(u \cdot x))$, and
+$\tilde{D}_k$ as the distribution of $\tilde{D}$ conditioned on that $x$ lies in $B_k$.
+Let $\lambda > 0$ be a constant, which will be specified at the end of this section.
+Given $\lambda$, we define $c_2:=c_2(\lambda)$ such that:
+\begin{enumerate}
+\item $c_2(\lambda) = O(\ln \frac{1}{\lambda})$,
+%$c_2(\lambda) \lambda$ goes to $0$ as $\lambda$ goes down to 0, and
+\item For all $w$ such that $\theta(w,w_{k-1}) \leq 2^{-k-3} \pi$,
+\begin{equation}
+  \P_D( \sign(w \cdot x) \neq \sign(w_{k-1} \cdot x), |w_{k-1} \cdot x| \geq c_2(\lambda) \cdot 2^{-k} ) \leq \lambda \cdot 2^{-k}.
+\label{eqn:margin}
+\end{equation}
+\end{enumerate}
+The existence of such function $c_2(\cdot)$ is guaranteed by Theorem 21 of \cite{BL13}, along with the fact that $D_X$ is isotropic log-concave.
+
+In addition, given $\lambda > 0$, define $c_3(\lambda) := \lambda \min(\cf /81, \cf  c_2(\lambda)/9)$ (where $\cf $ is a numerical constant defined in Lemma~\ref{lem:bandmass}), such that $\tau_k = c_3 2^{-k}$. Under this setting of $\tau_k$, we have that for all $k$ in $\{0,1,\ldots,k_0\}$:
+\begin{equation}
+\E_{D_k} \ell_{\tau_k}(u, x, y) \leq \P_{D_k}(|u \cdot x| \leq \tau_k) \leq \frac{\P_{D_X}(| u \cdot x | \leq \tau_k)}{\P_{D_X}( x \in B_k )} \leq \frac{9 \tau_k}{\min(\cf /9, \cf  b_k)} \leq \lambda.
+\label{eqn:lowerr}
+\end{equation}
+where the first inequality is from that $\ell_{\tau_k}(u, (x, \sign(u \cdot x))) \in [0,1]$, and $\ell_{\tau_k}(u, (x, \sign(u \cdot x))) = 0$ if $|u \cdot x| \geq \tau_k$;
+the second inequality uses the fact that $\P(A|B) \leq \frac{\P(A)}{\P(B)}$ for any two events $A,B$; the third inequality uses Lemma~\ref{lem:bandmass} to upper bound (resp. lower bound) the numerator (resp. the denominator).
+%and the fact that $\P_{D_X}( x \in B_k ) \geq \min(\cf /9, \cf  b_k)$ for all $k$ in $\{0,1,\ldots,k_0\}$.
+
+Recall that $n_k := c_1 t (\ln d + \ln \frac 1 \epsilon + \ln \frac{1}{\delta_k})^3$. Given $\lambda > 0$ and $c_2(\lambda)$, $c_3(\lambda)$, we set $c_1:=c_1(\lambda)$ such that by Lemmas~\ref{lem:conc}, for all $k$ in $\{0,1,\ldots,k_0\}$, for all $w$ in $W_k$,
+\begin{equation}
+ |\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))| \leq \lambda.
+\label{eqn:conc}
+\end{equation}
+
+Given $\lambda$ and $c_2(\lambda)$, $c_3(\lambda)$, we also choose $\mu_1 = \mu_1(\lambda), \mu_2 = \mu_2(\lambda) \in (0,\frac 1 2)$ such that under the respective noise condition, for all $k$ in $\{0,1,\ldots,k_0\}$, for all $w$ in $W_k$,
+\begin{equation}
+| \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))| \leq \lambda.
+\label{eqn:corrupt}
+\end{equation}
+The existences of $\mu_1(\lambda)$ and $\mu_2(\lambda)$ are guaranteed in light of Lemmas~\ref{lem:tv-an} and~\ref{lem:tv-bn}.
+
+Define $f(\lambda') = C_2(45 c_2(\lambda') \lambda' + 5\lambda')$. Observe that by the definition of $c_2(\cdot)$, $f(\lambda')$ goes to zero as $\lambda'$ goes down to zero. Therefore, we can select a value of $\lambda > 0$, such that $f(\lambda) \leq 2^{-8} \pi$.
+Note that our selection of $\lambda$ also determines the value of $c_1$, $c_2$, $c_3$ and $\mu_1$, $\mu_2$.
+%Define $\lambda = \min\{\lambda' > 0: C_2(45 c_2(\lambda') \lambda' + 5\lambda') \geq 2^{-8}\pi\}$. The existence of $\lambda$ can be seen by noting that $c_2(\lambda) \lambda$ goes to zero
+%as $\lambda$ goes down to zero.
+
+\section{Learning guarantee at each epoch}
+\label{sec:epoch}
+In this section, we prove two key lemmas, namely
+Lemmas~\ref{lem:hlm} and~\ref{lem:truncate}, both of which serve as the basis for Lemma~\ref{lem:induct}.
+
+\subsection{Proof of Lemma~\ref{lem:hlm}}
+The proof of Lemma~\ref{lem:hlm} is based on
+a uniform concentration bound on the $\tau_k$-hinge loss over $W_k$ in the sampling region $B_k$, namely Lemma~\ref{lem:conc}.
+Specifically, Lemma~\ref{lem:conc} implies that the
+difference between the empirical hinge losses and the expected hinge losses for all $w$ in $W_k$ with respect to $D_k$ is uniformly bounded by $\tilde{O}(\sqrt{\frac{t (\ln d + \ln \frac 1 \epsilon)^3}{n_k}})$.
+As will be seen in the analysis, only a constant concentration error $\lambda$ is required in the hinge loss minimization step (see Equation~\eqref{eqn:conc}). Therefore, the setting of $n_k = O(t (\ln d + \ln \frac 1 \epsilon)^3)$ fulfills this requirement.
+
+
+%Let $\lambda > 0$ be a constant to be determined later.
+\begin{proof}[Proof of Lemma~\ref{lem:hlm}]
+We consider the cases of $k = 0$ and $k \geq 1$ separately.
+\paragraph{Case 1: $k = 0$.} By Lemma~\ref{lem:hlm-grt} below and the fact that $D = D_0$, $\P_D(\sign(w_0' \cdot x) \neq \sign(u \cdot x)) \leq 5\lambda$ holds.
+In addition, by the second inequality of of Equation~\eqref{eqn:angdis},
+%($\theta(w_0', u) \leq C_2 \P_D(\sign(w_0' \cdot x) \neq \sign(u \cdot x))$),
+we have that $\theta(w_0',u) \leq 5 C_2 \lambda$.
+By the definiton of $\lambda$, it is at most $2^{-8} \pi$.
+
+\paragraph{Case 2: $k \geq 1$.} By Lemma~\ref{lem:hlm-grt} below, $\P_{D_k}(\sign(w_k' \cdot x) \neq \sign(u \cdot x)) \leq 5\lambda$ holds. We now show that the above fact implies that the angle between $w_k'$ and $u$ is
+at most $2^{-k-8}\pi$. This implication is well known in the margin-based
+active learning literature~\citep{BBZ07, BL13}; we provide the proof here for completeness.
+
+%We prove the lemma in two steps.
+%In the first step, we show that by the choices of $\mu_1$ and $\mu_2$, and the choices of constants $c_1,c_2,c_3 > 0$ in Appendix~\ref{sec:params},
+%$\P_{\tilde{D}_k}(\sign(w_k' \cdot x) \neq y) \leq 5\lambda$.
+%In the second step,
+
+
+
+%\paragraph{Completing the proof.} With the above settings of parameters $c_1, c_2, c_3$ and $\mu_1, \mu_2$, we are now ready to prove the theorem.
+%We now give the formal proof.
+%\begin{enumerate}
+% \item
+%note that the vector
+% $w_{k-1} - u$ is at most $2t$-sparse, and it has $\ell_2$ norm at most $2^{-k}$.
+% By Cauchy-Schwarz, $\| u - w_{k-1} \|_1 \leq \sqrt{2t} \cdot 2^{-k-3}$. Therefore,
+% by the definition of $W_k$, .
+
+ %, we have that for all $w \in W_k$,
+ %\[ |\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))|
+ %\leq \cs  \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(\ln d + \ln \frac 2 {\delta_k})}{n_k}}, \]
+ %where $\rho_k = \sqrt{2t} \cdot 2^{-k-3}$, $\tau_k = c_3 \cdot 2^{-k}$.
+
+ %Define .
+ %In addition, by , we have that there exists sufficiently small $\mu_1$, $\mu_2$ such that under either of the two noise conditions,
+
+
+
+
+ %We apply a tight concentration inequality for the deviation of
+ %$\E_{S_k} \ell_{\tau_k}(w, x, y) := \frac 1 {|S_k|} \sum_{(x,y) \in S_k} \ell_{\tau_k}(w, x, y)$
+ %from $\E_{D_k} \ell_{\tau_k}(w, x, y)$.
+ %Note that
+ %\[ \sup_{w \in W_k} | \E_{S_k} \ell_{\tau_k}(w, x, y) - \E_{D_k} \ell_{\tau_k}(w, x, y) |
+ %= \sup_{v: \| v \|_1 \leq \sqrt{2t} 2^{-(k-1)}} | \E_{S_k} \ell_{\tau_k}'(v, x, y) - \E_{D_k} \ell_{\tau_k}'(v, x, y) | \]
+%where $\ell_{\tau}'(v, x, y) = \ell_{\tau}(w_{k-1}+v, x, y) = (1 - \frac{y w_{k-1} x + y v x}{\tau_k})_+$.
+%Note that $\ell(\tau_k)$ is $\frac 1 \tau_k$-Lipschitz and $\ell_{\tau_k}(w, x, y)$ is uniformly bounded
+%by $O(\sqrt{t})$.
+%With high probability, all $\| x \|_\infty$'s are uniformly bounded by $O(\ln d)$.
+
+%Now, applying (~\cite{SSBD14}, Theorem 26.15), we have that with high probability, for all
+%$w \in W_k$,
+%\[ | \E_{S_k} \ell_{\tau_k}(w, x, y) - \E_{D_k} \ell_{\tau_k}(w, x, y) | \leq c \cdot \sqrt{\frac{t \log^3 d}{n_k}} \leq \frac 1 {64}, \]
+%where the last inequality is by the choice of $n_k = O(t (\ln d)^3)$.
+%On the other hand, we know that by the choice of $\tau_k$,
+%Therefore,
+%TBD
+
+ %\item
+ %We know from the first part that $\P_{\tilde{D}_k}(\sign(w_k' \cdot x) \neq y) \leq 5\lambda$.
+By Lemma~\ref{lem:bandmass}, $\P_{D_k}(\sign(w_k' \cdot x) \neq \sign(u \cdot x)) \leq 5\lambda$ implies that
+ \begin{eqnarray}
+	 &&\P_{D}(\sign(w_k' \cdot x) \neq \sign(u \cdot x), x \in B_k) \nonumber \\
+	 &=& \P_{D_k}(\sign(w_k' \cdot x) \neq \sign(u \cdot x)) \cdot \P_{D_X}(x \in B_k) \leq 5 \lambda \cdot 9 c_2(\lambda) 2^{-k} \leq 45 \lambda c_2(\lambda) 2^{-k}.
+	 \label{eqn:inband}
+\end{eqnarray}
+ %\begin{equation}
+ %   \P_D(\sign(w_k' \cdot x) \neq \sign(u \cdot x), x \in B_k) \leq 45 c_2(\lambda) \lambda \cdot %2^{-k}.
+%\end{equation}
+
+On the other hand, observe that for all $w$ in $W_k$, $\| w - w_{k-1} \|_2 \leq 2^{-k-3}$.
+%As $u$ is in $W_k$, $\| w - w_{k-1} \|_2 \leq 2^{-k-3}$ holds. By triangle inequality of $\ell_2$ norm, we have that for all $w$ in $W_k$,
+%$ \| u - w \| \leq 2^{-k-2}. $
+Using Lemma~\ref{lem:distangle} and the fact that $w_{k-1}$ is a unit vector, we get that for all $w$ in $W_k$,
+$ \theta(w,w_{k-1}) \leq 2^{-k-3}\pi. $
+Specifically, by Equation~\eqref{eqn:margin}, we have that
+	\[ \P_D(\sign(w \cdot x) \neq \sign(w_{k-1} \cdot x), x \notin B_k) \leq \lambda 2^{-k} \]
+ holds for $w \in \{u, w_k'\} \subset W_k$ respectively. Therefore, by triangle inequality,
+ \begin{eqnarray}
+&& \P_D(\sign(w_k' \cdot x) \neq \sign(u \cdot x), x \notin B_k) \nonumber \\
+&\leq& \P_D(\sign(w_k' \cdot x) \neq \sign(w_{k-1} \cdot x), x \notin B_k) +  \P_D(\sign(u \cdot x) \neq \sign(w_{k-1} \cdot x), x \notin B_k) \nonumber \\
+&\leq& 2 \lambda 2^{-k}. \label{eqn:outband}
+\end{eqnarray}
+% Thus,
+% \begin{equation}
+%    \P_D(\sign(w_k' \cdot x) \neq \sign(u \cdot x), x \notin R_k) \leq c \lambda 2^{-k}.
+%	\end{equation}
+%In particular, we have $\theta(w_{k-1},u) \leq 2^{-k-2}\pi$ for $w_{k-1}$ is in $W_k$.
+%By triangle inequality of spherical distance, we have that for all $w$ in $W_k$,
+%\[ \theta(w,w_{k-1}) \leq \theta(w,u) + \theta(u,w_{k-1}) \leq 2^{-k-1}\pi. \]
+
+
+%For this range of $w$, by Lemma~\ref{lem:distangle}, we have that
+% \[ \theta(w, w_{k-1}) \leq 2^{-k-1} \leq 2^{-k-2} \pi. \]
+ %By the choice of $b_k = c_2 2^{-k}$, we have that for all $w$ such that $\theta(w, w_{k-1}) \leq 2^{-k-2} \pi$,
+ %\[ \P_{\tilde{D}}(\sign(w \cdot x) \neq \sign(w_{k-1} \cdot x), x \notin B_k) \leq \lambda 2^{-k}. \]
+
+ %As $w_k'$ and $u$ are both in $W_k$, by the above reasoning, they both have angle with $u$ at most $2^{-k-2} \pi$.
+
+Combining Equations~\eqref{eqn:inband} and~\eqref{eqn:outband}, we have that
+	\[ \P_D(\sign(w_k' \cdot x) \neq \sign(u \cdot x) ) \leq (45 c_2(\lambda) \lambda + 2 \lambda) 2^{-k}. \]
+
+Applying the second inequality of Equation~\eqref{eqn:angdis} gives that
+	\[ \theta(w_k', u) \leq C_2 (45 c_2(\lambda) + 2) \lambda 2^{-k}. \]
+
+By the definition of $\lambda$, the above is at most $2^{-k-8} \pi$. %Such an $\lambda$ exists, as $c_2(\lambda) \lambda$ goes to 0 as $\lambda$ goes to 0.
+
+Combining the above two cases, the lemma follows.
+%\end{enumerate}
+\end{proof}
+
+\begin{lemma}
+For every $k$ in $\{0,1,\ldots,k_0\}$, if $u$ is in $W_k$, then
+\[ \P_{D_k}(\sign(w_k' \cdot x) \neq \sign(u \cdot x)) \leq 5\lambda. \]
+\label{lem:hlm-grt}
+\end{lemma}
+\begin{proof}
+	If $u$ is in $W_k$, then we have the following chain of inequalities:
+	\begin{eqnarray*}
+	  \P_{D_k}(\sign(w_k' \cdot x) \neq \sign(u \cdot x))
+		&=& \P_{\tilde{D}_k}(\sign(w_k' \cdot x) \neq y) \\
+	  &\leq& \E_{\tilde{D}_k} \ell_{\tau_k}(w_k', (x, y)) \\
+	  &\leq& \E_{D_k} \ell_{\tau_k}(w_k', (x, y)) + \lambda  \\
+	  &\leq& \E_{S_k} \ell_{\tau_k}(w_k', (x, y)) + 2\lambda \\
+	  &\leq& \E_{S_k} \ell_{\tau_k}(u, (x, y)) + 2\lambda \\
+	  &\leq& \E_{D_k} \ell_{\tau_k}(u, (x, y)) + 3\lambda \\
+	  &\leq& \E_{\tilde{D}_k} \ell_{\tau_k}(u, (x, y)) + 4\lambda \\
+	  &\leq& \lambda + 4\lambda = 5\lambda, \\
+	\end{eqnarray*}
+	where the first inequality is from the fact that the $\tau_k$-hinge loss is an upper bound of the 0-1 loss; the second inequality is from
+	Equation~\eqref{eqn:corrupt} and that $w_k' \in W_k$; the third inequality is from Equation~\eqref{eqn:conc} and that $w_k' \in W_k$;
+	the fourth inequality is by the optimality of $w_k'$ in optimization problem~\eqref{eqn:opt} and that $u \in W_k$; the fifth inequality is from Equation~\eqref{eqn:conc} and that $u \in W_k$;
+	the sixth inequality is from Equation~\eqref{eqn:corrupt} and that $u \in W_k$; the last inequality is from Equation~\eqref{eqn:lowerr}.
+\end{proof}
+
+The following lemma is used in the proof of Lemma~\ref{lem:hlm}; it establishes a connection between the angle and the $\ell_2$ distance of two vectors, when one of the vectors has unit $\ell_2$ norm.
+
+\begin{lemma}
+Suppose $v$ is an unit vector in $\R^d$ (that is, $\|v\|_2 = 1$). Then, for any vector $w$ in $\R^d$,
+$\theta(w,v) \leq \pi \| w - v \|_2$.
+\label{lem:distangle}
+\end{lemma}
+\begin{proof}
+%By triangle inequality, $|\| w \|_2 - 1| = |\| w \|_2 - \| v \|_2 | \leq \| w - v \|_2$.
+%We consider two cases regarding the $\ell_2$ distance from $w$ to $v$.
+%\paragraph{Case 1: $\| w - v \|_2 \geq \frac \pi 4$.} In this case, $\theta(w,v) \leq \pi \leq 4\| w - v \|_2$ immediately follows.
+%\paragraph{Case 2: $\| w - v \|_2 < \frac \pi 4$.} In this case, first note that $\theta(w,v)$ must be acute. To see this,
+%observe that $v \cdot w = v \cdot v - v \cdot (v - w) \geq 1 - \frac{\pi}{4} \geq 0$.
+Denote by $\hat{w}$ the $\ell_2$ normalized version of $w$, i.e. $\hat{w} = \frac{w}{\|w\|_2}$.
+Lemma~\ref{lem:normalize} below implies that
+\begin{equation}
+	\| \hat{w} - v \|_2 \leq 2\| w - v \|_2.
+	\label{eqn:normalizedl2}
+\end{equation}
+Consequently,
+\[ \theta(w, v) \leq \frac{\pi}{2} \cdot 2\sin\frac{\theta(w, v)}{2} = \frac{\pi}{2} \cdot 2\sin\frac{\theta(\hat{w}, v)}{2} = \frac{\pi}{2} \| \hat{w} - v \|_2  \leq \pi \| w - v \|_2.\]
+where the first inequality is from the elementary inequality that $\phi \leq \frac \pi 2 \sin \phi$ for $\phi \in [0,\frac \pi 2]$ (by taking $\phi = \frac{\theta(w, v)}{2}$),
+the second inequality is from the identity that $\| \hat{w} - v\|_2 = 2\sin\frac{\theta(\hat{w}, v)}2$ as both $\hat{w}$ and $v$ are unit vectors, and the last inequality is
+from Equation~\eqref{eqn:normalizedl2}.
+\end{proof}
+
+The following lemma is used in the proof of Lemma~\ref{lem:distangle}; it uses the fact that $\ell_2$ normalization is an $\ell_2$ projection onto the unit sphere.
+
+\begin{lemma}
+Suppose $v$ is an unit vector in $\R^d$ (that is, $\|v\|_2 = 1$). Then, for any vector $w$ in $\R^d$,
+\[ \| \frac{w}{\|w\|_2} - v \|_2 \leq 2 \| w - v \|_2. \]
+\label{lem:normalize}
+\end{lemma}
+\begin{proof}
+Denote by $\hat{w}$ the $\ell_2$ normalized version of $w$, i.e. $\hat{w} = \frac{w}{\|w\|_2}$.
+We have that by triangle inequality,
+\[ \| \hat{w} - w \|_2 = \| (\frac{1}{\|w\|_2}-1) w \|_2 = | \| w \|_2  - 1 | = | \| w \|_2  - \| v \|_2 | \leq \| w - v \|_2. \]
+Again by triangle inequality,
+\[ \| \hat{w} - v \|_2 \leq \| \hat{w} - w \|_2 + \| w - v \|_2 \leq 2\| w - v \|_2. \]
+The lemma follows.
+\end{proof}
+
+%	We have the following chain of inequalities:
+% \begin{eqnarray*}
+%  \P_D(\sign(w_0' \cdot x) \neq \sign(u \cdot x))
+% &=& \P_{\tilde{D}}(\sign(w_0' \cdot x) \neq y)) \\
+% &\leq& \E_{\tilde{D}} \ell_{\tau_0}(w_0', (x, y)) \\
+% &\leq& \E_D \ell_{\tau_0}(w_0', (x, y)) + \lambda  \\
+% &\leq& \E_{S_0} \ell_{\tau_0}(w_0', (x, y)) + 2\lambda  \\
+% &\leq& \E_{S_0} \ell_{\tau_0}(u, (x, y)) + 2\lambda  \\
+% &\leq& \E_D \ell_{\tau_0}(u, (x, y)) + 3\lambda  \\
+% &\leq& \E_{\tilde{D}} \ell_{\tau_0}(u, (x, y)) + 4\lambda \\
+% &\leq& 5\lambda
+% \end{eqnarray*}
+% where the first inequality is by the fact that the $\tau_0$-hinge loss is an upper bound of the 0-1 loss; the second inequality is from
+% Equation~\eqref{eqn:corrupt} and that $w_0' \in W_0$; the third inequality is from Equation~\eqref{eqn:conc} and that $w_0' \in W_0$;
+% the fourth inequality is from the optimality of $w_0'$ in optimization problem~\eqref{eqn:opt}; the fifth inequality is from Equation~\eqref{eqn:conc} and that $u \in W_0$;
+% the sixth inequality is from Equation~\eqref{eqn:corrupt} and that $u \in W_0$; the last inequality is from Equation~\eqref{eqn:lowerr}.
+
+\subsection{Proof of Lemma~\ref{lem:truncate}}
+
+The proof of Lemma~\ref{lem:truncate} is based on the key insight that the hard thresholding operation $\HT_t$
+ is effectively a projection onto the $\ell_0$-ball $\{w \in \R^d: \| w \|_0 \leq t\}$; see Lemma~\ref{lem:ht}
+ for a formal description.
+
+\begin{proof}[Proof of Lemma~\ref{lem:truncate}]
+  Denote by $\hat{w}_k'$ the $\ell_2$ normalized version of $w_k'$: $\hat{w}_k':=\frac{w_k'}{\| w_k' \|_2}$.
+  Under the condition that $\theta(w_k', u) \leq 2^{-k-8} \pi$, as $\hat{w}_k'$ and $u$ are both unit vectors, we have
+\begin{equation*}
+  \| \hat{w}_k' - u \|_2 = 2 \sin \frac{\theta(w_k', u)}{2} \leq \theta(w_k', u) \leq 2^{-k-8} \pi \leq 2^{-k-6}.
+%\label{eqn:normalize_effect}
+\end{equation*}
+%as $w_k$ is defined as $$
+Now, by Lemma~\ref{lem:ht} below, we have that
+$\| \hat{w}_k' - \HT_t(\hat{w}_k') \|_2 \leq   \| \hat{w}_k' - u \|_2 \leq 2^{-k-6}$. By triangle inequality of $\ell_2$ distance, we have that
+\begin{equation*}
+ \| \HT_t(\hat{w}_k') - u \|_2 \leq \| \hat{w}_k' - w_k \|_2 + \| \hat{w}_k' - u \|_2 \leq 2^{-k-5}.
+%\label{eqn:w_k}
+\end{equation*}
+%\leq 2^{-k-4} = r_{k+1}
+Observe that as
+$w_k$ and $\hat{w}_k'$ are equal up to scaling, $w_k := \frac{\HT_t(w_k')}{\| \HT_t(w_k') \|_2}$ is identically $\frac{\HT_t(\hat{w}_k')}{\| \HT_t(\hat{w}_k') \|_2}$.
+Applying Lemma~\ref{lem:normalize} with $w = \HT_t(\hat{w}_k')$ and $v = u$, we get that
+\[ \| w_k - u \|_2 \leq 2 \| \HT_t(\hat{w}_k') - u \|_2 \leq 2^{-k-4} = r_{k+1}. \]
+In addition, as $w_k$ and $u$ are both $t$-sparse, $w_k - u$ is $2t$-sparse. Therefore, by Cauchy-Schwarz, $ \| w_k - u \|_1 \leq \sqrt{2t} \| w_k - u \|_2 \leq \sqrt{2t} r_{k+1} = \rho_{k+1}$.
+Hence, $u$ is in the set $\{ w \in \R^d: \| w - w_k \|_2 \leq r_{k+1} \text{ and } \| w - w_k \|_1 \leq \rho_{k+1} \}$, namely $W_{k+1}$.
+\end{proof}
+
+%$\B_2(w_k, r_{k+1}) \cap \B_1(w_k, \rho_{k+1})$
+%The second claim is an immediate consequence of Equation~\eqref{eqn:w_k} and Lemma~\ref{lem:distangle} (given below).
+
+
+%as $\| u\|_2 = 1$, the above inequality implies that $\| w_k \|_2 \in [1 - 2^{-k-4} \pi, 1 + 2^{-k-4} \pi]$. Denote by $\hat{w}_k := \frac{w_k}{\|w_k\|_2}$. We have that
+%\[ \| \hat{w}_k - w_k \|_2 = \frac{|\|w_k\|_2 - 1|}{\|w_k\|_2} \leq \frac{2^{-k-4} \pi}{1/2} = 2^{-k-3} \pi.\]
+%Combining the above inequality with the first claim, by triangle inequality, we have that
+%\[ \| \hat{w}_k - u \|_2 \leq \| u - w_k \|_2 + \| \hat{w}_k - w_k \|_2 \leq 2^{-k-2} \pi. \]
+%Observe that $\| \hat{w}_k - u \|_2 = 2 \sin \frac{\theta(w_k, u)}{2} \geq \frac{2}{\pi}\theta(w_k, u)$. This implies that
+%\[ \theta(w_k, u) \leq \frac{\pi}{2} \cdot 2^{-k-2} \pi \leq 2^{-k-1} \pi. \]
+%This proves the second claim.
+
+%We give a few helper lemmas here that are used to prove  Lemma~\ref{lem:truncate}.
+
+\begin{lemma}
+Suppose $w$ is a vector in $\R^d$. Then, for any $t$-sparse vector $v$ in $\R^d$,
+\[ \| \HT_t(w) - w \|_2 \leq \| v - w \|_2. \]
+In other words, $\HT_t(w)$ is the best $t$-sparse approximation to $w$, measured in $\ell_2$ distance.
+\label{lem:ht}
+\end{lemma}
+\begin{proof}
+Denote by $w_{(1)}, w_{(2)}, \ldots, w_{(d)}$ the $d$ entries of $w$ in descending
+order in magnitude. We have that
+\[ \| \HT_t(w) - w \|_2^2 = \sum_{i=t+1}^d w_{(i)}^2. \]
+On the other hand, for any $t$-sparse vector $v$, denote by $S$ its support ($|S| \leq t$). We have that
+\[ \| v - w \|_2^2 \geq \sum_{i \in \{1,\ldots,d\} \setminus S} w_i^2 \geq \sum_{i=t+1}^d w_{(i)}^2, \]
+where the second inequality is from that the sum of squares of any $d-t$ entries in $w$ must be greater than that of the bottom $d-t$ entries.
+The lemma follows.
+\end{proof}
+
+%\section{Proof for the first epoch}
+%In this section, we show Lemma~\ref{lem:init}, which guarantees that the hinge loss minimization (line~\ref{line:hlm}) performed at the first epoch ($k = 0$) yields
+%a vector $w_0'$ with a constant angle to $u$.
+%\begin{lemma}
+%There is an event $E_0$ with probability $1-\delta_0$, such that on $E_0$, the $w_0'$ in Algorithm~\ref{alg:ae_al} satisfies that
+%$\theta(w_0', u) \leq 2^{-8} \pi$.
+%\label{lem:init}
+%\end{lemma}
+%The proof of this lemma is very similar to that of Lemma~\ref{lem:hlm}. %We only give a sketch here.%[Proof Sketch]
+%\begin{proof}
+%By Lemmas~\ref{lem:tv-an} and~\ref{lem:tv-bn}, if $\mu_1$ and $\mu_2$ are sufficiently small, we have that under either of the two noise settings,
+%\[
+%| \E_D \ell_{\tau_0}(w, (x, y)) - \E_{\tilde{D}} \ell_{\tau_0}(w, (x, y)) | \leq \lambda. %\frac{2^{-7} \pi}{5 C_2}.
+%\]
+%In addition, by the setting of sample size $n_0$,
+%\[
+%|	\E_D \ell_{\tau_0}(w, (x, y)) - \E_{S_0} \ell_{\tau_0}(w, (x, y)) | \leq \lambda. %\frac{2^{-7} \pi}{5 C_2}.
+%\]
+%Moreover, we have that $\E_{\tilde{D}} \ell_{\tau_0}(u, (x, y)) \leq \P_D( |u \cdot x| \leq \tau_0) \leq \lambda$. %\frac{2^{-7} \pi}{5 C_2}$.
+
+%Combining the above facts,
+%\end{proof}
+
+\section{The uniform concentration of hinge losses in label query regions}
+\label{sec:conc}
+In contrast to~\cite{ABHZ16} where the constraint set of the hinge loss minimization problem at epoch $k$ is the intersection of an $\ell_2$ ball of $O(2^{-k})$ radius and an $\ell_1$ ball of $O(\sqrt{t})$ radius,
+Algorithm~\ref{alg:ae_al} defines the constraint set $W_k$ to be the intersection of an $\ell_2$ ball of $O(2^{-k})$ radius and an $\ell_1$ ball of $O(\sqrt{t} 2^{-k})$ radius. The following key lemma, namely Lemma~\ref{lem:conc}, shows the advantage of our construction of $W_k$.
+Specifically, it establishes a sharp uniform concentration of hinge losses $\ell_{\tau_k}$ over $W_k$, with respect to sample $S_k$ drawn from distribution $D_k$. Observe that the concentration bound is $\tilde{O}(\sqrt{\frac{t (\ln d + \ln \frac 1 \epsilon)^3}{n_k}})$; if one were to use the constraint set in~\cite{ABHZ16},
+one would get concentration bounds of order $\tilde{O}(\sqrt{\frac{ (t \ln d) \cdot 2^k}{n_k}})$, which has an exponential dependence in $k$.
+%As $W_k$ has a $\ell_1$ radius of $O(\sqrt{t} \cdot 2^{-k})$ and a $\ell_2$ radius of $O(2^{-k})$,
+%This concentration result is the cornerstone of Lemma~\ref{lem:hlm}.
+% this construction is crucial for achieving attribute efficient label complexities.
+
+
+\begin{lemma}
+For any $c_2, c_3 > 0$, there exists a constant $\cs  > 0$ such that the following holds.
+Given $k$ in $\{0, 1,\ldots,k_0\}$,
+suppose $S_k$ is a sample of size $n_k$ drawn from distribution $D_k$. Then with probability
+$1-\delta_k$, for all $w \in W_k$, we have:
+\[
+|\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))|
+\leq \cs  \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(\ln d + \ln \frac 2 {\delta_k})}{n_k}}.
+\]
+\label{lem:conc}
+\end{lemma}
+
+Before going into the proof of the lemma, let us define some notations. For every $k$ in $\{0,1,\ldots,k_0\}$, denote by $R_k = \cse \ln(\frac{2n_k d}{\delta_k} \max(\frac9{\cf }, \frac{1}{\cf b_k}))$ for some large enough positive constant $\cse $ such that
+$\P_{D_X} (\| x \|_\infty > R_k) \leq \min(\cf /9, \cf  b_k) \delta_k / 2n_k$ holds.
+%, and $\cf $ is defined in Lemma~\ref{lem:bandmass}.
+The existence of such $\cse$ is guaranteed by Lemma 20 of~\citet{ABHZ16}.
+In addition, define $T_k:= \{(x,y): \| x \|_\infty \leq R_k \}$.
+
+The proof of Lemma~\ref{lem:conc} relies on the following observation: as the marginal distribution of $D_k$ over $\calX$ has a light tail, the probability that $(x,y) \notin T_k$ is extremely small, therefore $D_k|_{T_k}$ is ``close'' to $D_k$.
+The subsequent reasoning is composed of two parts: first, we show that $|\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y))|$ is small (Lemma~\ref{lem:sktk}). To this end, we argue that $S_k$ is almost a sample iid from $D_k |_{T_k}$, and then carefully apply Rademacher complexity
+bounds for $\ell_1$ bounded linear predictors on $\ell_\infty$ bounded examples~\citep{KST09}. Second, we show that $|\E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y)) |$ is small for all $w$ in $W_k$ (Lemma~\ref{lem:tk}).
+%an $\ell_2$ neighborhood of $w_{k-1}$
+
+\begin{proof}
+First we show that there is an event $E$ that has probability at least $1-\delta_k/2$,
+conditioned on which all the unlabeled examples in $S_k$ have $\ell_\infty$ norms uniformly bounded by $R_k$.
+Define:
+\begin{equation}
+	E := \{ \text{ for all } (x,y) \text{ in } S_k, (x,y) \text{ is in } T_k \}.
+	\label{eqn:e}
+\end{equation}
+%Here,
+Observe that for each individual $(x,y)$ in $S_k$ drawn from $D_k$,
+\[ \P_{D_k} ((x,y) \notin T_k) \leq \frac{\P_{D_k} ((x,y) \notin T_k)}{\P_{D_X}(x \in B_k)} \leq \frac{\min(\cf /9, \cf  b_k) \delta_k / 2n_k}{\min(\cf /9, \cf  b_k)} \leq \frac{\delta_k}{2n_k}, \]
+therefore, by union bound,
+$\P(E) \geq 1-\delta_k/2$.
+
+By Lemma~\ref{lem:sktk}, there is an event $F$ such that
+$\P[F|E] \geq 1-\delta_k/2$, and on event $F$,
+\begin{eqnarray}
+\left| \E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) \right|
+&\leq& \cfo  \cdot \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(2\ln d + \ln \frac 2 {\delta_k})}{n_k}},
+\label{eqn:sktk}
+\end{eqnarray}
+for some constant $\cfo $ defined in Lemma~\ref{lem:sktk}.
+
+Note that $\P(E \cap F) \geq (1 - \delta_k/2)^2 \geq 1-\delta_k$. We henceforth condition on $E \cap F$ happening.
+
+Using Lemma~\ref{lem:tk}, we get that for all $w$ in $W_k$,
+\begin{equation}
+|\E_{D_k|_{T_k}} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))| \leq C_9 \sqrt{\frac{1}{n_k}},
+\label{eqn:tk}
+\end{equation}
+for some constant $\cn $ defined in Lemma~\ref{lem:tk}.
+
+
+%We now use Lemma~\ref{lem:conditional} to bound the difference between $\E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y))$ and
+%$\E_{D_k} \ell_{\tau_k}(w, (x, y))$.
+%Therefore, there exists a numerical constant $\cse  > 0$, such that the above is at most $\cse  \sqrt{\frac{1}{n_k}}$.
+
+%Therefore, there exists constant $\cse  > 0$, such that
+%&\leq& \cse  \sqrt{\frac{1}{n_k}}.
+%\label{eqn:tk}
+%\end{eqnarray}
+% the third inequality is
+% and that .
+
+Combining Equations~\eqref{eqn:sktk} and~\eqref{eqn:tk}, we conclude that there is a constant $\cs $ such that on event $E \cap F$,
+\[
+|\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))|
+\leq \cs  \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(\ln d + \ln \frac 2 {\delta_k})}{n_k}}.
+\]
+This proves the lemma.
+\end{proof}
+
+\begin{lemma}
+For every $k$ in $\{0,1,\ldots,k_0\}$, suppose event $E$ is defined as in Equation~\eqref{eqn:e}. Then there is an event $F$ such that
+$\P[F|E] \geq 1-\delta_k/2$, and on event $F$, for all $w$ in $W_k$,
+\begin{eqnarray*}
+\left| \E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) \right|
+&\leq& \cfo  \cdot \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(2\ln d + \ln \frac 2 {\delta_k})}{n_k}},
+\end{eqnarray*}
+\label{lem:sktk}
+for some constant $\cfo > 0$ that depends on $c_2$ and $c_3$.
+\end{lemma}
+
+\begin{proof}
+	Conditioned on event $E$, sample $S_k$ can be seen as drawn iid from $D_k|_{T_k}$.
+	We consider the cases of $k = 0$ and $k \geq 1$ separately.
+	\paragraph{Case 1: $k = 0$.} Using Corollary 4 of~\cite{KST09} with $\ell = \pm \ell_{\tau_0}$, $L_\ell = \frac{1}{\tau_0}$, $X = R_0$ and $W_1 = \sqrt{t}$ in the notations therein, we
+	get that there is an event $F$, such that $\P[F|E] \geq 1-\delta_0/2$, on which for all $w$ in $W_k$,
+	\begin{equation}
+	\left| \E_{S_0} \ell_{\tau_0}(w, (x, y)) - \E_{D |_{T_0}} \ell_{\tau_0}(w, (x, y)) \right| \leq \frac{\cse}{\tau_0} \ln(\frac{2n_0 d}{\delta_0} \max(\frac9{\cf}, \frac{1}{\cf b_0})) \cdot \sqrt{\frac{32 t(\ln d + \ln \frac 4 {\delta_0})}{n_0}}.  \nonumber
+	%\label{eqn:s0t0}
+	\end{equation}
+
+	\paragraph{Case 2: $k \geq 1$.} By Lemma~\ref{lem:rad} below, we have that there is an event $F$, such that $\P[F|E] \geq 1-\delta_k/2$, on which for some constant $C_{10} > 0$ and for all $w$ in $W_k$,
+	\begin{eqnarray}
+	&& \left| \E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) \right| \nonumber \\
+	&\leq& (1 + \frac{b_k}{\tau_k} + \frac{\rho_k R_k}{\tau_k}) \sqrt{\frac{\ln d + \ln \frac 2 {\delta_k}}{n_k}} \nonumber \\
+	&\leq& C_{10} \cdot \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(2\ln d + \ln \frac 2 {\delta_k})}{n_k}}, \nonumber
+	%\label{eqn:sktk-kgeq1}
+	\end{eqnarray}
+	where the second inequality is by observing that $\frac{b_k}{\tau_k} = \frac{c_2}{c_3}$ and $\frac{\rho_k}{\tau_k} = \frac{\sqrt{2t}}{8c_3}$ and recalling that $R_k = \cse \ln(\frac{2n_k d}{\delta_k} \max(\frac9{\cf }, \frac{1}{\cf b_k}))$.
+
+	Combining the above two cases, we can find a large enough constant $\cfo >0$ such that the lemma statement holds.
+\end{proof}
+
+We next show Lemma~\ref{lem:rad}, a key concentration result used in the proof of Lemma~\ref{lem:sktk}.
+\begin{lemma}
+Given $k$ in $\{1,\ldots,k_0\}$, suppose $S_k$ is a set of $n_k$ iid samples drawn from $D_k |_{T_k}$. We have that with probability $1-\delta_k/2$,
+for all $w$ in $W_k$,
+\[
+|\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))|
+\leq
+(1 + \frac{b_k}{\tau_k} + \frac{\rho_k R_k}{\tau_k}) \sqrt{\frac{2 \ln d + \ln \frac 2 {\delta_k}}{n_k}}.
+\]
+\label{lem:rad}
+\end{lemma}
+\begin{proof}
+First, for all $w$ in $W_k$, $(x,y) \in T_k$, the instantaneous hinge loss $\ell_{\tau_k}(w, (x, y))$ is at most $1+\frac{|w \cdot x|}{\tau_k} \leq 1+\frac{|w_{k-1} \cdot x|}{\tau_k}+\frac{|(w-w_{k-1}) \cdot x|}{\tau_k} \leq 1 +\frac{b_k}{\tau_k} + \frac{\rho_k R_k}{\tau_k}$.
+By standard symmetrization arguments (see Theorem 8 of \cite{BM02}), we have that with probability $1-\delta_k/2$, for all $w$ in $W_k$,
+\begin{equation}
+|\E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))| \leq (1 + \frac{b_k}{\tau_k} + \frac{\rho_k R_k}{\tau_k})\sqrt{\frac{\ln \frac 2 {\delta_k}}{2 n_k}} + R_{n_k}(\calF),
+\label{eqn:hoeff}
+\end{equation}
+where $R_{n_k}(\cdot)$ denotes the Rademacher complexity over the examples in $S_k$,
+$\calF$ is the set of functions $\{(x,y) \mapsto (1- \frac{y w \cdot x}{\tau_k})_+: w \in W_k \}$.
+Note that $\calF$ can be written as the composition of $\phi(a):= (1- \frac{a}{\tau_k})_+$ and function class
+$\calG := \{(x,y) \mapsto y w \cdot x: w \in W_k \}$.
+
+By the contraction inequality of Rademacher complexity (see Theorem 12 of \cite{BM02}) and the $\frac{1}{\tau_k}$-Lipschitzness of $\phi$,
+$R_{n_k}(\calF)$ is at most $\frac{1}{\tau_k} R_{n_k}(\calG)$. We now focus on bounding $R_{n_k}(\calG)$. First,
+denote by $(x_i, y_i)$, $i=1,\ldots,n_k$ the elements of $S_k$. By the definition of Rademacher complexity,
+\[ R_{n_k}(\calG) = \frac 1 {n_k} \E_\sigma \sup_{w \in W_k} \sum_{i=1}^{n_k} \sigma_i y_i w \cdot x_i,  \]
+where $\sigma = (\sigma_1, \ldots, \sigma_{n_k})$, $\sigma_i$'s are iid random variables that take values uniformly in $\{-1,+1\}$.
+
+It can be easily seen that $\sigma$ has the same distribution as $(\sigma_1 y_1, \ldots, \sigma_{n_k} y_{n_k})$. Hence, $R_n(\calG)$ can be simplified to
+\[ R_{n_k}(\calG) = \frac 1 {n_k} \E_\sigma \sup_{w \in W_k} \sum_{i=1}^{n_k} \sigma_i w \cdot x_i.  \]
+
+We bound $R_{n_k}(\calG)$ as follows:
+\begin{eqnarray*}
+R_{n_k}(\calG) &\leq& \frac 1 {n_k} \E_\sigma \sup_{w: \| w - w_{k-1} \|_1 \leq \rho_k} \sum_{i=1}^{n_k} \sigma_i w \cdot x_i \\
+&=& \frac 1 {n_k} \E_\sigma \sup_{v: \| v \|_1 \leq \rho_k} \sum_{i=1}^{n_k} \sigma_i (w_{k-1} \cdot x_i + v \cdot x_i) \\
+&=& \frac 1 {n_k} \E_\sigma \sup_{v: \| v \|_1 \leq \rho_k} \sum_{i=1}^{n_k} \sigma_i v \cdot x_i + \frac 1 {n_k} \E_\sigma \sum_{i=1}^{n_k} \sigma_i w_{k-1} \cdot x_i, \\
+\end{eqnarray*}
+where the inequality uses the fact that all $w$'s in $W_k$ satisfy that $\| w - w_{k-1} \|_1 \leq \rho_k$.
+
+As all $x_i$'s have $\ell_\infty$ norm at most $R_k$, by Theorem 1, Example 2 of ~\cite{KST09}, the first term is bounded by
+$\rho_k \cdot R_k \cdot \sqrt{\frac{2 \ln d}{n_k}}$. In addition, as all $(x_i, y_i)$'s are sampled from $D_k$, for all $i$, $|w_{k-1} \cdot x_i| \leq b_k$. Therefore, the second term can be bounded by:
+\[ \frac 1 {n_k} \E_\sigma \sum_{i=1}^{n_k} \sigma_i w_{k-1} \cdot x_i \leq \frac 1 {n_k} \sqrt{\E_\sigma \left(\sum_{i=1}^{n_k} \sigma_i w_{k-1} \cdot x_i \right)^2} \leq b_k \sqrt{\frac 1 {n_k}}. \]
+Summing the two bounds up, we have that $R_{n_k}(\calG) \leq (b_k + \rho_{k} R_k)\sqrt{\frac{2 \ln d}{n_k}}$. Therefore,
+\[ R_{n_k}(\calF) \leq (\frac{b_k}{\tau_k} + \frac{\rho_{k}}{\tau_k} R_k)\sqrt{\frac{2 \ln d}{n_k}}. \]
+Combining this inequality with Equation~\eqref{eqn:hoeff}, along with some algebraic calculations, we get the lemma as stated.
+%Now consider function $\phi(a,y) = (1- \frac{a + w_{k-1} y}{\tau_{k-1}})$. Note that $\phi(a,y)$ is $\frac 1 \tau_k$-Lipschitz with respect to $a$,
+%and $\phi(w \cdot x,y) = \ell_{\tau_k}(w, x, y)$.
+%In addition, as all $x$'s are dran from $D|_{T_k}$, $\| x \|_\infty \leq c \log \frac{n_k d}{b_k\delta_k}$.
+%We consider all $v$'s such that $\| v \|_1 \leq \rho_k$, and
+%we have
+%$\max_{a \in [-\rho_k \log \frac{n_k d}{b_k\delta_k}, -\rho_k \log \frac{n_k d}{b_k\delta_k}]} \leq (1 + \frac{\rho_k \log \frac{n_k d}{b_k\delta_k}}{\tau_k})$.
+\end{proof}
+
+
+
+\begin{lemma}
+	For any $c_2, c_3 > 0$, there is a constant $\cn  > 0$ such that for all
+	$k$ in $\{0,1,\ldots,k_0\}$, $w$ in $W_k$,
+	\begin{equation*}
+	|\E_{D_k|_{T_k}} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))| \leq \cn \sqrt{\frac{1}{n_k}}.
+	\end{equation*}
+	\label{lem:tk}
+\end{lemma}
+\begin{proof}
+We consider the cases of $k = 0$ and $k \geq 1$ separately.
+\paragraph{Case 1: $k = 0$.} Observe that $\P_{D}((x,y) \notin T_0) \leq \frac{\delta_0}{2n_0} \leq \frac{1}{n_0}$, and $\E_{D}(w \cdot x)^2 \leq 1$ for $w$ in $W_0$ as $D$ is isotropic.
+Using Lemma~\ref{lem:conditional}, this implies that
+\begin{equation*}
+\left|\E_{D |_{T_0}} \ell_{\tau_0}(w, (x, y)) - \E_{D} \ell_{\tau_0}(w, (x, y)) \right| \leq 6\sqrt{\frac{1}{n_0}\left(1 + \frac{1}{c_3^2}\right)}.
+%\label{eqn:t0}
+\end{equation*}
+
+\paragraph{Case 2: $k \geq 1$.} Observe that by Lemma~\ref{lem:variance}, there is a constant $\ce $ such that for all $w$ in $W_k \subset \{w \in \R^d: \| w - w_{k-1}\|_2 \leq r_k\}$,
+$\E_{D_k}(w \cdot x)^2 \leq \ce  (b_k^2 + r_k^2)$. In addition, $\P_{D_k}((x,y) \notin T_k) \leq \frac 1 {n_k}$. Therefore, by Lemma~\ref{lem:conditional} and the definitions of $b_k$, $r_k$ and $\tau_k$, we have
+\begin{equation*}
+|\E_{D_k|_{T_k}} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y))| \leq 6 \sqrt{\frac{1}{n_k} \left(1 + \frac{\ce (b_k^2 + r_k^2)}{\tau_k^2}\right)} = 6 \sqrt{\frac{1}{n_k} \left(1 + \frac{\ce}{c_3^2}(\frac 1 {64} + c_2^2)\right)}.
+%\label{eqn:tk-kgeq1}
+\end{equation*}
+
+Combining the above two cases, we can find a large enough constant $\cn >0$ such that the lemma statement holds.
+\end{proof}
+
+In the proof of Lemma~\ref{lem:tk}, we use the following lemma to bound the difference between $\E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y))$ and
+$\E_{D_k} \ell_{\tau_k}(w, (x, y))$ in terms of $T_k$'s probability mass in $D_k$ and $D_k$'s second moments.
+\begin{lemma}
+For $k$ in $\{0,1,\ldots,k_0\}$, if $\P_{D_k}((x,y) \notin T_k) \leq \frac {\delta_k} {2n_k}$, then the following inequality holds for all $w$ in $\R^d$:
+\begin{eqnarray*}
+&&\left|\E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y)) \right|
+\leq
+ 6 \sqrt{\P_{D_k}((x,y) \notin T_k)} \cdot \sqrt{1 + \frac{\E_{D_k}(w \cdot x)^2}{\tau_k^2}}.
+\end{eqnarray*}
+\label{lem:conditional}
+\end{lemma}
+\begin{proof}
+First, observe that
+\begin{equation}
+\E_{D_k} \ell_{\tau_k}(w, (x, y)) = \E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) \P_{D_k}((x,y) \in T_k) + \E_{D_k} \ell_{\tau_k}(w, (x, y)) I((x,y) \notin T_k).
+\label{eqn:decomp}
+\end{equation}
+
+Therefore,
+\begin{eqnarray}
+&& \left|\E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) - \E_{D_k} \ell_{\tau_k}(w, (x, y)) \right| \nonumber \\
+&=& \left|\frac{\P_{D_k}((x,y) \notin T_k)}{\P_{D_k}((x,y) \in T_k)} \E_{D_k} \ell_{\tau_k}(w, (x, y)) - \frac{\E_{D_k} \ell_{\tau_k}(w, (x, y)) I((x,y) \notin T_k)}{\P_{D_k}((x,y) \in T_k)}  \right| \nonumber \\
+&\leq& 2 \P_{D_k}((x,y) \notin T_k) \E_{D_k} \ell_{\tau_k}(w, (x, y)) + 2 \E_{D_k} \ell_{\tau_k}(w, (x, y)) I((x,y) \notin T_k) \nonumber \\
+&\leq& 2 \P_{D_k}((x,y) \notin T_k) \E_{D_k} (1 + \frac{|w \cdot x|}{\tau_k}) + 2 \E_{D_k} (1 + \frac{|w \cdot x|}{\tau_k}) I((x,y) \notin T_k) \nonumber \\
+&\leq& 2 \P_{D_k}((x,y) \notin T_k) (1 + \sqrt{\frac{\E_{D_k}(w \cdot x)^2}{\tau_k^2}}) + 2 \sqrt{\P_{D_k}((x,y) \notin T_k) \E_{D_k}(1 + \frac{(w \cdot x)}{\tau_k})^2 } \nonumber\\
+&\leq& 6 \sqrt{\P_{D_k}((x,y) \notin T_k)} \cdot \sqrt{1 + \frac{\E_{D_k}(w \cdot x)^2}{\tau_k^2}}, \nonumber
+\end{eqnarray}
+where the equality is from Equation~\eqref{eqn:decomp} and algebra; the first inequality is from that $\P_{D_k}((x,y) \in T_k) \geq 1 - \frac{\delta_k}{2n_k} \geq \frac 1 2$ and the elementary inequality $|a+b| \leq |a|+|b|$;
+the second inequality is from that $\ell_{\tau_k}(w,(x,y)) \leq (1 + \frac{|w \cdot x|}{\tau_k})$;
+the third inequality is by applying Cauchy-Schwarz on both terms, and the last inequality is from algebra (using the following elementary inequalities: $\sqrt{a} + \sqrt{b} \leq \sqrt{2(a+b)}$, $\P_{D_k}((x,y) \notin T_k) \leq 1$ and $(a+b)^2 \leq 2(a^2+b^2)$).
+\end{proof}
+
+
+%The argument for concentration of hinge losses at the first epoch ($k=0$) is slightly different from (in fact, easier than) those in subsequent epochs ($k \geq 1$); We give the proof here for completeness.
+
+%\begin{lemma}
+%For any $c_3 > 0$, there exists a constant $\cn  > 0$ such that the following holds.
+%Suppose $S_0$ is a sample of size $n_0$ drawn from distribution $D_0 = D$. Then with probability
+%$1-\delta_0$, for all $w \in W_0$, we have:
+%\[
+%|\E_{S_0} \ell_{\tau_0}(w, (x, y)) - \E_{D_0} \ell_{\tau_0}(w, (x, y))|
+%\leq \cn  \ln\frac{n_0 d}{\delta_0} \cdot \sqrt{\frac{t(\ln d + \ln \frac 2 {\delta_0})}{n_0}}.
+%\]
+%\label{lem:conck0}
+%\end{lemma}
+
+%\begin{proof}
+%First we show that there is an event $E$ that has probability at least $1-\delta_0/2$,
+%conditioned on which all the unlabeled examples in $S_0$ has uniformly bounded $\ell_\infty$ norm.
+%Define:
+%\[ E := \{ \text{ for all } (x,y) \text{ in } S_0, (x,y) \text{ is in } T_0 \}.\]
+%where
+%$T_0:= \{(x,y): \| x \|_\infty \leq c \log \frac{n_0 d}{\cf  \delta_0} \}$, and $\cf $ is defined in Lemma~\ref{lem:bandmass}.
+
+%By Lemma 20 of~\cite{ABHZ16}, we have that for each individual $(x,y)$ in $S_k$ drawn from $D_k$,
+%\[ \P_D ((x,y) \notin T_0) = \P_D (\| x \|_\infty > c \log \frac{n_0 d}{\cf  \delta_0}) \leq \frac{\delta_0}{2n_0}, \]
+%therefore, by union bound,
+%$\P(E) \geq 1-\delta_0/2$.
+
+%Conditioned on event $E$, sample $S_0$ can be seen as drawn iid from $D|_{T_0}$.
+%By Corollary 4 of~\cite{KST09} with $\ell = \pm \ell_{\tau_0}$, $L_\ell = \frac{1}{\tau_0}$, $X = c \log \frac{n_0 d}{\cf  \delta_0}$ and $W_1 = \sqrt{t}$ in the notations therein, we
+%get that there is an event $F$, such that $\P[F|E] \geq 1-\delta_k/2$, on which
+%\begin{equation}
+%\left| \E_{S_0} \ell_{\tau_0}(w, (x, y)) - \E_{D |_{T_0}} \ell_{\tau_0}(w, (x, y)) \right| \leq \frac{c}{\tau_0} \ln\frac{n_0 d}{\cf  \delta_0} \cdot \sqrt{\frac{32 t(\ln d + \ln \frac 2 {\delta_0})}{n_0}}
+%\label{eqn:s0t0}
+%\end{equation}
+
+
+%Therefore, by Lemma~\ref{lem:rad} (shown below), we have that there is an event $F$, such that
+%$\P[F|E] \geq 1-\delta_k/2$, and on event $F$,
+%\begin{eqnarray}
+%\left| \E_{S_k} \ell_{\tau_k}(w, (x, y)) - \E_{D_k |_{T_k}} \ell_{\tau_k}(w, (x, y)) \right|
+%&\leq&
+%(1 + \frac{b_k}{\tau_k} + \frac{\rho_k}{\tau_k} \log \frac{n_k d}{\cf  b_k\delta_k}) \sqrt{\frac{\ln d + \ln \frac 2 {\delta_k}}{n_k}} \nonumber \\
+%&\leq& \cfo  \cdot \ln\frac{n_k d}{\epsilon \delta_k} \cdot \sqrt{\frac{t(2\ln d + \ln \frac 2 {\delta_k})}{n_k}}.
+%\label{eqn:sktk}
+%\end{eqnarray}
+%for some constant $\cfo  > 0$.
+%Note that $\P(E \cap F) \geq (1 - \delta_0/2)^2 \geq 1-\delta_0$. We henceforth condition on $E \cap F$ happening.
+
+%On the other hand, we can bound $\left|\E_{D | T_0} \ell_{\tau_0}(w, (x, y)) - \E_{D} \ell_{\tau_0}(w, (x, y)) \right|$ using Lemma~\ref{lem:conditional}.
+%Observe that $\P_{D}((x,y) \notin T_0) \leq \frac{\delta_0}{2n_0} \leq \frac{1}{2n_0}$, and $\E_{D}(w \cdot x)^2 \leq 1$ for $w$ in $W_0$ as $D$ is isotropic.
+%This implies that
+%\begin{equation}
+%\left|\E_{D | T_0} \ell_{\tau_0}(w, (x, y)) - \E_{D} \ell_{\tau_0}(w, (x, y)) \right| \leq \sqrt{\frac{6}{n_0}}.
+%\label{eqn:t0}
+%\end{equation}
+%\begin{eqnarray*}
+%&&
+%\leq
+% 6 \sqrt{\P_{D_k}((x,y) \notin T_k)} \cdot \sqrt{1 + \frac{\E_{D_k}(w \cdot x)^2}{\tau_k^2}}
+%\end{eqnarray*}
+%Combining Equations~\eqref{eqn:s0t0} and~\eqref{eqn:t0}, and note that $\tau_0 = c_3$, we conclude that there is a large enough constant $\cn $ (that depends on $c_3$) such that on event $E \cap F$,
+%\[ |\E_{S_0} \ell_{\tau_0}(w, (x, y)) - \E_{D_0} \ell_{\tau_0}(w, (x, y))|
+%\leq \cn  \ln\frac{n_0 d}{\delta_0} \cdot \sqrt{\frac{t(\ln d + \ln \frac 2 {\delta_0})}{n_0}}. \]
+%This proves the lemma.
+%\end{proof}
+
+\section{Auxiliary lemmas}
+The lemmas in this section are known and used in previous works on efficient halfspace learning under isotropic log-concave distributions~\citep[See e.g.][]{ABL17, ABHZ16}; we collect them here for completeness.
+
+The following lemma characterizes one-dimensional projections of isotropic log-concave distributions (which are in fact also isotropic log-concave).
+%Suppose $x$ is drawn from an isotropic log-conave distribution $D_X$.
+\begin{lemma}[\citet{LV07}]
+There exists a numerical constant $\cf \in (0,1)$ such that the following holds.
+Given
+a unit vector $v$ and a positive real number $b$,
+\[ \min(\cf /9, \cf  b) \leq \P_{D_X}(|v \cdot x| \leq b ) \leq 9 b. \]
+% $b \in (0, \frac 1 9)$,
+%As a consequence, given a unit vector $v$ and a positive real number $b$,
+%\[ \min(\cf /9, \cf  b) \leq \P_{D_X}(|v \cdot x| \leq b ) \leq 9b. \]
+\label{lem:bandmass}
+\end{lemma}
+
+Suppose $w$ is a unit vector, and $B = \{w: |w \cdot x| \leq b \}$ is a band of width
+$b > 0$ along the $w$ direction.
+The following technical lemma bounds the second moments of
+$D_X|_B$, along directions close to $w$.
+
+\begin{lemma}[\citet{ABL17}]
+Suppose $w, b, B$ are defined as above. Then there is a numerical constant $\ce  > 0$, such that for all $w' \in \{v: \| v - w \|_2 \leq r \}$, we have
+\begin{equation*}
+ \E_{D_X|_B} (w' \cdot x)^2 \leq \ce (r^2 + b^2).
+\end{equation*}
+\label{lem:variance}
+\end{lemma}
+
+Recall that $D$ (resp. $\tilde{D}$) is the joint distribution over $(x,y)$ (resp. $(x,\sign(u \cdot x))$). In addition, recall that $b_k = c_2 2^{-k}$, $\tau_k = c_3 2^{-k}$ and $B_k = \{ x: |w_{k-1} \cdot x| \leq b_k \}$.
+The following lemma shows that under certain ``local low noise'' conditions on $D$, for every halfspace $w$ in $W_k$,
+its expected $\tau_k$-hinge loss on $D_k$ is close to that on $\tilde{D}_k$. With the help of this result, in Lemmas~\ref{lem:tv-an} and~\ref{lem:tv-bn}, we will show that under the $t$-sparse $\mu_1 \epsilon$-adversarial noise condition and $t$-sparse $\mu_2$-bounded noise condition for sufficiently small $\mu_1$ and $\mu_2$,
+the hinge loss of $w$ on $D_k$ is at most a constant away from the hinge loss of $w$ on $\tilde{D}_k$,
+for all $w$ in $W_k$.
+
+
+\begin{lemma}
+For any choice of $c_2, c_3 > 0$, there exists a constant
+$\ct  > 0$ such that the following holds. For every $k$ in $\{0,1,\ldots,k_0\}$, suppose $\P_{D_k}(y \neq \sign(u \cdot x)) \leq \xi_k$, then for every
+$w \in W_k$,
+\begin{equation}
+| \E_{D_k} \ell_{\tau_k}(w, (x, y)) - \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) |
+\leq
+\sqrt{\ct  \xi_k}.
+\label{eqn:lossdiff}
+\end{equation}
+\label{lem:noisy-hinge}
+\end{lemma}
+\begin{proof}
+We first bound the difference as follows:
+\begin{eqnarray}
+&& |\E_{D_k} \ell_{\tau_k}(w, (x, y)) - \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) | \nonumber \\
+&=& |\E_{D_k} [\ell_{\tau_k}(w, (x, y)) - \ell_{\tau_k}(w, (x, \sign(u \cdot x)))] | \nonumber \\
+&=& | \E_{D_k} I(y \neq \sign(u \cdot x)) \cdot (\ell_{\tau_k}(w, (x, y)) - \ell_{\tau_k}(w, (x, \sign(u \cdot x)))) | \nonumber \\
+&\leq& \E_{D_k} I(y \neq \sign(u \cdot x)) \cdot 2\frac{|w \cdot x|}{\tau_k} \nonumber \\
+&\leq& 2 \sqrt{ \P_{D_k}(y \neq \sign(u \cdot x)) \frac{\E_{D_k} (w \cdot x)^2 }{\tau_k^2} }
+\label{eqn:cs}
+\end{eqnarray}
+where the first inequality is from that an example $(x,y)$ drawn from $\tilde{D}_k$ satisfies
+$y = \sign(u \cdot x)$ with probability 1; the second inequality is by decomposing $1$ as
+ $I(y \neq \sign(u \cdot x)) + I(y = \sign(u \cdot x))$; the first inequality is from that
+$|(1+\frac{|w \cdot x|}{\tau_k})_+ - (1-\frac{|w \cdot x|}{\tau_k})_+| \leq 2\frac{|w \cdot x|}{\tau_k}$;
+the second inequality is from Cauchy-Schwarz. We now consider the cases of $k=0$ and $k \geq 1$ respectively.
+\paragraph{Case 1: $k = 0$.} In this case, $W_0$ is a subset of $\{w \in \R^d: \| w \|_2 \leq 1\}$ and $D_0 = D$.
+Therefore, for all $w$ in $W_0$,
+\[ \E_{D_0} (w \cdot x)^2 \leq 1 \]
+as $D$ is isotropic log-concave. Continuing Equation~\eqref{eqn:cs}, we get that
+\[ |\E_{D_0} \ell_{\tau_0}(w, (x, y)) - \E_{\tilde{D}_0} \ell_{\tau_0}(w, (x, y)) | \leq  2\sqrt{\frac{\xi_0}{\tau_0^2}} = 2\sqrt{\frac{\xi_0}{c_3^2}}. \]
+
+%$\B_2(w_{k-1},r_k)$
+\paragraph{Case 2: $k \geq 1$.} In this case, $W_k$ is a subset of $\{w \in \R^d: \| w - w_{k-1} \|_2 \leq r_k \}$.
+By Lemma~\ref{lem:variance}, and the choices of $b_k$ and $r_k$, we have that for all $w$ in $W_k$,
+\begin{equation}
+ \E_{D_k} (w \cdot x)^2 \leq \ce (r_k^2 + b_k^2).
+\label{eqn:variance}
+\end{equation}
+By the definitions of $r_k$, $b_k$, and $\tau_k$ and Equation~\eqref{eqn:cs}, we have
+\[
+|\E_{D_k} \ell_{\tau_k}(w, (x, y)) - \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) |
+\leq
+2 \sqrt{\xi_k \frac{\ce(r_k^2 + b_k^2)}{\tau_k^2}} = 2 \sqrt{\xi_k \ce  \frac{1+c_2^2}{c_3^2}}.
+\]
+
+%we can find a constant $\ct  \geq \frac{1}{c_3^2}$ (that depends on $c_2$, $c_3$) such that for all $k \geq 1$, the right hand side of
+%Equation is at most $\frac {\ct  \tau_k^2}{4}$.
+%Continuing Equation~\eqref{eqn:cs}, we get that
+%\[ |\E_{D_k} \ell_{\tau_k}(w, (x, y)) - \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) | \leq \sqrt{\ct  \xi_k}. \]
+%Therefore, we can pick $\ct $ large enough such that Equation~\eqref{eqn:lossdiff} holds.
+%&\leq& \sqrt{ \ct  \xi_k}
+%, and
+%the last inequality is from Equation~\eqref{eqn:variance}.
+Now, choose $\ct = \max\left(\ce(\frac{1+c_2^3}{c_3^2}), \frac{1}{c_3^2}\right)$. Combining the above two cases and by the choice of $\ct $, we conclude that Equation~\eqref{eqn:lossdiff} holds for all $k$ in $\{0,1,\ldots,k_0\}$.
+\end{proof}
+
+Applying the above lemma to the two noise settings respectively, we have:
+
+\begin{lemma}
+For any $\lambda > 0$ and $c_2, c_3 > 0$, there exists a constant $\mu_1 > 0$ such that the following holds. Suppose $D$ satisfies the $t$-sparse $\mu_1 \epsilon$-bounded
+noise condition. For every $k \in \{0,\ldots,k_0\}$, and $w$ in $W_k$,
+% given a vector $w_{k-1}$, for every
+%$w \in \B_2(w_{k-1}, r_k)$,
+\[
+| \E_{D_k} \ell_{\tau_k}(w, (x, y)) - \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) |
+\leq
+\lambda.
+\]
+\label{lem:tv-an}
+\end{lemma}
+%\leq \frac{\P_D(y \neq \sign(u \cdot x))}{\cf  b_k} \leq \frac{\P_D(y \neq \sign(u \cdot x))}{\cf  c_2 C_1 \epsilon}
+%, the second inequality is from Lemma~\ref{lem:bandmass}, and the last inequality is
+%from the fact that $b_k \geq b_{k_0} \geq \frac{c_2 C_1 \epsilon}{64}$.
+\begin{proof}
+By Lemma~\ref{lem:noisy-hinge}, it suffices to let $\mu_1$ be such that for all $k \in \{0,1,\ldots,k_0\}$, $\P_{D_k}(y \neq \sign(u \cdot x)) \leq \frac{\lambda^2}{\ct }$ for the $\ct$ defined therein.
+Observe that
+\[ \P_{D_k}(y \neq \sign(u \cdot x)) \leq \frac{\P_D(y \neq \sign(u \cdot x))}{\P_D(x \in B_k)}. \]
+by the fact that $\P(A|B) \leq \frac{\P(A)}{\P(B)}$ for any two events $A$, $B$.
+We now consider the cases of $k=0$ and $k \geq 1$ respectively.
+
+\paragraph{Case 1: $k = 0$.} In this case, $B_k = \R^d$, hence $\P_D(x \in B_k) = 1$. It suffices to set $\mu_1 \leq \frac{\lambda^2}{\ct }$.
+
+\paragraph{Case 2: $k \geq 1$.} In this case, $\P_D(x \in B_k) \geq \min(\cf /9, \cf  b_k) \geq \min(\cf /9, \cf  c_2 C_1 \epsilon / 2)$, where the first inequality is from Lemma~\ref{lem:bandmass}; the second inequality is from the definition of $b_k$ and $k \leq k_0$.
+Therefore, for sufficiently small $\mu_1$, if $\P_D(y \neq \sign(u \cdot x)) \leq \mu_1 \epsilon$, then $\P_{D_k}(y \neq \sign(u \cdot x)) \leq \frac{2 \mu_1}{\min(2\cf /9, \cf  C_1 c_2)} \leq \frac{\lambda^2}{\ct }$.
+
+Combining the above two cases, we can pick a sufficiently small $\mu_1$ such that the requirements on $\mu_1$ in both cases are satisfied. This completes the proof.
+\end{proof}
+
+
+
+\begin{lemma}
+For any $\lambda > 0$ and $c_2, c_3 > 0$, there exists a constant $\mu_2 > 0$ such that the following holds. Suppose $D$ satisfies the $t$-sparse $\mu_2$-bounded
+noise condition. For every $k \in \{0,\ldots,k_0\}$, and $w$ in $W_k$,
+\[
+| \E_{D_k} \ell_{\tau_k}(w, (x, y)) - \E_{\tilde{D}_k} \ell_{\tau_k}(w, (x, y)) |
+\leq
+\lambda.
+\]
+\label{lem:tv-bn}
+\end{lemma}
+\begin{proof}
+By Lemma~\ref{lem:noisy-hinge}, it suffices to let $\mu_2$ be such that for all $k \in \{0,1,\ldots,k_0\}$, $\P_{D_k}(y \neq \sign(u \cdot x)) \leq \frac{\lambda^2}{\ct }$ for the $\ct$ defined therein.
+This can indeed be satisfied by setting $\mu_2 = \frac{\lambda^2}{\ct }$, which immediately implies that $\P_{D_k}(y \neq \sign(u \cdot x)) \leq \mu_2 \leq \frac{\lambda^2}{\ct }$.
+\end{proof}
+
+
+
+
+
+%\subsection{Adversarial Noise}
+%\subsection{Bounded Noise}

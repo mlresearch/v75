@@ -1,0 +1,252 @@
+\section{Proof of Theorem~\ref{rst:budget}}
+\label{sec:payment-proof}
+
+We restate the theorem here for convenience:
+
+\begin{rtheorem}{Theorem}{\ref{rst:budget}}
+The expected total payment of
+Algorithm~\ref{alg:basic-incentivizing} is at most
+$O \left(\ARMNUM^2 \cdot \e^{2/\MinProb} \right)$.
+%The payment budget for Algorithm~\ref{alg:basic-incentivizing} is bounded above by 
+%\begin{align}
+% O \left(\ARMNUM^2 \MAXR \Diam^2 \TieDensity d^3 \sigma\cdot \exp\left(\frac{2}{\MinProb}\right) \right).  
+%\pfedit{O \left(\ARMNUM^2  d \cdot (\MAXR + \Diam d \sigma)\cdot \max\bigg\{\exp\left(\frac{2}{p}\right),
+%\left( \frac{\sigma \Diam d}{\TieCutoff} \right)^{5/2},
+%\left( \frac{\sigma \TieDensity \Diam d}{\MinProb} \right)^{5/2}\bigg\}
+%\right).}\nonumber 
+%\end{align}
+\end{rtheorem}
+
+The high-level idea of the proof is motivated by Lemma~\ref{lem:numP},
+which shows that the expected \emph{number} of payments is constant.
+Unfortunately, in contrast to the regret, there is no hard upper bound
+on the payment in any one round.
+If a draw of a particular arm comes out wildly inaccurate --- which is
+an event of low but positive probability ---
+then agents may require very large incentives to pull this arm again
+in the future (and correct the inaccurate estimate).
+The high payments are offset by the exceedingly low probability of
+having to incur them, but a rigorous analysis requires some care:
+if a high payment is required in one phase, this indicates a very
+inaccurate estimate, which may require multiple phases to correct.
+Hence, we need to handle dependency of payments across time steps and
+phases.
+
+To reason about such estimation errors formally, we define
+\emph{envelopes} of sample paths.
+A sample path \SP captures all the random events affecting the
+algorithm, i.e., the random draws \AgentV{t} of agents and the
+noise \NoiseV[t] in the draws of the pulled arms,
+with an infinite time horizon.
+
+With foresight, we define $g(s, \ell) := \frac{12 \sigma \ell}{s^{2/5}}$.
+Let $\ErrV{t}{i} = \ArmEV{t}{i} - \ArmV{i}$ be the estimation
+error for the attribute vector \ArmV{i} at time $t$,
+with components \Err{t}{i}{j}.
+For any sample path \SP, let $s (t,\SP)$ be the phase number that the
+algorithm is in at time $t$ with the sample path \SP.
+Define the sets
+
+\begin{align*}
+\hat{\mathcal{L}}_\ell
+  & = \Set{\SP}{|\Err{t}{i}{j}(\SP)| \leq g(s(t,\SP),\ell)
+    \mbox{ for all } i,j,t},\\
+\Env{1} & = \hat{\mathcal{L}}_1,\\ 
+\Env{\ell} & = \hat{\mathcal{L}}_{\ell} \setminus \hat{\mathcal{L}}_{\ell-1}
+  \quad \mbox{ for } \ell \geq 2.
+\end{align*}
+
+% \begin{align*}
+% L'[\ell](t)
+%   & = \Set{\SP}{|\Err{t}{i}{j}(\SP)|\leq g(s(t,\SP),\ell), \forall i,j\}
+% \end{align*}
+We call \Env{\ell} the \Kth{\ell} envelope.
+In words, \Env{\ell} consists of all sample paths such that at all times
+$t$, all coordinates of all arm estimation errors are bounded by
+$g(s, \ell)$,
+but for at least one time $t$, at least one coordinate of one arm
+estimation error is \emph{not} bounded by $g(s, \ell-1)$.
+When \SP is clear, we omit it in the notation for
+\Err{t}{i}{j}, payments, etc.
+The importance of envelopes is that for small $\ell$, the payments are
+tightly bounded, while for large $\ell$, the cumulative probability of
+the sample paths in \Env{\ell} is small.
+This is captured by the following two lemmas.
+
+\begin{lemma} \label{lem:sample-path-payment}
+If $\SP \in \Env{\ell}$ and $s(t,\SP) = s$, then
+the payment in step $t$ is upper-bounded by
+$\bar{c} (s,\ell) = \MAXR + 2 \Diam d \cdot g(s,\ell)$.
+\end{lemma}
+
+\begin{proof}
+The maximum payment is upper-bounded by the maximum perceived
+difference in value for any agent type and any two arms:
+\begin{align*}
+\bar{c} (s, \ell) & \leq 
+\max_{\AgV} \left(  \max_{i} \AgV \cdot \ArmEV{t}{i}
+                 - \min_{i'} \AgV \cdot \ArmEV{t}{i'} \right) \\
+& = \max_{\AgV} \left( \max_{i}\AgV \cdot (\ErrV{t}{i}+\ArmV{i})
+                    - \min_{i'}\AgV \cdot (\ErrV{t}{i'}+\ArmV{i'}) \right) \\
+& \leq \max_{\AgV} \left(  \max_{i} \AgV \cdot \ArmV{i}
+                        - \min_{i'} \AgV \cdot \ArmV{i'}
+                        + \max_{i} \AgV \cdot \ErrV{t}{i}
+                        - \min_{i'} \AgV \cdot \ErrV{t}{i'} \right) \\
+& \leq \MAXR + 2 \Diam d \cdot g(s,\ell). 
+\end{align*}
+The final inequality used the definition of the envelope.
+\end{proof}
+
+\begin{lemma} \label{lem:envelope-probability}
+For every $\ell \geq 2$, we have that
+$\Prob{\SP \in \Env{\ell}} \leq 24 \ARMNUM d\exp(-1.8(\ell-1)^2)$. 
+\end{lemma}
+
+\begin{proof}
+For \SP to be in \Env{\ell}, by definition,
+for at least one time $t$,
+at least one coordinate of at least one arm's estimation error must
+exceed $g(s(t,\SP),\ell-1)$.
+For now, fix an arm $i$ and coordinate $j$.
+
+Define $x_s := \frac{4 \sigma (\ell-1)}{s^{1/2}}$ and
+$x'_s := g(s, \ell-1) = \frac{12 \sigma (\ell-1)}{s^{2/5}}$.
+
+Recall that $\NumPull{t}{i}(\SP) \geq s(t,\SP)$ is the number of times
+that arm $i$ has been pulled by time $t$ under \SP.
+Let the random stopping time $\tau_{i,j}$ be the first value of
+\NumPull{t}{i} (i.e., the first pull of arm $i$) such that 
+the estimation error of attribute $j$ of arm $i$ exceeds
+$g(\NumPull{t}{i}, \ell-1)$.
+$\tau_{i,j} = \infty$ means that the estimation error never exceeds 
+$g(\NumPull{t}{i}, \ell-1)$.
+We next verify that $x_s, x'_s$ as we defined them satisfy the 
+assumption 
+\[
+  \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x_n^2}{16 \sigma^2}}
+  \; \leq \; \frac{n x'_n}{2 \sigma}
+\]
+of Lemma~\ref{lem:round-prob}, for all $n \geq 1$.
+First, we show that
+$\sqrt{0.6n \log(\log_{1.1}(n)+1)} \leq 5 n^{3/5}$
+for all $n \geq 1$.
+By squaring the inequality and canceling out a factor $n$,
+the statement is equivalent to showing that
+$25 n^{1/5} \geq \log(\log_{1.1}(n)+1)$.
+Indeed, a stronger statement holds, namely, that
+$25 n^{1/5} \geq \log_{1.1}(n)+1$.  
+To see this, notice that the derivative of the left-hand side is
+always strictly larger than the derivative of the right-hand side,
+so the difference between the sides is minimized at $n=1$,
+where it is positive. 
+Using this inequality and subadditivity of $\sqrt{\cdot}$, we can bound
+
+\[
+  \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x_n^2}{16 \sigma^2}}
+\; \leq \;
+  5 n^{3/5} + \frac{\sqrt{n} x_n}{4 \sigma}
+\; = \; 
+  5 n^{3/5} + (\ell-1)
+  \; \leq \; \frac{n x'_n}{2 \sigma}.
+\]
+Applying Lemma~\ref{lem:round-prob} to $\tau_{i,j}$,
+we conclude that the probability that the error in coordinate $j$ of
+arm $i$ exceeds $x'_s = g(s,\ell-1)$ at time $\tau_{i,j}$
+(and hence at any time, by definition of $\tau_{i,j}$)
+is at most
+$24 \exp\left(-\frac{1.8 s x_s^2}{16 \sigma^2} \right)
+\; = \; 24 \exp(-1.8 (\ell-1)^2)$.
+Now, taking a union bound over all arms $i$ and
+coordinates $j$ completes the proof.
+\end{proof}
+
+Next, we show that for any sample path \SP in the envelope \Env{\ell},
+we can bound the total number of payments made in terms of $\ell$.
+Define $h(\ell) := \max \left( \exp(\frac{2}{\MinProb}),
+\left( \frac{24 \sigma \ell \Diam d}{\TieCutoff} \right)^{5/2},
+\left( \frac{48 \sigma \ell \TieDensity \Diam d}{\MinProb} \right)^{5/2}
+\right)$.
+
+\begin{lemma} \label{lem:envelope-payments}
+Let \SP be a sample path in \Env{\ell}.
+Then, under \SP, the algorithm makes payments at most for the first 
+$h(\ell)$ phases. 
+\end{lemma}
+
+\begin{proof}
+The proof is similar to that of Lemma~\ref{lem:numP}.
+Fix a sample path $\SP \in \Env{\ell}$.
+Consider a phase $s > h(\ell)$ and a time $t$ in phase $s$.
+Because $\SP \in \Env{\ell}$, in particular, all estimation errors are
+bounded at time $t$, in the sense that the event \AccEU{t}{g(s,\ell)}
+happens.
+Because $s \geq h(\ell)$, we get that
+$g(s,\ell) \leq \min(\frac{\TieCutoff}{2\Diam d}, \frac{\MinProb}{4 \Diam d \TieDensity})$
+as well as $s \geq \exp(2/\MinProb)$.
+Therefore, we can apply Lemma~\ref{lem:no-incentives} and conclude
+that the pull at time $t$ was not incentivized.
+\end{proof}
+
+\begin{extraproof}{Theorem~\ref{rst:budget}}
+We can write the total expected payment as
+\begin{align*}
+  \Expect{\sum_{t=1}^{\infty} \PayA{t}}
+& = \sum_{\ell = 1}^{\infty} \sum_{\SP \in \Env{\ell}}
+  \Prob{\SP} \cdot \sum_{t=1}^{\infty} \PayA{t}(\SP)
+\; = \; \sum_{\ell = 1}^{\infty} \sum_{\SP \in \Env{\ell}}
+  \Prob{\SP} \cdot \sum_{s=1}^{\infty} \sum_{t: s(t,\SP) = s} \PayA{t}(\SP).
+\end{align*}
+
+By Lemma~\ref{lem:envelope-payments},
+the payments are 0 for $s > h(\ell)$,
+and by Lemma~\ref{lem:sample-path-payment},
+when $\SP \in \Env{\ell}$ and $s(t,\SP) = s$, we can bound
+$\PayA{t}(\SP) \leq \MAXR + 2 \Diam d \cdot g(s,\ell)$.
+Furthermore, in any one phase, because each arm is incentivized at
+most once, there are at most \ARMNUM payments total.
+Substituting these bounds, we obtain that
+
+\begin{align*}
+  \Expect{\sum_{t=1}^{\infty} \PayA{t}}
+& \leq \sum_{\ell = 1}^{\infty} \sum_{\SP \in \Env{\ell}} \Prob{\SP} \cdot
+  \sum_{s=1}^{h(\ell)} \ARMNUM \cdot (\MAXR + 2 \Diam d \cdot g(s,\ell))
+\\ & = \ARMNUM \cdot
+  \sum_{\ell = 1}^{\infty} \Prob{\SP \in \Env{\ell}} \cdot
+  \sum_{s=1}^{h(\ell)} \left( \MAXR + \frac{24 \Diam d \sigma \ell}{s^{2/5}} \right).
+\end{align*}
+
+We now lower-bound $s^{2/5} \geq 1$, split off the term for $\ell=1$
+and bound $\Prob{\SP \in \Env{1}} \leq 1$, and apply
+Lemma~\ref{lem:envelope-probability} to the remaining
+$\Prob{\SP \in \Env{\ell}}$ terms, to bound
+
+\begin{align*}
+\Expect{\sum_{t=1}^{\infty} \PayA{t}}
+& \leq
+\ARMNUM \cdot \sum_{s=1}^{h(1)} (\MAXR + 24 \Diam d \sigma)
++ \ARMNUM \cdot
+  \sum_{\ell = 2}^{\infty} 24 \ARMNUM d\exp(-1.8(\ell-1)^2) \cdot
+  \sum_{s=1}^{h(\ell)} (\MAXR + 24 \Diam d \sigma \ell)
+\\ & \leq
+\ARMNUM \cdot h(1) \cdot (\MAXR + 24 \Diam d \sigma)
++ 24 \ARMNUM^2 d \cdot \sum_{\ell = 2}^{\infty}
+     \exp(-1.8(\ell-1)^2) \cdot h(\ell) \cdot (\MAXR + 24 \Diam d \sigma \ell).
+\end{align*}
+Because $h(\ell)$ and $(\MAXR + 24 \Diam d \sigma \ell)$ grow
+polynomially in $\ell$, whereas $\exp(-1.8(\ell-1)^2)$ decreases
+exponentially in $\ell$, the sum is dominated by its first term, and
+the overall expected payment is bounded by
+
+\begin{align*}
+& O \left(\ARMNUM^2 d \cdot (\MAXR + \Diam d \sigma) \cdot h(1)
+  \right)
+\\ = 
+& O \left(\ARMNUM^2  d \cdot (\MAXR + \Diam d \sigma)\cdot
+  \max \left( \exp \left(\frac{2}{\MinProb}\right),
+		    \left( \frac{\sigma \Diam d}{\TieCutoff} \right)^{5/2},
+    \left( \frac{\sigma \TieDensity \Diam d}{\MinProb} \right)^{5/2} \right)
+\right)
+\\ =
+& O \left( \ARMNUM^2 \cdot \exp \left(\frac{2}{\MinProb} \right) \right).
+\end{align*}
+\end{extraproof}

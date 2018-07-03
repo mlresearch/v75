@@ -1,0 +1,104 @@
+% !TEX root = paper.tex
+
+In this section we focus on linear matrix prediction problems. The side information $x_t$ is now matrix-valued, and we shall denote it by a capital letter $X_t\in\bbR^{d_1\times{}d_2}$. Our goal is to achieve a regret inequality as in \pref{eq:phi_comp_adap} with a class $\F=\crl*{X\mapsto\tri*{W,X}\mid{} W\in\cW}$, where $\cW=\crl*{W\in\bbR^{d_1\times{}d_2}\mid{}\nrm*{W}_{\Sigma}\leq{}r}$. Here $\tri*{A,B}=\Tr(AB^{\trn})$ is the standard matrix inner product and $\nrm*{\cdot}_{\Sigma}$ denotes the nuclear norm. We also let $\nrm*{\cdot}_{\sigma}$ denote the spectral norm. As before, the loss $\loss$ is assumed to be $L$-Lipschitz and regret against a matrix $W\in\cW$ is given by
+$
+  \reg(W)\ldef \sum_{t=1}^{n}\loss(\pred_t, y_t) - \loss(\tri*{W,X_t}, y_t).
+$
+
+In a search for an adaptive bound on regret, we inspect the adaptive bound \pref{eq:adaptive} for the vector case. The direct analogue for matrices would be a bound proportional to $\left(\sum_{t=1}^n \norm{X_t}^2_\sigma \right)^{1/2}$, and indeed such a bound is possible with Matrix Exponential Weights \cite[Theorem 13]{HazKalSha12}.\footnote{With more work it is possible to obtain a bound of $\left(\max_{t}\nrm*{X_t}_{\sigma}\cdot\nrm*{\sum_{t=1}^nX_t}_\sigma \right)^{1/2}$; this is still weaker than our result, and seems to only be possible when the constraint set and $X_t$s are restricted to be positive-semidefinite.} However, the matrix version of Khintchine inequality, as well as matrix deviation inequalities, involve---for the case of random centered self-adjoint matrices---the tighter quantity $\norm{\sum_{t=1}^n X_t^2}^{1/2}_\sigma$ (see \citep{tropp2012user,mackey2014matrix}). Given the correspondence between online regret bounds and martingale inequalities, one may wonder if there is an algorithm that achieves this adaptive bound. We shall exhibit such a method using our approach, and the reader might already guess that $\sum_{t=1}^n X_t^2$ should be part of the sufficient statistic for the online algorithm. This is indeed the case, though we present results for general non-square matrices.
+
+Let $\sym^{d}$ denote the set of symmetric matrices in $\bbR^{d\times{}d}$, $\sym^{d}_{+}$ denote the set of positive-semidefinite matrices, and $\sym^{d}_{++}$ denote the set of positive-definite matrices. 
+For $X\in\sym^{d}$ we let $\lambda(X)\in\bbR^{d}$ denote its eigenvalues arranged in decreasing order, so that $\lambda_1(X)$ is the largest eigenvalue. For any matrix $X\in\bbR^{d_1\times{}d_2}$ we define its Hermitian dilation $\cH(X)\in\sym^{d_1+d_2}$ and  $\cM(X) \in\sym^{d_1+d_2}$ as:
+\begin{equation}
+  \cH(X) = \left(
+    \begin{array}{ll}
+      0 & X\\
+      X^{\trn} & 0
+    \end{array}
+    \right) ~~~~~~~~~\cM(X) = \cH(X)^{2} = \left(
+    \begin{array}{ll}
+      XX^{\trn} & 0\\
+      0 & X^{\trn}X
+    \end{array}
+  \right).
+  \end{equation}
+  It is well-known that for any matrix $X$, $\lambda_{1}(\cH(X)) = \nrm*{X}_{\sigma}.$
+
+With these definitions in place, the desired adaptive regret bound takes the form
+\begin{equation}
+\cA_{\eta}(X_{1},\ldots,X_{n}) = \frac{\eta{}rL^2}{2}\nrm*{\sum_{t=1}^{n}\cM(X_t)}_{\sigma} + \frac{c}{\eta}
+\end{equation}
+for some fixed $\eta>0$ and constant $c>0$. The sufficient statistic takes values in  $\cT=\reals\times \sym^{d_1+d_2}\times \sym^{d_1+d_2}_{+}$ and incorporates the matrix variance terms $\cM(X_t)$.
+
+
+
+\begin{proposition}
+  \label{prop:matrix_sufficient}
+  The pair $(\suff, V)$ defined via $\suff(X_t,\pred_t,\delta_t) = \left( \delta_t\cdot\pred_t, \delta_t\cdot \cH(X_t), \cM(X_t) \right)\in\reals\times \sym^{d_1+d_2}\times \sym^{d_1+d_2}_{+}$ and
+\begin{equation}
+\label{eq:matrix_v}
+V(a, H, M) = a + r\lambda_1\prn*{H -{\textstyle\frac{1}{2}}\eta{}L^2 M} - \frac{c}{\eta},
+\end{equation}
+form a sufficient statistic pair for the adaptive regret bound $\cA_{\eta}$.
+\end{proposition}
+  
+Now that we proposed a sufficient statistic, \pref{lem:suff_to_martingale} and \pref{lem:equivalence_burkholder} give a specific form for a martingale inequality and a construction for the special function (if the martingale inequality holds). Since the function constructed in the proof of \pref{lem:equivalence_burkholder} may not be efficiently computable, we embark on a search for a function that \emph{can} be evaluated efficiently. The next theorem presents such a Burkholder function. The proof rests on Lieb's Concavity Theorem \citep{lieb1973convex}, which states that for any fixed $A\in\sym^{d}$, the function $X \mapsto\Tr\,\exp\prn*{A + \log{}X}$ is concave over $\sym^{d}_{++}$.
+  
+
+  \begin{theorem}
+    \label{thm:matrix_burkholder}
+    Define $\burk:\reals\times \sym^{d_1+d_2}\times \sym^{d_1+d_2}_{+}\to{}\bbR$ via
+    \[
+      \burk(a, H, M) = a+ \frac{r}{\eta}\log\,\Tr\,\exp\prn*{\eta{}H - {\textstyle\frac{1}{2}}\eta^{2}L^{2}M} - \frac{c}{\eta}.
+    \]
+    Then $\burk$ is a Burkholder function, for the pair $(\suff, V)$ in \pref{eq:matrix_v} when $c\geq{}r\log(d_1 + d_2)$.
+
+  \end{theorem}
+  This Burkholder function construction immediately implies both existence of a prediction strategy (via \pref{lem:universal_algo}) and that a probabilistic inequality for matrix-values martingales holds. We will present both in detail. The matrix prediction strategy granted by the Burkholder algorithm is particularly simple due to extra convexity properties of $\burk$; see \pref{app:efficient}.
+  
+  \begin{corollary}[Matrix prediction algorithm]
+    \label{corr:matrix_strategy}
+    Suppose that $\cY=\brk*{-B, B}$ for some $B>0$. Then the deterministic strategy
+    \begin{equation}
+      \label{eq:matrix_pred}      
+      \pred_{t} = \mathrm{proj}_{\brk*{-B, B}}\prn*{-\frac{r}{L\eta}\En_{\sigma\in\pmo}\brk*{
+        \sigma\log\,\Tr\,\exp\,\prn*{\eta\sigma{}L\cH(X_t) + \eta{}\sum_{s=1}^{t-1}\dl_{s}\cH(X_s) - {\textstyle\frac{1}{2}}\eta^{2}L^{2}\sum_{s=1}^{t}\cM(X_s)}
+        }}
+      \end{equation}
+       leads to a regret bound of
+      \[
+        \sum_{t=1}^{n}\loss(\pred_t, y_t) - \inf_{W\in\cW}\sum_{t=1}^{n}\loss(\tri*{W,X_t}, y_t) \leq{}
+        {\textstyle\frac{1}{2}}\eta{}L^2 r\nrm*{\sum_{t=1}^{n}\cM(X_t)}_{\sigma} + \frac{r\log(d_1 + d_2)}{\eta}.
+      \]
+  \end{corollary}
+
+  Since this regret bound is monotonically increasing with time, it is easy to tune $\eta$ to obtain a fully adaptive strategy.
+  \begin{proposition}
+    Let $R=\max_{t}\nrm*{X_t}_{\sigma}$ be known. By tuning $\eta$ through the standard doubling trick, we arrive at a regret bound of  
+    \begin{align*}
+      &\sum_{t=1}^{n}\loss(\pred_t, y_t) - \inf_{W\in\cW}\sum_{t=1}^{n}\loss(\tri*{W,X_t}, y_t) 
+    \\ &\leq{}
+      O\prn*{r\sqrt{\max\crl*{\nrm*{\sum_{t=1}^{n}X_{t}X_{t}^{\trn}}_{\sigma}, \nrm*{\sum_{t=1}^{n}X_{t}^{\trn}X_{t}}_{\sigma}}\log(d_1+d_2)} + Rr\log(n)}.
+    \end{align*}
+  \end{proposition}
+	
+	Let us briefly discuss the result. First, the computation in \pref{eq:matrix_pred} involves an SVD, and does not scale with $t$ since the method only keeps in memory the cumulative statistics. The regret bound gives a \emph{sequence-optimal} rate for the problem of \emph{Online Matrix Completion}, where each $X_t$ is an indicator $e_{i_t}e_{j_t}^{\top}$ corresponding to---for example---a user-movie pair for which the learner must predict a score. Here the regret bound obtained by \pref{eq:matrix_pred} interpolates between the worst-case configuration of the entries $(i_t,j_t)$ and ``spread-out'' (e.g. uniform) sampling of the entries. The result improves on \citep{foster2017zigzag}, which showed that this type of bound is possible by invoking the UMD inequality for Schatten norms but did not provide an efficient algorithm. See that paper for further discussion of the setting and problem.
+	
+
+  We now deliver on the second promise, namely a probabilistic martingale inequality. This inequality is stated for $\bbR^{d_1+d_2}$-valued Paley-Walsh martingale difference sequences $(\eps_t\mb{X}_t(\eps))_{t\leq{}n}$, where each $\mb{X}_{t}(\eps) = \mb{X}_{t}(\eps_1,\ldots,\eps_{t-1})$ is predictable with respect to $\cF_{t-1}=\sigma(\eps_{1},\ldots,\eps_{t-1})$ for Rademacher random variables $\eps_{1},\ldots,\eps_{n}$.
+
+  \begin{corollary}[Martingale Matrix Square Function Inequality]
+    \label{corr:matrix_square}
+    For all Paley-Walsh martingale difference sequences $(\eps_t\mb{X}_{t}(\eps))_{t\leq{}n}$ it holds that
+    \begin{equation}
+      \label{eq:matrix_square}
+    \En_{\eps}\nrm*{\sum_{t=1}^{n}\eps_t\mb{X}_{t}(\eps)}_{\sigma}
+    \leq{} \sqrt{2\En_{\eps}\max\crl*{\nrm*{\sum_{t=1}^{n}\mb{X}_{t}(\eps)\mb{X}_{t}(\eps)^{\trn}}_{\sigma}, \nrm*{\sum_{t=1}^{n}\mb{X}_{t}(\eps)^{\trn}\mb{X}_{t}(\eps)}_{\sigma}}\log(d_1+d_2)}.
+    \end{equation}
+  \end{corollary}
+    In the special case where $\mb{X}_t(\eps)=X_t$ is a fixed sequence, this square function inequality \pref{eq:matrix_square} recovers the Matrix Khintchine inequality \citep{mackey2014matrix}, including constants.  A similar martingale inequality can be obtained from the Matrix Freedman/Bennett inequalities of \cite{tropp2011freedman}, but this will depend on almost sure bounds on spectral norms of $(\mb{X}_{t}(\eps))_{t\leq{}n}$.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

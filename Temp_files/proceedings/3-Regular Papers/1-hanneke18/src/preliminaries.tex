@@ -1,0 +1,29 @@
+% !TeX root = main.tex
+%\section{Preliminaries}
+%\label{sec:prelim}
+\section{Problem Formulation}
+\label{sec:problem}
+We will consider a setting where we have access to a distribution $p$ over a (possibly infinite) set $X$, and let $p_x$ be the probability mass assigned by $p$ to each $x \in X$.
+For simplicity, we assume that all distributions are discrete, but our results extend naturally to continuous settings as well.
+Let $\text{supp}(p) \subseteq X$ denote the support of distribution $p$.
+We assume we have two types of access to $p$:
+\begin{enumerate}
+\item Sample access: We may draw samples $x_i \sim p$;
+\item Invalidity access: We may query whether a point $x_i$ is ``invalid''.
+\end{enumerate}
+To be more precise on the second point, we assume we have access to an oracle which can answer queries to the function $\Inv: X \rightarrow \{0, 1\}$, where $\Inv(x) = 1$ indicates that a point is ``invalid.'' As shorthand, we will use $\Inv(q) = \Exp_{x \sim q}[\Inv(x)]$. Put another way, if $V$ is the set of valid points, then $\Inv(q)=1-q(V)$. Henceforth, we find it more convenient to upper-bound invalidity rather than lower-bound validity. % reconciling with the intro 
+
+For this work, we will assume that $\Inv(x)=0$ for all $x \in \text{supp}(p)$, i.e., $\Inv(p)=0$, though examples may also have $\Inv(x)=0$ even if $p(x)=0$. However, we note that it would be relatively straightforward to extend our results to a more general case: %by simply removing from the random positive examples from those that have $\Inv(x_i)=1$.
+Given a validity oracle and set of training examples that include a mix of valid and invalid examples, one can run the validity oracle on the training examples to create a subset of valid training examples. %In other words, given a partly-valid random example oracle and a validity oracle for training, one can simulate a fully-valid random example oracle that only generates valid examples by repeatedly drawing samples from the oracle until one is found that satisfies the validity oracle. The expected number of calls to the partly-valid oracle would be the reciprocal of the probability that the oracle generates a valid example.
+
+
+Our goal is to output a distribution $\hat q$ with low invalidity and expected loss, for some monotone decreasing loss function $L : [0,1] \rightarrow [0,M]$.  In addition to the natural loss function $L(q_x)=\min(M, \log 1/q_x)$ mentioned earlier, a convex bounded loss is $L(q_x)=\log 1/(q_x+\exp(-M))$. 
+For a class $Q$ of candidate distributions $q$ over $X$, we aim to solve the following problem:
+$$\min_{ q \in Q \atop \Inv(q) = 0 } \Loss(q)=\min_{ q \in Q \atop \Inv(q) = 0 } \Exp_{x \sim p} \left[ L(q_x) \right].$$
+Let $OPT$ be the minimum value of this objective function, and $q^*$ be a distribution which achieves this value. In practice we can never determine with certainty whether any $\hat q$ has 0 invalidity. Instead, given $\eps_1, \eps_2 > 0$, we want that $\Loss(\hat q) \le OPT+\eps_1$ and $\Inv(\hat q) \le \eps_2$. 
+
+%We consider a generalization of this problem which allows partial validity in Section~\ref{sec:partial-validity}.
+
+\begin{remark}
+  Note that given a candidate distribution $\hat q$ it is straightforward to check whether it satifies the loss and validity requirements, with probability $1-\delta$, by computing the empirical loss using $O\left(\frac 1 {\eps_1^2} \log(1/\delta)\right)$ samples from $p$ and by querying the invalidity oracle $O\left(\frac 1 {\eps_2} \log(1/\delta)\right)$ times using samples generated from $\hat q$. This observation allows us to focus on distribution learning algorithms that succeed with a constant probability as we can amplify the success probability to $1-\delta$ by repeating the learning process $O(\log(1/\delta))$ times and checking whether the ouput is correct. 
+\end{remark}

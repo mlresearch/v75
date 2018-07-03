@@ -1,0 +1,59 @@
+\section{Proper Learning}
+\label{sec:proper}
+For ease of exposition, we begin with a canonical and simple example, where our goal is to approximate the distribution $p$ using a 
+uniform distribution over a two-dimensional rectangle (or, in higher dimensions, a multi-dimensional box).
+
+Here, the goal is to find a uniform distribution $q^*$ over a rectangle that best approximates
+$p$ (i.e., minimizes some loss) while lying entirely in its valid region. 
+We are allowed to output a uniform distribution $\hat q$ over a rectangle that has at least $1-\eps_2$ of its mass within the valid region.
+Figure~\ref{fig:rectangle} illustrates the target distribution $q^*$ graphically.
+
+\subsection{Example: Uniform distributions over a Box}
+
+Let $X = \{0,1,...,\Delta-1\}^d$ and assume that $Q$ is the family of distributions that are uniform over a box, i.e.
+for every $q \in Q$, there exists $\vec a, \vec b \in \{0,1,...,\Delta-1\}^d$ such that:
+$$q_x = \frac { \Ind[ \forall i \in \{1,...,d\}: x_i \in [a_i, b_i] ] } { \prod_{i=1}^d (b_i-a_i+1) }$$
+
+\begin{theorem}
+  Using $O\left(\frac {d M^2} {\eps_1^2} \right)$ samples and $\frac {1} {\eps_2} \left(\frac {d M} {\eps_1} \right)^{O( d )}$ invalidity queries on $p$, there exists an algorithm which identifies a distribution $\hat q \in Q$, such that $\Inv(\hat q) \le \eps_2$ and 
+  $\Loss(\hat q) \le \Loss(q^*) + \eps_1$ with probability $3/4$.
+\end{theorem}
+
+\begin{proof}
+  Since the VC-dimension of $d$-dimensional boxes is $2 d$, with probability $7/8$ after taking a set $X_P$ of $P = O\left(\frac {d M^2} {\eps_1^2} \right)$ samples from $p$, we can estimate 
+  $p(\Supp(q))$ for all distributions $q \in Q$ within $\pm \frac {\eps_1} {2 M}$ by forming the empirical distribution. This implies that the empirical loss $\overline \Loss(q) = \frac 1 { |X_P| } \sum_{x \in X_p} L(q_x)$ is an estimate to the loss function, i.e. $\overline \Loss(q) \in \Loss(q)\pm \frac {\eps_1} {2}$.
+  
+  Now consider the optimal distribution $q^*$. Observe that any distribution $q \in Q$, such that $\Supp(q) \subseteq \Supp(q^*)$ and $\Supp(q)\cap X_P = \Supp(q^*)\cap X_P$, satisfies $\overline \Loss(q) \le \overline \Loss(q^*)$ and $\Inv(q)=0$. Thus, there exists a $q'\in Q$ with this property that has at least one point $x \in X_P$ in each of the $2 d$ sides of its box.
+  
+  As there are at most $P^{2 d}$ such boxes, we can check identify which of their corresponding distribution $q \in Q$ have $\Inv(q) \le \eps_2$ by quering $\Inv$ at $O\left( \frac 1 {\eps_2} \log \left( P^{2 d} \right) \right)$ random points from each of them. This succeeds with probability $7/8$ and uses in total 
+  $\frac {1} {\eps_2} \left(\frac {d M} {\eps_1} \right)^{O( d )}$ 
+  invalidity queries. 
+  
+  We pick $\hat q$ to be the distribution that minimizes the empirical $\overline \Loss(\hat q)$ out of those that have no invalid samples in the support.
+  Overall, with probability $3/4$, we have that $\Inv(\hat q) \le \eps_2$ and
+  $$
+    \Loss(\hat q) \le \overline \Loss(\hat q) + \frac {\eps_1} 2 
+    \le \overline \Loss(q') + \frac {\eps_1} 2 
+    \le \overline \Loss(q^*) + \frac {\eps_1} 2
+    \le \Loss(q^*) + {\eps_1}.
+$$
+\end{proof}
+
+\subsection{Impossibility of Proper Learning}\label{sec:impossibility}
+
+The example in the previous section required number of queries that is exponential in $d$ in order to output a distribution $\hat q \in Q$ with $\Inv(\hat q) \le \eps_2$ and $\Loss(\hat q) \le \Loss(q^*) + \eps_1$. 
+We show that such an exponential dependence in $d$ is required when one aims to learn a distribution $\hat q$ properly even for the class of uniform distributions over axis-parallel boxes.
+
+The proof of the following theorem appears in Section~\ref{sec:proper-lb-proof}:
+\begin{theorem}\label{thm:rectangleslb}
+  Even for $\Delta = 2$, the number of queries required to find a distribution $\hat q \in Q$ such that $\Inv(\hat q) \le \frac 1 4$ and 
+  $\Loss(\hat q) \le \Loss(q^*) + \frac 1 {2 d}$ with probability at least $3/4$ is at least $2^{\Omega(d)}$.
+\end{theorem}
+
+As Theorem~\ref{thm:rectangleslb} shows, proper learning suffers from a ``needle in a haystack'' phenomenon. To build intuition, we present an alternative simpler setting that illustrates this point more clearly.
+
+Let $Q$ be the set of all distributions $q_i$ that, with probability $\frac12$, output $0$, and otherwise output $i>0$. 
+Let $p$ be the distribution that always outputs $0$ and suppose that $\Inv(i)=1$ for all $i \neq \{0,i^*\}$ for some arbitrary $i^*$. 
+In order to properly learn the distribution $\hat q$, one needs to locate the hidden $i^*$ by querying the invalidity oracle many times. This requires a number of queries that is proportional to the size of the domain $X$, which is intractable when the domain is large (e.g., in high dimensions) or even infinite.
+
+Note, however, that in this example, even though learning a distribution $q$ within the family $Q$ is hard, we can easily come up with an improper distribution that always outputs point $0$. Such a distribution is always valid and achieves optimal loss. In the next section we show that even though proper learning may be information-theoretically expensive or impossible, it is actually always possible to improperly learn using polynomially many samples and invalidity queries.

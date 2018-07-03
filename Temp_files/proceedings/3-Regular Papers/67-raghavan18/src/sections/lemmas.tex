@@ -1,0 +1,317 @@
+Throughout the paper, we use a number of tools that are either known or easily follow from something that is known. We move these tools to a separate appendix so as not to interrupt the flow. We provide the proofs for the sake of completeness.
+
+\subsection{(Sub)gaussians and Concentration}
+
+We rely on several known facts about Gaussian and subgaussian random variables. A random variable $X$ is called $\sigma$-subgaussian, for some $\sigma>0$, if $E[e^{\sigma X^2}]<\infty$. This includes variance-$\sigma^2$ Gaussian random variables as a special case.
+
+
+
+\begin{lemma}
+  If $X \sim \mc N(0, \sigma^2)$, then for any $t \ge 0$,
+  \[
+    \E{X \given X \ge t} \le \begin{cases}
+      2 \sigma & t \le \sigma \\
+      t + \frac{\sigma^2}{t} & t > \sigma
+    \end{cases}
+  \]
+  \label{lem:gaus_exp_bound}
+\end{lemma}
+\begin{proof}
+  We begin with
+  \begin{align}\label{eq:pf:lem:gaus_exp_bound}
+    \E{X \given X \ge t} = \frac{\frac{1}{\sigma\sqrt{2\pi}}\int_t^\infty x
+    \exp\p{x^2/(2\sigma^2)} \dx}{\Pr\b{X \ge t}}.
+  \end{align}
+$X$ can be represented as $X = \sigma Y$, where $Y$ is a standard normal random variable. Using a tail bound for the latter (from \citet{cook2009upper}),
+\[
+    \Pr\b{X \ge t} = \Pr\b{Y \ge \frac{t}{\sigma}} \ge
+    \frac{1}{\sqrt{2\pi}} \frac{t/\sigma}{(t/\sigma)^2 + 1}
+    \exp\p{-\frac{t^2}{2\sigma^2}}.
+  \]
+  The numerator in \eqref{eq:pf:lem:gaus_exp_bound} is
+  \begin{align*}
+    \frac{1}{\sigma\sqrt{2\pi}}\int_t^\infty x \exp\p{x^2/(2\sigma^2)} \dx
+    &= -\frac{1}{\sigma \sqrt{2\pi}} \cdot \sigma^2 e^{-x^2/(2\sigma^2)}
+    \bigg|_t^\infty \cdot e^{-t^2/(2\sigma^2)}
+    = \frac{\sigma}{\sqrt{2\pi}} \exp\p{-\frac{t^2}{2\sigma^2}}.
+  \end{align*}
+  Combining, we have
+  \begin{align*}
+    \E{X \given X \ge t} &\le \frac{\frac{\sigma}{\sqrt{2\pi}}
+    \exp\p{-\frac{t^2}{2\sigma^2}}}{\frac{1}{\sqrt{2\pi}}\frac{t/\sigma}{(t/\sigma)^2
+    + 1} \exp\p{-\frac{t^2}{2\sigma^2}}}
+    = \frac{\sigma^2 ((t/\sigma)^2 + 1)}{t}
+    = t + \frac{\sigma^2}{t}
+  \end{align*}
+  For $t \le \sigma$, $\E{X \given X \ge t} \le \E{X \given X \ge \sigma} \le
+  2\sigma$ by the above bound.
+\end{proof}
+\begin{lemma}
+ Suppose $X \sim \mc N(0, \Sigma)$ is a Gaussian random vector with covariance matrix $\Sigma$. Then
+  \[
+    \E{\; \|X\|_2 \given \|X\|_2 > \alpha \;} 
+        \le d\p{\alpha+ \frac{\lambda_{\max}(\Sigma)}{\alpha}} \quad\
+    \text{for any $\alpha \ge 0$}.
+  \]
+  \label{lem:gaus_exp_norm_bound}
+\end{lemma}
+\begin{proof}
+  Assume without loss of generality that $\Sigma$ is diagonal, since the norm is
+  rotationally invariant. Observe that
+    $\|X\|_2 \given \forall i ~ X_i > \alpha$
+  stochastically dominates $\|X\|_2 \given \|X\|_2 > \alpha$.
+  (Geometrically, the latter conditioning shifts the probability mass away from the origin.)
+  Therefore,
+  \begin{align*}
+    \E{\; \|X\|_2 \given \|X\|_2 > \alpha \;}
+    &\le \E{\; \|X\|_2 \given \forall i ~ X_i > \alpha \;} \\
+    &= \textstyle  \E{\sum_{i=1}^d X_i \given \forall i ~ X_i > \alpha}
+    \le \sum_{i=1}^d \p{t+ \frac{\lambda_i(\Sigma)}{\alpha}}
+  \end{align*}
+  by Lemma~\ref{lem:gaus_exp_bound}, where
+    $\lambda_i(\Sigma) \leq \lambda_{\max}(\Sigma)$ is the $i$th
+  eigenvalue of $\Sigma$.
+\end{proof}
+
+
+\begin{fact}
+  If $X$ is a $\sigma$-subgaussian random variable, then
+  \[
+    \Pr[|X-\E{X}| > t] \le 2e^{-t^2/(2\sigma^2)}.
+  \]
+  \label{fact:subg_def}
+\end{fact}
+
+\begin{lemma}
+  If $X_1, \dots, X_n$ are independent $\sigma$-subgaussian random variables, then
+  \begin{align*}
+    \Pr\b{\max_i |X_i-\E{X_i}| > \sigma\sqrt{2\log\frac{2n}{\delta}}} \le \delta.
+  \end{align*}
+  \label{lem:subg_union_bound}
+\end{lemma}
+\begin{proof}
+  For any $X_i$, we know from Fact~\ref{fact:subg_def} that
+  \[
+    \Pr\b{|X_i - \E{X_i}| > \sigma \sqrt{2 \log \frac{2n}{\delta}}}
+    \le 2\exp\p{-\frac{2\sigma^2 \log \frac{2n}{\delta}}{2\sigma^2}}
+    = 2\exp\p{-\log \frac{2n}{\delta}}
+    = \frac{\delta}{n}.
+  \]
+  A union bound completes the proof.
+\end{proof}
+\begin{lemma}
+  If $X_1, \dots, X_K$ are independent zero-mean $\sigma$-subgaussian random variables, then
+  \[
+    \textstyle \E{\max_i X_i} \le \sigma \sqrt{2 \log K}.
+  \]
+  \label{lem:subgaussian_max}
+\end{lemma}
+\begin{proof}
+Let $X = \max X_i$. Since each $X_i$ is $\sigma$-subgaussian, it follows that
+  \[
+    \E{e^{\lambda X_i}} \le \exp\p{\frac{\lambda^2 \sigma^2}{2}}.
+  \]
+  Using Jensen's inequality, we have
+  \[
+    \exp\p{\lambda\E{X}} \le \E{\exp\p{\lambda X}} = \E{\max \exp\p{\lambda
+    X_i}} \le \sum_{i} \E{\exp\p{\lambda X_i}} \le K \exp\p{\frac{\lambda^2
+    \sigma^2}{2}}.
+  \]
+  Rearranging, we have
+  \[
+    \E{X} \le \frac{\log K}{\lambda} + \frac{\lambda \sigma^2}{2}.
+  \]
+  Setting $\lambda = \frac{\sqrt{2 \log K}}{\sigma}$, we have
+  $  \E{X} \le \sigma \sqrt{2 \log K}$ as needed
+\end{proof}
+
+
+\begin{lemma}
+  If $\theta \sim \mc N(\pmt, \pvt)$ where $\pmt\in \R^d$ and $\pvt \in \R^{d \times d}$, then
+$\E{\; \|\theta - \pmt\|_2\; } \le \sqrt{d \lambda_{\max}(\pvt)}$.
+  \label{lem:gaus_norm}
+\end{lemma}
+\begin{proof}
+  From~\cite{chandrasekaran2012convex}, the expected norm of a standard normal
+  $d$-dimensional Gaussian is at most $\sqrt{d}$. Using the fact that
+$\pvt^{-1/2} (\theta - \pmt) \sim \mc N(0, I)$,
+  we have
+  \[
+    \E{\|\theta - \pmt\|_2} = \E{\|\pvt^{1/2} \pvt^{-1/2}(\theta - \pmt)\|_2}
+    \le \|\pvt^{1/2}\|_2 \E{\|\pvt^{-1/2}(\theta - \pmt)\|_2} \le
+    \sqrt{d\lambda_{\max}(\pvt)}
+  \]
+\end{proof}
+
+\begin{lemma}[Lemma 2.2 in \citet{dasgupta2003elementary}]
+  If $X \sim \chi^2(d)$, \ie $X = \sum_{i=1}^d X_i^2$, where $X_1 \LDOTS X_d$ are independent standard Normal random variables, then
+  \begin{align*}
+    \Pr\b{X \le \beta d} &\le (\beta e^{1-\beta})^{d/2} & \text{for any $\beta\in (0,1)$}, \\
+    \Pr\b{X \ge \beta d} &\le (\beta e^{1-\beta})^{d/2} & \text{for any $\beta>1$}.
+  \end{align*}
+  \label{lem:chi_sq_conc}
+\end{lemma}
+
+\begin{lemma}[Hoeffding bound]
+  If $\bar{X} = \frac{1}{n} \sum_{i=1}^n X_i$, where the $X_i$'s are independent
+  $\sigma$-subgaussian random variables with zero mean, then
+  \begin{align*}
+    \max\left(\Pr\b{\bar{X} \ge t},\;\Pr\b{\bar{X} \le -t}\right)
+     &\le \exp\p{-\frac{nt^2}{2\sigma^2}}
+        &\text{for all $t>0$}, \\
+  \max\left(
+    \Pr\b{\overline{X} \le -\sigma
+    \sqrt{\tfrac{2}{n}\log \tfrac{1}{\delta}}},\quad
+    \Pr\b{\overline{X} \ge \sigma
+    \sqrt{\tfrac{2}{n}\log \tfrac{1}{\delta}}}  \right) &\le \delta
+    &\text{for all $\delta>0$}.
+  \end{align*}
+  \label{lem:hoeffding}
+\end{lemma}
+
+
+\subsection{KL-divergence}
+
+We use some basic facts about KL-divergence. Let us recap the definition: given two distributions $P,Q$ on the same finite outcome space $\Omega$, KL-divergence from $P$ to $Q$ is
+\[ \kl{P}{Q} := - \sum_{\omega \in \Omega} P(\omega) \log \tfrac{Q(\omega)}{P(\omega)} .\]
+
+\begin{lemma}[High-probability Pinsker Inequality~\citep{T09}]
+\label{lem:pinkser}
+For any probability distributions $P$ and $Q$ over the same sample space and any arbitrary event $E$,
+\[
+P(E) + Q(\overline{E}) \ge \tfrac{1}{2}\, e^{-\kl{P}{Q}}.
+\]
+\end{lemma}
+
+
+
+\begin{lemma}
+\label{lem:bern_kl}
+Let $P$ and $Q$ be Bernoulli distributions with means $p \in [1/2-\eps,
+1/2+\eps]$ and $q \in [1/2-\eps, 1/2+\eps]$ respectively, with $\eps \le 1/4$. Then
+  $\kl{P}{Q} \le \frac{7}{3}\,\eps^2$.
+\end{lemma}
+\begin{proof}
+For any $\eps \le 1/4$,
+
+\begin{align*}
+\log \p{\frac{p(1-p)}{q(1-q)}} &\le
+\log\p{\frac{1/4}{1/4-\eps^2}} \le
+\log\p{\frac{1}{1-4\eps^2}}    \le
+ \frac{14\, \eps^2}{3} \tag {By
+    Lemma~\ref{lem:log_expansion}}
+\\
+  \kl{P}{Q} &= p \log \p{\frac{p}{q}} + (1-p) \log\p{\frac{1-p}{1-q}} \\
+  &\le \p{\frac{1}{2} + \eps} \log \p{\frac{p(1-p)}{q(1-q)}}
+    = \p{\frac{1}{2} + \eps} \frac{14 \eps^2}{3}
+   \le \frac{7\eps^2}{2}.
+\end{align*}
+\end{proof}
+
+
+\subsection{Linear Algebra}
+
+We use several facts from linear algebra. In what follows, recall that
+$\lambda_{\min}(M)$ and $\lambda_{\max}(M)$ denote the minimal and the maximal eigenvalues of matrix $M$, resp.
+For two matrices $A,B$, let us write $B \succeq A$ to mean that $B-A$ is positive semidefinite.
+
+\begin{lemma}
+    $\lambda_{\max}(vv\tran) = \|v\|_2^2$ ~~ for any $v \in \R^d$.
+  \label{lem:norm_eigen}
+\end{lemma}
+\begin{proof}
+  $vv\tran$ has rank one, so it has one eigenvector with nonzero eigenvalue. $v$
+  is an eigenvector since $(vv\tran)v = (v\tran v) v$, and it has eigenvalue
+  $v\tran v = \|v\|_2^2$. This is the only nonzero eigenvalue, so
+  $\lambda_{\max}(vv\tran) = \|v\|_2^2$.
+\end{proof}
+
+\begin{lemma} \label{lem:conj_succ}
+  For symmetric matrices $A$, $B$ with $B$ invertible,
+  \[
+    B \succeq A \Longleftrightarrow I \succeq B^{-1/2} A B^{-1/2}
+  \]
+\end{lemma}
+\begin{proof}
+  \begin{align*}
+    B \succeq A &\Longleftrightarrow x\tran B x \ge x\tran A x \tag{$\forall x$} \\
+    &\Longleftrightarrow x\tran(B-A) x \ge 0 \tag{$\forall x$} \\
+    &\Longleftrightarrow x\tran B^{1/2} (I-B^{-1/2}AB^{-1/2}) B^{1/2} x \ge 0 \tag{$\forall x$} \\
+    &\Longleftrightarrow x\tran (I-B^{-1/2}AB^{-1/2}) x \ge 0 \tag{$\forall x$} \\
+    &\Longleftrightarrow I \succeq B^{-1/2}AB^{-1/2}.
+  \end{align*}
+\end{proof}
+
+\begin{lemma}
+  If $A \succeq 0$ and $B \succeq 0$, then
+$\lambda_{\min}(A + B) \ge \lambda_{\min}(A)$.
+  \label{lem:min_ev_sum}
+\end{lemma}
+\begin{proof}
+  \begin{align*}
+    \lambda_{\min}(A + B) &= \min_{\|x\|_2 = 1} x\tran (A+B) x \\
+    &= \min_{\|x\|_2 = 1} x\tran A x + x\tran B x \\
+    &\ge \min_{\|x\|_2 = 1} x\tran A x \tag{because $x\tran B x \ge 0$} \\
+    &= \lambda_{\min}(A)
+  \end{align*}
+\end{proof}
+
+\subsection{Logarithms}
+
+We use several variants of standard inequalities about logarithms.
+
+\begin{lemma}
+    $x \ge \log(ex)$ for all $x > 0$.
+  \label{lem:xex}
+\end{lemma}
+\begin{proof}
+  This is true if and only if $x - \log(ex) \ge 0$ for $x > 0$. To show this,
+  observe that
+  \begin{enumerate}
+    \item At $x=1$, this holds with equality.
+    \item At $x = 1$, the derivative is
+      \[
+        \frac{d}{dx} x - \log(ex) \bigg|_{x=1} = 1 - \frac{1}{x} \bigg|_{x=1} =
+        0.
+      \]
+    \item The entire function is convex for $x > 0$, since
+      \[
+        \frac{d^2}{dx^2} x - \log(ex) = \frac{d}{dx} 1 - \frac{1}{x} =
+        \frac{1}{x^2} > 0.
+      \]
+  \end{enumerate}
+  This proves the lemma.
+\end{proof}
+\begin{corollary}
+  $  x - \log x \ge \frac{e-1}{e} x$.
+  \label{cor:e1ex}
+\end{corollary}
+\begin{proof}
+  Using Lemma~\ref{lem:xex} and letting $z = x/e$,
+  \[
+    x - \log x = \frac{e-1}{e} x + \frac{1}{e}x - \log x = \frac{e-1}{e} x + z -
+    \log(ez) \ge \frac{e-1}{e} x
+  \]
+\end{proof}
+\begin{lemma}
+$\log\p{\frac{1}{1-x}} \le \frac{7x}{6}$ for any $x \in [0,1/4]$.
+  \label{lem:log_expansion}
+\end{lemma}
+\begin{proof}
+  First, we note that
+  \[
+    \tfrac{d}{dx} \log\p{\tfrac{1}{1-x}} = 1-x (-(1-x)^{-2}) \cdot (-1)
+    = \tfrac{1}{1-x}
+    = \sum_{i=0}^\infty x^i.
+  \]
+  Integrating both sides, we have
+  \[
+    \log\p{\tfrac{1}{1-x}} = C + \sum_{i=0}^\infty \frac{x^i}{i},
+  \]
+  for some constant $C$ that does not depend on $x$. Taking $x = 0$ yields $C = 0$.
+  Therefore,
+  \[
+    \log\p{\frac{1}{1-x}} \le x + \frac{x^2}{2} \sum_{i=0}^\infty x^i = x +
+    \frac{x^2}{2(1-x)} = x\p{1 + \frac{x}{2(1-x)}} \le \frac{7x}{6}.
+  \]
+\end{proof}

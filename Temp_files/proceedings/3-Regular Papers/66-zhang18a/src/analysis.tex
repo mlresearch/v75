@@ -1,0 +1,243 @@
+\section{Analysis of a new estimate sequence} \label{sec:general-analysis}
+First introduced in \citep{nesterov1983method}, estimate sequences are central tools in establishing the acceleration of Nesterov's method. We first note a weaker notion of estimate sequences for functions whose domain is not necessarily a vector space.
+%\begin{definition}
+%	A pair of sequences $\{\Phi_{k}(x):\mathcal{X}\to\mathbb{R}\}_{k=0}^{\infty}$ and $\{\lambda_k\}_{k=0}^{\infty}$ is called an estimate sequence of function $f(x):\mathcal{X}\to\mathbb{R}$ if $\lambda_k\to 0$ and for any $x\in\mathcal{X}$ and all $k\ge 0$ we have:
+%	\begin{equation} \label{eq:estimate-sequence-definition}
+%	\Phi_k(x) \le (1-\lambda_k)f(x) + \lambda_k\Phi_0(x).
+%	\end{equation}
+%\end{definition}
+\begin{definition} \label{def:weak-estimate-sequence}
+	A pair of sequences $\{\Phi_{k}(x):\mathcal{X}\to\mathbb{R}\}_{k=0}^{\infty}$ and $\{\lambda_k\}_{k=0}^{\infty}$ is called a (weak) estimate sequence of a function $f(x):\mathcal{X}\to\mathbb{R}$, if $\lambda_k\to 0$ and for all $k\ge 0$ we have:
+	\begin{equation} \label{eq:weak-estimate-sequence-definition}
+	\Phi_k(x^*) \le (1-\lambda_k)f(x^*) + \lambda_k\Phi_0(x^*).
+	\end{equation}
+\end{definition}
+This definition relaxes the original definition proposed by \citet[def. 2.2.1]{nesterov2004introductory}, in that the latter requires $\Phi_k(x) \le (1-\lambda_k)f(x) + \lambda_k\Phi_0(x)$ to hold for all $x\in\mathcal{X}$, whereas our definition only assumes it holds at the minimizer $x^*$. We note that similar observations have been made, e.g., in \citep{carmon2017convex}. This relaxation is essential for sparing us from fiddling with the global geometry of Riemannian manifolds.
+%
+%In the sequel, we will instead use this weak notion of estimate sequence in our analysis.
+
+
+%Following the above definition, the main theme of this section is to introduce a new type of estimate sequence that generalizes Nesterov's original construction to Riemannian manifolds. 
+However, there is one major obstacle in the analysis -- Nesterov's construction of quadratic function sequence critically relies on the linear metric and does not generalize to nonlinear space. An example is given in Figure \ref{fig:change-base}, where we illustrate the distortion of distance (hence quadratic functions) in tangent spaces. The key novelty in our construction is inequality (\ref{eq:phi-less-overline-phi}) which allows a broader family of estimate sequences, as well as inequality (\ref{eq:base-change-assumption}) which handles nonlinear metric distortion and fulfills inequality (\ref{eq:phi-less-overline-phi}). Before delving into the analysis of our specific construction, we recall how to construct estimate sequences and note their use in the following two lemmas.
+
+\begin{lemma} \label{thm:estimate-sequence-construction}
+	Let us assume that:
+	\begin{enumerate}
+          \setlength{\itemsep}{1pt}
+		\item $f$ is geodesically $L$-smooth and $\mu$-strongly geodesically convex on domain $\mathcal{X}$.
+		\item $\Phi_0(x)$ is an arbitrary function on $\mathcal{X}$.
+		\item $\{y_k\}_{k=0}^{\infty}$ is an arbitrary sequence in $\mathcal{X}$.
+		\item $\{\alpha_k\}_{k=0}^{\infty}$: $\alpha_k\in(0,1)$,  $\sum_{k=0}^{\infty} \alpha_k = \infty$. \label{eq:alpha-k-not-summable}
+		\item $\lambda_0 = 1$.
+	\end{enumerate}
+	Then the pair of sequences $\{\Phi_k(x)\}_{k=0}^{\infty}$, $\{\lambda_k\}_{k=0}^{\infty}$ which satisfy the following recursive rules:
+	\begin{align}
+	\lambda_{k+1} = &~ (1-\alpha_k)\lambda_k, \\
+	\overline{\Phi}_{k+1}(x) = &~ (1-\alpha_k)\Phi_k(x) + \alpha_k \left[f(y_k) + \langle \nabla f(y_k), \Exp_{y_k}^{-1}(x)\rangle + \frac{\mu}{2}\|\Exp_{y_k}^{-1}(x)\|^2\right], \label{eq:phi-recursion}\\
+	\Phi_{k+1}(x^*) \le &~ \overline{\Phi}_{k+1}(x^*), \label{eq:phi-less-overline-phi}
+	\end{align}
+	is a (weak) estimate sequence.
+\end{lemma}
+	The proof is similar to~\citep[Lemma 2.2.2]{nesterov2004introductory} which we include in Appendix \ref{prf:estimate-sequence-construction}.
+
+\begin{lemma} \label{thm:estimate-sequence-implication}
+	If for a (weak) estimate sequence $\{\Phi_{k}(x):\mathcal{X}\to\mathbb{R}\}_{k=0}^{\infty}$ and $\{\lambda_k\}_{k=0}^{\infty}$ we can find a sequence of iterates $\{x_k\}$, such that
+	\[ f(x_k) \le \Phi_k^* \equiv \min_{x\in\mathcal{X}}\Phi_k(x), \]
+	then $f(x_k)-f(x^*) \le \lambda_k(\Phi_0(x^*)-f(x^*)) \to 0$.
+\end{lemma}
+\begin{proof} By Definition \ref{def:weak-estimate-sequence} we have
+	$f(x_k)\le \Phi_k^* \le \Phi_k(x^*) \le (1-\lambda_k)f(x^*) + \lambda_k\Phi_0(x^*)$.
+	Hence $f(x_k) - f(x^*) \le \lambda_k(\Phi_0(x^*) - f(x^*)) \to 0$.
+\end{proof}
+Lemma \ref{thm:estimate-sequence-implication} immediately suggest the use of (weak) estimate sequences in establishing the convergence and analyzing the convergence rate of certain iterative algorithms. The following lemma shows that a weak estimate sequence exists for Algorithm \ref{alg:riemannian-ag}. Later in Lemma \ref{thm:x-k-bound}, we prove that the sequence $\{x_k\}$ in Algorithm \ref{alg:riemannian-ag} satisfies the requirements in Lemma \ref{thm:estimate-sequence-implication} for our estimate sequence.
+
+\begin{lemma} \label{thm:estimate-sequence-lemma}
+	Let $\Phi_0(x) = \Phi_0^* + \frac{\gamma_0}{2}\|\Exp_{y_0}^{-1}(x)\|^2$.
+	Assume for all $k\ge 0$, the sequences $\{\gamma_k\}$, $\{\overline{\gamma}_k\}$, $\{v_k\}$, $\{\Phi_k^*\}$ and $\{\alpha_k\}$ satisfy
+	\begin{align}
+	\overline{\gamma}_{k+1} = &~ (1-\alpha_k)\gamma_k + \alpha_k\mu, \label{eq:overline-gamma-k+1}\\
+	v_{k+1} = &~ \Exp_{y_k}\left(\frac{(1-\alpha_k)\gamma_k}{\overline{\gamma}_{k+1}} \Exp_{y_k}^{-1}(v_k) - \frac{\alpha_k}{\overline{\gamma}_{k+1}} \nabla f(y_k)\right)  \\
+	\nonumber \Phi_{k+1}^* = &~ \left(1 - \alpha_k\right) \Phi_k^* + \alpha_k f(y_k) - \frac{\alpha_k^2}{2\overline{\gamma}_{k+1}}\|\nabla f(y_k)\|^2 \\
+	&~ + \frac{\alpha_k(1-\alpha_k)\gamma_k}{\overline{\gamma}_{k+1}}\left(\frac{\mu}{2}\|\Exp_{y_k}^{-1}(v_k)\|^2 + \langle \nabla f(y_k), \Exp_{y_k}^{-1}(v_k)\rangle \right), \label{eq:phi-k+1-star} \\
+	\gamma_{k+1} \| \Exp&_{y_{k+1}}^{-1}(x^*) -\Exp_{y_{k+1}}^{-1}(v_{k+1})\|^2 \le \overline{\gamma}_{k+1}\|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|^2, \label{eq:base-change-assumption} \\
+	\alpha_k\in &~ (0,1), \quad \sum_{k=0}^{\infty} \alpha_k = \infty,
+	\end{align}
+	then the pair of sequence $\{\Phi_k(x)\}_{k=0}^{\infty}$ and $\{\lambda_k\}_{k=0}^{\infty}$, defined by
+	\begin{align}
+	\Phi_{k+1}(x) = &~ \Phi_{k+1}^* + \frac{\gamma_{k+1}}{2}\|\Exp_{y_{k+1}}^{-1}(x)-\Exp_{y_{k+1}}^{-1}(v_{k+1})\|^2, \\
+	\lambda_0 = 1,  \quad &~ \lambda_{k+1} = (1-\alpha_k)\lambda_k.
+	\end{align}
+	is a (weak) estimate sequence.
+\end{lemma}
+\begin{proof} Recall the definition of $\overline{\Phi}_{k+1}(x)$ in Equation (\ref{eq:phi-recursion}). We claim that if $\Phi_k(x) = \Phi_k^* + \frac{\gamma_k}{2}\|\Exp_{y_k}^{-1}(x)-\Exp_{y_k}^{-1}(v_k)\|^2$, then we have $\overline{\Phi}_{k+1}(x) \equiv \Phi_{k+1}^* + \frac{\overline{\gamma}_{k+1}}{2}\|\Exp_{y_k}^{-1}(x)-\Exp_{y_k}^{-1}(v_{k+1})\|^2$. The proof of this claim requires a simple algebraic manipulation as is noted as Lemma \ref{thm:complete-square}. Now using the assumption (\ref{eq:base-change-assumption}) we immediately get $\Phi_{k+1}(x^*)\le\overline{\Phi}_{k+1}(x^*)$. By Lemma \ref{thm:estimate-sequence-construction} the proof is complete.
+\end{proof}
+We verify the specific form of $\overline{\Phi}_{k+1}(x)$ in Lemma~\ref{thm:complete-square}, whose proof can be found in the Appendix \ref{prf:complete-square}.
+\begin{lemma} \label{thm:complete-square}
+	For all $k\ge 0$, if $\Phi_k(x) = \Phi_k^* + \frac{\gamma_k}{2}\|\Exp_{y_k}^{-1}(x)-\Exp_{y_k}^{-1}(v_k)\|^2$, then with $\overline{\Phi}_{k+1}$ defined as in (\ref{eq:phi-recursion}), $\overline{\gamma}_{k+1}$ as in (\ref{eq:overline-gamma-k+1}), $v_{k+1}$ as in Algorithm \ref{alg:riemannian-ag} and $\Phi_{k+1}^*$ as in ($\ref{eq:phi-k+1-star}$) we have $\overline{\Phi}_{k+1}(x) \equiv \Phi_{k+1}^* + \frac{\overline{\gamma}_{k+1}}{2}\|\Exp_{y_k}^{-1}(x)-\Exp_{y_k}^{-1}(v_{k+1})\|^2$.
+\end{lemma}
+The next lemma asserts that the iterates $\{x_k\}$ of Algorithm \ref{alg:riemannian-ag} satisfy the requirement that the function values $f(x_k)$ are upper bounded by $\Phi_k^*$ defined in our estimate sequence.
+\begin{lemma} \label{thm:x-k-bound}
+	Assume $\Phi_0^*=f(x_0)$, and $\{\Phi_k^*\}$ be defined as in (\ref{eq:phi-k+1-star}) with $\{x_k\}$ and other terms defined as in Algorithm \ref{alg:riemannian-ag}. Then we have $\Phi_{k}^*\ge f(x_k)$ for all $k\ge 0$.
+\end{lemma}
+The proof is standard. We include it in Appendix \ref{prf:x-k-bound} for completeness.
+Finally, we are ready to state the following theorem on the convergence rate of Algorithm \ref{alg:riemannian-ag}.
+
+\begin{theorem}[Convergence of Algorithm \ref{alg:riemannian-ag}] \label{thm:main-theorem-general-scheme}
+	For any given $T\ge 0$, assume (\ref{eq:base-change-assumption}) is satisfied for all $0\le k\le T$, then Algorithm \ref{alg:riemannian-ag} generates a sequence $\{x_k\}_{k=0}^{\infty}$ such that
+	\begin{equation} \label{eq:convergence-algorithm-1}
+	 f(x_T) - f(x^*) \le \lambda_T\left(f(x_0) - f(x^*) + \frac{\gamma_0}{2}\|\Exp_{x_0}^{-1}(x^*)\|^2 \right)
+	 \end{equation}
+	where $\lambda_0 = 1$ and $\lambda_k = \prod_{i=0}^{k-1}(1-\alpha_i)$.
+\end{theorem}
+\begin{proof}
+	The proof is similar to \citep[Theorem 2.2.1]{nesterov2004introductory}. We choose $\Phi_0(x) = f(x_0) + \frac{\gamma_0}{2}\|\Exp_{y_0}^{-1}(x)\|^2$, hence $\Phi_0^* = f(x_0)$. By Lemma \ref{thm:estimate-sequence-lemma} and Lemma \ref{thm:x-k-bound}, the assumptions in Lemma \ref{thm:estimate-sequence-implication} hold. It remains to use Lemma \ref{thm:estimate-sequence-implication}.
+\end{proof}
+
+\section{Local fast rate with a constant step scheme} \label{sec:constant-step-analysis}
+% Towards this goal, we first make a few specification to our general scheme in Algorithm \ref{alg:riemannian-ag} to simplify the choice of parameters.
+%\begin{lemma}[Bounding $\|\nabla f(y_k)\|$]
+%	\begin{equation}
+%	\|\nabla f(y_k)\|^2 \le 2L (f(y_k)-f(x^*))
+%	\end{equation}
+%\end{lemma}
+%\begin{proof}
+%	Use $L$-smooth assumption and note that $x^*$ is the minimizer, we have
+%	\[ f(x^*)\le f\left(\Exp_{y_k}\left(-\nabla f(y_k)/L\right)\right) \le f(y_k) - \frac{1}{2L}\|\nabla f(y_k)\|^2. \]
+%	Rearrange the terms and the proof is complete.
+%\end{proof}
+
+By now we see that almost all the analysis of Nesterov's generalizes, except that the assumption in (\ref{eq:base-change-assumption}) is not necessarily satisfied. In vector space, the two expressions both reduce to $x^* - v_{k+1}$ and hence (\ref{eq:base-change-assumption}) trivially holds with $\gamma = \overline{\gamma}$. On Riemannian manifolds, however, due to the nonlinear Riemannian metric and the associated exponential maps,  $\| \Exp_{y_{k+1}}^{-1}(x^*) -\Exp_{y_{k+1}}^{-1}(v_{k+1})\|$ and $\|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|$ in general do not equal (illustrated in Figure \ref{fig:change-base}). Bounding the difference between these two quantities points the way forward for our analysis, which is also our main contribution in this section. We start with two lemmas comparing a geodesic triangle and the triangle formed by the preimage of its vertices in the tangent space, in two constant curvature spaces: hyperbolic space and the hypersphere.
+\begin{figure}[hbt]
+	\centering \hspace{30pt} \def\svgwidth{220pt}
+	\input{figures/thm10-2.pdf_tex} \hspace{-80pt} \def\svgwidth{190pt} 
+	\input{figures/thm10.pdf_tex} \hspace{-30pt}
+	\caption{A schematic illustration of the geometric quantities in Theorem \ref{thm:squared-distance-ratio-bound}. Tangent spaces of $y_{k}$ and $y_{k+1}$ are shown in separate figures to reduce cluttering. Note that even on a sphere (which has constant positive sectional curvature), $d(x^*, v_{k+1}), \|\Exp_{y_{k}}^{-1}(x^*)-\Exp_{y_{k}}^{-1}(v_{k+1})\|$ and $ \|\Exp_{y_{k+1}}^{-1}(x^*)-\Exp_{y_{k+1}}^{-1}(v_{k+1})\|$ generally do not equal.} \label{fig:change-base}
+\end{figure}
+
+\begin{lemma}[bi-Lipschitzness of the exponential map in hyperbolic space] \label{thm:hyperbolic-squared-distance-distortion}
+	Let $a,b,c$ be the side lengths of a geodesic triangle in a hyperbolic space with constant sectional curvature $-1$, and $A$ is the angle between sides $b$ and $c$. Furthermore, assume $b\le\frac{1}{4},c\ge 0$. Let $\triangle\bar{a}\bar{b}\bar{c}$ be the comparison triangle in Euclidean space, with $\bar{b}=b,\bar{c}=c,\bar{A}=A$, then
+	\begin{equation}
+	\bar{a}^2 \le a^2\le (1+2b^2)\bar{a}^2.
+	\end{equation}
+\end{lemma}
+\begin{proof}
+	The proof of this lemma contains technical details that deviate from our main focus; so we defer them to the appendix. The first inequality is well known. To show the second inequality, we have Lemma \ref{thm:large-c-hyperbolic} and Lemma \ref{thm:small-c-hyperbolic} (in Appendix) which in combination complete the proof.
+\end{proof}
+We also state without proof that by the same techniques one can show the following result holds.
+\begin{lemma}[bi-Lipschitzness of the exponential map on hypersphere] \label{thm:hypersphere-squared-distance-distortion}
+	Let $a,b,c$ be the side lengths of a geodesic triangle in a hypersphere with constant sectional curvature $1$, and $A$ is the angle between sides $b$ and $c$. Furthermore, assume $b\le\frac{1}{4},c\in[0,\frac{\pi}{2}]$. Let $\triangle\bar{a}\bar{b}\bar{c}$ be the comparison triangle in Euclidean space, with $\bar{b}=b,\bar{c}=c,\bar{A}=A$, then
+	\begin{equation}
+	a^2\le \bar{a}^2\le (1+2b^2)a^2.
+	\end{equation}
+\end{lemma}
+Albeit very much simplified, spaces of constant curvature are important objects to study, because often their properties can be generalized to general Riemannian manifolds with bounded curvature, specifically via the use of powerful comparison theorems in metric geometry \citep{burago2001course}. In our case, we use these two lemmas to derive a tangent space distance comparison theorem for Riemannian manifolds with bounded sectional curvature.
+\begin{theorem}[Multiplicative distortion of squared distance on Riemannian manifold] \label{thm:squared-distance-ratio-bound}\\
+	Let $x^*$, $v_{k+1}$, $y_k$, $y_{k+1}\in\mathcal{X}$ be four points in a g-convex, uniquely geodesic set $\mathcal{X}$ where the sectional curvature is bounded within $[-K, K]$, for some nonnegative number $K$.
+%	 where $\kappa_{\max}>0>\kappa_{\min}$ and $K = \max\{-\kappa_{\min},\kappa_{\max}\}$, 
+	Define $b_{k+1}=\max\left\{\|\Exp_{y_k}^{-1}(x^*)\|,\|\Exp_{y_{k+1}}^{-1}(x^*)\|\right\}$. Assume $b_{k+1}\le\frac{1}{4\sqrt{K}}$ for $K>0$ (otherwise $b_{k+1} < \infty$), then we have 
+	\begin{equation}
+	\|\Exp_{y_{k+1}}^{-1}(x^*)-\Exp_{y_{k+1}}^{-1}(v_{k+1})\|^2 \le (1+5K b_{k+1}^2) \|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|^2.
+	\end{equation}
+\end{theorem}
+
+\begin{proof}
+	The high level idea is to think of the tangent space distance distortion on Riemannian manifolds of bounded curvature as a consequence of bi-Lipschitzness of the exponential map. Specifically, note that $\triangle y_k x^* v_{k+1}$ and $\triangle y_{k+1} x^* v_{k+1}$ are two geodesic triangles in $\mathcal{X}$, whereas $\|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|$ and $\|\Exp_{y_{k+1}}^{-1}(x^*)-\Exp_{y_{k+1}}^{-1}(v_{k+1})\|$ are side lengths of two comparison triangles in vector space. Since $\mathcal{X}$ is of bounded sectional curvature, we can apply comparison theorems.
+	
+	First, we consider bound on the distortion of squared distance in a Riemannian manifold with constant curvature $-K$. Note that in this case, the hyperbolic law of cosines becomes
+	\[ \cosh(\sqrt{K}a) = \cosh(\sqrt{K}b)\cosh(\sqrt{K}c) - \sinh(\sqrt{K}b)\sinh(\sqrt{K}c)\cos(A), \]
+	which corresponds to the geodesic triangle in hyperbolic space with side lengths $\sqrt{K}a, \sqrt{K}b,\sqrt{K}c$, with the corresponding comparison triangle in Euclidean space having lengths $\sqrt{K}\bar{a}, \sqrt{K}\bar{b}, \sqrt{K}\bar{c}$. Apply Lemma \ref{thm:hyperbolic-squared-distance-distortion} we have $(\sqrt{K}a)^2 \le (1+2(\sqrt{K}b)^2)(\sqrt{K}\bar{a})^2$, i.e. $a^2 \le (1+2K b^2)\bar{a}^2$.
+	%	and the squared distance ratio becomes
+	%	\begin{align}
+	%	\nonumber &~ \frac{\left(\arccosh\left(\cosh(\sqrt{K}b)\cosh(\sqrt{K}c) - \sinh(\sqrt{K}b)\sinh(\sqrt{K}c)\cos(A)\right)/\sqrt{K}\right)^2}{b^2 + c^2 - 2bc\cos(A)} \\
+	%	\nonumber = &~ \frac{\left(\arccosh\left(\cosh(\sqrt{K}b)\cosh(\sqrt{K}c) - \sinh(\sqrt{K}b)\sinh(\sqrt{K}c)\cos(A)\right)\right)^2}{(\sqrt{K}b)^2 + (\sqrt{K}c)^2 - 2(\sqrt{K}b)(\sqrt{K}c)\cos(A)} \\
+	%	\le &~ 1 + 2(\sqrt{K}b)^2 = 1 + 2K b^2 \label{eq:hyperbolic-squared-distance-ratio}
+	%	\end{align}
+	%	assuming $\sqrt{K}b\le\frac{1}{4}$, where the inequality is by using lengths $\sqrt{K}b, \sqrt{K}c$ in Lemma \ref{thm:hyperbolic-squared-distance-distortion}.
+	Now consider the geodesic triangle $\triangle y_k x^* v_{k+1}$. Let $\tilde{a}=\|\Exp_{v_{k+1}}^{-1}(x^*)\|, b=\|\Exp_{y_k}^{-1}(v_{k+1})\|\le b_{k+1}, c=\|\Exp_{y_k}^{-1}(x^*)\|, A=\angle x^* y_k v_{k+1}$, so that $\|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|^2 = b^2+c^2-2bc\cos(A)$. By Toponogov's comparison theorem \citep{burago2001course}, we have $\tilde{a}\le a$
+	hence
+	\begin{equation} \label{eq:y-k-squared-distance-ratio}
+	\|\Exp_{v_{k+1}}^{-1}(x^*)\|^2 \le \left(1+2K b_{k+1}^2\right)\|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|^2.
+	\end{equation}
+	Similarly, using the spherical law of cosines for a space of constant curvature $K$ 
+	\[ \cos(\sqrt{K}a) = \cos(\sqrt{K}b)\cos(\sqrt{K}c) + \sin(\sqrt{K}b)\sin(\sqrt{K}c)\cos(A) \]
+	and Lemma \ref{thm:hypersphere-squared-distance-distortion} we can show $\bar{a}^2 \le (1+2K b^2)a^2$, where $\bar{a}$ is the  side length in Euclidean space corresponding to $a$. 
+	%	corresponds to the geodesic triangle in hypersphere with side lengths $\sqrt{K}a, \sqrt{K}b,\sqrt{K}c$. For 
+	%	and lengths $\sqrt{K}b, \sqrt{K}c$ in Lemma \ref{thm:hypersphere-squared-distance-distortion}, we have that when comparing geodesic triangles $(\{b,c\},A)$ in Euclidean space and a Riemannian manifold with constant curvature $K$, assuming $\sqrt{K}b\le\frac{1}{4}, \sqrt{K}c\le\frac{\pi}{2}$, the squared distance ratio is bounded by
+	%	\begin{align}
+	%	\nonumber &~ \frac{b^2 + c^2 - 2bc\cos(A)}{\left(\arccos\left(\cos(\sqrt{K}b)\cos(\sqrt{K}c) + \sin(\sqrt{K}b)\sin(\sqrt{K}c)\cos(A)\right)/\sqrt{K}\right)^2} \\
+	%	\nonumber = &~ \frac{(\sqrt{K}b)^2 + (\sqrt{K}c)^2 - 2(\sqrt{K}b)(\sqrt{K}c)\cos(A)}{\left(\arccos\left(\cos(\sqrt{K}b)\cos(\sqrt{K}c) + \sin(\sqrt{K}b)\sin(\sqrt{K}c)\cos(A)\right)\right)^2} \\
+	%	\le &~ 1 + 2(\sqrt{K}b)^2 = 1 + 2K b^2 \label{eq:hypersphere-squared-distance-ratio}
+	%	\end{align}
+	%	
+	%	Similarly, for the geodesic triangle $\triangle y_{k+1} x v_{k+1}$. We now let $a=\|\Exp_{v_{k+1}}^{-1}(x)\|, b=\|\Exp_{y_{k+1}}^{-1}(v_{k+1})\|, c=\|\Exp_{y_{k+1}}^{-1}(x)\|, A=\angle x y_{k+1} v_{k+1}$, so that $\|\Exp_{y_{k+1}}^{-1}(x)-\Exp_{y_{k+1}}^{-1}(v_{k+1})\|^2 = b^2+c^2-2bc\cos(A)$. Using a corollary of the Rauch comparison theorem (TODO: note this is a local result; assumptions required), we have that
+	Hence by our uniquely geodesic assumption and \citep[Theorem 2.2, Remark 7]{meyer1989toponogov}, with similar reasoning for the geodesic triangle $\triangle y_{k+1} x^* v_{k+1}$, we have $a \le \|\Exp_{v_{k+1}}^{-1}(x^*)\|$, so that
+	\begin{equation} \label{eq:y-k+1-squared-distance-ratio}
+	\|\Exp_{y_{k+1}}^{-1}(x^*)-\Exp_{y_{k+1}}^{-1}(v_{k+1})\|^2 \le \left(1+2K b_{k+1}^2\right)a^2 \le \left(1+2K b_{k+1}^2\right)\|\Exp_{v_{k+1}}^{-1}(x^*)\|^2.
+	\end{equation}
+	Finally, combining inequalities (\ref{eq:y-k-squared-distance-ratio}) and (\ref{eq:y-k+1-squared-distance-ratio}), and noting that $(1+2K b_{k+1}^2)^2 = 1+4K b_{k+1}^2 + (4K b_{k+1}^2)K b^2 \le 1 + 5K b_{k+1}^2$, the proof is complete.
+\end{proof}
+Theorem \ref{thm:squared-distance-ratio-bound} suggests that if $b_{k+1}\le\frac{1}{4\sqrt{K}}$, we could choose $\beta\ge 5K b_{k+1}^2$ and $\gamma \le\frac{1}{1+\beta}\overline{\gamma}$ to guarantee $\Phi_{k+1}(x^*)\le \overline{\Phi}_{k+1}(x^*)$. It then follows that the analysis holds for $k$-th step. Still, it is unknown that under what conditions can we guarantee $\Phi_{k+1}(x^*)\le \overline{\Phi}_{k+1}(x^*)$ hold for all $k\ge 0$, which would lead to a convergence proof. We resolve this question in the next theorem. 
+
+\begin{theorem}[Local fast convergence] \label{thm:convergence-induction}
+	With Assumptions \ref{assumption:1}, \ref{assumption:2}, \ref{assumption:3}, \ref{assumption:4}, denote $D = \frac{1}{20\sqrt{K}}\left(\frac{\mu}{L}\right)^{\frac{3}{4}}$ and assume $\mathcal{B}_{x^*, D}:=\{x\in\mathcal{M}: d(x,x^*)\le D\} \subseteq\mathcal{X}$.
+	 If we set $h=\frac{1}{L}, \beta=\frac{1}{5}\sqrt{\frac{\mu}{L}}$ and $x_0 \in \mathcal{B}_{x^*, D}$,
+	then Algorithm \ref{alg:constant-step} converges; moreover, we have
+	\begin{equation} \label{eq:convergence-rate}
+	f(x_k)-f(x^*)\le \left(1-\frac{9}{10}\sqrt{\frac{\mu}{L}}\right)^k\left(f(x_0)-f(x^*)+\frac{\mu}{2}\|\Exp_{x_0}^{-1}(x^*)\|^2\right).
+	\end{equation}
+\end{theorem}
+
+\begin{proof}{\bf sketch.}
+Recall that in Theorem 		\ref{thm:main-theorem-general-scheme} we already establish that if the tangent space distance comparison inequality (\ref{eq:base-change-assumption}) holds, then the general Riemannian Nesterov iteration (Algorithm \ref{alg:riemannian-ag}) and hence its constant step size special case (Algorithm \ref{alg:constant-step}) converge with a guaranteed rate. By the tangent space distance comparison theorem (Theorem \ref{thm:squared-distance-ratio-bound}), the comparison inequality should hold if $y_k$ and $x^*$ are close enough. Indeed, 
+we use induction to assert that with a good initialization, (\ref{eq:base-change-assumption}) holds for each step. Specifically, for every $k>0$, if $y_k$ is close to $x^*$ and the comparison inequality holds until the $(k-1)$-th step, then $y_{k+1}$ is also close to $x^*$ and the comparison inequality holds until the $k$-th step. We postpone the complete proof until Appendix \ref{prf:convergence-induction}.
+%	\emph{The base case.} First we verify that $y_0, y_1$ is sufficiently close to $x^*$ so that the comparison inequality (\ref{eq:base-change-assumption}) holds at step $k=0$. In fact, since $y_0=x_0$ by construction, we have 
+%	\begin{equation} \label{eq:xstar-y0}
+%	\|\Exp_{y_0}^{-1}(x^*)\| =\|\Exp_{x_0}^{-1}(x^*)\| \le  \frac{1}{4\sqrt{K}}, \qquad 5K\|\Exp_{y_0}^{-1}(x^*)\|^2 \le \frac{1}{80}\left(\frac{\mu}{L}\right)^{\frac{3}{2}} \le  \beta.
+%	\end{equation}
+%	To bound $\|\Exp_{y_1}^{-1}(x^*)\|$, observe that $y_1$ is on the geodesic between $x_1$ and $v_1$. So first we bound $\|\Exp_{x_1}^{-1}(x^*)\|$ and $\|\Exp_{v_1}^{-1}(x^*)\|$. Bound on $\|\Exp_{x_1}^{-1}(x^*)\|$ comes from strong g-convexity:
+%	\begin{align*}
+%	\|\Exp_{x_1}^{-1}(x^*)\|^2\le &~ \frac{2}{\mu}(f(x_1)-f(x^*))\le \frac{2}{\mu}(f(x_0)-f(x^*))+\frac{\gamma}{\mu}\|\Exp_{x_0}^{-1}(x^*)\|^2 \\
+%	\le &~ \frac{L+\gamma}{\mu}\|\Exp_{x_0}^{-1}(x^*)\|^2, 
+%	\end{align*}
+%	whereas bound on $\|\Exp_{v_1}^{-1}(x^*)\|$ utilizes the tangent space distance comparison theorem. First, from the definition of $\overline{\Phi}_1$ we have
+%	$$\|\Exp_{y_0}^{-1}(x^*)-\Exp_{y_0}^{-1}(v_1)\|^2 = \frac{2}{\gamma}(\overline{\Phi}_1(x^*)-\Phi_1^*)\le \frac{2}{\gamma}(\Phi_0(x^*)-f(x^*))\le \frac{L+\gamma}{\gamma}\|\Exp_{x_0}^{-1}(x^*)\|^2.$$
+%	Then note that (\ref{eq:xstar-y0}) implies that the assumption in Theorem \ref{thm:squared-distance-ratio-bound} is satisfied when $k=0$, whereby
+%    $$\|\Exp_{v_1}^{-1}(x^*)\|^2\le  (1+\beta)\|\Exp_{y_0}^{-1}(x^*)-\Exp_{y_0}^{-1}(v_1)\|^2\le \frac{2(L+\gamma)}{\gamma}\|\Exp_{x_0}^{-1}(x^*)\|^2.$$
+%    Together we have the following sequence of inequalities
+%    \begin{align}
+%    	    \nonumber\|\Exp_{y_1}^{-1}(x^*)\|\le ~& \|\Exp_{x_1}^{-1}(x^*)\| + \frac{\alpha\gamma}{\gamma+\alpha\mu}\|\Exp_{x_1}^{-1}(v_1)\|\\  \nonumber\le ~& \|\Exp_{x_1}^{-1}(x^*)\| + \frac{\alpha\gamma}{\gamma+\alpha\mu}\left(\|\Exp_{x_1}^{-1}(x^*)\| + \|\Exp_{v_1}^{-1}(x^*)\|\right) \\
+%    	    \nonumber\le ~& \sqrt{\frac{L+\gamma}{\mu}}\|\Exp_{x_0}^{-1}(x^*)\| + \frac{\alpha\gamma}{\gamma+\alpha\mu}\left(\sqrt{\frac{L+\gamma}{\mu}}+\sqrt{\frac{2(L+\gamma)}{\mu}}\right)\|\Exp_{x_0}^{-1}(x^*)\| \\
+%    	    \nonumber\le ~& \left(1 + \frac{1+\sqrt{2}}{2}\right)\sqrt{\frac{L+\gamma}{\mu}}\|\Exp_{x_0}^{-1}(x^*)\| \\
+%    	    \le ~& \frac{1}{10\sqrt{K}}\left(\frac{\mu}{L}\right)^{\frac{1}{4}} 
+%    	    \le \frac{1}{4\sqrt{K}}, \label{eq:base-xstar-y}
+%    \end{align}
+%    which also imply the bound
+%    \begin{equation}
+%		5K\|\Exp_{y_1}^{-1}(x^*)\|^2 \le \frac{1}{20}\sqrt{\frac{\mu}{L}} \le \beta. \label{eq:base-beta}
+%	\end{equation}
+%     By inequalities (\ref{eq:base-xstar-y}), (\ref{eq:base-beta}) and Theorem \ref{thm:squared-distance-ratio-bound} it is therefore guaranteed that 
+%    $$\gamma \| \Exp_{y_1}^{-1}(x^*) -\Exp_{y_1}^{-1}(v_1)\|^2 \le \overline{\gamma} \|\Exp_{y_0}^{-1}(x^*)-\Exp_{y_0}^{-1}(v_1)\|^2.$$
+%	\emph{The inductive step.}
+%	Assume that for $i=0,\dots,k-1$, (\ref{eq:base-change-assumption}) hold, i.e.:
+%	$$\gamma \| \Exp_{y_{i+1}}^{-1}(x^*) -\Exp_{y_{i+1}}^{-1}(v_{i+1})\|^2 \le \overline{\gamma}\|\Exp_{y_i}^{-1}(x^*)-\Exp_{y_i}^{-1}(v_{i+1})\|^2, \forall i=0,\dots,k-1$$
+%	and also that $\|\Exp_{y_k}^{-1}(x^*)\|\le \frac{1}{10\sqrt{K}}\left(\frac{\mu}{L}\right)^{\frac{1}{4}}$.
+%	Note that due to the sequential nature of the algorithm, statements about any step only depend on its previous steps, but not any step afterwards. 
+%	Since (\ref{eq:base-change-assumption}) hold for steps $i=0,\dots,k-1$, the analysis in the previous section already applies for steps $i=0,\dots,k-1$. Therefore, by Theorem  \ref{thm:main-theorem-general-scheme} and the proof of Lemma \ref{thm:x-k-bound} we know that 
+%	\begin{align*}
+%	f(x^*)\le &~ f(x_{k+1})\le\Phi_{k+1}^*\le\Phi_{k+1}(x^*)
+%	\le f(x^*)+(1-\alpha)^{k+1}(\Phi_0(x^*)-f(x^*)) \\
+%	\le &~ \Phi_0(x^*) = f(x_0)+\frac{\gamma}{2}\|\Exp_{x_0}^{-1}(x^*)\|^2.
+%	\end{align*}
+%	Following a similar route as the analysis for the base case\footnote{A complete proof is present in Appendix \ref{sec:complete-proof}.}, we can show $\|\Exp_{y_{k+1}}^{-1}(x^*)\|\le \frac{1}{10\sqrt{K}}\left(\frac{\mu}{L}\right)^{\frac{1}{4}}$ and also the desired comparison inequality
+%	$$\gamma \| \Exp_{y_{k+1}}^{-1}(x^*) -\Exp_{y_{k+1}}^{-1}(v_{k+1})\|^2 \le \overline{\gamma} \|\Exp_{y_k}^{-1}(x^*)-\Exp_{y_k}^{-1}(v_{k+1})\|^2.$$
+%	In other words, inequality (\ref{eq:base-change-assumption}) holds for $i=0,\dots,k$. This concludes the inductive step. \\
+%	By induction, (\ref{eq:base-change-assumption}) holds for all $k\ge 0$. Hence by Theorem \ref{thm:main-theorem-general-scheme}, Algorithm \ref{alg:constant-step} converges, with
+%	$$\alpha_i\equiv \alpha=\frac{\sqrt{\beta^2+4(1+\beta)\mu h}-\beta}{2} = \frac{\sqrt{\mu h}}{2}\left(\sqrt{\frac{1}{25}+4\left(1+\frac{\sqrt{\mu h}}{5}\right)} - \frac{1}{5}\right)\ge \frac{9}{10}\sqrt{\frac{\mu}{L}}.$$
+%	Hence plugging $\lambda_k = \prod_{i=0}^{k-1} (1-\alpha_i) = \left(1-\frac{9}{10}\sqrt{\frac{\mu}{L}}\right)^k$ in (\ref{eq:convergence-algorithm-1}) completes the proof.
+\end{proof}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "colt2018"
+%%% End:

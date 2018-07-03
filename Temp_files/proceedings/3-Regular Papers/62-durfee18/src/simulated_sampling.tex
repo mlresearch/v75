@@ -1,0 +1,60 @@
+\subsection{Simulated Sampling of $\AA$}\label{subsec:simulatedSplitting}
+
+In Lemma~\ref{lem:lewisAndRotate}, our primary preconditioning lemma, we set $N$ to be the minimum of $n$ and $O(d\epsilon^{-2}\log{n})$.
+However, all of our sampling above assumed that $O(d\epsilon^{-2}\log{n})$ rows were sampled to achieve certain matrix concentration results.
+Accordingly, we will still assume that $O(d\epsilon^{-2}\log{n})$ rows are sampled, but show that we can reduce the computational cost of any duplicate rows to $O(1)$, and hence the computation factor of $N$ can be assumed to be $\min\{n,O(d\epsilon^{-2}\log{n})\}$. The sampling procedure itself can be done in about $O(n)$ time. At the end of this section, we explain how the running time of Katyusha can be made to depend on $n$, rather than $d\epsilon^{-2}\log n$.
+
+Ultimately, our proof of Lemma~\ref{lem:lewisAndRotate} will critically use the fact that $\tilde{\AA}$ has $O(d\epsilon^{-2}\log{n})$ rows in several places.
+The following lemmas will then show how we can reduce this computation for duplicate rows, allowing us to substitute $n$ for $O(d\epsilon^{-2}\log{n})$ in the running time when $n \ll d\epsilon^{-2}\log{n}$.
+
+\begin{lemma}\label{lem:duplicateRowsForAtransposeA}
+	Let $\tilde{\AA} \in \R^{N \times d}$ be a matrix with at most $n$ unique rows, and for each unique row, we are given the number of copies in $\tilde{\AA}$. Then computing $\tilde{\AA}^T\tilde{\AA}$ takes at most $O(nd^{\omega -1})$ time.
+\end{lemma}
+
+\begin{proof}
+	By definition 
+	\[
+	\tilde{\AA}^T\tilde{\AA} = \sum_i \tilde{\AA}_{i,:}^T\tilde{\AA}_{i,:}.
+	\]
+	Therefore, if we have $k$ copies of row $\tilde{\AA}_{i,:}$, we know that they contribute $k\tilde{\AA}_{i,:}^T\tilde{\AA}_{i,:}$ to the summation. Accordingly, if we replaced all of them with one row $\sqrt{k}\tilde{\AA}_{i,:}$, then this row would contribute an equivalent amount to the summation. As a result, we can combine all copies of unique rows to achieve an $n \times d$ matrix $\tilde{\AA'}$ and compute $\tilde{\AA'}^T\tilde{\AA'}$ which will be equivalent to $\tilde{\AA}^T\tilde{\AA}$.
+\end{proof}
+
+\begin{corollary}\label{cor:duplicateRowsRotAndInit}
+	Let $[\tilde{\AA}\; \tilde{\bb}] \in \R^{N \times (d+1)}$ be a matrix with at most $n$ unique rows, and for each unique row, we are given the number of copies in $[\tilde{\AA}\; \tilde{\bb}]$. Then computing $\tilde{\AA}\UU$ where $\UU \in \R^{d\times d}$, and computing $\tilde{\AA}^T\tilde{\bb}$ takes $O(nd^{\omega - 1})$ and $O(nd)$ time, respectively.
+\end{corollary}
+
+
+\begin{proof}
+	We can similarly use the fact that $\tilde{\AA}_{i,:}\UU$ is equivalent for all copies of $\tilde{\AA}_{i,:}$ and combine $k$ copies into the row $k\tilde{\AA}_{i,:}$.
+	
+	Analogously, we have $\tilde{\AA}^T\tilde{\bb} = \sum_i\tilde{\AA}_{i,:}^T\tilde{\bb}_i$, so we can combine duplicate rows.
+\end{proof}
+
+Furthermore, we need to show that we can efficiently sample $O(d\epsilon^{-2}\log{n})$ rows (ideally in $O(n)$-time) even when $O(d\epsilon^{-2}\log{n}) \gg n$. We will achieve this through known results on fast binomial distribution sampling.
+
+\begin{theorem}[Theorem 1.1 in \cite{Farach-Colton2015}]\label{thm:binSampling}
+	Given a binomial distribution $B(n,p)$ for $n \in \mathbb{N}$, $p \in \mathbb{Q}$, drawing a sample from it takes $O(\log^2{n})$ time using $O(n^{1/2 + \epsilon})$ space w.h.p., after $O(n^{1/2+\epsilon})$-time preprocessing for small $\epsilon > 0$. The preprocessing does not depend on $p$ and can be used for any $p'\in \mathbb{Q}$ and for any $n' \leq n$.
+	
+\end{theorem}
+
+This result implies that sampling $m$ items independently can be done more efficiently if $m \gg n$, where we are only concerned with the number of times each item in the state space is sampled.
+\begin{corollary}\label{cor:binSampling}
+	Given a probability distribution $\mathcal{P} = (p_1,...,p_n)$ over a state space of size $n$, sampling $m$ items independently from $\mathcal{P}$ takes $O(m^{1/2 + \epsilon} + n\log^2{n})$-time.
+	
+\end{corollary}
+
+\begin{proof}
+	Note that sampling independently $m$ times is equivalent to determining how many of each item is sampled by using the binomial distribution and updating after each item. More specifically, we can iterate over all $i \in [n]$ and draw $k_i \sim B(m,p_i)$, then update $m$ to be $m - k_i$ and scale up each $p_j$ (where $j > i$) by $(1-p_i)^{-1}$. It is straightforward to make the scaling up of each $p_j$ efficient, and according to Theorem~\ref{thm:binSampling} we can obtain the binomial sample in $O(\log^2{n})$-time.
+	
+	
+	Furthermore, because $m$ is decreasing at each iteration, we can use the original preprocessing in Theorem~\ref{thm:binSampling} for each step to achieve our desired running time.	
+\end{proof}
+
+
+\begin{corollary}\label{cor:sampleEfficiently}
+	Given a matrix $\AA \in \R^{n \times d}$, with a probability distribution over each row, we can produce a matrix
+	$\tilde{\AA} \in \R^{O(d\epsilon^{-2}\log{n})\times d}$ according to the given distribution in time at most
+	$O\left(\min(d\epsilon^{-2}\log{n}, (d\epsilon^{-2}\log{n})^{1/2 + o(1)} + n\log^2{n})\right).$
+\end{corollary}
+
+Finally, our application of \Cref{thm:katyushaRuntime} assumes that it is given an $N \times d$ matrix, but we assumed that the computational cost could assume $N = \min\{n,O(d\epsilon^{-2}\log{n})\}$. A closer examination of Algorithm 2 in \cite{AllenZhu17}, which is the routine for \Cref{thm:katyushaRuntime}, shows that the factor of $N$ comes from a full gradient calculation, which can be done more quickly by combining rows in an equivalent manner to the lemma and corollary above.

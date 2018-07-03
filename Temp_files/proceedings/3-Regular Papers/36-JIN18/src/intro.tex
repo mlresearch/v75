@@ -1,0 +1,222 @@
+%!TEX root = main.tex
+
+\section{Introduction}\label{sec:intro}
+
+
+Nonconvex optimization problems are ubiquitous in modern machine learning. 
+While it is NP-hard to find global minima of a nonconvex function in the worst case, 
+in the setting of machine learning it has proved useful to consider a less stringent
+notion of success, namely that of convergence to a \emph{first-order stationary point} 
+(where $\grad f(\x) = 0$).  Gradient descent (GD), a simple and fundamental 
+optimization algorithm that has proved its value in large-scale machine learning, is 
+known to find an~\EFSP ~(where $\norm{\grad f(\x)} \le \epsilon$) in $O(1/\epsilon^2)$ 
+iterations \citep{nesterov1998introductory}, and this rate is sharp~\citep{cartis2010complexity}. 
+Such results, however, do not seem to address the practical success of gradient descent;
+first-order stationarity includes local minima, saddle points or even local maxima, and a
+mere guarantee of convergence to such points seems unsatisfying.  Indeed, architectures
+such as deep neural networks induce optimization surfaces that can be teeming with such 
+highly suboptimal saddle points~\citep{dauphin2014identifying}.  It is important to 
+study to what extent gradient descent avoids such points, particularly in the high-dimensional
+setting in which the directions of escape from saddle points may be few.
+
+%  First-order stationary point
+% It is well known that~\gd~obtains an $\epsilon$-first order stationary point i.e., where $\norm{\nabla f} \leq \epsilon$ in $\order{\frac{1}{\epsilon^2}}$ steps~\cite{nesterov1998introductory}. 
+% Unfortunately however, it turns out that~\gd~can get stuck in saddle points (i.e., first order stationary points which are not second order stationary points)~\cite[Section~1.2.3]{nesterov1998introductory} and the rate of~\gd~cannot be improved beyond $\order{\frac{1}{\epsilon^2}}$ mentioned above~\cite{cartis2010complexity}.
+
+This paper focuses on convergence to a \emph{second-order stationary point} 
+(where $\grad f(\x) = 0$ and $\hess f(\x) \succeq 0$). Second-order stationarity 
+rules out many common types of saddle points (\emph{strict} saddle points where 
+$\lambda_{\min}(\hess f(\x)) <0$), allowing only local minima and higher-order saddle 
+points. A significant body of recent work, some theoretical and some empirical, shows
+that for a large class of well-studied machine learning problems, neither higher-order 
+saddle points nor spurious local minima exist. That is, \emph{all second-order stationary 
+points are (approximate) global minima} for these problems. \citet{choromanska2014loss}
+and \citet{kawaguchi2016deep} 
+present such a result for learning neural networks, \citet{bandeira2016low,mei2017solving} 
+for synchronization and MaxCut, \citet{boumal2016non} for smooth semidefinite programs, 
+\citet{bhojanapalli2016global} for matrix sensing, \citet{ge2016matrix} for matrix completion, and
+\citet{ge2017no} for robust PCA.
+% More concretely, these works show that while high dimensional nonconvex optimization problems are replete with highly suboptimal saddle points, \emph{all} of these saddle points are \emph{first order stationary points} (i.e., where gradient is small). On the other hand, they also show that \emph{all second order stationary points} (i.e., where gradient is small and Hessian is almost positive semidefinite) are not only local minima but in fact are also (approximate) global minima.
+%The remarkable aspect of these works is that while there are plenty of highly suboptimal saddle points in these nonconvex optimization problems, they manage to show that they are all \emph{first order stationary points} (i.e., where the gradient is small) but \emph{not second order stationary points}.
+These results strongly motivate the quest for \emph{efficient algorithms} to find second-order stationary points.
+ % can find local minima, or equivalently second order stationary points, in nonconvex optimization problems.
+
+Hessian-based algorithms can explicitly compute curvatures and thereby avoid saddle 
+points~\citep[see, e.g.,][]{nesterov2006cubic, curtis2014trust}, but these algorithms 
+are computationally
+infeasible in the high-dimensional regime.  ~\gd, by contrast, is known to get stuck at 
+strict saddle points \cite[Section~1.2.3]{nesterov1998introductory}.  Recent work has
+reconciled this conundrum in favor of \gd; ~\cite{jin2017escape}, building on earlier work 
+of~\cite{ge2015escaping}, show that a perturbed version of~\gd~converges to an $\epsilon$-relaxed 
+version of a second-order stationary point (see Definition \ref{def:SOSP}) in $\tilde{O}(1/\epsilon^2)$ 
+iterations.  That is, perturbed \gd~in fact finds second-order stationary points as fast as
+standard \gd~finds first-order stationary points, up to logarithmic factors in dimension.
+
+On the other hand,~\gd~is known to be suboptimal in the convex case. 
+In a celebrated paper, \citet{nesterov1983method} showed that an accelerated version of
+gradient descent (\nag), which takes ``momentum steps'' in addition to gradient steps, finds an~\ESP~(see Section \ref{sec:prelim_convex}) in  $O(1/\sqrt{\epsilon})$ 
+steps, while gradient descent takes $O(1/\epsilon)$ steps. The basic idea of momentum acceleration
+has been used to design faster algorithms for a range of other convex optimization 
+problems~\citep{beck2009fast,nesterov2012efficiency,lee2013efficient}.
+We will refer to this general family as ``momentum-based methods.''
+Such results have focused on the convex setting. 
+
+In the nonconvex setting, while there has been recent work on designing accelerated 
+algorithms that converge faster than GD~\citep[see, e.g.,][]{agarwal2017finding, carmon2016accelerated,carmon2017convex}, these proposals rely on more complex mechanisms,
+including nested loops and the incorporation of proximal terms to achieve the
+faster rate.  In contrast, empirically, Nesterov's classical, single-loop
+AGD and the related family of ``momentum-based algorithms''---have been 
+used successfully in modern large-scale nonconvex applications, where they
+have been observed to perform better than GD \citep{sutskever2013importance}.
+Providing a theoretical understanding of the scope of this phenomenon, and its
+possible limitations, is an interesting and important open problem.
+We are thus led to ask the following question: 
+% In the nonconvex setting, while several theoretical existing results showing convergence rate faster than gradient descent \citep{}, all those algorithms rely on more complex mechanisms such as nested-loop and adding proximal terms. 
+% On the other side in practice, gradient descent with momentum are still heavily used in modern nonconvex applications including deep networks \citep{sutskever2013importance}. 
+% It is open as to whether such simple momentum-based methods yield faster rates in the \emph{nonconvex setting}, specifically when we consider the convergence criterion of second-order stationarity.  We are thus led to ask the following question: 
+
+\textbf{Does Nesterov's \nag~(or a simple variant) yield faster convergence than~\gd~in 
+general nonconvex setting?}
+
+
+% Comparison to the convex setting gives rise to the natural question of whether momentum helps in escaping saddle points faster than~\gd. Formally, we ask
+
+% A widely used framework for designing efficient algorithms, especially in the context of large scale optimization, is that of \emph{first order oracle}, where the algorithm has access to gradients of the function to be optimized.
+% Traditionally, first order oracle algorithms have been well studied for convex optimization. Gradient descent~\cite{cauchy1847} is the simplest and most classical example of first order oracle algorithms. Given first order oracle access to a smooth convex function, gradient descent (\gd) obtains a point whose suboptimality is at most $\epsilon$ in $\order{\frac{1}{\epsilon}}$ steps. However, it turns out that~\gd~is not optimal in the number of steps taken. In a celebrated paper~\cite{nesterov1983method}, Nesterov proposed a new first order oracle algorithm that achieves optimal convergence speed (for convex problems). This algorithm, called Nesterov's accelerated gradient descent (\nag), obtains a point whose suboptimality is at most $\epsilon$ in $\order{\frac{1}{\sqrt{\epsilon}}}$ steps.~\nag~is also broadly called a momentum algorithm since each step of the algorithm consists of both the current gradient as well as direction from the previous step akin to momentum in physics. Ever since~\nag~was proposed, it has been a subject of intense study, with several works using ideas behind it to design faster algorithms for different settings of \emph{convex optimization}. We refer the reader to~\cite{beck2009fast,nesterov2012efficiency,lee2013efficient,shalev2014accelerated} and references therein for an account of this study.
+
+% \emph{Is there a simple momentum based algorithm that can find $\epsilon$-second order stationary points in less than $\otilde{\frac{1}{\epsilon^2}}$ steps?}
+%\citet{jin2017escape} proves GD finds second order stationary point in $\tilde{O}(1/\epsilon^2)$ iterations, while 
+%\citet{carmon2016accelerated, agarwal2016finding} achieves $\tilde{O}(1/\epsilon^{7/4})$ but with much more complicated mechanism using Hessian-vector, nested loop. can we actually achieve this with pure gradient algorithm? specifically the classical Nestrov's accelerated gradient descent, if yes, what's the mechanism behind that.
+% \cnote{discuss the structure to write intro}
+
+% \subsection{Contributions of this Paper}
+
+
+
+
+\begin{algorithm}[t]
+\caption{Nesterov's Accelerated Gradient Descent ($\x_0, \eta, \theta$)}\label{algo:AGD}
+\begin{algorithmic}[1]
+\STATE $\v_0 \leftarrow 0$
+\FOR{$t = 0, 1, \ldots, $}
+\STATE $\y_{t} \leftarrow \x_{t} + (1-\theta) \v_t$
+\STATE $\x_{t+1} \leftarrow \y_t - \eta \grad f (\y_t)$
+\STATE $\v_{t+1} \leftarrow \x_{t+1} - \x_t $
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+% \begin{algorithm}[t]
+% \caption{Perturbed Accelerated Gradient Descent 
+% ($\x_0, \eta, \theta, \gamma, s, r, \utime$)}\label{algo:PAGD}
+% \begin{algorithmic}[1]
+% \State $\v_0 \leftarrow 0$
+% \For{$t = 0, 1, \ldots, $}
+% \If{$\norm{\grad f(\x_t)} \le \epsilon$ and \emph{no perturbation in last $\utime$ steps}}
+% \hspace{4em}\rlap{\smash{$\left.\begin{array}{@{}c@{}}\\{}\end{array} \color{blue} \right\}%
+% 		\color{blue}\begin{tabular}{l}{Perturbation}\end{tabular}$}}
+% \State $\x_t \leftarrow \x_t + \xi_t \qquad \xi_t \sim \text{Unif}\left(\mathbb{B}_0(r)\right)$
+% \EndIf
+% \State $\y_{t} \leftarrow \x_{t} + (1-\theta) \v_t$
+% \State $\x_{t+1} \leftarrow \y_t - \eta \grad f (\y_t)$
+% \hspace{20em}\rlap{\smash{$\left.\begin{array}{@{}c@{}}\\{}\\{}\end{array} \color{blue} \right\}%
+% 		\color{blue}\begin{tabular}{l}{\nag}\end{tabular}$}}
+% \State $\v_{t+1} \leftarrow \x_{t+1} - \x_t $
+% % \If{along $\y_t$ to $\x_t$ is too nonconvex}
+% \If{$f(\x_t) \le  f(\y_t) + \la \grad f(\y_t), \x_t - \y_t \ra - \frac{\gamma}{2} \norm{\x_t - \y_t}^2$}
+% \State $(\x_{t+1}, \v_{t+1}) \leftarrow $ Negative-Curvature-Exploitation($\x_t, \v_t, s$)
+% \hspace{0.5em}\rlap{\smash{$\left.\begin{array}{@{}c@{}}\\{}\end{array} \color{blue} \right\}%
+% 		$}{\color{blue}\begin{tabular}{l}Negative curvature\\exploitation\end{tabular}}}
+% \EndIf
+% \EndFor
+% % \State \textbf{return} $\x_T$
+% \end{algorithmic}
+% \end{algorithm}
+
+
+
+
+This paper answers this question in the affirmative. We present a simple momentum-based algorithm (\pagd~for ``perturbed~\nag'') that finds an $\epsilon$-second order stationary point in $\tilde{O}(1/\epsilon^{7/4})$ iterations, faster than the $\tilde{O}(1/\epsilon^{2})$ iterations required by~\gd.
+%gradient descent \citep{jin2017escape}.
+The pseudocode of our algorithm is presented in Algorithm~\ref{algo:PAGD}.\footnote{See Section~\ref{sec:results} for values of various parameters.}
+%Our algorithm as highlighted in Algorithm \ref{algo:PAGD}.
+\pagd~adds two algorithmic features to~\nag~(Algorithm \ref{algo:AGD}):
+\begin{itemize}
+\item Perturbation (Lines 3-4): when the gradient is small, we add a small perturbation sampled uniformly from a $d$-dimensional ball with radius $r$.
+The homogeneous nature of this perturbation mitigates our lack of knowledge of the curvature tensor
+at or near saddle points.
+\item Negative Curvature Exploitation (\nce, Lines 8-9; pseudocode in Algorithm~\ref{algo:NCE}):
+when the function is observed to have ``a lot'' of negative curvature along $\y_t$ to $\x_t$ direction, we simply move $\x$ along this direction based on current momentum $\v_t$, and then reset $\v$.
+% when the function becomes ``too nonconvex'' along $\y_t$ to $\x_t$, we reset the momentum and 
+% decide whether to exploit negative curvature depending on the magnitude of the current momentum $\v_t$. 
+%This guarantees a decrease of our Hamiltonian criterion function even in the highly nonconvex 
+%setting (see Section \ref{sec:tech} for details).
+\end{itemize}
+We note that both components are straightforward to implement and increase computation by a constant factor. 
+The perturbation idea follows from~\cite{ge2015escaping} and~\cite{jin2017escape}, while~\nce~is 
+inspired by~\citet{carmon2017convex}.
+We note that the analysis of the NCE subroutine is rather straightforward (see Section \ref{sec:results} and Section \ref{sec:hamiltonian} for more details); the main challenge of this paper is to understand the behavior of perturbation and Nesterov's AGD steps in the nonconvex setting.
+% This paper shows that \pagd~escapes saddle points and finds a second-order stationary point in $\tilde{O}(1/\epsilon^{7/4})$ iterations, matching the best existing convergence rate, which is faster than the $\tilde{O}(1/\epsilon^{2})$ iterations required by~\gd.
+To the best of our knowledge, \pagd~is the first instance of a single-loop 
+algorithm (meaning that it does not require an inner loop of optimization of 
+a surrogate function) that is provably faster than GD in a general nonconvex setting.
+
+% , while all previous nonconvex accelerated algorithms rely on more complex mechanisms such as nested-loop and adding proximal terms.
+
+% \pagd~is the first Hessian-free algorithm to find a second-order stationary point in $\tilde{O}(1/\epsilon^{7/4})$ steps.  Note also that \pagd~is a ``single-loop algorithm,'' 
+% meaning that it does not require an inner loop of optimization of a surrogate function.  It is the
+% first single-loop algorithm to achieve a $\tilde{O}(1/\epsilon^{7/4})$ rate even in the setting of 
+% finding a first-order stationary point. 
+
+% \pn{Informal theorem here? Might have to introduce too much notation.}
+
+% \pn{Single loop vs two loops etc.
+% 	Compare to Carmon et al. papers and others you will compare in the table.}
+% \cnote{See section ?? for overview of our techniques}
+
+
+% \begin{enumerate}
+% \item Nonconvex first order GD rate
+% \item Nonconvex why second order
+% \item Nonconvex second order GD rate
+% \item Acceleration and convex
+% \item Question
+% \item Our algorithm and result
+% \end{enumerate}
+
+\begin{algorithm}[t]
+\caption{Perturbed Accelerated Gradient Descent 
+($\x_0, \eta, \theta, \gamma, s, r, \utime$)}\label{algo:PAGD}
+\begin{algorithmic}[1]
+\STATE $\v_0 \leftarrow 0$
+\FOR{$t = 0, 1, \ldots, $}
+\IF{$\norm{\grad f(\x_t)} \le \epsilon$ and \emph{no perturbation in last $\utime$ steps}}
+\STATE $\x_t \leftarrow \x_t + \xi_t \qquad \xi_t \sim \text{Unif}\left(\mathbb{B}_0(r)\right)$
+\hspace{12.2em}\smash{\raisebox{\dimexpr.4\normalbaselineskip+.5\jot}{\begin{scriptsize}
+$%
+            \left.\begin{array}{@{}c@{}}\\[\jot]\\[\jot]\end{array}\right\}$ \end{scriptsize} $\text{Perturbation}$}}
+\ENDIF
+\STATE $\y_{t} \leftarrow \x_{t} + (1-\theta) \v_t$
+\STATE $\x_{t+1} \leftarrow \y_t - \eta \grad f (\y_t)$
+\hspace{19.3em}\rlap{\smash{$\left.\begin{array}{@{}c@{}}\\{}\\{}\end{array}  \right\}%
+        \begin{tabular}{l}{\nag}\end{tabular}$}}
+\STATE $\v_{t+1} \leftarrow \x_{t+1} - \x_t $
+% \If{along $\y_t$ to $\x_t$ is too nonconvex}
+\IF{$f(\x_t) \le  f(\y_t) + \la \grad f(\y_t), \x_t - \y_t \ra - \frac{\gamma}{2} \norm{\x_t - \y_t}^2$}
+\STATE $(\x_{t+1}, \v_{t+1}) \leftarrow $ Negative-Curvature-Exploitation($\x_t, \v_t, s$)
+% \hspace{0.5em}\rlap{\smash{$\left.\begin{array}{@{}c@{}}\\{}\end{array}  \right\}%
+%         $}{\begin{tabular}{l}Negative curvature\\exploitation\end{tabular}}}
+\hspace{2em}\smash{\raisebox{\dimexpr.4\normalbaselineskip+.5\jot}{\begin{scriptsize}
+            $\left.\begin{array}{@{}c@{}}\\[\jot]\\[\jot]\end{array}\right\}$
+        \end{scriptsize}%
+            $\begin{tabular}{l}Negative curvature\\exploitation\end{tabular}$}}
+\ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+% \vspace{-0.5cm}

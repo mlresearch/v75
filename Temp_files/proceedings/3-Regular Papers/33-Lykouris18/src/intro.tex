@@ -1,0 +1,70 @@
+% !TEX root = main.tex
+
+The online learning paradigm \citep{Littlestone1994,prediction_book}
+has become a key tool for solving a wide spectrum of problems such as  developing strategies for players in large multiplayer games \citep{Blum2006,Blum2008,Roughgarden15,LykourisST16,FosterLLST16},  designing online marketplaces and auctions \citep{BlumHartline,Cesa-Bianchi2013,Roughgarden:2016MRM}, portfolio investment \citep{Cover91,Freund97,HazanKaleAurora07}, online routing
+\citep{AwerbuchK04,KalaiVempala}. In each of these applications, the learner has to repeatedly select an action on every round. Different actions have different costs or losses associated with them on every round. The goal of the learner is to minimize her cumulative loss and the performance of the learner is evaluated by the notion of  ``\emph{regret}'', 
+defined as the difference between the cumulative loss of the learner, and the cumulative loss $L^\star$ of the benchmark. 
+
+The term ``\emph{small-loss} regret bound'' is often used to refer to bounds on regret that depend (or mostly depend) on $L^\star$, rather than the total number of rounds played $T$ often referred to as the time horizon. For instance, for many classical online learning problems, one can in fact show that regret can be bounded by $\widetilde O(\sqrt{L^\star})$ rather than $\widetilde O(\sqrt{T})$. However, these algorithms use the \emph{full information} model:  assume that
+on every round, the learner receives as feedback the losses of all possible actions (not only the selected actions). In such full information settings, it is well understood when small-loss bounds are achievable and how to design learning algorithms that attain them. However, in most applications, full information about losses of all actions is not available. 
+Unlike the full information case, the problem of obtaining small-loss regret bounds for partial information settings is poorly understood. Even
+in the classical multi-armed bandit problem,
+small-loss bounds are only known in expectation against the so called oblivious adversaries or comparing against the lowest expected cost of an arm (and not the actual lowest cost), referred to as pseudo-regret.
+
+The goal of this paper is to develop robust techniques for extending the small-loss guarantees to a broad range of partial feedback settings where learner only observes losses of selected actions and some neighboring actions. In the basic online learning model, at each round $t$, the decision maker or \emph{learner} chooses one action from a set of $d$ actions, typically referred to as \emph{arms}. Simultaneously an adversary picks a loss vector $\ell^t\in[0,1]^d$ indicating the losses for the $d$ arms. The learner suffers the loss of her chosen arm and observes some feedback. The variants of online learning differ by the nature of feedback received. The two most prominent such variants are the \emph{full information setting}, where the feedback is the whole loss vector, and the \emph{bandit setting} where only the loss of the selected arm is observed. Bandits and full information represent two extremes. In most realistic applications, a learner  choosing an action $i$, learns not only the loss $\ell_i^t$ associated with her chosen action $i$, but also some partial information about losses of some other actions. A simple and elegant model of this partial information is the \emph{graph-based} feedback model 
+\citep{MannorS11,AlonCGMMS}, where at every round, there is a (possibly time-varying) undirected graph $G^t$
+representing the information structure, where the possible actions are the nodes. If the learner selects an action $i$ and incurs the loss $\ell_i^t$, she observes the losses of all the nodes connected to node $i$ by an edge in $G^t$. Our main result is a general technique that allows us to use any full information learning algorithm as a black-box, and design a learning algorithm whose regret can be bounded with high probability as $o(\alpha L^{\star})$, where $\alpha$ is the maximum independence number of the feedback graphs. This graph-based information feedback model is a very general setting that can encode all of full information, bandit, as well as a number of other applications. 
+
+\subsection{Our contribution}
+
+\paragraph{Our results} We develop a unified, black-box technique to achieve small-loss regret guarantees with high probability in various partial information feedback models. We obtain the following results.
+\begin{itemize}
+\item We first provide a generic black box reduction from any small-loss full information algorithm. When used with known algorithms it achieves actual regret guarantees of 
+$\widetilde{\bigO}\prn*{(L^{\star})^{\nicefrac{2}{3}}}$ 
+that hold with high probability for any of pure bandits, semi-bandits, contextual bandits, or feedback graphs (with dependence on the information structure in the $\widetilde{\bigO}$ as $d^{\nicefrac{1}{3}}$ for the first three, and $\alpha^{\nicefrac{1}{3}}$ for feedback graphs).
+    There are three novel features of
+    this result. First, unlike most previous work in partial information that is heavily algorithm-specific, our technique is 
+    black-box in the sense that it takes as input a small-loss full information algorithm and, via a small modification, makes it work under partial information. Second, prior to our work, there was no data-dependent guarantee 
+    for general feedback graphs even for pseudo-regret (without dependence on the number of actions, i.e., taking advantage of the increased information feedback),  while we provide a high probability small-loss guarantee. 
+    Last, our guarantees are not for pseudo-regret but actual regret guarantees that hold with high probability. 
+\item We then show various applications.  The black-box nature of our reduction allows us to use the full information learning algorithms best suited for each application. We obtain small-loss guarantees for semi-bandits \citep{KalaiVempala} (including routing in networks), for contextual bandits \citep{Langford2007} (even with an infinite comparator class), as well as learning with slowly changing (shifting) comparators \citep{Herbster1998} as needed in games with dynamic population \citep{LykourisST16,FosterLLST16}.
+
+\item Finally, we focus on the special case of bandits, semi-bandits, graph feedback from fixed graphs, and shifting  comparators. In each setting we take advantage of properties of a learning algorithm best suited in the application to alleviate the inefficiencies resulting from the black-box nature of our general reduction.
+For  bandits and semi-bandits, we provide optimal small-loss actual regret high-probability guarantees of $\widetilde{\bigO}(\sqrt{dL^{\star}})$. Previous work for bandits and semi-bandits offered analogous bounds only for pseudo-regret and only in expectation.
+This answers an open question of \cite{Neu15_semibandits,Neu2015_implicit}. In the case of 
+fixed feedback graphs, we achieve optimal $\sqrt{L^*}$ dependence on loss, at the expense of the bound depending on clique-partition number of the graph, rather than the independence number. 
+\end{itemize}
+
+\paragraph{Our techniques}
+Our main technique is a dual-thresholding scheme that temporarily freezes low-performing actions, i.e. does not play them at the current round. Traditional partial information guarantees are based on creating an unbiased estimator for the loss of each arm and then running a full information algorithm on the estimated loses. The most prominent such unbiased estimator, called \emph{importance sampling}, is equal to the actual loss divided by the probability with which the action is played. This division can make the estimated losses unbounded in the absence of a lower bound on the probability of being played. Algorithms like EXP3 \citep{Auer2003} for the bandit setting or Exp3-DOM \citep{AlonCGMMS} for the graph-based feedback setting mix in a $\nicefrac{1}{\sqrt{T}}$ amount of noise which ensures
+that the range of losses is bounded.  Adding such uniform noise works well for learners maximizing utility, but can be very damaging when minimizing losses. In the case of utilities, playing low performing arms with a small $\epsilon$ probability, can only lose at most an $\epsilon$ fraction of the utility. In contrast, when the best arm has small loss, the losses incurred due to the noise can dominate. This approach can only return uniform bounds with $\bigO{(\sqrt{T})}$ 
+regret since, even in the case that there is a perfect arm that has $0$ loss, the algorithm keeps playing low-performing arms. Some specialized algorithms do achieve small-loss bounds for bandits, but these techniques extend neither to graph feedback nor to high probability guarantees (see also discussion below about related work).
+
+Instead of mixing in noise, we take advantage of the freezing idea, originally introduced by \cite{Allenberg2006} with a single threshold $\gamma$ offering a new way to adapt the multiplicative weights algorithm to the bandit setting.
+The resulting estimator is negatively 
+biased for the arms that are frozen but is always unbiased for the selected arm. 
+Using these expectations, the regret bound of the full information algorithm can be used to bound the expected regret compared to the expected loss of any fixed arm, achieving low pseudo-regret in expectation.
+To achieve good bounds, we need to guarantee that the total probability frozen is limited. By freezing arms with probability less than $\gamma$, the 
+total probability that is frozen at each round is at most $d\gamma$ and therefore contributes to a regret term of $d\gamma$ times the loss of the algorithm which gives a dependence on $d$ on the regret bound. This was analyzed in the context of multiplicative weights by \cite{Allenberg2006}.
+
+Our main technical contribution is to greatly expand the power of this freezing technique. We show how to apply it in a black-box manner with any full information learning algorithm and 
+extend it to graph-based feedback. To deal with the graph-based feedback setting, we suggest a novel and technically more challenging dual-threshold freezing scheme. The natural way to apply importance sampling in the graph-based feedback is by dividing the actual loss with the probability of being observed, i.e. the sum of the probabilities that the action and its neighbors are played. An initial approach is to freeze an action if its probability of being observed is below some threshold $\gamma$. We show that the total probability frozen by this step is bounded by $\alpha\gamma$, where $\alpha$ is the size of the maximum independent number of the feedback graph. To see why, consider a maximal independent set $S$ of the frozen actions and note that all frozen actions are observed by some node in $S$. 
+This observation seems to imply that we can replace the dependence on $d$ by a dependence on $\alpha$. However there are externalities among actions as freezing one action may affect the probability of another being observed. As a result, the latter may need to be frozen as well to ensure that all active arms are observed with probability at least $\gamma$ (and therefore obtain our desired upper bound on the range of the estimated losses). This causes a cascade of freezing, with possibly freezing a large amount of additional probability. 
+
+To limit this cascade effect, we develop a dual-threshold 
+freezing technique: we initially freeze arms that are observed with probability less than $\gamma$, and subsequently use a lower threshold $\gamma'=\nicefrac{\gamma}{3}$ and only freeze arms
+that are observed with probability less than $\gamma'$. This technique allows us to bound the total probability of arms 
+that are frozen subsequently by the total probability of arms 
+that are frozen initially. We prove this via an elegant combinatorial charging argument.
+
+
+Last, to go beyond pseudo-regret and guarantee actual regret bounds with high probability, it does not suffice to have the estimator be 
+negatively biased but we need to also obtain a handle on the variance. We prove that freezing also provides such a lever leading to a high-probability 
+$\widetilde{\bigO}{(\alpha^{\nicefrac{1}{3}}\prn*{L^{\star}}^{\nicefrac{2}{3}})}$
+regret guarantee that holds in a black-box manner. Interestingly, this freezing technique via a small modification enables the same guarantee for semi-bandits where the independent set is replaced by the number of elements (edges). 
+
+In order to obtain the optimal high-probability guarantee for bandits and semi-bandits, we need to combine our black box analysis with features of  concrete full information learning algorithms. The
+black-box nature of the previous analysis is extremely useful in demonstrating where additional features are needed. Combining our analysis with the implicit exploration technique of \cite{Kock2014EfficientLB}
+similarly as in the analysis of \cite{Neu2015_implicit}, we develop an algorithm based on multiplicative weights, which we term \emph{GREEN-IX}, which achieves the optimal high-probability small-loss bound
+$\widetilde{\bigO}(\sqrt{d L^{\star})}$
+for the pure bandit setting. Using an alternative technique of \cite{Neu15_semibandits}: truncation in the follow the perturbed leader algorithm, we also obtain the corresponding result for semi-bandits. 

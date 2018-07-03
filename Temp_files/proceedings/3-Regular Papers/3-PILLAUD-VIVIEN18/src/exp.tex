@@ -1,0 +1,82 @@
+%!TEX root = colt2018.tex
+
+
+In this section we want to show our main results, on the error made (on unseen data) by the $n$-th iterate of the regularized SGD algorithm. Hence, we go back to the original SGD recursion defined in Eq.~(\ref{eq:SGDrecursion}). Let us recall it:
+\begin{equation*}
+    {g}_n - g_\lambda =  \big[
+I - \gamma_n   (  K_{x_n} \otimes K_{x_n} + \lambda I ) \big]
+  ( {g}_{n-1} - g_\lambda )   + \gamma_n \varepsilon_n,
+\end{equation*}
+%
+with the noise term $\varepsilon_k  =   \xi_k K_{x_k}   +   (\Phg(x_k)- g_\lambda(x_k)) K_{x_k} - \E \left[ (\Phg(x_k)- g_\lambda(x_k)) K_{x_k} \right] \in \H.$ Like in the previous section we are going to state two results in two different settings, the first one for SGD with decreasing step-size ($\gamma_n = \gamma / n^\alpha$) and the second one for tail averaged SGD with constant step-size. For all the proofs of this section see the Appendix (section \ref{sec:error}).
+
+\subsection{SGD with decreasing step-size}
+
+In this section, we focus on decreasing step-sizes $\gamma_n = \gamma/n^\alpha$ for $\alpha \in (0,1)$, which lead to exponential convergence rates. Results for $\alpha=1$ and $\alpha=0$ can be derived in a similar way (but do not lead to exponential rates).
+\clearpage
+\begin{theorem}
+\label{th:erroralpha}
+Assume \asm{asm:separability}, \asm{asm:kernel-bounded}, \asm{asm:data-iid}, \asm{asm:flambda-correct-sign} and $\gamma_n = \gamma/n^\alpha$, $\alpha \in (0,1)$ for any $n$ and $\gamma\lambda < 1$. Let $g_n$ be the n-th iterate of the recursion defined in Eq.~\eqref{eq:SGDrecursion}, as soon as $n$ satisfies the inequality $\exp\left(  -\frac{\gamma\lambda}{1-\alpha}\left( (n+1)^{1-\alpha} -1  \right)   \right) \leqslant \delta / (5R\|g_0- g_\lambda\|_\H)$, then 
+\begin{align*}
+\closs(g_n) = \closs^*, \mbox{ with probability at least }1-2\exp\left( -\frac{ \delta^2}{C_R}\cdot n^{\alpha}\right),
+\end{align*}
+with $C_R = 2 ^{\alpha + 7}\gamma R^2 \tr \Sigma  \left(1+\|\Phg- g_\lambda\|^2_\infty\right)/\lambda+8\gamma R^2 \delta( 1 + 2 \| \Phg - g_\lambda\|_\infty )/3 $,  and in particular 
+$$ \expect{\closs(g_n) - \closs^*} \leqslant 2\exp\left( -\frac{ \delta^2}{C_R}\cdot n^{\alpha}\right).$$
+\end{theorem}
+%
+Note that Theorem \ref{th:erroralpha} shows that with probability at least $1-2\exp\left( -\frac{ \delta^2}{C_R}\cdot n^{\alpha}\right)$, the predictions of $g_n$ are perfect. We can also make the following observations:
+\vspace{-0.1cm}
+\BIT
+\itemsep-3pt
+
+\item The idea of the proof (see Appendix \ref{ap:EXPalpha} for the detailed proof) is the following: we know that as soon as $\|g_n - g_\lambda\|_\H \leqslant \delta/(2R)$, the predictions of $g_n$ are perfect (Lemma \ref{lm:appr-correct-sign-to-01}). We just have to apply Theorem \ref{th:SGDalpha} for to the original SGD recursion and make sure to bound each term by $\delta/(4R)$. Similar results for non-averaged SGD could be derived beyond least-squares (e.g., hinge or logistic loss) using results from~\citet{kakade2009generalization}. 
+
+\item Also note that the larger the $\alpha$, the smaller the bound. However, it is only valid for $n$ larger that a certain quantity depending of $\lambda \gamma$. A good trade-off is $\alpha=1/2$, for which we get an excess error  of $2\exp\left( -\frac{ \delta ^2}{C_R} n^{1/2}\right)$, which is valid as soon as 
+$n \geqslant \log(10 R \|g_0 - g_\lambda\|_\H / \delta)/(4\lambda^2\gamma^2)$. Notice also that we should go for large $\gamma \lambda $ to increase the factor in the exponential and make the condition happen as soon as possible.
+%
+\item If we want to emphasize the dependence of the bound on the important parameters, we can write that: $\expect{\closs(g_n) - \closs^*} \lesssim 2\exp\left( -\lambda \delta^2n^{\alpha}/R^2\right).$
+%
+\item When the condition on $n$ is not met, then we still have the usual bound obtained by taking directly the excess loss \citep{bartlett2006convexity} but we lose exponential convergence.
+
+\EIT
+% \begin{eqnarray*}
+%  \E (\closs_\rho(g_n)-\closs_\rho^*) &=&  \E (\closs_\rho(g_n)-\closs_\rho(g_\lambda)) \leqslant \delta^{-1}\big[ \E F_\lambda(g_n) - F_\lambda(g_\lambda) \big]= \delta^{-1}\E\|\Sigma^{1/2}(g_n - g_\lambda)\|^2_\H \\
+%  \E (\closs_\rho(g_n)-\closs_\rho^*) &\leqslant &  2 \delta^{-1}\exp\left(  -\frac{2\gamma\lambda}{1-\alpha}\left( (n+1)^{1-\alpha} -1  \right) \right) \|\Sigma\|_{\textrm op} \|g_0 - g_\lambda\|^2_\H + \delta^{-1}(\E V_n)^2,\\
+%  \ &\leqslant& 2 \delta^{-1} \exp\left(  -\frac{2\gamma\lambda}{1-\alpha}\left( (n+1)^{1-\alpha} -1  \right) \right) \|\Sigma\|_{\textrm op} \|g_0 - g_\lambda\|^2_\H \\
+%  & &
+%   \qquad + \delta^{-1}\frac{2^{\alpha + 2} (1+\|\Phg - g_\lambda\|^2_\infty)\gamma \tr \Sigma }{\lambda}\ \cdot \frac{1}{n^{\alpha}}.
+% \end{eqnarray*}
+
+\subsection{Tail averaged SGD with constant step-size}
+We now consider the tail-averaged recursion\footnote{The full averaging result corresponding to Theorem \ref{th:errortail} is proved in Appendix \ref{ap:EXPfullaverage}, Theorem \ref{th:expwithbias}.}, with the following result:
+
+\begin{theorem}
+\label{th:errortail}
+Assume \asm{asm:separability}, \asm{asm:kernel-bounded}, \asm{asm:data-iid}, \asm{asm:flambda-correct-sign} and $\gamma_n = \gamma$ for any n, $\gamma\lambda < 1$ and $\gamma \leqslant \gamma_0 = (R^2 + 2\lambda)^{-1}$. Let $g_n$ be the n-th iterate of the recursion defined in Eq.~(\ref{eq:SGDrecursion}), and $\bar{g}_n^{\textrm {tail}} = \frac{1}{\lfloor n/2 \rfloor} \sum_{i=\lfloor n/2 \rfloor}^{n} g_i$, as soon as $ n \geqslant 2/(\gamma\lambda)\ln (5R \|g_0-g_\lambda\|_\H/\delta)$, then 
+$$ \closs(\bar{g}_n^{\textrm {tail}}) = \closs^*, \mbox{ with probability at least }1-4\exp\left( - \delta^2 K_R (n+1)\right),$$
+with $K_R^{-1} =2^9 R ^2  \left(1+\|\Phg- g_\lambda\|^2_\infty\right)\tr(\Sigma(\Sigma + \lambda \idm)^{-2})+32 \delta R^2 ( 1 + 2 \| \Phg - g_\lambda\|_\infty )/ (3\lambda),$ and in particular
+$$ \expect{\closs(\bar{g}_n^{\textrm {tail}}) - \closs^*} \leqslant 4\exp\left( - \delta^2 K_R (n+1)\right).$$
+\end{theorem}
+%
+\clearpage
+Theorem \ref{th:errortail} shows that  with probability at least $1-4\exp\left( - \delta^2 K_R (n+1)\right)$, the predictions of $\bar{g}_n^{\textrm {tail}}$ are perfect. We can also make the following observations:
+\vspace{-0.2cm}
+\BIT
+\itemsep-3pt
+ 
+%
+\item The idea of the proof (see Appendix \ref{ap:EXPaverage} for the detailed proof) is the following: we know that as soon as $\|\bar{g}_n^{\textrm {tail}} - g_\lambda\|_\H \leqslant \delta/(2R)$, the predictions of $\bar{g}_n^{\textrm {tail}}$ are perfect (Lemma \ref{lm:appr-correct-sign-to-01}). We just have to apply  Corollary \ref{co:SGDtailaveraged} to   the original SGD recursion, and make sure to bound each term by $\delta/(4R)$. 
+%
+\item If we want to emphasize the dependence of the bound on the important parameters, we can write that: $\expect{\closs(g_n) - \closs^*} \lesssim 2\exp\left( -\lambda^2 \delta^2n/R^4\right).$ Note that the $ \lambda^2 $ could be made much smaller with assumptions on the decrease of eigenvalues of $\Sigma$ \citep[it has been shown][that if the decay happens at speed $1/n^{\beta}$: $\tr \Sigma (\Sigma + \lambda \idm)^{-2} \leqslant \lambda^{-1}\tr \Sigma (\Sigma + \lambda \idm)^{-1}\leqslant R^2 / \lambda^{1+1/\beta}$]{caponnetto2007optimal}.
+%
+\item We want to take $\gamma \lambda$ as big as possible to satisfy quickly the condition. In comparison to the convergence rate in the case of decreasing step-sizes, the dependence on $n$ is improved as the convergence is really an exponential of $n$ (and not of some power of $n$ as in the previous result). 
+%
+\item Finally, the complete proof for the full average is contained in Appendix \ref{ap:EXPfullaverage} and more precisely in Theorem \ref{th:expwithbias}.
+
+\EIT
+
+
+
+
+
+

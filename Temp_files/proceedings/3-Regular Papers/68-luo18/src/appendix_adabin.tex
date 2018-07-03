@@ -1,0 +1,319 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%   AdaGreedy3 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Omitted Details for \AdaBIN}\label{app:AdaBIN}
+In \AdaBIN, the bin length is set to $H^{\frac{1}{2}}$, and the probability of an exploration bin is $b^{-\frac{1}{2}}$. These two values are not clear before we derive the regret bound and select them optimally. In the following analysis, we will keep them as variables before reaching the final steps. Specifically, we let the bin length be $H^{\gamma}$ (therefore Line~\ref{line:forloop of bin} would be a for-loop from $1$ to $H^{1-\gamma}$, while Line~\ref{line:forloop of bin step} from $1$ to $H^\gamma$); and we let the exploration probability at Line~\ref{line:exploration prob} be $b^{-\theta}$. %The reader can just keep in mind that $\gamma$ and $\theta$ are both equal to $\frac{1}{2}$ in the following analysis. 
+
+In \AdaBIN, if an interval $\calI$ is an subinterval of an exploration bin, by Freedman's inequality, with probability at least $1-\delta/T^2$, 
+\begin{align}
+\left| \avgR_{\calI}(\pi) - \calR_{\calI}(\pi) \right| \leq \alpha_{\calI}. \label{eq:concentration4}
+\end{align}
+For a general interval $\calI$, we have with probability at least $1-\delta/T^2$, 
+\begin{align}
+\left| \avgR_{\calI}(\pi) - \calR_{\calI}(\pi) \right| \leq \beta_{\calI}. \label{eq:concentration6}
+\end{align}
+We now define the high probability event that is used in \AdaBIN's analysis: 
+\begin{definition}[$\evt 3$]
+Define $\evt 3$ to be the following event: for all $\pi\in\Pi$, all interval $\calI\subseteq [1,T]$, Eq.\eqref{eq:concentration4} holds if $\calI$ is an subinterval of an exploration bin; Eq.\eqref {eq:concentration6} holds if otherwise. 
+\end{definition}
+A union bound over these events implies that $\evt 3$ holds with probability at least $1-\delta/2$. 
+
+In this subsection, we use $S^\p$ to denote the total number of epochs in the whole time horizon, and use $\calE_1, \calE_2, \ldots, \calE_{S^\p}$ to denote individual epochs. Besides, we denote $K^\p=K\ln(N/\delta)$. We also use notations that are defined at the beginning of Appendix~\ref{app:AdaEG2}. 
+
+We analyze \AdaBIN under the switching and drifting distribution settings in the following two subsections respectively. 
+\subsection{Switching Regret}
+\begin{lemma}
+\label{thm: Ada3 not many rerun}
+With probability at least $1-\delta/2$, $S^\p\leq S$. 
+\end{lemma}
+\begin{proof}
+It suffices to prove that under $\evt 3$, at any time $t$ if there is no distribution change from the start of the epoch, the algorithm will not rerun. 
+
+Let $t$ be in epoch $i$ and block $j$, and is in an exploration bin. Suppose $\calD_{T_i+1} = \calD_{T_i+2} = \cdots = \calD_{t}$. For any $\ell$ such that $[t-\ell+1, t]$ is a subset of the bin, denoting $A=[t-\ell+1,t]$ and $B=[T_i+1, T_i+2^{j-1}-1]$. When $j>1$, we have for any $\pi$,
+\begin{align*}
+\avgR_{A}(\pi) & \leq \calR_{A}(\pi)+\alpha_{A} 
+\tag{by \eqref{eq:concentration4}} \\
+&= \calR_{B}(\pi)+\alpha_{A} 
+\tag{the distribution does not change from $T_i$ to $t$}\\
+&\leq \avgR_{B}(\pi)+\alpha_{A}+\beta_{B} 
+\tag{by \eqref{eq:concentration6}}\\
+&\leq \avgR_{B}(\hat{\pi}_{B})+\alpha_{A}+\beta_{B} 
+\tag{by the optimality of $\hat{\pi}_B$}\\
+&\leq \calR_{B}(\hat{\pi}_{B})+\alpha_{A}+2\beta_{B} 
+\tag{by \eqref{eq:concentration6}} \\
+&= \calR_{A}(\hat{\pi}_{B})+\alpha_{A}+2\beta_{B} 
+\tag{the distribution does not change from $T_i$ to $t$}\\
+&\leq \avgR_{A}(\hat{\pi}_{B})+2\alpha_{A}+2\beta_{B}. 
+\tag{by \eqref{eq:concentration4}}
+\end{align*}
+Therefore, $\test(t)$ would return \false. Hence, conditioned on $\evt 3$, the algorithm ends an epoch only when there is some distribution change. This proves the lemma. 
+
+\end{proof}
+
+\begin{definition}[flat bin]
+A bin $\calI$ in epoch $i$ and block $j$ is called a \textit{flat bin} if for all $\pi\in\Pi$ and for all $[s,e]$ such that 1) $[s,e] \subseteq \calI$ and 2) $e-s+1=2^q$ for some nonnegative integer $q$, the following holds (with $B(i,j)=[T_i+1,T_i+2^{j-1}-1]$):
+\begin{equation}
+\calR_{[s,e]}(\pi)\leq \calR_{[s,e]}(\hat{\pi}_{(i,j)}) + 2\beta_{B(i,j)}(\pi)+4\alpha_{[s,e]}.
+\end{equation}
+\end{definition}
+The above definition basically says that in a flat bin, $\hat{\pi}_{(i,j)}$ performs well in the sense that for any $\pi$, $\calR_{[s,e]}(\pi)-\calR_{[s,e]}(\hat{\pi}_{(i,j)})$ is small in all sub-intervals $[s,e]$ such that $e-s+1=2^q$. Since in an exploitation bin, the learner mostly plays $\hat{\pi}_{(i,j)}$, we have the following lemma saying that the regret contributed from \textit{flat exploitation bins} is small. 
+
+\begin{lemma} 
+\label{lemma:switch_flat_exploitation}
+\AdaBIN always ensures the following:
+\begin{align*}
+&\sum_{t=1}^T \E_t[r_t(\pi^\star_t(x_t)) - r_t(a_t)] \one\{t \text{ is in flat exploitation bins}\} \\
+&\leq \otil\left(\sqrt{K^\p}\left(S^{\p\frac{1}{4}}T^{\frac{3}{4}} + \sqrt{S T}\right) + K^\p\left(\sqrt{S^\p T} + S \right)\right). 
+\end{align*}
+\end{lemma}
+
+\begin{proof}
+The proof will go through several stages: we sequentially calculate the regret in a bin, a block, an epoch, and then the whole time horizon; the regret in a later level is simply a summation over its previous level. Most proofs in this section are all in this form. 
+\begin{itemize}[leftmargin=*]
+\item \textbf{Regret in a bin.} 
+Let $\calI$ be a flat exploitation bin that lies in epoch $i$ and block $j$. Partition $\calI$ into $[s_1, e_1],\ldots, [s_{S_\calI}, e_{S_\calI}]$ such that for every $k\in[S_\calI]$, $[s_k,e_k]$ is an i.i.d. interval. For every $t\in[s_k,e_k]$, define $\ell_t=2^{\log_2\floor{t-s_k+1}}$ (that is, the longest $\ell\in\{1,2,4,8,\ldots\}$ such that $[t-\ell+1, t]\subseteq [s_k,e_k]$). By the definition of flat bin, we have for all $\pi$,
+\begin{align*}
+\calR_t(\pi)
+&=\calR_{[t-\ell_t+1,t]}(\pi) \tag{$[s_k,e_k]$ is i.i.d.}\\
+&\leq \calR_{[t-\ell_t+1,t]}(\hat{\pi}_{(i,j)}) + 2\beta_{B(i,j)}+4\alpha_{[t-\ell_t+1,t]} \tag{$\calI$ is a flat bin}\\
+&=\calR_t(\hat{\pi}_{(i,j)}) + 2\beta_{B(i,j)}+4\alpha_{[t-\ell_t+1,t]}. \tag{$[s_k,e_k]$ is i.i.d.}
+\end{align*}
+Therefore, 
+\begin{align*}
+\calR_t(\pi)-\calR_t(\hat{\pi}_{(i,j)}) &\leq \otil\left(\beta_{B(i,j)}+\sqrt{\frac{K'}{\ell_t}} + \frac{K'}{\ell_t}\right) 
+= \otil\left(\beta_{B(i,j)}+\sqrt{\frac{K'}{t-s_k+1}} + \frac{K'}{t-s_k+1}\right). 
+\end{align*}
+Thus, 
+\begin{align*}
+&\sum_{t \in \calI} \E_t[ r_t(\pi^\star_t(x_t)) - r_t(a_t)] \\
+&\leq \sum_{t \in \calI} (\calR_t(\pi^\star_t(x_t)) - \calR_t(\hat{\pi}_{(i,j)})) + \sum_{t \in \calI} K\mu_t \\
+&=\sum_{k=1}^{S_\calI} \sum_{t=s_k}^{e_k}(\calR_t(\pi^\star_t(x_t)) - \calR_t(\hat{\pi}_{(i,j)})) + \sum_{t \in \calI} K\mu_t \\
+&\leq \otil\left(\sum_{k=1}^{S_\calI} \sqrt{K'(e_k-s_k+1)} + K' + \sum_{t\in\calI} (\beta_{B(i,j)} + K\mu_t) \right) \\
+& \leq \otil\left(\sqrt{K'S_\calI\abs{\calI}} + K'S_\calI + \sum_{t\in\calI} (\beta_{B(i,j)} + K\mu_t) \right), 
+\end{align*}
+where in the last inequality, we use Cauchy-Schwarz inequality. 
+
+\item \textbf{Regret in a block.}
+Now we compute the regret contributed from flat explotation bins in a block $\calJ$ whose epoch and block indices are $i$ and $j$ respectively. Assume there are $\Gamma$ bins in $\calJ$. Then $\abs{\calJ}\leq 2^{j-1}$ and $\Gamma \leq 2^{(j-1)(1-\gamma)}$ by the algorithm. Let $\calI_1, \calI_2, \ldots, \calI_\Gamma$ be the bins in $\calJ$, we have $\sum_{b=1}^{\Gamma}S_{\calI_b}\leq  S_{\calJ} + \Gamma$ (because the boundaries between bins can cut a stationary interval into two). By our conclusion at the previous stage, 
+\begin{align*}
+&\sum_{t \in \calJ} \E_t[ (r_t(\pi^\star_t(x_t)) - r_t(a_t))]\one\{t \text{ is in flat exploitation bins}\}  \\
+&\leq \sum_{b=1}^{\Gamma} \otil\left(\sqrt{K^\p S_{\calI_b}\abs{\calI_b}} + K^\p S_{\calI_b}\right) + \sum_{t\in\calJ} \otil(\beta_{B(i,j)}+K\mu_t) \\
+&\leq \otil\left( \sqrt{K^\p (S_{\calJ} + \Gamma) \abs{\calJ} } + K^\p (S_{\calJ}+\Gamma)\right)+ \sum_{t\in\calJ} \otil(\beta_{B(i,j)}+K\mu_t) \tag{Cauchy-Schwarz}\\
+& \leq \otil\left(\sqrt{K^\p}\left(\sqrt{S_{\calJ}\abs{\calJ}} + 2^{(j-1)(1-\frac{\gamma}{2})}\right) +K^\p\left(S_{\calJ}+2^{(j-1)(1-\gamma)}\right) \right) + \sum_{t\in\calJ} \otil(\beta_{B(i,j)}+K\mu_t). \tag{$\Gamma\leq 2^{(j-1)(1-\gamma)}$ and $\abs{\calJ}\leq 2^{j-1}$}
+\end{align*}
+\item \textbf{Regret in an epoch.}
+Now we compute the regret in an epoch $\calE$. There are $\ceil{\log_2(1+\abs{\calE})}$ blocks in the epoch $\calE$, and we denote them by $\calJ_1, \calJ_2, \ldots, \calJ_{\ceil{\log_2(1+\abs{\calE})}}$. Similarly, we have $\sum_{j=1}^{\ceil{\log_2(1+\abs{\calE})}} S_{\calJ_j} \leq S_{\calE}+\ceil{\log_2(1+\abs{\calE})}$. Summing up the regret in individual blocks and again using Cauchy-Schwarz inequality, we get
+\begin{align*}
+&\sum_{t \in \calE} \E_t[ (r_t(\pi^\star_t(x_t)) - r_t(a_t))] \one\{t \text{ is in flat exploitation bins}\} \\
+&\leq \otil\left( \sqrt{K^\p} \left( \sqrt{S_\calE\abs{\calE}}   + \sum_{j=1}^{\ceil{\log_2(1+\abs{\calE})}} 2^{(j-1)(1-\frac{\gamma}{2})} \right) 
++ K^\p \left( S_\calE +  \sum_{j=1}^{\ceil{\log_2(1+\abs{\calE})}}  2^{(j-1)(1-\gamma)} \right) \right)  \\
+&\ \ \ +\otil\left(\sum_{t\in\calE} (\sqrt{K^\p}(t-T_i)^{-\frac{1}{3}} + K^\p(t-T_i)^{-\frac{2}{3}}) \right)\\
+&=\otil\left( \sqrt{K^\p}\left(\sqrt{S_\calE\abs{\calE}} + \abs{\calE}^{1-\frac{\gamma}{2}} + \abs{\calE}^{\frac{2}{3}}  \right) 
++ K^\p\left(S_\calE+ \abs{\calE}^{1-\gamma} + \abs{\calE}^{\frac{1}{3}} \right) \right)\\ 
+&=\otil\left( \sqrt{K'}\left(\sqrt{S_\calE \abs{\calE}} + \abs{\calE}^{\frac{3}{4}}\right) + K'\left(S_\calE + \abs{\calE}^{\frac{1}{2}}\right)\right)
+\end{align*}
+
+\item \textbf{Regret in the whole time horizon.}
+Finally, we sum the bound over epochs and use H\"{o}lder's inequality. Again, we have $\sum_{i=1}^{S^\p} S_{\calE} \leq S + S^\p$. 
+\begin{align*}
+&\sum_{t=1}^T \E_t[ (r_t(\pi^\star_t(x_t)) - r_t(a_t))]\one\{t \text{ is in flat exploitation bins}\}\\ 
+&\leq \otil\left(\sqrt{K^\p} \left( \sqrt{(S+S^\p)T} + S^{\p\frac{1}{4}}T^{\frac{3}{4}} \right) + K^\p (S+S^\p + S^{\p \frac{1}{2}} T^{\frac{1}{2}})\right) \\
+&\leq \otil\left(\sqrt{K^\p}\left(S^{\p\frac{1}{4}}T^{\frac{3}{4}} + \sqrt{S T}\right) + K^\p\left(\sqrt{S^\p T} + S \right)\right) .
+\end{align*}
+\end{itemize}
+\end{proof}
+
+Given we have low regret in flat exploitation bins, in the following two lemmas we bound the number of rounds in non-flat bins or exploration bins. 
+
+\begin{lemma}
+\label{thm:Ada3 exploration}
+With probability at least $1-\delta$, 
+\begin{align*}
+\sum_{t=1}^T \one\{t \text{ is in exploration bins}\} \leq \otil\left( S^{\p \frac{1}{4}} T^{\frac{3}{4}} \right). 
+\end{align*}
+\end{lemma}
+\begin{proof}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Regret in a block.}
+We first look at a block $\calJ$ whose block index is $j$. Recall that in this block, bin length is set to $2^{(j-1)\gamma}$. Conditioned on all history before $\calJ$, in $\calJ$ we have 
+\begin{align*}
+\sum_{b=1}^{2^{(j-1)(1-\gamma)}} \E_{\text{bin}(b)} [\one\{\text{bin } b \text{ is exploration}\}] \leq \sum_{b=1}^{2^{(j-1)(1-\gamma)}}b^{-\theta}\leq \order(2^{(j-1)(1-\gamma)(1-\theta)}), 
+\end{align*}
+where we slightly overload the notation, using $\E_{\text{bin}(b)}$ to denote that expectation conditioned on all history before bin $b$. 
+Applying Hoeffiding-Azuma's inequality, with probability at lest $1-\delta/(T\log_2 T)$, the number of exploration bins in $\calJ$ is upper bound by $\otil(2^{(j-1)(1-\gamma)(1-\theta)} + 2^{\frac{1}{2}(j-1)(1-\gamma)})$. In other words, 
+\begin{align*}
+\sum_{t\in\calJ} \one\{t \text{ is in exploration bins}\}&\leq 2^{(j-1)\gamma}\times \otil(2^{(j-1)(1-\gamma)(1-\theta)} + 2^{\frac{1}{2}(j-1)(1-\gamma)})\\
+&=\otil(2^{(j-1)(1-\theta+\gamma\theta)} + 2^{\frac{1}{2}(j-1)(1+\gamma)}).
+\end{align*}
+Using a union bound, we know that with probability $1-\delta$, the above bound holds for all $j$ and all blocks with index $j$ in the whole time horizon. The $T\log_2 T$ factor is because there can be at most $\log_2 T$ different $j$'s and at most $T$ blocks with index $j$. We call this $\evt 4$. In the following stages, we condition on $\evt 4$. 
+\item \textbf{Regret in an epoch.}
+Now sum the bound in the previous stage over blocks in an epoch $\calE$. Conditioning on $\evt 4$, we have
+\begin{align*}
+\sum_{t\in\calE} \one\{t \text{ is in exploration bins}\} &\leq \otil\left(\sum_{j=1}^{\ceil{\log_2(1+\abs{\calE})}} 2^{(j-1)(1-\theta+\gamma\theta)} +2^{\frac{1}{2}(j-1)(1+\gamma)} \right)\\
+&=\otil\left(\abs{\calE}^{1-\theta+\gamma\theta} + \abs{\calE}^{\frac{1}{2}+\frac{1}{2}\gamma}\right)=\otil\left(\abs{\calE}^{\frac{3}{4}}\right). 
+\end{align*}
+\item \textbf{Regret in the whole time horizon.}
+Finally, we sum over epochs in the whole time horizon and use union bound. Conditioning on $\evt 4$, we have
+\begin{align*}
+\sum_{t=1}^T \one\{t \text{ is in exploration bins}\} &\leq \otil\left( \sum_{i=1}^{S^\p} \abs{\calE_i}^{\frac{3}{4}}\right)\leq\otil\left( S^{\p \frac{1}{4}} T^{\frac{3}{4}}\right), 
+\end{align*}
+where in the final step we use H{\"o}lder's inequality.
+\end{itemize}
+\end{proof}
+
+\begin{lemma}
+\label{thm: Ada3 nonflat}
+With probability at least $1-\delta$,
+\begin{align*}
+\sum_{t=1}^T \one\{ t \text{ is in non-flat bins} \} \leq \otil\left( S^{\p \frac{1}{4}} T^{\frac{3}{4}}\right) . 
+\end{align*}
+\end{lemma}
+\begin{proof}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Regret in an epoch.}
+Let $\calI$ be a non-flat bin whose epoch and block indices are $i$ and $j$. Then there exists some $[s,e]\subseteq \calI$ such that $e-s+1=2^q$ and 
+\begin{equation*}
+\calR_{[s,e]}(\pi)> \calR_{[s,e]}(\hat{\pi}_{(i,j)}) + 2\beta_{B(i,j)}(\pi)+4\alpha_{[s,e]}.
+\end{equation*}
+Note that this can only holds for $j>1$. Furthermore, if $\evt 3$ holds and $\calI$ happens to be an exploration bin, then we have 
+\begin{gather*}
+\bigabs{\calR_{[s,e]}(\pi)-\avgR_{[s,e]}(\pi)}\leq \alpha_{[s,e]},\\
+\bigabs{\calR_{[s,e]}(\hat{\pi}_{(i,j)})-\avgR_{[s,e]}(\hat{\pi}_{(i,j)})}\leq \alpha_{[s,e]}.
+\end{gather*}
+Combining the three inequalities, we get 
+\begin{align*}
+\avgR_{[s,e]}(\pi)> \avgR_{[s,e]}(\hat{\pi}_{(i,j)}) + 2\beta_{B(i,j)}(\pi)+2\alpha_{[s,e]}.
+\end{align*}
+This event will make $\test(e)=\true$, which then triggers the rerun. The above argument indicates that as long as $\evt 3$ holds, the non-flat bins in an epoch would only include the first non-flat exploration bins (in which the whole epoch ends) and all non-flat exploitation bins that appear before it. Therefore, the key is to bound the number of non-flat exploitation bins that occur before the first non-flat exploration bin. 
+
+For an epoch $\calE$, let $j^*$ denote the last block index in it. Define $X$ to be the number of non-flat exploitation bins in $\calE$ that appear before the first non-flat exploration bin. 
+Note the following two facts: 1) the decision for a bin to be exploration or exploitation is independent of its flatness, 2) a bin with index $b$ is exploitation with probability $1-b^{-\theta}\leq 1-p_{\min}$, where $p_{\min}\triangleq 2^{-(j^*-1)(1-\gamma)\theta}$. Therefore, the probability $\text{Pr}\{X> x\}$ is upper bounded by $(1-p_{\min})^x$. This is because when $X>x$, the first $x$ non-flat bins in the epoch all need to be exploitation bins.
+%
+Picking $x$ to be $\frac{\ln (2T/\delta)}{p_{\min}}=2^{(j^*-1)(1-\gamma)\theta}\ln(2T/\delta)\leq \abs{\calE}^{(1-\gamma)\theta}\ln(2T/\delta)$, we get  $\text{Pr}\{X> x\}\leq(1-p_{\min})^x \leq (1/e)^{\ln (2T/\delta)}=\frac{\delta}{2T}$. 
+
+Define $\evt 5$ to be that in every epoch, the quantity $X$ is smaller than $\abs{\calE}^{(1-\gamma)\theta}\ln(2T/\delta)$. Since there are at most $T$ epochs, a union bound guarantees that $\evt 5$ holds with probability at least $1-\delta/2$. 
+
+Thus, when $\evt 3$ and $\evt 5$ both hold, we have
+\begin{align*}
+\sum_{t\in\calE} \one\{ t \text{ is in non-flat bins} \} \leq \abs{\calE}^{\gamma} \times \otil\left(\abs{\calE}^{(1-\gamma)\theta}\right)=\otil(\abs{\calE}^{\frac{3}{4}}) 
+\end{align*}
+because the bin length is at most $\abs{\calE}^{\gamma}$. 
+
+\item \textbf{Regret in the whole time horizon.}
+Finally we sum this over epochs and use union bound. From the above discussions, with probability at least $1-(1-\text{Pr}(\evt 3))-(1-\text{Pr}(\evt 5))\geq 1-\delta$, 
+\begin{align*}
+\sum_{t=1}^T \one\{ t \text{ is in non-flat bins} \}\leq \otil\left(\sum_{i=1}^{S^\p}\abs{\calE_i}^{\frac{3}{4}}\right)\leq \otil(S^{\p \frac{1}{4}}T^{\frac{3}{4}}). 
+\end{align*}
+\end{itemize}
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:Ada3 regret} (Part I: switching regret)]
+Combining Lemma~\ref{thm: Ada3 not many rerun}, \ref{lemma:switch_flat_exploitation}, \ref{thm:Ada3 exploration}, and~\ref{thm: Ada3 nonflat}, we see that with probability at least $1-5\delta/2$, 
+\begin{align*}
+\sum_{t=1}^T \E_t[r_t(\pi^\star_t(x_t)) - r_t(a_t)]
+&\leq \sum_{t=1}^T \Big( \E_t[r_t(\pi^\star_t(x_t)) - r_t(a_t)] \one\{t \text{ is in flat exploitation bins}\}  \\
+&\qquad+ \one\{t \text{ is in exploration bins}\} + \one\{ t \text{ is in non-flat bins} \}  \Big) \\
+&\leq \otil\left(\sqrt{K^\p}S^{\frac{1}{4}}T^{\frac{3}{4}}  + K^\p\sqrt{S T}\right). 
+\end{align*}
+Applying Hoeffding-Azuma inequality shows that with probability at least $1-3\delta$, 
+\[
+\sum_{t=1}^T r_t(\pi^\star_t(x_t)) - r_t(a_t) = \otil\left(\sqrt{K^\p}S^{\frac{1}{4}}T^{\frac{3}{4}}  + K^\p\sqrt{S T}\right).
+\]
+\end{proof}
+
+\subsection{Dynamic Regret}
+\begin{lemma}
+\label{lemma:dynamic S not much}
+With probability $1-\delta/2$, $S^\p \leq \otil(1+K^{\p -\frac{2}{5}}\Delta^{\frac{4}{5}}T^{\frac{1}{5}})$.
+\end{lemma}
+\begin{proof}
+Suppose that $\evt 3$ holds. When the $\test(t)$ returns \true at some $t$ in epoch $i$ and  block $j$, we have (let $A=[t-\ell+1,t], B=B(i,j)=[T_i+1, T_i+2^{j-1}-1]$):
+\begin{align*}
+\avgR_{A}(\hat{\pi}_{A}) > \avgR_{A}(\hat{\pi}_{B})+2\beta_{B} + 4\alpha_{A}. 
+\end{align*} 
+By the optimality of $\hat{\pi}_{B}$, we have
+\begin{align*}
+\avgR_{B}(\hat{\pi}_{A}) \leq \avgR_{B}(\hat{\pi}_{B}).
+\end{align*}
+The above two inequalities indicate for either $\pi=\hat{\pi}_{A}$ or $\pi=\hat{\pi}_{B}$, 
+\begin{align*}
+\bigabs{\avgR_{A}(\pi) - \avgR_{B}(\pi)} > \beta_{B} + 2\alpha_{A}.
+\end{align*}
+Since $\evt 3$ holds, 
+\begin{gather*}
+\bigabs{\avgR_{A}(\pi)-\calR_{A}(\pi)}\leq \alpha_{A},\\
+\bigabs{\avgR_{B}(\pi)-\calR_{B}(\pi)}\leq \beta_{B}. 
+\end{gather*}
+Combining the above three inequalities, we get
+\begin{align*}
+\bigabs{\calR_{A}(\pi)-\calR_{B}(\pi)}>\alpha_{A}. 
+\end{align*}
+Since $\bigabs{\calR_{A}(\pi)-\calR_{B}(\pi)}\leq \Delta_{\calE}$ and $\alpha_{A}=\Omega\left(\sqrt{\frac{K^\p}{\ell}}\right)=\Omega(K^{\p \frac{1}{2}}\abs{\calE}^{-\frac{\gamma}{2}})$, we have $\Delta_{\calE}\geq \Omega(K^{\p \frac{1}{2}}\abs{\calE}^{-\frac{\gamma}{2}})$. Now invoke this lower bound for all epochs in which rerun has been triggered (i.e., $\calE_1, \ldots, \calE_{S'-1}$). By H\"{o}lder's inequality, 
+\begin{align*}
+S^\p-1 
+&\leq \left(\sum_{i=1}^{S^\p-1} \abs{\calE_i}^{-\frac{\gamma}{2}} \right)^{\frac{2}{2+\gamma}} \left(\sum_{i=1}^{S^\p-1} \abs{\calE_i} \right)^{\frac{\gamma}{2+\gamma}} \\
+&\leq \tilde{\mathcal{O}}\left(K^{\p -\frac{1}{2+\gamma}}\left(\sum_{i=1}^{S'-1}\Delta_{\calE_i} \right)^{\frac{2}{2+\gamma}} T^{\frac{\gamma}{2+\gamma}} \right)  \\
+&\leq \tilde{\mathcal{O}}\left(K^{\p -\frac{1}{2+\gamma}} \Delta^{\frac{2}{2+\gamma}} T^{\frac{\gamma}{2+\gamma}} \right)  \\
+&= \tilde{\mathcal{O}}\left( K^{\p -\frac{2}{5}}\Delta^{\frac{4}{5}} T^{\frac{1}{5}} \right). 
+\end{align*}
+\end{proof}
+
+\begin{lemma}
+\label{lemma:dynamic flat exploitation}
+\AdaBIN always ensures the following
+\begin{align*}
+&\sum_{t=1}^T\E_t[r_t(\pi_t^\star(x_t))-r_t(a_t)]\one\{t \text{ is in flat-exploitation bins}\}
+\leq \otil\left(K^{\p}\Delta^{\frac{1}{3}}T^{\frac{2}{3}} + K^\p S^{\p \frac{1}{4}}T^{\frac{3}{4}} \right).
+\end{align*}
+\end{lemma}
+\begin{proof}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Regret in a bin.} 
+If $\calI$ is an flat exploitation bin in epoch $i$ and block $j$, then for all $[s,e]\subseteq \calI$ such that $e-s+1=2^q$, we have for all $\pi$,
+\begin{align*}
+\calR_{[s,e]}(\pi)\leq \calR_{[s,e]}(\hat{\pi}_{(i,j)}) + 2\beta_{B(i,j)}+4\alpha_{[s,e]},
+\end{align*}
+which implies (by expanding the definition of $\calR_{[s,e]}(\pi)$),
+\begin{align}
+\sum_{t=s}^{e} \E_t[r_t(\pi(x_t))-r_t(a_t)]&\leq \sum_{t=s}^{e} (\calR_t(\pi)-\calR_t(\hat{\pi}_{(i,j)})+K\mu_t) \nonumber \\
+&\leq \otil\left( \sqrt{K^\p (e-s+1)} + K^\p + \sum_{t=s}^e (\beta_{B(i,j)}+K\mu_t)\right). \label{eqn:ada3_vbound_single}
+\end{align}
+Now we divide the whole bin into intervals of length $L'=2^q$ for some integer $q$. Then we can use Lemma~\ref{lem:dynamic2interval} to relate the dynamic regret in the whole bin to the sum of interval regret against a fixed policy on each of the intervals (that is, Eq.~\eqref{eqn:ada3_vbound_single}).
+
+One subtle issue is that there might be one interval (the last one) whose length is less than $L'$. This interval can be further divided into no more than $\log_2L'$ subintervals whose length are all of $2$'s powers. As a whole, there are no more than $\frac{|\calI|}{L'}+\log_2 L'$ intervals each of length no more than $L'$. By Lemma~\ref{lem:dynamic2interval} and Eq.~\eqref{eqn:ada3_vbound_single}, we have
+\begin{align*}
+\sum_{t\in\calI} \E_t[r_t(\pi_t^\star(x_t))-r_t(a_t)]\leq \otil\left( \left(\frac{|\calI|}{L'} + \log_2 L'\right)(\sqrt{K'L'}+K') + L'\Delta_\calI + \sum_{t\in\calI} (\beta_{B(i,j)}+K\mu_t)\right). 
+\end{align*}
+Picking $ L'= \min\left\{2^{\floor{\log_2|\calI|}}, 2^{ \big\lfloor \frac{2}{3} \log_2 (|\calI|/\Delta_\calI)\big\rfloor } \right\} $, the right-hand side is further bounded by 
+\begin{align*}
+\otil\left(  K'|\calI|^{\frac{2}{3}}\var_\calI^{\frac{1}{3}} + K'|\calI|^{\frac{1}{2}} + \sum_{t\in\calI} (\beta_{B(i,j)}+K\mu_t)\right)
+\end{align*}
+
+\item \textbf{Regret in an epoch. }
+Next, we sum the regret over flat exploitation bins in an epoch. Note there are at most $\otil(\abs{\calE}^{1-\gamma})$ bins in an epoch $\calE$. Using H\"{o}lder's inequality, we have
+\begin{align*}
+&\sum_{t\in \calE} \E_t[r_t(\pi_t^\star(x_t))-r_t(a_t)]\one\{t \text{ is in flat exploitation bins}\}\\
+&\leq \otil\left(K^{\p} \abs{\calE}^{\frac{2}{3}}\Delta_\calE^{\frac{1}{3}} + K^{\p } \abs{\calE}^{1-\frac{\gamma}{2}}  + K^{\p\frac{1}{2}} \abs{\calE}^{\frac{2}{3}} \right) \\
+&= \otil\left(K^{\p} \abs{\calE}^{\frac{2}{3}}\Delta_\calE^{\frac{1}{3}} + K^{\p } \abs{\calE}^{\frac{3}{4}} \right).
+\end{align*}
+
+\item \textbf{Regret in the whole time horizon. }
+Summing over epochs and using H\"{o}lder's inequality, we get 
+\begin{align*}
+&\sum_{t=1}^T \E_t[r_t(\pi_t^\star(x_t))-r_t(a_t)]\one\{t \text{ is in flat exploitation bins}\}=\otil\left(K^{\p}\Delta^{\frac{1}{3}}T^{\frac{2}{3}} + K^\p S^{\p \frac{1}{4}}T^{\frac{3}{4}} \right). 
+\end{align*}
+
+\end{itemize}
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:Ada3 regret} (Part II: dynamic regret)]
+Combining Lemma~\ref{lemma:dynamic S not much}, \ref{lemma:dynamic flat exploitation}, \ref{thm:Ada3 exploration}, and~\ref{thm: Ada3 nonflat}, we see that with probability at least $1-5\delta/2$, 
+\begin{align*}
+\sum_{t=1}^T \E_t[r_t(\pi^\star_t(x_t)) - r_t(a_t)]\leq \otil\left(K'\var^{\frac{1}{3}}T^{\frac{2}{3}}  + K^\p\left(1+\var^{\frac{4}{5}}T^{\frac{1}{5}}\right)^{\frac{1}{4}} T^{\frac{3}{4}}\right)\leq \otil\left(K'\var^{\frac{1}{5}}T^{\frac{4}{5}}  + K^\p T^{\frac{3}{4}}\right). 
+\end{align*}
+Applying Hoeffding-Azuma inequality shows that with probability at least $1-3\delta$, 
+\[
+\sum_{t=1}^T r_t(\pi^\star_t(x_t)) - r_t(a_t) = \otil\left(K'\var^{\frac{1}{5}}T^{\frac{4}{5}}  + K^\p T^{\frac{3}{4}}\right).
+\]
+The theorem finally follows by a union bound combining the switching regret bound and the dynamic regret bound we have proven.
+\end{proof}

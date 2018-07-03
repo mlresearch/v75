@@ -1,0 +1,411 @@
+In this section, we show a Bayesian regret bound for the LinUCB algorithm under perturbed context generation. We focus on a version from \citet{abbasi2011improved}, as defined in \eqref{eq:Abbasi-f} on page~\pageref{eq:Abbasi-f}.
+
+Recall that the interval width function in \eqref{eq:Abbasi-f} is parameterized by numbers $L,S,c_0$. We use
+\begin{align}
+    L &\geq 1 + \rho \sqrt{2d \log(2T^3Kd)}, \nonumber \\
+    S &\geq \|\pmt\|_2 + \sqrt{3d\log T}
+    \quad \text{(and $S< T$)} \label{eq:LinUCB-params}\\
+    c_0 &= 1. \nonumber
+\end{align}
+Recall that $\rho$ denotes perturbation size, and $\pmt = \E{\theta}$, the prior means of the latent vector $\theta$.
+
+\begin{remark}
+Ideally we would like to set $L,S$ according to \eqref{eq:LinUCB-params} with equalities. We consider a more permissive version with inequalities so as to not require the exact knowledge of $\rho$ and $\|\pmt\|_2$.
+
+While the original result in \citet{abbasi2011improved} requires
+    $\|x_{a,t}\|_2\leq L$ and $\|\theta\|_2\leq S$,
+in our setting this only happens with high probability.
+\end{remark}
+
+We prove the following theorem (which implies Theorem~\ref{thm:main-worst-case}(a)):
+
+\begin{theorem}
+Assume perturbed context generation. Further, suppose that the maximal eigenvalue of the covariance matrix $\Sigma$ of the prior $\prior$ is at most $1$, and the mean vector satisfies
+    $\|\pmt\|_2\geq 1+\sqrt{3 \log T} $.
+The version of LinUCB with interval width function \eqref{eq:Abbasi-f} and parameters given by \eqref{eq:LinUCB-params} has Bayesian regret at most
+\begin{align}\label{eq:thm:LunUCB-main}
+    T^{1/3} \left( d^2\,S\,(K^2/\rho)^{1/3} \right)\cdot \polylog(TKLd).
+\end{align}
+\label{thm:LunUCB-main}
+\end{theorem}
+
+\begin{remark}
+The theorem also holds if the assumption on $\|\pmt\|_2$ is replaced with
+$d \ge \frac{\log T}{\log \log T}$. The only change in the analysis is that in the concluding steps (Section~\ref{app:linucb-coda}), we use Lemma~\ref{lem:smooth_oful_ex}(b) instead of Lemma~\ref{lem:smooth_oful_ex}(a).
+\end{remark}
+
+On a high level, our analysis proceeds as follows. We massage algorithm's regret so as to elucidate the dependence on the number of rounds with small ``gap" between the best and second-best action, call it $N$. This step does not rely on perturbed context generation, and makes use of the analysis from \citet{abbasi2011improved}. The crux is that we derive a much stronger upper-bound on $\E{N}$ under perturbed context generation. The analysis relies on some non-trivial technicalities on bounding the deviations from the ``high-probability" behavior, which are gathered in Section~\ref{app:linucb-deviations}.
+
+We reuse the analysis in \citet{abbasi2011improved} via the following lemma.%
+\footnote{Lemma~\ref{lem:reg_sq_bound}(a) is implicit in the proof of Theorem 3 from \citet{abbasi2011improved}, and Lemma~\ref{lem:reg_sq_bound}(b) is asserted by \citet[][Lemma 10]{abbasi2011improved}.}
+ To state this lemma,
+define the instantaneous regret at time $t$ as
+    $\iR{t} = \theta\tran x_t^* - \theta\tran x_{a_t, t} $,
+and let
+\[
+   \beta_T = \p{\sqrt{d \log \p{T(1 + TL^2)}} + S}^2.
+  \]
+
+\begin{lemma}[\citet{abbasi2011improved}]
+Consider a problem instance with reward noise $\mc N(0, 1)$ and a specific realization of latent vector $\theta$ and contexts $x_{a,t}$. Consider LinUCB with parameters $L,S,c_0$ that satisfy $\|x_{a,t}\|_2\leq L$, $\|\theta\|_2 \le S$, and $c_0= 1$. Then
+\begin{OneLiners}
+\item[(a)] with probability at least $1-\tfrac{1}{T}$ (over the randomness in the rewards) it holds that
+  \[
+    \textstyle  \sum_{t=1}^T\; \iR{t}^2 \le 16 \beta_T\; \log(\det(Z_t + I)),
+  \]
+  where $Z_t =\sum_{\tau=1}^t x_\tau x_\tau\tran\in \R^{d\times d}$ is the ``empirical covariance matrix" at time $t$.
+\item[(b)] $\det(Z_t+I) \le (1 +tL^2/d)^d$.
+\end{OneLiners}
+  \label{lem:reg_sq_bound}
+\end{lemma}
+
+The following lemma captures the essence of the proof of Theorem~\ref{thm:LunUCB-main}. From here on, we assume perturbed context generation. In particular, reward noise is $\mc N(0, 1)$.
+
+\begin{lemma}
+Suppose parameter $L$ is set as in \eqref{eq:LinUCB-params}. Consider a problem instance with a specific realization of $\theta$ such that $\|\theta\|_2 \le S$.
+Then for any $\gamma > 0$,
+  \begin{align*}
+    \E{\creg{}{T}} \le \|\theta\|_2^{-1/3}\;\p{\frac{1}{2\sqrt{\pi}} + 16 \beta_T\, d
+    \log(1 + TL^2/d)} \p{\frac{TK^2}{\rho}}^{1/3} + \tilde
+    O\p{1}.
+  \end{align*}
+  \label{lem:smooth_oful_step}
+\end{lemma}
+
+\begin{proof}
+We will prove that for any $\gamma > 0$,
+  \begin{align}\label{eq:pf:lem:smooth_oful_step}
+    \E{\creg{}{T}}
+    &\le T \cdot \frac{\gamma^2
+    K^2}{2\rho\|\theta\|_2\sqrt{\pi}} + \frac{1}{\gamma} 16 \beta_T\, d
+    \log(1 + TL^2/d) + \tilde O(1).
+  \end{align}
+The Lemma easily follows by setting $\gamma = (TK^2/(\rho \|\theta\|_2))^{-1/3}$.
+
+Fix some $\gamma>0$. We distinguish
+between rounds $t$ with $\iR{t}<\gamma $ and those with $\iR{t}\geq \gamma$:
+\begin{align}\label{eq:pf:lem:smooth_oful_step:2}
+  \creg{}{T} &= \sum_{t=1}^T \iR{t}
+  \le \sum_{t \in \mc T_\gamma} \iR{t} + \sum_{t=1}^T
+  \frac{\iR{t}^2}{\gamma}
+  \le \gamma |\mc T_\gamma| + \frac{1}{\gamma} \sum_{t=1}^T \iR{t}^2,
+\end{align}
+where $\mc T_\gamma = \{t : \iR{t} \in (0, \gamma)\}$.
+
+We use Lemma~\ref{lem:reg_sq_bound} to upper-bound the second summand in \eqref{eq:pf:lem:smooth_oful_step:2}. To this end, we condition on the event that every
+component of every perturbation $\varepsilon_{a, t}$ has absolute value at most $\sqrt{2 \log{2T^3
+Kd}}$; denote this event by $U$. This implies $\|x_{a,t}\|_2 \le L$ for all
+actions $a$ and all rounds $t$. By Lemma~\ref{lem:subg_union_bound}, $U$ is a high-probability event:
+    $\Pr[U] \ge 1 - \frac{1}{T^2}$.
+Now we are ready to apply Lemma~\ref{lem:reg_sq_bound}:
+\begin{align}\label{eq:pf:lem:smooth_oful_step:3}
+\textstyle \E{\sum_{t=1}^T \iR{t}^2 \given U}
+    \leq 16\,d\,\beta_T \,\log(1+tL^2/d).
+\end{align}
+To plug this into \eqref{eq:pf:lem:smooth_oful_step:2}, we need to account for the low-probability event $\bar{U}$. We need to be careful because $R_t$ could, with low probability, be arbitrarily large. By Lemma~\ref{lem:exp_reg_ub_er} with $\ell = 0$,
+\begin{align*}
+\E{R_t \given \bar U}
+    &\le 2\b{\|\theta\|_2 \p{1 + \rho(1+ \sqrt{2 \log K}) + \sqrt{2 \log(2T^3 Kd)}}} \\
+\E{\creg{}{T} \given \bar U} \Pr[\bar U]
+&= \textstyle \sum_{t=1}^T\;\E{R_t \given \bar U} /T^2 < \tilde O(1). \\
+\E{\creg{}{T} \given U}\; \Pr[U]
+    &\leq \textstyle \gamma\, \E{\;|\mc T_\gamma|\;}
+        + \frac{1}{\gamma} \E{\sum_{t=1}^T \iR{t}^2 \given U}
+            &\text{(by \eqref{eq:pf:lem:smooth_oful_step:2})}
+\end{align*}
+Putting this together and using \eqref{eq:pf:lem:smooth_oful_step:3}, we obtain:
+\begin{align}\label{eq:pf:lem:smooth_oful_step:4}
+\E{\creg{}{T}}
+    \leq
+        \gamma\, \E{\;|\mc T_\gamma|\;}
+        + \frac{16}{\gamma}\,d\,\beta_T \,\log(1+tL^2/d)+ \tilde O(1).
+\end{align}
+
+To obtain \eqref{eq:pf:lem:smooth_oful_step}, we analyze the first summand in \eqref{eq:pf:lem:smooth_oful_step:4}. Let $\Delta_t$ be the ``gap" at time $t$: the difference in expected rewards
+  between the best and second-best actions at time $t$ (where ``best" and
+  ``second-best" is according to expected rewards). Here, we're taking
+  expectations \emph{after} the perturbations are applied, so the only
+  randomness comes from the noisy rewards. Consider the set of rounds with small gap,
+  $\mc G_\gamma := \{t : \Delta_t < \gamma\}$.
+  Notice that $r_t \in (0, \gamma)$ implies $\Delta_t <\gamma$, so
+    $|\mc T_\gamma| \le |\mc G_\gamma|$.
+
+In what follows we prove an upper bound on $\E{|\mc G_\gamma|}$. This is the step where perturbed context generation is truly used. For any two arms $a_1$ and $a_2$, the gap between their expected
+  rewards is
+  \[
+    \theta\tran(x_{a_1,t} - x_{a_2,t}) = \theta\tran(\mu_{a_1,t} -
+    \mu_{a_2,t}) + \theta\tran(\varepsilon_{a_1,t} - \varepsilon_{a_2,t}).
+  \]
+  Therefore, the probability that the gap between those arms is smaller than
+  $\gamma$ is
+  \begin{align*}
+    \Pr&\b{|\theta\tran(\mu_{a_1,t} -
+    \mu_{a_2,t}) + \theta\tran(\varepsilon_{a_1,t} - \varepsilon_{a_2,t})| \le
+    \gamma} \\
+    &= \Pr\b{-\gamma - \theta\tran(\mu_{a_1,t} - \mu_{a_2,t}) \le
+    \theta\tran(\varepsilon_{a_1,t} - \varepsilon_{a_2,t}) \le \gamma -
+    \theta\tran(\mu_{a_1,t} - \mu_{a_2,t})}
+  \end{align*}
+  Since $\theta\tran\varepsilon_{a_1,t}$ and $\theta\tran\varepsilon_{a_2,t}$
+  are both distributed as $\mc N(0, \rho^2 \|\theta\|_2^2)$, their difference is
+  $\mc N(0, 2 \rho^2 \|\theta\|_2^2)$. The maximum value that the Gaussian
+  measure takes is $\frac{1}{2\rho\|\theta\|_2\sqrt{\pi}}$, and the measure in
+  any interval of width $2\gamma$ is therefore at most
+  $\frac{\gamma}{\rho\|\theta\|_2\sqrt{\pi}}$. This gives us the bound
+  \[
+    \Pr\b{|\theta\tran(\mu_{a_1,t} - \mu_{a_2,t}) +
+    \theta\tran(\varepsilon_{a_1,t} - \varepsilon_{a_2,t})| \le \gamma} \le
+    \frac{\gamma}{\rho\|\theta\|_2\sqrt{\pi}}.
+  \]
+  Union-bounding over all $\binom{K}{2}$ pairs of actions, we have
+\begin{align*}
+\Pr[\Delta_t \le \gamma]
+    &\le \Pr\b{\bigcup_{a_1, a_2 \in [K]}
+          |\theta\tran(x_{a_1,t} - x_{a_2,t})| \le \gamma}
+    \le \frac{K^2}{2} \frac{\gamma}{\rho\|\theta\|_2\sqrt{\pi}}.\\
+\E{\;|\mc G_\gamma|\;}
+    &= \sum_{t=1}^T \Pr[\Delta_t \le \gamma]
+    \le T \cdot \frac{K^2}{2} \frac{\gamma}{\rho\|\theta\|_2\sqrt{\pi}}.
+\end{align*}
+Plugging this into \eqref{eq:pf:lem:smooth_oful_step:4}
+  (recalling that
+    $|\mc T_\gamma| \le |\mc G_\gamma|$)
+  completes the proof.
+\end{proof}
+
+\subsection{Bounding the deviations}
+\label{app:linucb-deviations}
+
+We make use of two results that bound deviations from the ``high-probability" behavior, one on $\|\theta\|_2$ and another on instantaneous regret. First, we prove high-probability upper and lower bounds on $\|\theta\|_2$ under the conditions in Theorem~\ref{thm:LunUCB-main}. Essentially, these bounds allow us to use Lemma~\ref{lem:smooth_oful_step}.
+
+\begin{lemma}\label{lem:smooth_oful_ex}
+Assume the latent vector $\theta$ comes from a multivariate Gaussian,
+    $\theta \sim \mc N(\pmt, \pvt)$,
+here the covariate matrix $\pvt$ satisfies $\lambda_{\max}(\pvt) \le 1$.
+\begin{itemize}
+\item[(a)] If $\|\pmt\|_2 \ge 1+\sqrt{3\log T}$,  then
+  for sufficiently large $T$, with probability at least $1-\frac{2}{T}$,
+  \begin{align}\label{eq:lem:smooth_oful_ex}
+    \tfrac{1}{2\log T} \le \|\theta\|_2 \le \|\pmt\|_2 + \sqrt{3d \log T}.
+  \end{align}
+\item[(b)] Same conclusion if $d \ge \frac{\log T}{\log \log T}$.
+\end{itemize}
+\end{lemma}
+\begin{proof}
+  We consider two cases, based on whether $d \ge \log T/\log \log T$. We need both cases to prove part (a), and we obtain part (b) as an interesting by-product.
+We repeatedly use
+  Lemma~\ref{lem:chi_sq_conc}, a concentration inequality for $\chi^2$ random
+  variables, to show concentration on the Gaussian norm.
+
+  \textbf{Case 1:} $d \ge \log T/\log \log T$. \\
+  Since the Gaussian measure is decreasing in
+  distance from 0, the $\Pr\b{\|\theta\|_2 \le c} \le \Pr\b{\|\pmt - \theta\|_2
+  \le c}$ for any $c$. In other words, the norm of a Gaussian is most likely to
+  be small when its mean is 0. Let $X = \pvt^{-1/2} (\pmt - \theta)$. Note that
+  $X$ has distribution $\mc N(0, I)$, and therefore $\|X\|_2^2$ has $\chi^2$
+  distribution with $d$ degrees of freedom. We can bound this as
+  \begin{align*}
+    \Pr\b{\|\pmt - \theta\|_2 \le \frac{1}{2\log T}}
+    &= \Pr\b{\|\pvt^{-1/2}X\|_2 \le \frac{1}{2\log T}} \\
+    &\le \Pr\b{\sqrt{\lambda_{\max}(\pvt)}\|X\|_2 \le \frac{1}{2\log T}} \\
+    &\le \Pr\b{\|X\|_2 \le \frac{1}{2\log T}} \\
+    &= \Pr\b{\|X\|_2^2 \le \frac{1}{4(\log T)^2}} \\
+    &\le \p{\frac{1}{4d(\log T)^2} e^{1-1/((4\log T)^2 d)}}^{d/2} \tag{By
+      Lemma~\ref{lem:chi_sq_conc}} \\
+    &\le \p{\frac{\log \log T}{(\log T)^3}}^{\log T/(2\log \log T)} \tag{$d \ge
+    \log T/\log \log T$} \\
+    &= \frac{T^{\log \log \log T/(2 \log \log T)}}{T^{3/2}} \\
+    &\le T^{-1}
+  \end{align*}
+  Similarly, we can show
+  \begin{align*}
+    \Pr\b{\|\pmt - \theta\|_2 \ge \sqrt{d\log T}}
+    &= \Pr\b{\|\pvt^{-1/2}X\|_2 \ge \sqrt{d \log T}} \\
+    &\le \Pr\b{\sqrt{\lambda_{\max}(\pvt)}\|X\|_2 \ge \sqrt{d \log T}} \\
+    &\le \Pr\b{\|X\|_2 \ge \sqrt{d\log T}} \\
+    &= \Pr\b{\|X\|_2^2 \ge d \log T} \\
+    &\le \p{\log T e^{1-\log T}}^{d/2} \tag{By Lemma~\ref{lem:chi_sq_conc}} \\
+    &\le \p{\exp\p{1 + \log \log T - \log T}}^{\log T/(2\log \log T)} \tag{$d
+    \ge \log T/\log \log T$} \\
+    &= T^{(1 + \log \log T - \log T)/(2\log \log T)} \\
+    &\le T^{-1} \tag{For $\log T > 1 + 3 \log \log T$}
+  \end{align*}
+  By the triangle inequality,
+  \[
+    \|\pmt\|_2 - \|\pmt - \theta\|_2 \le \|\theta\|_2 \le \|\pmt\|_2 + \|\pmt -
+    \theta\|_2.
+  \]
+  Thus, in this case, $\frac{1}{2\log T} \le \|\theta\|_2 \le \|\pmt\|_2 +
+  \sqrt{d \log T}$ with probability at least $1-2T^{-1}$.
+
+  \textbf{Case 2:} $\|\pmt\|_2 \ge 1 + \sqrt{3 \log T}$ and $d < \log T/\log
+  \log T$. \\
+  For this part of the proof, we just need that $d < \log T$, which it is by
+  assumption. Using the triangle inequality, if $\|\pmt\|_2$ is large, it
+  suffices to show that $\|\pmt - \theta\|_2$ is small with high probability.
+  Again, let $X = \pvt^{-1/2} (\pmt - \theta)$. Then,
+  \begin{align*}
+    \Pr\b{\|\pmt - \theta\|_2 \ge \sqrt{3 \log T}}
+    &= \Pr\b{\|\pvt^{1/2} X\|_2 \ge \sqrt{3 \log T}} \\
+    &\ge \Pr\b{\sqrt{\lambda_{\max}(\pvt)} \|X\|_2 \ge \sqrt{3 \log T}} \\
+    &= \Pr\b{\|X\|_2 \ge \frac{\sqrt{3 \log T}}{\sqrt{\lambda_{\max}(\pvt)}}} \\
+    &\ge \Pr\b{\|X\|_2 \ge \sqrt{3 \log T}} \\
+    &= \Pr\b{\|X\|_2^2 \ge 3 \log T}
+  \end{align*}
+  By Lemma~\ref{lem:chi_sq_conc},
+  \begin{align*}
+    \Pr\b{\|X\|_2^2 \ge 3 \log T}
+    &\le \p{\frac{3\log T}{d} e^{1-\frac{3\log T}{d}}}^{d/2} \\
+    &= \p{T^{-3/d}e \frac{3\log T}{d}}^{d/2} \\
+    &= T^{-1} \p{T^{-1/d}e \frac{3\log T}{d}}^{d/2} \\
+    &\le T^{-1} \tag{for sufficiently large
+    $T$} \end{align*}
+  Because $\|\pmt\|_2 \ge 1 + \sqrt{3 \log T}$, $1 \le \|\theta\|_2 \le
+  \|\pmt\|_2 + \sqrt{3 \log T}$ with probability at least $1-T^{-1}$.
+\end{proof}
+
+Next, we show how to upper-bound expected instantaneous regret in the worst case.%
+\footnote{We state and prove this result in a slightly more general version which we use to support Section~\ref{sec:bayesian_greedy}. For the sake of this section, a special case of $\ell=0$ suffices.}
+
+\begin{lemma}
+Fix round $t$ and parameter $\ell>0$. For any $\theta$, conditioned on any history $h_{t-1}$ and the event that
+  $\|\varepsilon_{a,t}\|_\infty \ge \ell$
+for each arm $a$, the expected instantaneous regret of
+  any algorithm at round $t$ is at most
+  \[
+    2\, \|\theta\|_2\p{1 + \rho(2 + \sqrt{2 \log K}) + \ell}.
+  \]
+  \label{lem:exp_reg_ub_er}
+\end{lemma}
+\begin{proof}
+  The expected regret at round $t$ is upper-bounded by the reward difference
+  between the best arm $x_t^*$ and the worst arm $x_t^\dagger$, which is
+  \[
+    \theta\tran (x_t^* - x_t^\dagger).
+  \]
+  Note that $x_t^* = \mu_t^* + \varepsilon_t^*$ and $x_t^\dagger = \mu_t^\dagger
+  + \varepsilon_t^\dagger$. Then, this is
+  \begin{align*}
+    \theta\tran (x_t^* - x_t^\dagger) &=
+    \theta\tran (\mu_t^* - \mu_t^\dagger) + \theta\tran (\varepsilon_t^* -
+    \varepsilon_t^\dagger) \\
+    &\le 2\|\theta\|_2 + \theta\tran (\varepsilon_t^* - \varepsilon_t^\dagger)
+  \end{align*}
+  since $\|\mu_{a,t}\|_2 \le 1$. Next, note that
+  \[
+    \theta\tran \varepsilon_t^* \le \max_a \theta\tran \varepsilon_{a,t}
+  \]
+  and
+  \[
+    \theta\tran \varepsilon_t^\dagger \ge \min_a \theta\tran \varepsilon_{a,t}.
+  \]
+  Since $\varepsilon_{a,t}$ has symmetry about the origin conditioned on the
+  event that at least one component of one of the perturbations has absolute
+  value at least $\ell$, i.e. $v$ and $-v$ have equal likelihood, $\max_a
+  \theta\tran \varepsilon_{a,t}$ and $-\min_a \theta\tran \varepsilon_{a,t}$ are
+  identically distributed. Let $\elt$ be the event that at least one of the
+  components of one of the perturbations has absolute value at least $\ell$.
+  This means for any choice $\mu_{a,t}$ for all $a$,
+  \begin{align*}
+    \Exp \b{\theta\tran (x_t^* - x_t^\dagger) \given \elt}
+    &\le 2\|\theta\|_2 + 2 \Exp \b{\max_a \theta\tran
+    \varepsilon_{a,t} \given \elt}
+    %= 2\p{\|\theta\|_2 + \max_a \theta\tran \varepsilon_{a,t}}.
+  \end{align*}
+  where the expectation is taken over the perturbations at time $t$.
+
+  %\begin{align*}
+    %2\Exp_{\varepsilon_{a,t}} \b{\|\theta\|_2 + \max_a
+    %\theta\tran \varepsilon_{a,t} \given \elt}
+    %&= 2\p{\|\theta\|_2 + \Exp_{\varepsilon_{a,t}} \b{\max_a \theta\tran
+    %\varepsilon_{a,t} \given \elt}}
+  %\end{align*}
+  Without loss of generality, let $(\varepsilon_{a',t})_j$ be the component such
+  that $|(\varepsilon_{a',t})_j| \ge \ell$. Then, all other components have
+  distribution $\mc N(0, \rho^2)$. Then,
+  \begin{align*}
+    \Exp \b{\max_a \theta\tran \varepsilon_{a,t} \given
+    \elt}
+    &=\Exp \b{\max_a \theta\tran \varepsilon_{a,t} \given
+    |(\varepsilon_{a',t})_j| \ge \ell} \\
+    &=\Exp \b{\max(\theta\tran \varepsilon_{a',t}, \max_{a
+    \ne a'} \theta\tran \varepsilon_{a ,t}) \given |(\varepsilon_{a',t})_j| \ge
+    \ell} \\
+    &\le\Exp \b{\max\p{|\theta_j (\varepsilon_{a',t})_j| +
+    \sum_{i \ne j} \theta_i (\varepsilon_{a',t})_i, \max_{a \ne a'} \theta\tran
+    \varepsilon_{a ,t}} \given |(\varepsilon_{a',t})_j| \ge \ell}
+  \end{align*}
+  Let $(\tilde \varepsilon_{a,t})_i = 0$ if $a = a'$ and $i = j$, and
+  $(\varepsilon_{a,t})_i$ otherwise. In other words, we simply zero out the
+  component $(\varepsilon_{a',t})_j$. Then, this is
+  \begin{align*}
+    &\Exp \b{\max\p{|\theta_j (\varepsilon_{a',t})_j| +
+    \theta\tran \tilde \varepsilon_{a',t}, \max_{a \ne a'} \theta\tran
+    \tilde \varepsilon_{a ,t}} \given |(\varepsilon_{a',t})_j| \ge \ell} \\
+    &\le \Exp \b{\max_a \p{|\theta_j
+    (\varepsilon_{a',t})_j| + \theta\tran \tilde \varepsilon_{a,t}} \given
+    |(\varepsilon_{a',t})_j| \ge \ell} \\
+    &= \Exp \b{|\theta_j (\varepsilon_{a',t})_j| + \max_a
+    \p{\theta\tran \tilde \varepsilon_{a,t}} \given |(\varepsilon_{a',t})_j|
+    \ge \ell} \\
+    &= \Exp \b{|\theta_j (\varepsilon_{a',t})_j|\given
+    |(\varepsilon_{a',t})_j| \ge \ell} + \Exp \b{\max_{a}
+    \p{\theta\tran \tilde \varepsilon_{a,t}}} \\
+    &\le \Exp \b{|\theta_j (\varepsilon_{a',t})_j|\given
+    |(\varepsilon_{a',t})_j| \ge \ell} + \rho \|\theta\|_2\sqrt{2\log K}
+  \end{align*}
+  because by Lemma~\ref{lem:subgaussian_max},
+  \[
+    \Exp \b{\max_a \theta\tran \tilde \varepsilon_{a,t}} \le
+    \Exp \b{\max_a \theta\tran \varepsilon_{a,t}} \le \rho
+    \|\theta\|_2 \sqrt{2 \log K}
+  \]
+  Next, note that by symmetry and since $\theta_j \le \|\theta\|_2$,
+  \[
+    \Exp \b{|\theta_j (\varepsilon_{a',t})_j|\given
+    |(\varepsilon_{a',t})_j| \ge \ell}
+    \le \|\theta\|_2 \Exp \b{(\varepsilon_{a',t})_j\given
+    (\varepsilon_{a',t})_j \ge \ell}.
+  \]
+  By Lemma~\ref{lem:gaus_exp_bound},
+  \[
+    \Exp \b{(\varepsilon_{a',t})_j\given
+    (\varepsilon_{a',t})_j \ge \ell} \le \max(2\rho, \ell + \rho)
+    \le 2\rho + \ell
+  \]
+  Putting this all together, the expected instantaneous regret is bounded by
+  \[
+    2\p{\|\theta\|_2\p{1 + \rho(2 + \sqrt{2 \log K}) + \ell}},
+  \]
+  proving the lemma.
+\end{proof}
+
+\subsection{Finishing the proof of Theorem~\ref{thm:LunUCB-main}.}
+\label{app:linucb-coda}
+
+We focus on the ``nice event" that \eqref{eq:lem:smooth_oful_ex} holds, denote it
+$ \mE$ for brevity. In particular, note that it implies $\|\theta\|_2\leq S$. Lemma~\ref{lem:smooth_oful_step} guarantees that expected regret under this event,
+    $\E{\creg{}{T} \given \mE}$, is upper-bounded by
+the expression \eqref{eq:thm:LunUCB-main} in the theorem statement.
+
+
+In what follows we use Lemma~\ref{lem:smooth_oful_ex}(a) and Lemma~\ref{lem:exp_reg_ub_er} guarantee that if $\mE$ fails, then the
+corresponding contribution to expected regret is small. Indeed, Lemma~\ref{lem:exp_reg_ub_er} with $\ell = 0$ implies that
+\begin{align*}
+    \E{R_t \given \bar{\mE}\,}
+       \leq BT\,\|\theta\|_2 \quad\text{for each round $t$},
+\end{align*}
+where $B= 1 + \rho(2 + \sqrt{2 \log K})$ is the ``blow-up factor". Since  \eqref{eq:lem:smooth_oful_ex} fails with probability at most $\tfrac{2}{T}$
+by Lemma~\ref{lem:smooth_oful_ex}(a), we have
+\begin{align*}
+\E{\creg{}{T} \given \bar{\mE}\,} \;\Pr[\bar{\mE}\,]
+    & \leq \tfrac{2B}{T}\; \E{ \|\theta\|_2 \given \bar{\mE}\,} \\
+    & \leq \tfrac{2B}{T}\;
+        \E{ \|\theta\|_2 \given \|\theta\|_2 \geq \tfrac{1}{2\log T}\,} \\
+    &\leq O\p{\tfrac{B}{T}}\; \p{\|\pmt\|_2 + d\log T} \\
+    &\leq O(1).
+\end{align*}
+
+The antecedent inequality follows by Lemma~\ref{lem:gaus_exp_norm_bound} with
+            $\alpha =\tfrac{1}{2\log T} $,
+using the assumption that $\lambda_{\max}(\Sigma)\leq 1$. The theorem follows.

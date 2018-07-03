@@ -1,0 +1,183 @@
+
+\section{Introduction\label{sec:intro}}
+
+We consider the Sub-Gaussian Mixture Models (SGMMs), where one is
+given $\num$ random points drawn from a mixture of $\numclust$ sub-Gaussian
+distributions with different means. SGMMs, particularly its special
+case Gaussian Mixture Models (GMMs), are widely used in a broad range
+of applications including speaker identification, background modeling
+and online recommendations systems. In these applications, one is
+typically interested in two inference problems under SGMMs:
+\begin{itemize}
+\item \textbf{Clustering:} (approximately) identify the cluster membership
+of each point, that is, which of the $\numclust$ mixture components
+generates a given point;
+\item \textbf{Center estimation:} estimate the $\numclust$ centers of an
+mixture, that is, the means of the $\numclust$ components.
+\end{itemize}
+Standard approaches to these problems, such as $\numclust$-means
+clustering, typically lead to integer programming problems that are
+non-convex and NP-hard to optimize~\citep{aloise2009hard,jain2002facility,mahajan2009planar}.
+Consequently, much work has been done in developing computationally
+tractable algorithms for SGMMs, including expectation maximization
+\citep{dempster1977em}, Lloyd's algorithm \citep{lloyd1982least},
+spectral methods \citep{vempala2004spectral}, the method of moments
+\citep{pearson1936method}, and many more. Among them, convex relaxation,
+including those based on linear programming (LP) and semidefinite
+programming (SDP), have emerged as an important approach for clustering
+SGMMs. This approach has several attractive properties: (a) it is
+solvable in polynomial time, and does not require a good initial solution
+to be provided; (b) it has the flexibility to incorporate different
+quality metrics and additional constraints; (c) it is not restricted
+to specific forms of SGMMs (such as Gaussian distributions), and is
+robust against model misspecification \citep{peng2005new,peng2007approximating,nellore2015recovery}.
+
+Theoretical performance guarantees for convex relaxation methods have
+been studied in a body of classical and recent work. As will be discussed
+in the related work section (Section \ref{sec:related}), these existing
+results often have one of the two forms:
+\begin{enumerate}
+\item How well the (rounded) solution of a relaxation optimizes a particular
+objective function (e.g., the k-means or k-medians objective) compared
+to the original integer program, as captured by an \emph{approximation
+factor} \citep{charikar1999constant,kanungo2004local,peng2007approximating,li2016approximating};
+\item When the solution of a relaxation corresponds exactly to the ground-truth
+clustering, a phenomenon known as \emph{exact recovery}, which is
+considered in a more recent line of work \citep{nellore2015recovery,awasthi2015relax,mixon2017clustering,iguchi2017certify,li2017kmeans}.
+\end{enumerate}
+In many practical scenarios, optimizing a particular objective function,
+and designing approximation algorithms for doing so, is often only
+a means to the true goal of the problem, namely learning the true
+underlying model that generates the observed data. Establishing exact
+recovery guarantees is more directly relevant to this goal. However,
+such results often require very stringent conditions on the separation
+or signal-to-noise ratio (SNR) of the model. In practice, convex relaxation
+solutions are rarely exact, even when the data are generated from
+the assumed model. On the other hand, it is observed that the solutions,
+while not exact or integer-valued, are often a good approximation
+to the desired solution that represents the ground truth. Such a phenomenon
+is not captured by results on exact recovery.\\
+
+In this paper, we aim to significantly strengthen our understanding
+of convex relaxation approaches to SGMMs. In particular, we study
+the regime where their solutions are not integral in general, and
+seek to directly characterize the \emph{estimation errors} of the
+solutions\textemdash namely, their distance to desired integer solution
+corresponding to the true underlying model. For a specific class of
+SDP relaxations for SGMMs, our results reveal a perhaps surprising
+property of them: While the SDP solutions are not integer-valued in
+general, their errors can be controlled by that of the solutions of
+an idealized integer program (IP), in which one tries to estimate
+cluster memberships when an oracle reveals the \emph{true centers}
+of the SGMM. In particular, we show that, in a precise sense to be
+formalized later, the estimation errors of the SDP and IP satisfy
+the following relationship (Theorem~\ref{thm:ip_sdp}):
+\[
+\text{error(SDP)}\lesssim\text{error(IP)}.
+\]
+We refer to this property as \emph{hidden integrality} of the SDP
+relaxations; its proof in fact involves showing that the optimal solutions
+of certain intermediate linear optimization problems are integral.
+We then further upper bound the error of the IP and show that it decays
+\emph{exponentially }in terms of the SNR (Theorem~\ref{thm:ip_exp_rate}):
+\[
+\text{error(IP)}\lesssim\exp\left[-\Omega(\text{SNR}^{2})\right],
+\]
+where the SNR is defined as the ratio of the separation and standard
+deviation of the sub-Gaussian components. Combining these two results
+immediately leads to explicit bounds on the error of the SDP solution
+(Corollary~\ref{cor:SDP_exp_rate}). 
+
+When the SNR is sufficiently large, the above results imply that the
+SDP solution is integral and exact up to numerical errors, hence recovering
+(sometimes improving) existing results on exact recovery as a special
+case. Moreover, when the SNR is lower and the SDP solution is fractional,
+an explicit clustering can be obtained from the SDP solution via a
+simple, optimization-free rounding procedure. We show that the error
+of this explicit clustering (in terms of the fraction of points misclassified)
+also decays exponentially in the SNR (Theorem~\ref{thm:cluster_error_rate}).
+As a consequence, we obtain sufficient conditions for misclassifying
+at most $\delta$ fraction of the points for any given $\delta\in[0,1]$.
+Finally, we show that the SDP solutions also lead to an efficient
+estimator of the cluster \emph{centers}, for which estimation error
+bounds are established (Theorem~\ref{thm:mean_estimation_error}).
+Significantly, our results often match and sometimes improve upon
+state-of-the-art performance guarantees in settings for which known
+results exist, and lead to new guarantees in other less studied settings
+of SGMMs. Detailed discussion of these implications of our results
+and comparison with existing ones will be provided after we state
+our main theorems.
+
+\paragraph{Paper Organization}
+
+The remainder of the paper is organized as follows. In Section~\ref{sec:related},
+we discuss related work on SGMMs and its special cases. In Section
+\ref{sec:setup}, we describe the problem setup for SGMMs and provide
+a summary of our clustering algorithms. In Section \ref{sec:main},
+we present our main results, discuss some of their consequences and
+compare them with existing results.
+
+\section{Related work\label{sec:related}}
+
+The study of SGMMs has a long history and is still an active area
+of research. Here we review the most relevant results with theoretical
+guarantees, with a focus on SDP relaxation methods. 
+
+\citet{dasgupta1999learning} is among the first to obtain performance
+guarantees for GMMs. Subsequent work has obtained improved guarantees,
+achieved by various algorithms including spectral methods. These results
+often establish sufficient conditions, in terms of the separation
+between the cluster centers (or equivalently the SNR), for achieving
+(near)-exact recovery of the cluster memberships. \citet{vempala2004spectral}
+obtain one of the best results and require $\text{SNR}\gtrsim\left(\numclust\ln\num\right)^{1/4}$,
+which is later improved and extended by \citet{achlioptas2005spectral,kumar2010clustering,awasthi2012improved}.
+We compare these results with ours in Section \ref{sec:main}.
+
+Expectation-Maximization (EM) and Lloyd's algorithms are among the
+most popular methods for GMMs. Despite their empirical effectiveness,
+non-asymptotic statistical guarantees are established only recently.
+In particular, convergence and center estimation error bounds for
+EM under GMMs with two components are derived in \citet{balakrishnan2017statistical,klusowski2016statistical},
+with extension to multiple components given in \citet{yan2017em}.
+The work of \citet{lu2016lloyd} provides a general convergence analysis
+for Lloyd's algorithm, which implies clustering and center estimation
+guarantees for random models including SGMMs. All these results assume
+that one has access to a sufficiently good initial solution, typically
+obtained by spectral methods. Recent breakthrough has been made by
+\citet{daskalakis2016ten,xu2016em}, who establish global convergence
+of randomly-initialized EM for GMMs with two symmetric components.
+Complementarily, \citet{jin2016local} show that EM may fail to converge
+under GMMs with $\numclust\ge3$ components due to the existence of
+bad local minima. 
+
+Most relevant to us are work on convex relaxation methods for GMMs
+and k-means/median problems, with SDP relaxations first considered
+in \citet{peng2005new,peng2007approximating}. Thanks to convexity,
+these methods do not suffer from the issues of bad local minima faced
+by EM and Lloyd's, though it is far from trivial to round their (typically
+fractional) solutions into valid clustering solutions with provable
+and quality guarantees. In this direction, \citet{awasthi2015relax,li2017kmeans}
+establish conditions for LP/SDP relaxations to achieve exact recovery.
+The work of \citet{mixon2017clustering} consider SDP relaxations
+as a denoising method, and prove error bounds for a form of approximate
+recovery. Robustness of SDP relaxations under a semi-random GMM is
+studied in \citet{awasthi2017clustering}. Most of these results are
+directly comparable to ours, and we discuss them in more details in
+Section \ref{sec:main} after presenting our main theorems.
+
+Clustering problems under Stochastic Block Models (SBMs) have also
+witnessed fruitful progress on convex relaxation methods; see \citet{abbe2016recent}
+for a survey. Much work has been done on exact recovery guarantees
+for SDP relaxations of SBMs \citep{krivelevich2006coloring,oymak2011finding,amini2014semidefinite,ames2014convex,chen2012sparseclustering}.
+A more recent line of work establishes approximate recovery guarantees
+of the SDPs \citep{Guedon2015,MontanariSen16}. Particularly relevant
+to us is the work by \citet{fei2017exponential}, who also establish
+exponentially decaying error bounds. Despite the apparent similarity
+in the forms of the error bounds, our results require very different
+analytical techniques, due to the fundamental difference between the
+geometric and probabilistic structures of SBMs and SGMMs; moreover,
+our results reveal the more subtle hidden integrality property of
+SDP relaxations, which we believe holds more broadly beyond specific
+models like SBMs and SGMMs.
+
+

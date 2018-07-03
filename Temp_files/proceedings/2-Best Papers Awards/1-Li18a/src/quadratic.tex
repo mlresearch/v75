@@ -1,0 +1,82 @@
+ \section{Neural networks with Quadratic Activations}\label{sec:quadratic}
+ 
+In this section, we state the algorithms and generalization bounds for learning over-parameterized neural nets with quadratic activations, and give the key lemma for the analysis. 
+
+Let $(x_1, y_1),\dots, (x_m, y_m)$ be $n$ examples where $x_i$'s are from distribution $\mathcal{N}(0, \Id_{d\times d})$ and $y_i$'s are generated according to equation~\eqref{eqn:qnn}. 
+Let  $\hat{y} = \mathbf{1}^\top q(U^\top x)$
+be our prediction. We use mean squared loss as the empirical loss. 
+For technical reasons, we will optimize a truncated version of the empirical risk as
+\begin{align*}
+ \tilde{f}(U) = \frac{1}{m}\sum_{i=1}^{n} (\hat{y}_i-y_i)^2\mathbf{1}_{\|U^\top x\|^2\le R}
+\end{align*}
+for some parameter $R$ that will be logarithmic in dimension later.  We design a variant of gradient descent as stated in Algorithm~\ref{alg:aqnn}.
+We remark mostly driven by the analysis, our algorithm has an explicit re-scaling step. It resembles the technique of weight decay~\cite{krogh1992simple}, which has similar effect to that of an $\ell_2$ regularization. In the noiseless setting, the issue with vanilla weight decay or $\ell_2$ regularizer is that the recovery guarantees will depend on the strength of the regularizer and thus cannot achieve zero. An alternative is to use a truncated $\ell_2$ regularizer  that only penalizes when $U_t$ has norm bigger than a threshold. 
+Our scaling that we are using is dynamically decided, and in contrast to this truncated regularizer, it scales down the iterate when the norm of $U_t$ is small, and it scales up the iterate when $U_t$ has norm bigger than the norm of $\bUg$.\footnote{But note that such scaling up is unlikely to occur because the iterate stays low-rank} Analyzing standard gradient descent is left for future work. 
+
+ We note that one caveat here is that for technical reason, we assume that we know the Frobenius norm of the true parameter $\bUg$.  It can be estimated by taking the average of the prediction $\frac{1}{m}\sum_{i  = 1}^m y_i$ since $\Exp[y]  = \norm{\bUg}_{F}^2$, and the algorithm is likely to be robust to the estimation error of $\norm{\bUg}_{F}^2$. However, for simplicity, we leave such a robustness analysis for future work. 
+\begin{algorithm}\caption{Algorithm for neural networks with quadratic activations}\label{alg:aqnn}
+{\bf Inputs: } $n$ examples $(x_1, y_1),\dots, (x_m, y_m)$ where $x_i$'s are from distribution $\mathcal{N}(0, \Id_{d\times d})$ and $y_i$'s are generated according to equation~\eqref{eqn:qnn}. Let $\tau = \norm{\bUg}_{F}^2$. 
+
+{\bf Initialize} $U_0$ as in equation~\eqref{eqn:init}	\\
+For $t =1$ to $T$:
+\begin{align}
+\tilde{U}_t & = U_t - \eta \nabla \tilde{f}(U_t) \nonumber\\
+U_{t + 1 } &= \frac{1}{1 - \eta (\| \bU_t\|_{F}^2- \tau)} \tilde{U}_t \nonumber
+\end{align}
+\end{algorithm}
+  
+
+
+
+
+As alluded before, one-hidden-layer neural nets with quadratic activation closely connects to matrix sensing because we can treat write the neural network prediction by: 
+\begin{align*}
+{\bf 1}^\top  q({\bUg}^\top x) = \inner{xx^\top, \bUg \bUg^\top}
+\end{align*}
+Therefore, the $i$-th example $x_i$ corresponds to  the $i$-th measurement  matrix in the matrix sensing via $A_i = x_i{x_i}^\top$.  Assume $\{ x_1{x_1}^\top, \dots,  x_mx_m^\top\}$ satisfies RIP, then we can re-use all the proofs for matrix sensing. However, this set of rank-1 measurement matrices \textit{doesn't} satisfy RIP with high probability. The key observation is that if we truncated the observations properly, then we can make the truncated set of these rank-1 measurements  satisfy RIP property again. Mathematically, we prove the following Lemma. 
+
+
+\begin{lem}\label{lem:gaussian_concentration}
+Let $(A_1,\dots, A_m) = \{ x_1{x_1}^\top, \dots,  x_mx_m^\top\}$ where $x_i$'s are  i.i.d. from $\sim \mathcal{N}(0, \Id)$. Let  $R = \log\left(\frac{1}{ \delta}\right)$. Then, for every $q, \delta \in [ 0, 0.01]$ and $m \gtrsim d   \log^4 \frac{d}{q \delta }/\delta^2$, we have:  with probability at least $1 - q$, for every symmetric matrix $X$,
+\begin{align*}
+\Norm{\frac{1}{m} \sum_{i = 1}^m \langle A_i, X \rangle A_i 1_{|\langle A_i, X \rangle| \leq R} - 2 X - \trace(X) \Id} \leq \delta \| \bX \|_{\star}
+\end{align*}
+\end{lem}
+\noindent Suppose $X$ has rank at most  $r$ matrices and spectral norm at most $1$, we have, 
+\begin{align}
+\Norm{\frac{1}{m} \sum_{i = 1}^m \langle A_i, X \rangle A_i 1_{|\langle A_i, X \rangle| \leq R} - 2 X - \trace(X) \Id} \leq r\delta\label{eqn:truncated_rip}
+\end{align}
+
+We can see that equation~\eqref{eqn:truncated_rip} implies Lemma~\ref{lem:property_1} with a simple change of parameters (by setting $\delta$ to be a factor of $r$ smaller). The proof uses standard technique from supreme of random process, and is deferred to Section~\ref{sec:proofs:q}. 
+
+Theorem~\ref{thm:main-quadratic} follows straightforwardly from replacing the RIP property by the Lemma above. We provide a proof sketch below. 
+
+\begin{proof}[Proof Sketch of Theorem~\ref{thm:main-quadratic}]
+The basic ideas is to re-use the proof of Theorem~\ref{thm:technical-main} at every iteration.  First of all, we will replace all the RIP properties \footnote{We only require RIP on symmetric matrices.} in \eqref{place_1}, \eqref{eqn:6}, \eqref{eq_MtZt}, \eqref{eq:place_8}, \eqref{place_2}, \eqref{place_4}, \eqref{eq:y_1} and \eqref{eq_zt_signal}  by Lemma~\ref{lem:gaussian_concentration}.  The only difference is that we will let the $\delta$ when applying Lemma~\ref{lem:gaussian_concentration} to be $1/r$ smaller than the $\delta$ in Theorem~\ref{thm:technical-main}.
+
+We note that in Lemma~\ref{lem:gaussian_concentration}, there is an additional scaling of the identity term compared to Lemma~\ref{lem:property_1}. This is the reason why we have to change our update rule.
+We note that the update rule in Algorithm~\ref{alg:aqnn} undo the effect of this identity term and is identical to the update rule for matrix sensing problem:
+Let $c_t = \trace(U_t U_t^{\top}) - \trace(\bXg)$.
+Denote by $M_t' = M_t - c_t \Id$.
+The update in Algorithm~\ref{alg:aqnn} can be re-written as:
+\begin{align}
+\tilde{\bU}_{t + 1} &= (\Id - \eta M'_t - \eta c_t \Id )\bU_t
+\\
+&= (1 - \eta c_t) \left(\Id - \frac{\eta}{1 - \eta c_t} M'_t \right) \bU_t\nonumber
+\end{align}
+Hence we still have $\bU_{t + 1} = \frac{1}{1 - \eta c_t} \tilde{\bU}_{t + 1} = \left(\Id - \frac{\eta}{1 - \eta c_t} M'_t \right) \bU_t$. Thus the update rule here corresponds to the update rule for the matrix sensing case, and the rest of the proof follows from the proof of Theorem~\ref{thm:technical-main}.
+
+%[[Edited version]]
+%Let $c_t = \trace(U_t U_t^{\top}) - \trace(\bXg)$. The update in Algorithm~\ref{alg:aqnn} is as follows.
+%\begin{align}
+%	U_{t + 1} &= (\bI - \eta \bM_t) U_t / (1 - \eta c_t) \nonumber
+%\end{align}
+%Thus by Lemma \ref{lem:gaussian_concentration},
+%$\norm{M_t U_t}$ is bounded by
+%$\norm{2(U_tU_t^{\top} - \bXg) U_t + \eta c_t U_t}$ plus the concentration error term.
+%Then $\norm{U_{t+1}}$ is bounded by $\norm{U_t - \frac{2\eta(U_t U_t^{\top} - \bXg) U_t} {1 - \eta c_t}}$ plus the concentration error.
+%Thus the update rule here corresponds to the update rule for the matrix sensing case, and the rest of the proof follows from the proof of Theorem~\ref{thm:technical-main}.
+%The details are left to the readers.
+
+\end{proof}
+

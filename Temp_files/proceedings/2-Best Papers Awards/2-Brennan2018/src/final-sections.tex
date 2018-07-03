@@ -1,0 +1,109 @@
+\section{Detection-Recovery Reductions}
+\label{s:detectionrecovery}
+
+In this section, we show that our computational lower bounds for detection problems imply corresponding lower bounds for the recovery. The idea is to produce two instances of each problem that are coupled to have the same planted sparse structure but are conditionally independent given this structure. If there is a polynomial-time recovery algorithm that outputs a set $S$ containing a constant fraction of the planted sparse structure, then we restrict to the indices in $S$ yields an instance with a planted structure of linear size and apply a detection algorithm from Appendix~\ref{s:info}. For each of the problems that we consider, this solves detection within a sub-polynomial factor of when detection first becomes information-theoretically possible. The reduction also always runs in polynomial time. Therefore our detection lower bounds also imply recovery lower bounds.
+
+To carry out this argument, we first require methods of creating two such instances. We first give such a cloning method for $\textsc{PDS}$ instances. This method is similar to the cloning map in $\textsc{PC-Lifting}$ from Appendix~\ref{s:lifting} but produces two copies rather than four.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} $\textsc{PDS-Cloning}$
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, parameters $p, q \in (0, 1]$ with $p > q$
+\begin{enumerate}
+\item Set $P = 1 - \sqrt{1 - p}$ and $Q = 1 - \sqrt{1 - q}$
+\item For each pair $i, j \in [n]$ with $i < j$, independently generate $x^{ij} \in \{0, 1\}^2$ such that
+\begin{itemize}
+\item If $\{i, j\} \in E(G)$, then generate $x^{ij}$ from
+$$\bP[x^{ij} = v] = \frac{1 - q}{p - q} \cdot P^{|v|_1}(1 - P)^{2 - |v|_1} - \frac{1 - p}{p - q} \cdot Q^{|v|_1}(1 - Q)^{2 - |v|_1}$$
+\item If $\{i, j\} \not \in E(G)$, then generate $x^{ij}$ from
+$$\bP[x^{ij} = v] = \frac{p}{p - q} \cdot Q^{|v|_1}(1 - Q)^{2 - |v|_1} - \frac{q}{p - q} \cdot P^{|v|_1}(1 - P)^{2 - |v|_1}$$
+\end{itemize}
+\item Construct the graphs $G^1$ and $G^2$ such that $\{i, j\} \in E(G^k)$ if and only if $x^{ij}_k = 1$
+\item Output $(G^1, G^2)$
+\end{enumerate}
+\vspace{4mm}
+\textbf{Algorithm} $\textsc{Gaussian-Cloning}$
+\vspace{2mm}
+
+\textit{Inputs}: Matrix $M \in \mathbb{R}^{n \times n}$
+\begin{enumerate}
+\item Generate a matrix $G \sim N(0, 1)^{\otimes n \times n}$ with independent Gaussian entries
+\item Compute the two matrices
+$$M^1 = \frac{1}{\sqrt{2}} (M + G) \quad \text{and} \quad M^2 = \frac{1}{\sqrt{2}} (M - G)$$
+\item Output $(M^1, M^2)$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Cloning procedures in Lemmas \ref{lem:pdscloning} and \ref{lem:gausscloning}.}
+\end{figure}
+
+\begin{lemma} \label{lem:pdscloning}
+Suppose that $S \subseteq [n]$ and $p, q \in (0, 1]$ are such that $p > q$. Also suppose that $P, Q \in [0,1]$ are such that $Q \neq 0, 1$ and the quotients $\frac{P}{Q}$ and $\frac{1 - P}{1 - Q}$ are both between $\sqrt{\frac{1 - p}{1 - q}}$ and $\sqrt{\frac{p}{q}}$. If $G \sim G(n, S, p, q)$ and $(G^1, G^2)$ is the output of $\textsc{PDS-Cloning}$ applied to $G$ with parameters $p, q, P$ and $Q$, then $(G^1, G^2) \sim G(n, S, P, Q)^{\otimes 2}$. Furthermore, if $G \sim G(n, q)$ then $(G^1, G^2) \sim G(n, Q)^{\otimes 2}$.
+\end{lemma}
+
+\begin{proof}
+We first show that the distributions in Step 2 of $\textsc{PDS-Cloning}$ are well-defined. First note that both are normalized and thus it suffices to verify that they are nonnegative. First suppose that $p > q$, then the distributions are well-defined if
+$$\frac{1 - p}{1 - q} \le \left( \frac{P}{Q} \right)^{|v|_1} \left( \frac{1 - P}{1 - Q} \right)^{2 - |v|_1} \le \frac{p}{q}$$
+for all $v \in \{0, 1\}^2$, which follows from the assumption on $P$ and $Q$. Now observe that if $\mathbf{1}_{\{i, j \} \in E(G)} \sim \text{Bern}(q)$ then $x^{ij}$ has distribution
+$$\bP[x^{ij} = v] = q \cdot \bP[x^{ij} = v | \{i, j\} \in E(G)] + (1 - q) \cdot \bP[x^{ij} = v | \{i, j\} \not \in E(G)] = Q^{|v|_1}(1 - Q)^{2 - |v|_1}$$
+and hence $x^{ij} \sim \text{Bern}(Q)^{\otimes 2}$. Similarly, if $\mathbf{1}_{\{i, j \} \in E(G)} \sim \text{Bern}(p)$ then $x^{ij} \sim \text{Bern}(P)^{\otimes 2}$. It follows that if $G \sim G(n, q)$ then $(G^1, G^2) \sim G(n, Q)^{\otimes 2}$ and if $G \sim G(n, S, p, q)$ then $(G^1, G^2) \sim G(n, S, P, Q)^{\otimes 2}$, proving the lemma.
+\end{proof}
+
+A similar argument as in Lemma \ref{lem:6b} on $\textsc{Gaussian-Lifting}$ yields the following lemma.
+
+\begin{lemma} \label{lem:gausscloning}
+If $M \sim \mL\left( A + N(0, 1)^{\otimes n \times n} \right)$ for any fixed matrix $A \in \mathbb{R}^{n \times n}$ and $(M^1, M^2)$ is the output of $\textsc{Gaussian-Cloning}$ applied to $M$, then $(M^1, M^2) \sim \mL\left( \frac{1}{\sqrt{2}} A + N(0, 1)^{\otimes n \times n} \right)^{\otimes 2}$.
+\end{lemma}
+
+\begin{proof}
+Since the entries of $M$ and $G$ are independent, the $\sigma$-algebras $\sigma \{ M^1_{ij}, M^2_{ij} \}$ for $i, j \in [n]$ are independent. Now note that $M^1_{ij}$ and $M^2_{ij}$ are jointly Gaussian and $\bE[M^1_{ij} M^2_{ij}] = \frac{1}{2} \cdot \bE[M^2 - G^2] = 0$, which implies that they are independent. It follows that $M^k_{ij}$ are independent for $k = 1, 2$ and $i, j \in [n]$. The lemma follows from the fact that each of $M^1$ and $M^2$ is identically distributed to $\frac{1}{\sqrt{2}} A + N(0, 1)^{\otimes n \times n}$. 
+\end{proof}
+
+With these two lemmas, we now overview how detection lower bounds imply partial recovery lower bounds for each problem that we consider. In the cases of sparse PCA and biased sparse PCA, rather than give a direct detection-recovery reduction, we outline modifications to our detection reductions that yield recovery reductions from planted clique. 
+
+\paragraph{Biclustering.} Suppose that there is a randomized algorithm $\phi$ that solves $\textsc{BC}_{PR}$. More precisely, if $M$ is an instance of $\textsc{BC}_{PR}(n, k, \mu)$ with latent row and column supports $S$ and $T$, then $\bE[|\phi_1(M) \cap S|] = \Omega(k)$ and $\bE[|\phi_2(M) \cap T|] = \Omega(k)$. Consider the detection algorithm for $\textsc{BC}_{D}(n, k, \mu \sqrt{2})$ that applies $\textsc{Gaussian-Cloning}$ to the input to produce $(M^1, M^2)$ and then takes the sum of the entries of $M^2$ restricted to the indices in $\phi_1(M^1) \times \phi_2(M^1)$. The algorithm then outputs $H_1$ if this sum is at least $k \cdot \tau(k)$ where $\tau(k) \to \infty$ arbitrarily slowly as $k \to \infty$. Since $M^1$ and $M^2$ are independent, it follows that $M^2$ is independent of $\phi(M^1)$. Under $H_0$, the sum is distributed as $N(0, k^2)$ which is less than $k \cdot \tau(k)$ with probability tending to $1$ as $k \to \infty$. Under $H_1$, let $S$ and $T$ denote the latent row and column supports of the planted submatrix. If $k_1 = |\phi_1(M^1) \cap S|$ and $k_2 = |\phi_2(M^1) \cap T|$, then the sum is distributed as $N(\mu \cdot k_1 k_2, k^2)$. If $\mu \cdot k_1 k_2 \ge 2k \cdot \tau(k)$, then the algorithm outputs $H_1$ with probability tending to $1$ as $k \to \infty$. If $\mu \ge \frac{2\tau(k)^3}{k}$ then $\mu \cdot k_1 k_2 < 2k \cdot \tau(k)$ is only possible if either $k_1 \cdot \tau(k) < k$ or $k_2 \cdot \tau(k) < k$. By Markov's inequality, each of these events occurs with probability tending to zero as $k \to \infty$ over the randomness of $\phi$. Therefore this algorithm has Type I$+$II error tending to zero as $k \to \infty$ if $\mu \ge \frac{2\tau(k)^3}{k}$, which is true for some $\tau$ as long as $\textsc{BC}_R$ is information-theoretically possible.
+
+In summary, if $\phi$ solves $\textsc{BC}_{PR}(n, k, \mu)$ then there is a polynomial-time algorithm using $\phi$ as a blackbox that solves $\textsc{BC}_{D}(n, k, \mu \sqrt{2})$. Hence our computational and information-theoretic lower bounds for $\textsc{BC}_D$ imply partial recovery lower bounds in the same parameter regimes. We now give similar detection-recovery reductions using an initial cloning step for other problems.
+
+\paragraph{Sparse Spiked Wigner and Rank-1 Submatrix.} Similarly to biclustering, suppose that $\phi$ solves $\textsc{ROS}_{PR}(n, k, \mu)$. Consider the detection algorithm for $\textsc{ROS}_D(n, k, \mu \sqrt{2})$ that first applies $\textsc{Gaussian-Cloning}$ to the input to produce $(M^1, M^2)$, forms the $k \times k$ matrix $W$ given by $M^2$ restricted to indices in $\phi_1(M^1) \times \phi_2(M^1)$ and then outputs $H_1$ if and only if $\sigma_1(W) > 2\sqrt{k} + \sqrt{2 \log k}$ where $\sigma_1(W)$ is the largest singular value of $W$. By Corollary 5.35 in \cite{vershynin2010introduction}, the algorithm outputs $H_0$ under $H_0$ with probability at least $1 - 2k^{-1}$. Under $H_1$, let $k_1$ and $k_2$ be the sizes of the intersections of $\phi_1(M^1)$ and $\phi_2(M^2)$ with the row and column supports, respectively, of the rank-1 spike. By the definition of $\mathcal{V}_{n, k}$, it follows that the rank-1 spike has largest singular value at least $\mu k^{-1} \sqrt{k_1 k_2}$. By Weyl's interlacing inequality, it follows that $\sigma_1(W) \ge \mu k^{-1} \sqrt{k_1 k_2} - 2\sqrt{k} - \sqrt{2 \log k}$. Suppose that $\mu \ge \tau(k) \sqrt{k}$ where $\tau(k) \to \infty$ as $k \to \infty$ arbitrarily slowly. It follows that $\mu k^{-1} \sqrt{k_1 k_2} < 4 \sqrt{k} + 2 \sqrt{2 \log k} < 8 \sqrt{k}$ implies that either $\tau(k) \cdot k_1 < 64k$ or $\tau(k) \cdot k_2 < 64k$. Both of these events occur with probability tending to zero as $k \to \infty$. It follows that this algorithm has Type I$+$II error tending to zero as $k \to \infty$ if $\mu \ge \tau(k) \sqrt{k}$, which aligns with the information theoretic lower bound on $\textsc{ROS}_R$ of $\mu \gtrsim \sqrt{k}$. Similar reductions yield an analogous result for $\textsc{SROS}$ and therefore also $\textsc{SSW}$.
+
+\paragraph{Planted Independent Set and Planted Dense Subgraph.} We first give a detection-recovery algorithm for $\textsc{PIS}$. Suppose that $\phi$ solves $\textsc{PIS}_{PR}(n, k, q)$. Consider the detection algorithm that takes the complement graph of an input $\textsc{PIS}_{D}(n, k, q)$, applies $\textsc{PDS-Cloning}$ with $P = p' = 1$, $q' = 1 - q$ and $Q = 1 - q/2$ to produce $(G^1, G^2)$ and then outputs $H_1$ if and only if $\overline{G^2}$ restricted to the vertices in $\phi(\overline{G^1})$ contains at most $\binom{k}{2} q - k\sqrt{q(1 - q) \log k}$ edges. Here $\overline{G}$ denotes the complement of the graph $G$. First note that these inputs to $\textsc{PDS-Cloning}$ are valid since $1 - P = 1 - p' = 0$ and
+$$\frac{P}{Q} = \frac{1}{1-q/2} = \frac{2}{1 + q'} \le \sqrt{\frac{1}{q'}} = \sqrt{\frac{1}{1-q}}$$
+Under $H_0$, it follows that $\overline{G^1}$ and $\overline{G^2}$ are independent and distributed as $G(n, q/2)$. By the same applications of Bernstein's inequality as in Theorem \ref{thm:pdsdet}, the algorithm outputs $H_1$ with probability tending to zero as $k \to \infty$. Under $H_1$, it follows that $\overline{G^1}$ and $\overline{G^2}$ are independent and distributed as $G_I(n, k, q/2)$. Let $k_1$ be the size of the intersection between $\phi(\overline{G^1})$ and the latent support of the planted independent set. The number of edges in $\overline{G^2}$ restricted to the vertices in $\phi(\overline{G^1})$ is distributed as $\text{Bin}( \binom{k}{2} - \binom{k_1}{2}, q )$. If $\binom{k_1}{2} q \ge 2k\sqrt{q(1 - q) \log k}$, then with high probability the algorithm outputs $H_1$. If $q \ge \frac{\tau(k) \log k}{k^2}$ where $\tau(k) \to \infty$ then it would have to hold that $\tau(k) \cdot k_1 \le 4k$ for this inequality not to be true. However, this event occurs with probability tending to zero by Markov's inequality. This gives a reduction from $\textsc{PIS}_{PR}(n, k, q)$ to $\textsc{PIS}_D(n, k, 2q)$.
+
+Similar detection-recovery reductions apply for planted dense subgraph. Fix some constant $w \in (0, 1/2)$. For an instance of $\textsc{PDS}_D(n, k, p, q)$ with $p > q$, consider $\textsc{PDS-Cloning}$ with $P = \frac{wp+(1-w)q}{2}$ and $Q = q/2$. Note that these are valid inputs to $\textsc{PDS-Cloning}$ when
+$$\sqrt{\frac{1 - p}{1 - q}} \le 1 - \frac{p - q}{2(1 - q)} \le 1 - \frac{w(p - q)}{2 - q} = \frac{1 - P}{1 - Q}$$
+and
+$$\frac{P}{Q} = \frac{wp+(1-w)q}{q} = 1 + \frac{w(p - q)}{q} \le \sqrt{\frac{p}{q}}$$
+where the second inequality holds as long as $\frac{p - q}{q} \le \frac{1 - 2w}{w^2}$. Taking $w$ to be sufficient small covers the entire parameter space $p - q = O(q)$. Producing two independent copies of planted dense subgraph and thresholding the edge count now yields a detection-recovery reduction by the same argument as for planted independent set.
+
+\paragraph{Sparse PCA and Biased Sparse PCA.} Rather than give a generic reduction between detection and recovery for variants of sparse PCA, we modify our existing reductions to produce two copies. Note that the reductions $\textsc{SPCA-High-Sparsity}$ and $\textsc{SPCA-Low-Sparsity}$ approximately produce instances of $\textsc{ROS}_D$ and $\textsc{BC}_D$, respectively, as intermediates. Consider the reduction that applies $\textsc{Gaussian-Cloning}$ to these intermediates and then the second steps of the reductions to both copies. Under $H_1$, this yields two independent copies of $N\left(0, I_n + \theta uu^\top \right)$ with a common latent spike $u$. Furthermore the resulting parameter $\theta$ is only affected up to a constant factor.
+
+Now given two independent samples from $\textsc{SPCA}_D(n, k, n, \theta)$ constrained to have the same hidden vector under $H_1$ and a randomized algorithm $\phi$ that solves the weak recovery problem, we will show that a spectral algorithm solves detection. Let $(X^1, X^2)$ denote the $n \times n$ data matrices for the two independent samples. Consider the algorithm that computes the $k \times k$ empirical covariance matrix $\hat{\Sigma}$ using the columns in $X^2$ restricted to the indices in $\phi(X^1)$ and then outputs $H_1$ if and only if $\lambda_1(\hat{\Sigma}) \ge 1 + 2 \sqrt{k/n}$. Under $H_0$, the same argument in Theorem \ref{thm:spectralspca} implies that $\lambda_1(\hat{\Sigma}) < 1 + 2 \sqrt{k/n}$ with probability at least $1 - 2e^{-k/2}$. Under $H_1$, let $k_1$ denote the size of the intersection between $\phi(X^1)$ and the latent support of the hidden vector. It follows that each column of $X^2$ restricted to the indices in $S = \phi(X^1)$ is distributed as $N\left(0, I_k + \theta u_S u_S^\top \right)$ where $u$ is the hidden vector. Now note that $\| u_S \|_2 \ge \sqrt{k_1/k}$ and by the argument in Theorem \ref{thm:spectralspca}, it follows that $u_S^\top \hat{\Sigma} u_S \ge 1 + \frac{\theta}{2k} \cdot \sqrt{k_1 k_2}$ with probability tending to 1 as $k \to \infty$. Therefore if $\theta \ge \tau(k) \sqrt{k/n}$ for some $\tau(k) \to \infty$, then this algorithm has Type I$+$II error tending to zero as $k \to \infty$, which aligns with the information-theoretic lower bound on $\textsc{SPCA}_D$ and $\textsc{SPCA}_R$.
+
+%\subsection{Extensions of Reductions}
+%
+%PLAN:
+%\begin{enumerate}
+%\item Give cloning method for every problem but sparse PCA and SSBM?
+%\item Clone internally in reductions instead and argue this is fine.
+%\item Mention how similar to distributional lifting, reason is will guarantee independence so constant-sparsity algorithms apply given restriction to output $S$.
+%\item Verify nonnegativity and indicate that these should all extend to $k$ copies but that is unnecessary here.
+%\item Review Alon reduction between PC detection and recovery losing a $\log n$ factor.
+%\item Deal with $G(n, S, P, Q)$ notation somewhere?
+%\end{enumerate}
+%
+%Deal with mapping to precise parameters (also the $p = cq$ issue for PDS fix this by adding edges? make sure theorem statement is correct as is). Discuss bipartite graphs, rectangular matrices, etc.
+
+\section{Future Directions}
+\label{s:future}
+
+A general direction for future work is to add more problems to the web of reductions established here. This work also has left number of specific problems open, including the following.
+\begin{enumerate}
+\item Collisions between support elements in $\textsc{Reflection-Cloning}$ causes our formulations of $\textsc{SSW}_D, \textsc{ROS}_D, \textsc{SSBM}_D$ and $\textsc{SPCA}_D$ to be as composite hypothesis testing problems rather than the canonical simple hypothesis testing formulations. Is there an alternative reduction from planted clique that can strengthen these lower bounds to hold for the simple hypothesis testing analogues?
+\item All previous planted clique lower bounds for $\textsc{SPCA}_D$ are not tight over the parameter regime $k \ll \sqrt{n}$. Is there a reduction from planted clique yielding tight computational lower bounds for $\textsc{SPCA}_D$ in this highly sparse regime?
+\item Is there a polynomial time algorithm for the recovery variant of $\textsc{SSBM}$ matching the computational barrier for the detection variant?
+\item Can the PDS recovery conjecture be shown to follow from the planted clique conjecture?
+\end{enumerate}

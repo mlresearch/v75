@@ -1,0 +1,87 @@
+\section{Preliminaries}
+We consider active learning in the PAC model~\citep{V84, KSS94}.
+Denote by $\calX := \R^d$ the instance space, and $\calY := \{-1,+1\}$ the label space.
+The learning algorithm is given a data distribution $D$ over $\calX \times \calY$. %, from which we can draw samples.
+Denote by $D_X$ the marginal distribution of $D$ over $\calX$, and $D_{Y|X}$ the conditional distribution of label given instance.
+%Throughout the paper, we assume that $D_X$ is isotropic log-concave.
+The learning algorithm is also given a concept class, the set of homogeneous linear classifiers (halfspaces) $\calH:=\{\sign(w \cdot x): w \in \R^d \}$.
+For any classifier $h: \calX \to \calY$, we denote by $\err(h):=\P_D(h(x) \neq y)$ the error rate of $h$.
+Denote by $h^*$ the optimal classifier in $\calH$: $h^*:=\argmin_{h' \in \calH} \err(h')$.
+The excess error of classifier $h$ is defined as $\err(h) - \err(h^*)$; in words, it is
+the difference between $h$'s error and the best error in $\calH$. A vector $w$ corresponds to a
+linear classifier $h_w := \sign(w \cdot x)$ whose decision boundary has $w$ as its normal; define $w^*$ as the unit vector $w$ such that $h_w = h^*$. We define the angle between two vectors $w, w'$ in $\R^d$ as $\theta(w,w') = \arccos(\frac{w \cdot w'}{\|w\|_2 \| w'\|_2})$. \cite{BL13} shows that there exist numerical constants $C_1, C_2 > 0$, such that if $D_X$ is isotropic log-concave, then for all $w, w'$ in $\R^d$,
+\begin{equation}
+ C_1 \P_D(h_w(x) \neq h_{w'}(x)) \leq \theta(w,w') \leq C_2 \P_D(h_w(x) \neq h_{w'}(x)).
+\label{eqn:angdis}
+\end{equation}
+
+In active learning, the algorithm has the ability to draw unlabeled examples from $D_X$ and perform adaptive label queries to a labeling oracle $\calO$.
+The oracle $\calO$ takes into input an unlabeled example $x$, and returns a label $y \sim D_{Y|X=x}$.
+Given a random variable $z$ whose distribution is $\Delta$ over $\calZ$ and a set $T \subset \calZ$, denote by $\Delta|_T$ the conditional distribution of $z$ given that $z$ is in $T$.
+An active learning algorithm is said to $(\epsilon,\delta)$-PAC
+learn $\calH$ and $D$ with label complexity $n(\epsilon,\delta)$, if with probability $1-\delta$, it performs at most $n(\epsilon,\delta)$ label queries to $\calO$,
+and returns a classifier $\hat{h}$ that has excess error at most $\epsilon$.
+
+Given a vector $w$ and example $(x,y)$, the $\tau$-hinge loss $\ell_{\tau}(w, (x, y))$ is defined as $(1 - \frac{y w \cdot x}{\tau})_+$, where $(z)_+:=\max(0, z)$. Denote by $I(\cdot)$ the indicator function, that is, $I(A)$ is $1$ if predicate $A$ is true, is $0$ if $A$ is false.
+A vector $v$ in $\R^d$ is said to be $s$-sparse, if it has at most $s$ nonzero entries.
+For an integer $s \in \{1,2,\ldots,d\}$, define $\HT_s(\cdot)$ as the hard thresholding operation that takes a vector $v$ in $\R^d$ as input, and outputs a vector that keeps $v$'s $s$ largest entries in absolute value (breaking ties lexicographically), and setting all its other entries to zero~\citep{BD09}.
+%Given a vector $w$ in $\R^d$ and $r>0$, denote by $\B_2(w,r):=\{w': \|w'-w\|_2 \leq r \}$ (resp. $\B_1(w,r)=\{w': \| w' - w \|_1 \leq r \}$) the $\ell_2$ (resp. $\ell_1$) ball centered at $w$ with radius $r$.
+
+In this paper, we focus on the setting where there is a sparse halfspace that performs well under $D$.
+Specifically, denote by $\calH_t := \{\sign(w \cdot x): w \in \R^d, \| w \|_0 \leq t \}$ the set of $t$-sparse halfspaces.
+We consider the following two conditions on $D$:
+
+%(at most $t$ of its
+%entries are nonzero)
+\begin{definition}
+A distribution $D$ over $\calX \times \calY$ is said to satisfy the {\em $t$-sparse $\nu$-adversarial noise} condition for $\nu \in (0,1)$ and $t \in \{1,\ldots,d\}$, if there is a $t$-sparse unit vector $u$, such that $\P_D(\sign(u \cdot x) \neq y) \leq \nu$.
+%\footnote{Note that $u$ may not be the optimal halfspace $w^*$, nevertheless, it can be seen by triangle inequality that $\theta(u,w^*) = O(\nu)$.}
+\label{def:an}
+\end{definition}
+Observe that under this condition, $h_u$ is not necessarily the optimal classifier in $\calH$; in fact, it may not even be the optimal classifier in $\calH_t$. Nevertheless, by triangle inequality and Equation~\eqref{eqn:angdis}, the angle between $u$ and $w^*$ is at most $O(\nu)$.
+It can be readily seen that if $t$ and $\nu$ are larger, the learning problem becomes more difficult. When $t = d$, the condition becomes the $\nu$-adversarial noise condition with respect to $\calH$~\citep{ABL17}.
+
+\begin{definition}
+A distribution $D$ over $\calX \times \calY$ is said to satisfy the {\em $t$-sparse $\eta$-bounded noise} condition for $\eta \in [0,\frac 1 2)$ and $t \in \{1,\ldots,d\}$, if there is a $t$-sparse unit vector $u$, such that
+for every $x \in \calX$, $\P_D(\sign(u \cdot x) \neq y | x) \leq \eta$.
+\label{def:bn}
+\end{definition}
+Under this condition, it can be seen that $h_u$ is the Bayes optimal classifier, therefore $u$ coincides with $w^*$.
+It can be readily seen that if $t$ and $\eta$ are larger, the learning problem becomes more difficult. When $t = d$, the condition becomes the $\eta$-bounded noise condition with respect to $\calH$~\citep{MN06}.
+
+
+%Note that the two conditions are incomparable: a distribution under the $\nu$ adversarial noise condition can have a region where the label flipping probability is
+%close to $1/2$, while on the other hand, a distribution under the $b$-bounded noise condition can make any $t$-sparse classifier incur constant error.
+Note that the above two conditions characterize different aspects of the data distribution $D$. The $t$-sparse $\nu$-adversarial noise condition only requires an upper bound on the total label flipping probability. On the other hand, the $t$-sparse $\eta$-bounded noise condition characterizes $D_{Y|X}$ everywhere in $\calX$: for every instance $x$, the expected label $\E[y|x]$ has the same sign as $u \cdot x$.
+The following condition is a special case of the above two conditions by setting $\nu = 0$ or $\eta = 0$:
+
+\begin{definition}
+A distribution $D$ over $\calX \times \calY$ is said to satisfy the {\em $t$-sparse realizable} condition, for $t \in \{1,2,\ldots,d\}$, if there is a $t$-sparse unit vector $u$, such that $\P_D(\sign(u \cdot x) \neq y) = 0$.
+\label{def:r}
+\end{definition}
+
+%Specifically, in passive learning, the algorithm
+%is given $m$ labeled examples drawn iid from $D$, and returns a classifier $\hat{h}: X \to Y$.
+%An algorithm is said to $(\epsilon,\delta)$-PAC learn $\calH$ and $D$ with sample complexity $m(\epsilon,\delta)$, if with probability $1-\delta$,
+%it draws $m(\epsilon,\delta)$ labeled examples iid from $D$, and returns a classifier $\hat{h}$ that has excess error at most $\epsilon$.
+
+
+%We study the problem of attribute-efficient active learning of linear separators.
+%Suppose that the instances $x \in \R^d$ are drawn iid from an isotropic log-concave distribution over
+%$\R^d$, and
+% we are in the realizable case, where there is a targe linear separator $u$ such that $\| u \|_2 = 1$, and
+% for all examples $(x,y)$ drawn, $y = \sign(u \cdot x)$.
+% Our goal is to learn a linear separator $\hat{u}$ using active learning, using
+%  as few label queries as possible. Existing active learning algorithms and lower bounds show a minimax label complexity of
+%  $\Theta(d \ln \frac 1 \epsilon)$ for this problem.
+
+  %that is,
+  % we drawn unlabeled examples and perform label queries, such that the returned
+  % $\hat{u}$ has angle at most $\epsilon$ to target $u$, with probability $1-\delta$,
+
+%In this note, we focus on the setting that the target halfspace $u$ is {\em sparse}:
+%\begin{assumption}[Sparse Target Halfspace]
+%There are at most $t = o(d)$ nonzero entries of vector $u$.
+%\end{assumption} Under the sparsity assumption,
+%we hope to design computationally efficient algorithms that achieve better label complexites
+%than the worst case $O(d \ln \frac 1 \epsilon)$ bound.

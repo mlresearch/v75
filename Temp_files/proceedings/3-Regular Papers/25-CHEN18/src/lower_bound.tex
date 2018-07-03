@@ -1,0 +1,137 @@
+\section{A Lower Bound of $\Omega(\log(T))$} \label{sec:lb}
+
+We saw in Theorem~\ref{rst:discrete} that 
+when agent preferences for their best arm are sufficiently clear,
+in the sense that $\TieDensity = 0$, the regret of
+Algorithm~\ref{alg:basic-incentivizing} is bounded by a constant.
+One may conjecture that this should hold more generally,
+in that the regret of the (fewer and fewer) agents on the boundary
+between close arms should go to 0, while their fraction also goes to 0.
+In this section, we establish a lower bound,
+showing that even in very simple settings, a (logarithmic) dependence
+on $T$ is typically unavoidable for \emph{any} incentivization strategy.
+
+We consider an instance with two arms,
+whose attribute vectors are $(0,0)$ and $(0,1)$, respectively.
+Agent types are distributed uniformly on the (edge of the)
+two-dimensional unit square%
+\footnote{While our model technically assumed that all agent coordinates are
+non-negative, we could simply shift the unit square.
+The present choice is solely for ease of notation.}  
+$\Set{\AgV}{\max(|\Ag{1}|, |\Ag{2}|) = 1}$,
+with density $\frac{1}{8}$.
+Because $\AgV \cdot (0,0) = 0$ and $\AgV \cdot (0,1) = \Ag{2}$,
+the best choice for agent \AgV is arm $(0,1)$ iff $\Ag{2} > 0$,
+i.e., the top half of the unit square prefers the arm $(0,1)$,
+and the bottom half prefers the arm $(0,0)$.
+
+Since we are proving a lower bound, we give the algorithm the
+following extra two advantages:
+(1) there is no noise in the observations of the arm $(0,0)$,
+and all agents know its location deterministically.
+(2) in each time step, regardless of which arm is pulled, the algorithm
+and all agents observe a pull from arm $(0,1)$.
+For simplicity of notation, we set the standard deviation of the arm
+$(0,1)$ to $\sigma = 1$;
+different values only lead to a scaling of the results.
+
+Under these advantages, myopic play is clearly optimal, so it suffices
+to bound the regret of the myopic algorithm which never incentivizes
+agents. 
+
+Because a pull of arm $(0,1)$ is observed in each time step,
+after $t$ rounds, the estimate \ArmEV{t}{(0,1)} is of the form
+$(0,1) + (\Noise[t]{1}, \Noise[t]{2})$,
+where $\Noise[t]{1} \sim \Normal{0}{\sqrt{1/t}}$
+and $\Noise[t]{2} \sim \Normal{0}{\sqrt{1/t}})$.
+We lower-bound the regret in step $t$ by focusing on the event that
+both normal noise coordinates are non-negative,
+which by symmetry has probability \quarter:
+
+\begin{align*}
+\Expect{\Regret{t}} 
+  & \geq \ExpectC{\Regret{t}}{\Noise[t]{1} > 0, \Noise[t]{2} > 0}
+         \cdot \Prob{\Noise[t]{1} > 0, \Noise[t]{2} > 0}
+  \; = \; \quarter \ExpectC{\Regret{t}}{\Noise[t]{1} > 0, \Noise[t]{2} > 0}.
+\end{align*}
+
+For the moment, focus on some time step $t$,
+and write $\NoiseV = \NoiseV[t]$.
+Then, there are two types of agents who pull the wrong arm and incur
+regret:
+\begin{enumerate}
+\item If $\Ag{2} > 0$ and $\Ag{1} \Noise{1} + \Ag{2} (1+\Noise{2}) < 0$
+then \AgV should pull $(0,1)$,
+but will wrongly pull $(0,0)$ and incur regret \Ag{2}.
+The range of \AgV making the wrong choice is thus
+$0 < \Ag{2} < \frac{- \Noise{1}}{1+\Noise{2}} \cdot \Ag{1}$.
+Since we are proving a lower bound, we only focus on the
+case $\Ag{1} = -1$, and ignore the case $\Ag{2} = 1$
+(which is rare, since it requires \Noise{1} to be large).
+Thus, the set of agents incurring regret contains the set
+$\Set{\AgV = (-1, \Ag{2})}{0 < \Ag{2} < \frac{\Noise{1}}{1+\Noise{2}}}$.
+
+% For any particular value of \Ag{2},
+% the length of the interval of corresponding \Ag{1} is
+% \begin{align*}
+%   \sqrt{1-\Ag{2}^2} - \frac{1+\Noise{2}}{\Noise{1}} \cdot \Ag{2}
+%   & \geq 1 - \Ag{2} - \frac{1+\Noise{2}}{\Noise{1}} \cdot \Ag{2}
+%   \; = \; 1 - \frac{1+\Noise{1}+\Noise{2}}{\Noise{1}} \cdot \Ag{2}.
+% \end{align*}
+
+\item If $\Ag{2} < 0$ and $\Ag{1} \Noise{1} + \Ag{2} (1+\Noise{2}) > 0$,
+then \AgV should pull $(0,0)$,
+but will wrongly pull $(0,1)$ and incur regret $-\Ag{2}$.
+This region and its regret are rotationally symmetric to the previous
+case.
+\end{enumerate}
+
+Hence, the expected regret for given \Noise{1}, \Noise{2} is at least
+%\begin{align*}
+$2 \int_0^{\frac{\Noise{1}}{1+\Noise{2}}}
+  \Ag{2} \cdot \frac{1}{8} \dd \Ag{2}
+=
+\frac{1}{8} \cdot \left(\frac{\Noise{1}}{1+\Noise{2}}\right)^2$.
+%\end{align*}
+The expected regret, conditioned on
+$\Noise{1} > 0$ and $\Noise{2} > 0$, is therefore
+
+\begin{align*}
+\ExpectC{\Regret{t}}{\Noise{1} > 0, \Noise{2} > 0}
+ & \geq \frac{1}{\Prob{\Noise{1}>0,\Noise{2}>0}} \cdot \frac{1}{8}
+    \int_{0}^{\infty} \int_{0}^{\infty}
+    \left( \frac{\Noise{1}}{1+\Noise{2}} \right)^2 \cdot
+    \frac{\e^{-\frac{t \Noise{1}^2}{2}} \sqrt{t}}{\sqrt{2\pi}} \dd\Noise{1}
+    \frac{\e^{-\frac{t \Noise{2}^2}{2}} \sqrt{t}}{\sqrt{2\pi}} \dd\Noise{2} \\
+ & = \frac{1}{4\pi} \int_{0}^{\infty} \int_{0}^{\infty}
+   \left( \frac{\Noise{1}}{\sqrt{t}+\Noise{2}} \right)^2
+   \e^{-\Noise{1}^2/2} \e^{-\Noise{2}^2/2} \dd \Noise{1} \dd \Noise{2}.
+\end{align*}
+
+We want to show that the expected regret per time step decreases only
+at a rate of $\Omega(1/t)$, and thereto consider the limit of the
+ratio of the two quantities:
+
+\begin{align*}
+\lim_{t \to \infty} \frac{\ExpectC{\Regret{t}}{\Noise{1} > 0, \Noise{2} > 0}}{\frac{1}{t}}
+  & \geq
+    \lim_{t \to \infty} \left( \frac{1}{4\pi} \cdot
+    \int_{0}^{\infty} \int_{0}^{\infty}
+    t \cdot \left( \frac{\Noise{1}}{\sqrt{t}+\Noise{2}} \right)^2
+    \e^{-\Noise{1}^2/2} \e^{-\Noise{2}^2/2} \dd \Noise{1} \dd \Noise{2} \right) \\
+  & = \frac{1}{4\pi} \cdot \int_{0}^{\infty} \int_{0}^{\infty}
+    \lim_{t \to \infty}
+    \left( t \cdot \left( \frac{\Noise{1}}{\sqrt{t}+\Noise{2}} \right)^2 \right)
+    \e^{-\Noise{1}^2/2} \e^{-\Noise{2}^2/2} \dd \Noise{1} \dd \Noise{2} \\
+  & = \frac{1}{4\pi} \cdot \int_{0}^{\infty} \int_{0}^{\infty}
+    \e^{-\Noise{1}^2/2} \e^{-\Noise{2}^2/2} \dd \Noise{1} \dd \Noise{2}
+  \; = \; \frac{1}{4 \pi}; 
+\end{align*}
+
+the second line is due to the monotone convergence theorem,
+which can be applied because
+$t \left(\frac{\Noise{1}}{\sqrt{t}+\Noise{2}}\right)^2$
+is strictly increasing in $t$.
+Because the expected regret in each time step is at least
+$\Omega(1/t)$, the total expected regret is at least
+$\Omega(\sum_{t=1}^{T}\frac{1}{t}) = \Omega(\log(T))$.

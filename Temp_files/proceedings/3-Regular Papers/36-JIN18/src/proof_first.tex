@@ -1,0 +1,442 @@
+%!TEX root = main.tex
+
+\subsection{Proof for large-gradient scenario}
+We prove Lemma \ref{lem:largeGrad} in this subsection. 
+Throughout this subsection, we let $\S$ be the subspace with eigenvalues in $(\theta^2/[\eta(2-\theta)^2], \ell]$, and let $\S^c$ be the complementary subspace. Also let $\proj_{\S}$ and $\proj_{\S^c}$ be the corresponding projections.
+We note $\theta^2/[\eta(2-\theta)^2] = \Theta(\sqrt{\rho\epsilon})$, and this particular choice lies at the boundary between the real eigenvalues and complex eigenvalues of the matrix $\A_j$, as shown in Lemma \ref{lem:aux_eigenvalues}.
+
+% \cnote{Prove theorem given three lemmas here Deal with NCE here}
+The first lemma shows that if momentum or gradient is very large, then the Hamiltonian already has sufficient decrease on average.
+
+\begin{lemma}\label{lem:largegrad_momentum}
+Under the setting of Theorem \ref{thm:main}, if $\norm{\v_t}\ge \umom$ or $\norm{\grad f(\x_t)} \ge 2\ell\umom$, and at time step $t$ only AGD is used without NCE or perturbation, then:
+\begin{equation*}
+ E_{t+1} - E_t \le - 4\ufun/\utime.
+\end{equation*} 
+\end{lemma}
+\begin{proof}
+When $\norm{\v_t} \ge \frac{\epsilon \sqrt{\cn}}{10\ell}$, by Lemma \ref{lem:energy_nonconvex}, we have:
+\begin{align*}
+E_{t+1} -E_t \le -\frac{\theta}{2\eta}\norm{\v_t}^2
+\le -\Omega\left(\frac{\ell}{\sqrt{\cn}}\frac{\epsilon^2 \cn}{\ell^2}c^{-2}\right)
+= -\Omega\left(\frac{\epsilon^2 \sqrt{\cn}}{2\ell}c^{-2}\right)
+\le -\Omega(\frac{\ufun}{\utime} c^6) \le -\frac{4\ufun}{\utime}.
+\end{align*}
+The last step is by picking $c$ to be a large enough constant.
+When $\norm{\v_t} \le \umom$ but $\norm{\grad f(\x_t)} \ge 2\ell\umom$, 
+by the gradient Lipschitz assumption, we have:
+\begin{equation*}
+\norm{\grad f(\y_t)} \ge \norm{\grad f(\x_t)} - (1-\theta) \ell \norm{\v_t} \ge \ell \umom.
+\end{equation*}
+Similarly, by Lemma \ref{lem:energy_nonconvex}, we have:
+\begin{align*}
+E_{t+1} -E_t \le -\frac{\eta}{4}\norm{\grad f(\y_t)}^2 \le -\Omega(\frac{\epsilon^2 \cn}{\ell}c^{-2})
+\le -\Omega(\frac{\ufun}{\utime} c^6) \le -\frac{4\ufun}{\utime}.
+\end{align*}
+Again the last step is by picking $c$ to be a large enough constant, which finishes the proof.
+\end{proof}
+
+
+Next, we show that if the initial momentum is small, but the initial gradient on the nonconvex subspace $\S^c$ is large enough, then within $O(\utime)$ steps, the Hamiltonian will decrease by at least $\ufun$.
+
+
+
+
+
+\begin{lemma}[Formal Version of Lemma \ref{lem:2}]\label{lem:largegrad_nonconvex}
+Under the setting of Theorem \ref{thm:main}, if $\norm{\proj_{\S^c}\grad f(\x_{0})} \ge \frac{\epsilon}{2}$, $\norm{\v_0} \le \umom$, $\v_0\trans [\proj_{\S}\trans\hess f(\x_0) \proj_{\S}] \v_0 \le  2 \sqrt{\rho\epsilon}\umom^2 $,
+and for $t\in [0, \utime/4]$ only AGD steps are used without NCE or perturbation,
+then:
+\begin{equation*}
+E_{\utime/4} - E_0 \le - \ufun.
+\end{equation*}
+\end{lemma}
+
+\begin{proof}
+The high-level plan is a proof by contradiction. We first assume that the
+energy doesn't decrease very much; that is, $E_{\utime/4} - E_0 \ge - \ufun$ for a small enough constant $\mu$. By Corollary \ref{cor:localball} and the Cauchy-Swartz inequality, this immediately implies that for all $t \le \utime$, we have
+$\norm{\x_t - \x_0} \le \sqrt{2\eta \utime \ufun/(4\theta)} = \uspace/2$. In
+the rest of the proof we will show that this leads to a contradiction.
+
+%  that $\norm{\x_{\utime} - \x_0} \ge \Omega(\uspace)$ is true,
+% then by Corollary \ref{cor:localball} it immediately implies $E_{t+\utime} - E_t \le - \Omega(\ufun)$.
+
+% For the remaining of the proof, we assume $\forall t\le \utime, \norm{\x_{t} - \x_0} \le c \uspace$, we will show this can not be true for sufficiently small constant $c$.
+
+Given initial $\x_0$ and $\v_0$, we define $\x_{-1} = \x_0 - \v_0$.
+Without loss of generality, set $\x_{0}$ as the origin $\zero$.  
+Using the notation and results of Lemma \ref{lem:AGD_update_general}, 
+we have the following update equation:
+\begin{align*}
+\pmat{\x_{t} \\ \x_{t-1}} =& \A^{t}\pmat{0 \\ -\v_0} 
+-\eta\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\grad f(0) + \delta_{\tau} \\ 0}.
+\end{align*}
+Consider the $j$-th eigen-direction of $\H = \hess f(\zero)$, 
+recall the definition of the $2\times 2$ block matrix $\A_j$ as 
+in \eqref{eq:definition_Aj}, and denote
+\begin{equation*}
+(a^{(j)}_{t}, ~-b^{(j)}_t) =\pmat{1 & 0 }\A_j^{t}.
+\end{equation*}
+Then we have for the $j$-th eigen-direction:
+% \begin{align*}
+% x_t^{(j)}
+% = \frac{ \mu_1\mu_2(\mu_1^{t} - \mu_2^{t})}{\mu_1 - \mu_2}
+% v_0^{(j)} 
+% -\eta\sum_{\tau = 0}^{t-1}\frac{\mu_1^{t-\tau} - \mu_2^{t-\tau}}{\mu_1 - \mu_2}
+% (\grad f(0)^{(j)} + \delta_\tau^{(j)})
+% \end{align*}
+\begin{align*}
+x_t^{(j)}
+= &b_t^{(j)} v_0^{(j)} 
+-\eta\sum_{\tau = 0}^{t-1} a_{t-1-\tau}^{(j)}
+(\grad f(0)^{(j)} + \delta_\tau^{(j)})\\
+= &-\eta\left[\sum_{\tau = 0}^{t-1} a_\tau^{(j)}\right]
+\left(\grad f(0)^{(j)} + \sum_{\tau = 0}^{t-1} p^{(j)}_\tau \delta_\tau^{(j)}
++ q^{(j)}_t  v_0^{(j)} \right),
+\end{align*}
+where 
+\begin{align*}
+p^{(j)}_\tau 
+= \frac{a_{t-1-\tau}^{(j)}}{\sum_{\tau = 0}^{t-1} a_\tau^{(j)}}
+\quad \text{~and~} \quad
+q^{(j)}_t = - \frac{b_t^{(j)}}{\eta\sum_{\tau = 0}^{t-1} a_\tau^{(j)}}.
+\end{align*}
+Clearly $\sum_{\tau=0}^{t-1} p^{(j)}_\tau  = 1$. For $j \in \S^c$, by Lemma \ref{lem:aux_nonconvex_inequal}, we know
+$\sum_{\tau = 0}^{t-1} a_\tau^{(j)} \ge \Omega(\frac{1}{\theta^2})$. 
+We can thus further write the above equation as:
+\begin{equation*}
+x_t^{(j)} = -\eta\left[\sum_{\tau = 0}^{t-1} a_\tau^{(j)}\right]
+\left(\grad f(0)^{(j)} + \tilde{\delta}^{(j)} + \tilde{v}^{(j)} \right),
+\end{equation*}
+where $\tilde{\delta}^{(j)} = \sum_{\tau = 0}^{t-1} p^{(j)}_\tau \delta_\tau^{(j)}$
+and $\tilde{v}^{(j)} = q^{(j)}_t  v_0^{(j)}$, coming from the Hessian Lipschitz 
+assumption and the initial momentum respectively.
+For the remaining part, we would like to bound $\|\proj_{\S^c} \tilde{\delta}\|$ and $\norm{\proj_{\S^c} \tilde{\v}}$, and show that both of them are small compared to $\norm{\proj_{\S^c}\grad f(\x_{0})}$.
+
+~
+
+First, for the $\|\proj_{\S^c} \tilde{\delta}\|$ term, we know by definition of the subspace $\S^c$, and given that both eigenvalues of $\A_j$ are real and positive according to Lemma \ref{lem:aux_eigenvalues}, such that $p^{(j)}_\tau$ is positive by Lemma \ref{lem:aux_matrix_form}, we have for any $j\in \S^c$:
+\begin{align*}
+|\tilde{\delta}^{(j)}| = &|\sum_{\tau = 0}^{t-1} p^{(j)}_\tau \delta_\tau^{(j)}|
+\le \sum_{\tau = 0}^{t-1} p^{(j)}_\tau (|\delta_0^{(j)}| + |\delta_\tau^{(j)} - \delta_0^{(j)} |)\\
+\le &\left[\sum_{\tau = 0}^{t-1} p^{(j)}_\tau \right]\left(|\delta_0^{(j)}| + \sum_{\tau = 1}^{t-1}|\delta_\tau^{(j)} - \delta_{\tau-1}^{(j)} |\right)
+\le |\delta_0^{(j)}| + \sum_{\tau = 1}^{t-1}|\delta_\tau^{(j)} - \delta_{\tau-1}^{(j)} |.
+\end{align*}
+By the Cauchy-Swartz inequality, this gives:
+\begin{align*}
+\norm{\proj_{\S^c} \tilde{\delta}}^2
+=& \sum_{j\in \S^c} |\tilde{\delta}^{(j)}|^2 \le \sum_{j\in \S^c} (|\delta_0^{(j)}| + \sum_{\tau = 1}^{t-1}|\delta_\tau^{(j)} - \delta_{\tau-1}^{(j)} |)^2
+\le 2\left[\sum_{j\in \S^c}|\delta_0^{(j)}|^2 + \sum_{j\in \S^c} (\sum_{\tau = 1}^{t-1}|\delta_\tau^{(j)} - \delta_{\tau-1}^{(j)} |)^2\right] \\
+\le& 2\left[\sum_{j\in \S^c}|\delta_0^{(j)}|^2 + t\sum_{j\in \S^c} \sum_{\tau = 1}^{t-1}|\delta_\tau^{(j)} - \delta_{\tau-1}^{(j)} |^2 \right] 
+\le 2\norm{\delta_0}^2 + 2t\sum_{\tau = 1}^{t-1}\norm{\delta_\tau- \delta_{\tau-1}}^2.
+\end{align*}
+Recall that for $t \le \utime$, we have $\norm{\x_t} \le \uspace/2$.
+By Proposition \ref{prop:delta}, we know:
+$\norm{\delta_0} \le O( \rho \uspace^2)$, 
+and by Corollary \ref{cor:localball} and Proposition \ref{prop:delta}:
+\begin{align*}
+t\sum_{\tau = 1}^{t-1}\norm{\delta_\tau- \delta_{\tau-1}}^2
+\le O(\rho^2 \uspace^2) t\sum_{\tau = 1}^{t-1}\norm{\x_\tau- \x_{\tau-1}}^2
+\le O(\rho^2 \uspace^4).
+\end{align*}
+This gives $\|\proj_{\S^c} \tilde{\delta}\| \le O( \rho \uspace^2) \le O(\epsilon \cdot c^{-6}) \le \epsilon/10$.
+
+~
+
+Next we consider the $\norm{\proj_{\S^c} \tilde{\v}}$ term. 
+By Lemma \ref{lem:aux_nonconvex_inequal}, we have
+\begin{align*}
+ - \eta q_t^{(j)}  = \frac{b_t}{\sum_{\tau = 0}^{t-1} a_\tau} \le O(1)\max\{\theta, \sqrt{\eta|\lambda_j|}\}.
+\end{align*}
+This gives:
+\begin{equation}\label{eq:proof_large_grad_mom}
+\norm{\proj_{\S^c} \tilde{\v}}^2  = \sum_{j\in\S^c} [q^{(j)}_t  v_0^{(j)}]^2 
+\le O(1)\sum_{j\in\S^c}  \frac{\max\{ \eta|\lambda_j|, \theta^2\}}{\eta^2}  [v_0^{(j)}]^2.
+\end{equation}
+Recall that we have assumed by way of contradiction that $E_{\utime/4} - E_0 \le - \ufun$.
+By the precondition that NCE is not used at $t=0$, due to the certificate \eqref{eq:certificate}, we have:
+\begin{equation*}
+\frac{1}{2} \v_0\trans 
+\hess f(\zeta_0) \v_0 \ge - \frac{\gamma}{2} \norm{\v_0}^2 = -\frac{\sqrt{\rho\epsilon}}{8} \norm{\v_0}^2,
+\end{equation*}
+where $\zeta_0 = \phi\x_0 + (1-\phi)\y_0$ and $\phi \in [0, 1]$. Noting that we fix $\x_0$ as the origin $\zero$, by the Hessian Lipschitz property, it is easy to show that
+$\norm{\hess f(\zeta_0) - \H} \le \rho\norm{\y_0} \le \rho \norm{\v_0} \le \rho \umom \le \sqrt{\rho\epsilon}$. This gives:
+\begin{equation*}
+\v_0 \H \v_0 \ge -2\sqrt{\rho\epsilon} \norm{\v_0}^2.
+\end{equation*}
+Again letting $\lambda_j$ denote the eigenvalues of $\H$, rearranging the above sum give:
+\begin{align*}
+\sum_{j:\lambda_j\le 0} |\lambda_j|[v_0^{(j)}]^2
+ \le& O(\sqrt{\rho\epsilon})\norm{\v_0}^2 + \sum_{j:\lambda_j> 0} \lambda_j[v_0^{(j)}]^2 \\
+ \le&  O(\sqrt{\rho\epsilon})\norm{\v_0}^2 + \sum_{j:\lambda_j> \theta^2/\eta(2-\theta)^2} \lambda_j[v_0^{(j)}]^2
+ \le O(\sqrt{\rho\epsilon})\norm{\v_0}^2 + \v_0\trans [\proj_\S\trans \H \proj_\S] \v_0.
+\end{align*}
+The second inequality uses the fact that $\theta^2/\eta(2-\theta)^2 \le O(\sqrt{\rho\epsilon})$.
+Substituting into \eqref{eq:proof_large_grad_mom} gives:
+\begin{equation*}
+\norm{\proj_{\S^c} \tilde{\v}}^2  \le
+O(\frac{1}{\eta})\left[\sqrt{\rho\epsilon}\norm{\v_0}^2 + \v_0\trans [\proj_\S\trans \H \proj_\S] \v_0 \right]
+\le O(\ell\sqrt{\rho\epsilon}\umom^2) = O(\epsilon^2 c^{-2}) \le \epsilon^2/100.
+\end{equation*}
+% \cnote{Using momentum condition for strongly convex part here}
+Finally, putting all pieces together, we have:
+\begin{align*}
+\norm{\x_t} \ge& \norm{\proj_{\S^c}\x_t}  \ge \eta \left[\min_{j\in\S^c}\sum_{\tau = 0}^{t-1} a_\tau^{(j)}\right]
+\norm{\proj_{\S^c} (\grad f(0) + \tilde{\delta} + \tilde{\v})}\\
+\ge& \Omega(\frac{\eta}{\theta^2})\left[\norm{\proj_{\S^c} \grad f(0)} - \norm{\proj_{\S^c}\tilde{\delta}} - \norm{\proj_{\S^c}\tilde{\v})}\right]
+\ge \Omega(\frac{\eta\epsilon}{\theta^2}) \ge \Omega(\uspace c^3) \ge \uspace
+\end{align*}
+which contradicts the fact $\norm{\x_t}$ that remains inside the ball around $\zero$ with radius $\uspace/2$.
+\end{proof}
+
+% \begin{lemma}
+% If $\norm{\v_0}\le \frac{\epsilon \sqrt{\cn}}{\ell}$ and $\norm{\grad f(\x_0)} \le 2\epsilon\sqrt{\cn}$. suppose
+% \begin{equation*}
+% E_{2\utime} - E_0 \ge - \mu \ufun
+% \end{equation*}
+% for small enough $\mu$, then, we have for all $t\in [\utime, 2\utime]$ that:
+% \begin{equation*}
+% \norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{10}
+% \text{~~and~~}
+% % \norm{\proj_\S(\x_t - \x_{t-1})} \le \frac{\epsilon}{\ell}
+% \v_t\trans [\proj_\S\trans\H \proj_\S] \v_t \le c \eta \epsilon^2
+% \end{equation*}
+% \end{lemma}
+The next lemma shows that if the initial momentum and gradient are 
+reasonably small, and the Hamitonian does not have sufficient decrease 
+over the next $\utime$ iterations, then both the gradient and momentum 
+of the strongly convex component $\S$ will vanish in $\utime/4$ iterations.
+
+\begin{lemma}[Formal Version of Lemma \ref{lem:1}]\label{lem:largegrad_convex}
+Under the setting of Theorem \ref{thm:main}, suppose $\norm{\v_0}\le \umom$ and $\norm{\grad f(\x_0)} \le 2\ell\umom$, $E_{\utime/2} - E_0 \ge - \ufun$,
+and for $t\in [0, \utime/2]$ only AGD steps are used, without NCE or perturbation.
+Then $\forall \; t\in [\utime/4, \utime/2]$:
+    \begin{equation*}
+    \norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{2}
+    \text{~~and~~}
+    \v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le \sqrt{\rho\epsilon}\umom^2.
+    \end{equation*}
+\end{lemma}
+
+\begin{proof}
+Since $E_{\utime} - E_0 \ge - \ufun$, by Corollary \ref{cor:localball} and 
+the Cauchy-Swartz inequality, we see that for all $t \le \utime$ we have 
+$\norm{\x_t - \x_0} \le \sqrt{2\eta \utime \ufun/\theta} = \uspace$.
+
+Given initial $\x_0$ and $\v_0$, we define $\x_{-1} = \x_0 - \v_0$.
+Without loss of generality, setting $\x_{0}$ as the origin $\zero$, 
+by the notation and results of Lemma \ref{lem:AGD_update_general}, 
+we have the update equation:
+% Given initial $\x_0$ and $\v_0$, we can construct an equivalent $\x_{-1} = \x_0 - \v_0$.
+% WLOG, set $\x_{0}$ as origin $0$, and denote $\H = \hess f(0)$. Recall the update equation:
+\begin{align} \label{eq:update_AGD_matrix_strongly_convex}
+\pmat{\x_{t} \\ \x_{t-1}}
+% =&  \A^{t}\pmat{\x_0 \\ \x_{-1}} 
+% -\eta\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\grad f(\x_{0}) + \delta_{\tau} \\ 0}  \nn \\
+=& \A^{t}\pmat{0 \\ -\v_0} 
+-\eta\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\grad f(0) + \delta_{\tau} \\ 0}.
+\end{align}
+% where $\norm{\delta_\tau} \le \sqrt{\rho\epsilon}(\norm{\x_\tau} + \norm{\x_{\tau-1}})$. 
+
+First we prove the upper bound on the gradient: $\forall \; t\in [\utime/4, \utime]$, we have $\norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{2}$. 
+Let $\Delta_t = \int_{0}^1 (\hess f(\phi \x_t) - \H)\mathrm{d}\phi$. According to \eqref{eq:update_AGD_matrix_strongly_convex}, we have:
+\begin{align*}
+\grad f(\x_t) = &
+\grad f(0) + (\H + \Delta_t)\x_t \\
+=& \underbrace{\left(\I - \eta\H \pmat{\I & 0}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\I \\ 0}\right) \grad f(0)}_{\g_1}
++ \underbrace{\H \pmat{\I & 0}\A^t\pmat{0 \\ -\v_0}}_{\g_2} \\
+&- \underbrace{\eta\H \pmat{\I & 0}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\delta_t \\ 0}}_{\g_3}
++ \underbrace{\Delta_t \x_t}_{\g_4}.
+\end{align*}
+We will upper bound four terms $\g_1, \g_2, \g_3, \g_4$ separately. 
+Clearly, for the last term $\g_4$, we have:
+$$\norm{\g_4} \le \rho\norm{\x_t}^2 \le O(\rho \uspace^2) = O(\epsilon c^{-6}) \le \epsilon/8.$$
+Next, we show that the first two terms $\g_1, \g_2$ become very small for $t\in [\utime/4, \utime]$.
+Consider coordinate $j \in \S$ and the $2\times 2$ block matrix $\A_j$.  By Lemma \ref{lem:aux_matrix_equality} we have:
+\begin{align*}
+1 - \eta\lambda_j \pmat{1 & 0}\sum_{\tau = 0}^{t-1} \A_j^{t-1-\tau}\pmat{1 \\ 0}
+ = \pmat{1 & 0}  \A_j^t \pmat{1 \\ 1}.
+\end{align*}
+Denote:
+\begin{equation*}
+(a^{(j)}_{t}, ~-b^{(j)}_t) =\pmat{1 & 0 }\A_j^{t}.
+\end{equation*}
+By Lemma \ref{lem:aux_convex_entry}, we know:
+\begin{equation*}
+\max_{j\in \S} \left\{ |a^{(j)}_t|
+, |b^{(j)}_t| \right\} \le (t+1) (1-\theta)^{\frac{t}{2}} .
+\end{equation*}
+This immediately gives when $t\ge \utime/4 = \Omega(\frac{c}{\theta}\log\frac{1}{\theta})$ for $c$ sufficiently large:
+\begin{align*}
+\norm{\proj_\S \g_1}^2 =& \sum_{j\in \S} |(a^{(j)}_{t} - b^{(j)}_t) \grad f(0)^{(j)}|^2
+\le (t+1)^2(1-\theta)^t \norm{\grad f(0)}^2 \le \epsilon^2/64 \\
+\norm{\proj_\S \g_2}^2 = & \sum_{j\in \S} |\lambda_j  b^{(j)}_t \v_0^{(j)}|^2
+\le \ell^2 (t+1)^2 (1-\theta)^t \norm{\v_0}^2 \le \epsilon^2/64.
+\end{align*}
+Finally, for $\g_3$, by Lemma \ref{lem:aux_convex_inequal}, for all $j\in \S$, we have
+\begin{equation*}
+|\g_3^{(j)}| = \left|\eta \lambda_j \sum_{\tau = 0}^{t-1}a^{(j)}_\tau \delta_{t-1-\tau}\right|
+\le |\delta^{(j)}_{t-1}|+  \sum_{\tau=1}^{t-1} |\delta^{(j)}_\tau - \delta^{(j)}_{\tau-1}|.
+\end{equation*}
+By Proposition \ref{prop:delta}, this gives:
+\begin{equation*}
+\norm{\proj_\S \g_3}^2 \le 
+2\norm{\delta_{t-1}}^2 + 2t\sum_{\tau = 1}^{t-1}\norm{\delta_\tau- \delta_{\tau-1}}^2 
+\le O(\rho^2\uspace^4) \le O(\epsilon^2 \cdot c^{-12}) \le \epsilon^2/64.
+\end{equation*}
+In sum, this gives for any fixed $t \in [\utime/4, \utime]$:
+\begin{equation*}
+\norm{\proj_\S \grad f(\x_t)}\le \norm{\proj_\S \g_1} + \norm{\proj_\S \g_2} + \norm{\proj_\S \g_3} + \norm{\g_4} \le \frac{\epsilon}{2}.
+\end{equation*}
+
+
+% \cnote{Use Lemma 16 we have initial gradient small}
+% Again, by Lemma \ref{lem:aux_matrix_form} we know:
+% \begin{equation*}
+% \left|\pmat{1 & 0}  \A_j^t \pmat{1 \\ 1}\right| \le \left|\pmat{1 & 0}  \A_j^t \pmat{1 \\ 0}\right|
+% + \left|\pmat{1 & 0}  \A_j^t \pmat{0 \\ -1}\right| \le
+% 2(t+1) \mu_1^{t+1} 
+% \end{equation*}
+% \cnote{Use Lemma 16 we have initial momentum small}
+
+% ~
+
+% For second term, we also have:
+% \begin{equation*}
+% \left|\pmat{1 & 0}  \A_j^t \pmat{0 \\ -1}\right| \le (t+1) \mu_1^{t+1} 
+% \end{equation*}
+
+% ~
+
+% For third term, let $r e^{i \phi}, re^{-i\phi}$ be two complex eigenvalue, we have:
+% \begin{equation*}
+% -\eta\lambda_j \pmat{1 & 0}\sum_{\tau = 0}^{t-1} \A_j^{t-1-\tau}\pmat{\delta^{(j)}_\tau \\ 0}
+% % = -\eta\lambda_j\left[\sum_{\tau = 0}^{t-1} a_\tau^{(j)}\right]\sum_{\tau = 0}^{t-1} p^{(j)}_\tau \delta_\tau^{(j)}
+% = -\eta\lambda_j \sum_{\tau =0}^{t-1} \frac{\mu_1^{t-\tau} -  \mu_2^{t -\tau}}{\mu_1 -\mu_2}\delta^{(j)}_\tau
+% = -\eta\lambda_j \sum_{\tau =0}^{t-1}\frac{r^{t-\tau}\sin[(t-\tau)\phi]}{r\sin[\phi]} \delta^{(j)}_\tau
+% \end{equation*}
+% By lemma \ref{lem:trigonometry} we know:
+% \begin{equation*}
+% \sum_{\tau =0}^{t-1} r^{t-\tau}\sin[(t-\tau)\phi]\delta_\tau
+% \le O(\frac{1}{\sqrt{\eta\lambda_j}}) \left[|\delta_0| + \sum_{\tau = 1}^{t-1} |\delta_\tau - \delta_{\tau - 1}|\right]
+% \end{equation*}
+% which finishes the proof of first part.
+
+% % where we know:
+% % $\eta\lambda_j\left[\sum_{\tau = 0}^{t-1} a_\tau^{(j)}\right] \rightarrow 1$.
+% % In real case, use $\pi^{(j)}$ are positive, in complex case use Lemma \ref{lem:trigonometry}.
+% % \cnote{Think of unified way to prove Lemma \ref{lem:trigonometry}}.
+
+% % \cnote{TODO: prove momentum part, two terms goes away, 
+% % the last one decompose into two $\sin(\phi)$ and $\cos(\phi)$}
+
+% For momentum, we have:
+
+We now provide a similar argument to prove the upper bound for the momentum. 
+That is, $\forall \; t\in [\utime/4, \utime]$, we show
+$\v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le \sqrt{\rho\epsilon}\umom^2$. According to \eqref{eq:update_AGD_matrix_strongly_convex}, 
+we have:
+\begin{align*}
+\v_t = \pmat{1 & -1}\pmat{\x_{t} \\ \x_{t-1}}
+=& \underbrace{\pmat{1 & -1}\A^{t}\pmat{0 \\ -\v_0} }_{\m_1}
+-\underbrace{\eta\pmat{1 & -1}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\grad f(0)  \\ 0}}_{\m_2} \\
+&- \underbrace{\eta\pmat{1 & -1}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\delta_{\tau} \\ 0}}_{\m_3}.
+\end{align*}
+Consider the $j$-th eigendirection, so that $j \in \S$, and recall the $2\times 2$ block matrix $\A_j$. Denoting
+\begin{equation*}
+(a^{(j)}_{t}, ~-b^{(j)}_t) =\pmat{1 & 0 }\A_j^{t},
+\end{equation*}
+by Lemma \ref{lem:aux_matrix_form} and \ref{lem:aux_convex_entry}, we have for $t\ge \utime/4 = \Omega(\frac{c}{\theta}\log\frac{1}{\theta})$ with $c$ sufficiently large:
+\begin{equation*}
+\norm{[\proj_\S\trans \hess f(\x_0) \proj_\S]^{\frac{1}{2}}\m_1}^2 = \sum_{j \in \S} |\lambda_j^{\frac{1}{2}} (b^{(j)}_t -b^{(j)}_{t-1})  \v_0^{(j)}|^2
+\le \ell(t+1)^2 (1-\theta)^t \norm{\v_0}^2 \le O(\frac{\epsilon^2}{\ell}c^{-3}) \le \frac{1}{3}\sqrt{\rho\epsilon}\umom^2.
+\end{equation*}
+On the other hand, by Lemma \ref{lem:aux_matrix_equality}, we have:
+\begin{align*}
+\abs{\eta \lambda_j \pmat{1 & -1}\sum_{\tau = 0}^{t-1} \A_j^{t-1-\tau}\pmat{1 \\0}}
+= \abs{\eta \lambda_j \pmat{1 & 0}\sum_{\tau = 0}^{t-1} (\A_j^{t-1-\tau}- \A_j^{t-2-\tau})\pmat{1 \\0}}
+= \abs{\pmat{1 & 0}  (\A_j^t -\A_j^{t-1})  \pmat{1 \\ 1}}.
+\end{align*}
+This gives, for $t\ge \utime/4 = \Omega(\frac{c}{\theta}\log\frac{1}{\theta})$, and
+for $c$ sufficiently large:
+\begin{align*}
+\norm{[\proj_\S\trans \hess f(\x_0) \proj_\S]^{\frac{1}{2}}\m_2}^2 
+=& \sum_{j \in \S} |\lambda_j^{-\frac{1}{2}} (a^{(j)}_t -a^{(j)}_{t-1} - b^{(j)}_t +b^{(j)}_{t-1} )  \grad f(0)^{(j)}|^2 \\
+\le& O(\frac{1}{\sqrt{\rho\epsilon}})(t+1)^2(1-\theta)^t \norm{\grad f(0)}^2 \le O(\frac{\epsilon^2}{\ell}c^{-3}) \le \frac{1}{3}\sqrt{\rho\epsilon}\umom^2.
+\end{align*}
+Finally, for any $j \in \S$, by Lemma \ref{lem:aux_convex_inequal}, we have:
+\begin{equation*}
+|(\H^{\frac{1}{2}}\m_3)^{(j)}| = |\eta\lambda_j^{\frac{1}{2}}\sum_{\tau = 0}^{t-1}(a_\tau - a_{\tau -1}) \delta_{t-1-\tau}|
+\le \sqrt{\eta} \left[\sum|\delta^{(j)}_{t-1}|+  \sum_{\tau=1}^{t-1} |\delta^{(j)}_\tau - \delta^{(j)}_{\tau-1}|\right].
+\end{equation*}
+Again by Proposition \ref{prop:delta}:
+\begin{align*}
+\norm{[\proj_\S\trans \hess f(\x_0) \proj_\S]^{\frac{1}{2}}\m_3}^2 
+= \eta \left[2\norm{\delta_{t-1}}^2 + 2t\sum_{\tau = 1}^{t-1}\norm{\delta_\tau- \delta_{\tau-1}}^2 \right]
+\le O(\eta\rho^2\uspace^4) \le O(\frac{\epsilon^2}{\ell}c^{-6}) \le \frac{1}{3}\sqrt{\rho\epsilon}\umom^2.
+\end{align*}
+Putting everything together, we have:
+\begin{align*}
+\v_t\trans [\proj_\S\trans \hess f(\x_0) \proj_\S] \v_t \le& 
+\norm{[\proj_\S\trans \hess f(\x_0) \proj_\S]^{\frac{1}{2}}\m_1}^2
++ \norm{[\proj_\S\trans \hess f(\x_0) \proj_\S]^{\frac{1}{2}}\m_2}^2\\
+&+ \norm{[\proj_\S\trans \hess f(\x_0) \proj_\S]^{\frac{1}{2}}\m_3}^2
+\le \sqrt{\rho\epsilon}\umom^2.
+\end{align*}
+This finishes the proof.
+\end{proof}
+
+
+Finally, we are ready to prove the main lemma of this subsection (Lemma \ref{lem:largeGrad}), which claims that if gradients in $\utime$ iterations are always large, then the Hamiltonian will decrease sufficiently within a small number of steps.
+\begingroup
+\def\thetheorem{\ref{lem:largeGrad}}
+\begin{lemma}[Large gradient]
+Consider the setting of Theorem~\ref{thm:main}.
+%If in~\pagd~(Algorithm~\ref{algo:PAGD}),
+If $\norm{\grad f(\x_\tau)} \ge \epsilon$ for all $ \tau \in [0, \utime]$, then by running Algorithm \ref{algo:PAGD} we have $E_{\utime} - E_0 \le -\ufun$.
+\end{lemma}
+\addtocounter{theorem}{-1}
+\endgroup
+
+
+
+\begin{proof}
+Since $\norm{\grad f(\x_\tau)} \ge \epsilon$ for all $ \tau \in [0, \utime]$, according to Algorithm \ref{algo:PAGD}, the precondition to add perturbation never holds, so Algorithm will not add any perturbation in these $\utime$ iterations.
+
+Next, suppose there is at least one iteration where NCE is used. Then by Lemma \ref{lem:NCE_decrease}, we know that that step alone gives $\ufun$ decrease in the Hamiltonian. According to Lemma \ref{lem:energy_nonconvex} and Lemma \ref{lem:NCE_decrease} we know that without perturbation, the Hamiltonian decreases monotonically in the remaining steps. This means whenever at least one NCE step is performed, Lemma \ref{lem:largeGrad} immediately holds.
+
+For the remainder of the proof, we can restrict the discussion to the case where NCE is never performed in steps $\tau \in [0, \utime]$.
+Letting
+\begin{equation*}
+\tau_1 = \arg\min_{t \in [0, \utime]}\left\{t \left| \norm{\v_t}\le \umom
+\text{~and~} \norm{\grad f(\x_t)} \le 2\ell\umom \right.\right\},
+\end{equation*}
+we know in case $\tau_1 \ge \frac{\utime}{4}$, that Lemma \ref{lem:largegrad_momentum} 
+ensures 
+$E_{\utime} - E_0 \le E_{\frac{\utime}{4}} - E_0 \le -\ufun$.
+Thus, we only need to discuss the case $\tau_1 \le \frac{\utime}{4}$.
+Again, if $E_{\tau_1 + \utime/2} - E_{\tau_1}\le -\ufun$, Lemma \ref{lem:largeGrad} immediately holds. For the remaining case, $E_{\tau_1 + \utime/2} - E_{\tau_1}\le -\ufun$, we apply Lemma \ref{lem:largegrad_convex} starting at $\tau_1$, and obtain
+    \begin{equation*}
+    \norm{\proj_\S\grad f(\x_{t})} \le \frac{\epsilon}{2}
+    \text{~~and~~}
+    % \norm{\proj_\S(\x_t - \x_{t-1})} \le \frac{\epsilon}{\ell}
+    \v_t\trans [\proj_\S\trans \hess f(\x_{\tau_1}) \proj_\S] \v_t \le \sqrt{\rho\epsilon}\umom^2.
+    ~~\quad \forall t \in [\tau_1 + \frac{\utime}{4}, \tau_1 + \frac{\utime}{2}].
+    \end{equation*}
+Letting:
+\begin{equation*}
+\tau_2 = \arg\min_{t \in [\tau_1 + \frac{\utime}{4}, \utime]}\left\{t \left| \norm{\v_t}\le \umom \right.\right\},
+\end{equation*}
+by Lemma \ref{lem:largegrad_momentum} we again know we only need to discuss the case where $\tau_2 \le \tau_1 + \frac{\utime}{2}$; otherwise, we already guarantee sufficient decrease in the Hamiltonian.
+Then, we clearly have $\norm{\proj_\S\grad f(\x_{\tau_2})} \le \frac{\epsilon}{2}$, also by the precondition of Lemma \ref{lem:largeGrad}, we know $\norm{\grad f(\x_{\tau_2})} \ge \epsilon$, 
+thus $\norm{\proj_{\S^c}\grad f(\x_{\tau_2})} \ge \frac{\epsilon}{2}$.
+On the other hand, since if the Hamiltonian does not decrease enough, $E_{\tau_2} - E_0 \ge -\ufun$, 
+by Lemma \ref{cor:localball}, we have $\norm{\x_{\tau_1} - \x_{\tau_2}} \le 2\uspace$, by the Hessian Lipschitz property, which gives:
+\begin{equation*}
+\v_{\tau_2}\trans [\proj_\S\trans \hess f(\x_{\tau_2}) \proj_\S] \v_{\tau_2} \le 
+\v_{\tau_2}\trans [\proj_\S\trans \hess f(\x_{\tau_1}) \proj_\S] \v_{\tau_2}
++ \norm{\hess f(\x_{\tau_1}) - \hess f(\x_{\tau_2})}\norm{\v_{\tau_2}}^2
+\le 2\sqrt{\rho\epsilon}\umom^2.
+\end{equation*}
+Now $\x_{\tau_2}$ satisfies all the preconditions of Lemma \ref{lem:largegrad_nonconvex}, and by applying Lemma \ref{lem:largegrad_nonconvex} we finish the proof.
+\end{proof}

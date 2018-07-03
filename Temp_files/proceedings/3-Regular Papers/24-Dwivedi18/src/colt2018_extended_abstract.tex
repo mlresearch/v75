@@ -1,0 +1,289 @@
+\documentclass[final, 12pt]{colt2018} % Anonymized submission
+% \documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[MALA]{Log-concave sampling: Metropolis-Hastings algorithms are fast!}
+
+% \usepackage{amsthm}
+% \usepackage{fullpage}
+\usepackage{graphics}
+\usepackage{graphicx}
+\usepackage{times}
+% Top and bottom rules for tables
+\usepackage{booktabs}
+
+% for adjust width
+\usepackage{chngpage}
+
+% to label enumerate
+\usepackage{enumitem}
+% for captions
+% \usepackage{caption}
+% \usepackage{subcaption}
+
+
+% for mathmakebox
+\usepackage{mathtools}
+% macros
+\input{macros}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+ \coltauthor{\Name{Raaz Dwivedi$^\diamond$} \Email{raaz.rsk@berkeley.edu}\\
+ \addr Department of Electrical Engineering and Computer Sciences, UC Berkeley
+ \AND
+ \Name{Yuansi Chen$^\diamond$} \Email{yuansi.chen@berkeley.edu}\\
+ \addr Department of Statistics, UC Berkeley
+ \AND
+ \Name{Martin Wainwright} \Email{wainwrig@berkeley.edu} \\
+ \Name{Bin Yu} \Email{binyu@berkeley.edu}\\
+ \addr Department EECS and Department of Statistics, UC Berkeley
+ }
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We consider the problem of sampling from a strongly log-concave
+density in $\mathbb{R}^d$, and prove a non-asymptotic upper bound on
+the mixing time of the Metropolis-adjusted Langevin algorithm (MALA).
+The method draws samples by running a Markov chain obtained from the
+discretization of an appropriate Langevin diffusion, combined with an
+accept-reject step to ensure the correct stationary distribution.
+Relative to known guarantees for the unadjusted Langevin algorithm
+(ULA), our bounds reveal that the use of an accept-reject step in MALA
+leads to an exponentially improved dependence on the error-tolerance.
+Concretely, in order to obtain samples with TV error at most $\delta$
+for a density with condition number $\kappa$, we show that MALA
+requires $\mathcal{O} \big(\kappa d \log(1/\delta) \big)$ steps, as
+compared to the $\mathcal{O} \big(\kappa^2 d/\delta^2 \big)$ steps
+established in past work on ULA.  We also demonstrate the gains of
+MALA over ULA for weakly log-concave densities.  Furthermore, we
+derive mixing time bounds for a zeroth-order method Metropolized
+random walk (MRW) and show that it mixes $\mathcal{O}(\kappa d)$
+slower than MALA.
+\end{abstract}
+\let\thefootnote\relax\footnotetext{$\diamond$Raaz Dwivedi and Yuansi
+Chen contributed equally to this work.\\
+Extended abstract. Full version appears as [\url{https://arxiv.org/abs/1801.02309}, v2]}
+
+\begin{keywords}
+MCMC, sampling, random walk, Metropolis-adjusted Langevin algorithm, convergence
+\end{keywords}
+
+\section{Main Results}
+\label{sec:main_results}
+Recent decades have witnessed great success of Markov Chain Monte
+Carlo (MCMC) algorithms suited for generating random samples; for
+instance, see the handbook~\citep{brooks2011handbook} and references
+therein. In a broad sense, these methods are based on two steps.  The
+first step is to construct a Markov chain whose stationary
+distribution is either equal to the target distribution or close to it
+in a suitable metric.  Given this chain, the second step is to draw
+samples by simulating the chain for a certain number of steps.
+
+Many algorithms have been proposed and studied for sampling from
+probability distributions with a density on a continuous space.  Two
+broad categories of these methods are \emph{zeroth-order methods} and
+\emph{first-order methods}. On one hand, a zeroth-order method is
+based on querying the density of the distribution (up to a
+proportionality constant) at a point in each iteration.  By contrast,
+a first-order method also makes use of gradient information about the
+density.  A few popular examples of zeroth order algorithms include
+Metropolized random walk
+(MRW)~\citep{mengersen1996rates,roberts1996geometric}, Ball
+Walk~\citep{lovasz1990ballwalk,dyer1991random,lovasz1993random} and the
+Hit-and-run algorithm~\citep{belisle1993hit, kannan1995isoperimetric,
+  lovasz1999hit,lovasz2006hit, lovasz2007geometry}.  A number of
+first-order methods are based on the Langevin diffusion.  Algorithms
+related to the Langevin diffusion include the Metropolis adjusted
+Langevin Algorithm (MALA)~\citep{roberts1996exponential,
+  roberts2002langevin,bou2012nonasymptotic}, the unadjusted Langevin
+algorithm (ULA)~\citep{parisi1981correlation,
+  grenander1994representations,
+  roberts1996exponential,dalalyan2016theoretical}, underdamped
+Langevin MCMC~\citep{cheng2017underdamped}, Riemannian
+MALA~\citep{xifara2014langevin},
+Proximal-MALA~\citep{pereyra2016proximal, durmus2016efficient},
+Metropolis adjusted Langevin truncated
+algorithm~\citep{roberts1996exponential}, Hamiltonian Monte
+carlo~\citep{neal2011mcmc} and Projected ULA~\citep{bubeck2015sampling}.
+There is now a rich body of work on these methods, and we do not
+attempt to provide a comprehensive summary in this paper.  More
+details can be found in the survey~\citep{roberts2004general}, which
+covers MCMC algorithms for general distributions, and the
+survey~\citep{vempala2005geometric}, which focuses on random walks for
+compactly supported distributions.
+
+In this paper, we study sampling algorithms for sampling from a
+log-concave distribution equipped with a density.  A log-concave
+density takes the form
+\begin{align}
+\label{eq:target}
+  \target\parenth{x} =
+  \frac{e^{-\myfun(x)}}{\displaystyle\int_{\realdim} e^{-\myfun(y)}
+    dy} \mbox{for all $x \in \realdim$,}
+\end{align}
+where $\myfun$ is a convex function on $\realdim$.  Up to an additive
+constant, the function $-\myfun$ corresponds to the log-likelihood
+defined by the density.  Standard examples of log-concave
+distributions include the normal distribution, exponential
+distribution and Laplace distribution.
+
+Some recent work has provided non-asymptotic bounds on the mixing
+times of Langevin type algorithms for sampling from a log-concave
+density.  The mixing time corresponds to the number of steps, as
+function of both the problem dimension $d$ and the error tolerance
+$\threshold$, to obtain a sample from a distribution that is
+$\threshold$-close to the target distribution in total variation
+distance. It is known that both the ULA
+updates~\citep{dalalyan2016theoretical,
+  durmus2016high,cheng2017convergence} as well as underdamped Langevin
+MCMC~\citep{cheng2017underdamped} have mixing times that scale
+polynomially in the dimension $\dims$, as well the inverse of the
+error tolerance $1/\threshold$.
+
+Both the ULA and underdamped-Langevin MCMC methods are based on
+evaluations of the gradient~$\gradf$, along with the addition of
+Gaussian noise. \citet{durmus2016high} show that
+for an appropriate decaying step size schedule, the ULA algorithm
+converges to the right stationary distribution. However, their
+results, albeit non-asymptotic, are hard to quantify. In the sequel,
+we limit our discussion to Langevin algorithms based on constant step
+sizes, for which there are a number of explicit quantitative bounds on
+the mixing time.  When one uses a fixed step size for these
+algorithms, an important issue is that the resulting random walks are
+asymptotically biased: due to the lack of Metropolis-Hastings
+correction step, the algorithms \emph{will not} converge to the
+stationary distribution if run for a large number of steps.
+Furthermore, if the step size is not chosen carefully the chains may
+become transient~\citep{roberts1996exponential}.  Thus, typical theory
+is based on running such a chain for a pre-specified number of steps,
+depending on the tolerance, dimension and other problem parameters.
+
+
+In contrast, the Metropolis-Hastings step that underlies the MALA
+algorithm ensures that the resulting random walk has the correct
+stationary distribution. \citet{roberts1996exponential} derived sufficient
+conditions for exponential convergence of the Langevin
+diffusion and its discretizations, with and without Metropolis-adjustment.
+However, they considered the distributions with $\myfun(x) = \enorm{x}^\alpha$
+and proved geometric convergence of ULA and MALA under some specific conditions.
+In a more general setting, \citet{bou2012nonasymptotic} and \citet{eberle2014error}
+derived non-asymptotic mixing time bounds for MALA.
+However, all these bounds are non-explicit in the case of logconcave sampling, and so makes it
+difficult to extract an explicit dependence in terms of the dimension
+$\usedim$ and error tolerance~$\threshold$. In particular, \citet{eberle2014error} made significant contribution to establishing the accept-reject rate of MALA by assuming differentiability of the target function to fourth order, but its final mixing rate is only explicit when the sampling domain is contained in a ball with constant radius.  A precise characterization of this
+dependence is needed if one wants to make quantitative comparisons
+with other algorithms, including ULA and other Langevin-type schemes.
+With this context, one of the main contributions of our paper is to
+provide an explicit upper bound on the mixing time of the MALA
+algorithm.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Our contributions
+This work contains two main results,
+both having to do with the mixing times of MCMC methods for
+sampling. As described above, our first and primary contribution is an
+explicit analysis of the mixing time of Metropolis adjusted Langevin
+Algorithm (MALA).  A second contribution is to use similar techniques
+to analyze a zeroth-order method called Metropolized random walk
+(MRW) and derive a explicit non-asymptotic mixing time bound for it.
+Unlike the ULA, these methods make use of the
+Metropolis-hastings accept-reject step and consequently converge to
+the target distributions in the limit of infinite steps.  Here we
+provide explicit non-asymptotic mixing time bounds for MALA and MRW
+and show that MALA converges significantly faster than ULA.
+In particular, we show that if the density is strongly log-concave and
+smooth, the $\threshold$-mixing time for MALA scales as $\condition
+\dims\log(1/\threshold)$
+which is significantly faster than ULA's convergence rate of order
+$\condition^2\dims/\threshold^2$. We also show that
+MRW mixes $\order{\condition\dims}$ slowly when compared to MALA.
+Furthermore, if the density is
+weakly log-concave, we show that MALA converges in $\calo\parenth{
+  \dims^2/\threshold^{1.5}
+}$ time in comparison to the $\calo\parenth{\dims^3/\threshold^{4}}$
+mixing time for ULA. These results are summarized in Table~\ref{tab:mixing_times}.
+
+
+\begin{table}
+    \centering
+    % \begin{adjustwidth}{-.2in}{-.3in}
+    {\renewcommand{\arraystretch}{1.8}
+    \begin{tabular}{ccc}
+        \toprule
+        \small {\bf Random walk} & {\bf Strongly log-concave}
+        & {\bf Weakly log-concave}
+        \\ \midrule
+        %
+        ULA~\citep{cheng2017convergence}
+        &$\mathcal{O}\parenth{\displaystyle\frac{\dims\condition^2\log((\log \warmparam)/\threshold)}{\threshold^2}}$
+        & $\displaystyle\tilde{\mathcal{O}}\parenth{\frac{\dims\smoothness^{2}}{\threshold^{6}}}$
+        \\[2mm]
+        ULA~\citep{dalalyan2016theoretical}
+        &$\mathcal{O}\parenth{\displaystyle\frac{\dims\condition^2 \log^2(\warmparam/\threshold)}{\threshold^2}}$
+        & $\displaystyle\tilde{\mathcal{O}}\parenth{\frac{\dims^3\smoothness^{2}}{\threshold^{4}}}$
+        \\[2mm]
+        %
+        MRW
+        &$\mathcal{O}\parenth{\displaystyle\dims^2 \condition^2 \log\parenth{\frac\warmparam\threshold}}$
+        & $\displaystyle\tilde{\mathcal{O}}\parenth{\frac{\dims^4\,\smoothness^{2.5}}{\threshold^{1.5}}}$
+        \\[2mm]
+%
+        MALA
+        &$\mathcal{O}\parenth{\displaystyle \max\braces{\dims\condition, \dims^{0.5}\condition^{1.5}}
+                \log\parenth{\frac\warmparam\threshold}}$
+        & $\displaystyle\tilde{\mathcal{O}}\parenth{\frac{\dims^2\, \smoothness^{1.5}}{\threshold^{1.5}}}$
+        \\[2ex]
+        \bottomrule
+        \hline
+    \end{tabular}
+    }
+    % \end{adjustwidth}
+    \caption{Scalings of upper bounds on $\threshold$-mixing time for different random walks in
+      $\realdim$ with target $\target \propto e^{-\myfun}$.
+      In the second column, we consider smooth and strongly log-concave densities, and report the bounds from a $\warmparam$-warm start for densities such that
+      $\scparam \Ind_\dims \preceq \hessf(x) \preceq
+      \smoothness\Ind_\dims$ for any $x \in \realdim$ and use $\condition
+      \defn \smoothness/\scparam$ to denote the condition number of the density. The big-O notation hides universal constants.
+      In the last column, we summarize the scaling for weakly log-concave smooth densities: $0 \preceq \hessf(x) \preceq
+      \smoothness\Ind_\dims$ for all $x \in \realdim$. For this case, the $\tilde\calo$ notation is used to track scaling only with respect to $\dims, \threshold$ and $\smoothness$ and ignore dependence on the starting distribution and a few other parameters.}
+    \label{tab:mixing_times}
+\end{table}
+
+% Acknowledgments---Will not appear in anonymized version
+\acks{This work was supported by Office of Naval Research grant DOD
+ONR-N00014 to MJW, and by ARO W911NF1710005, NSF-DMS 1613002 and the
+Center for Science of Information (CSoI), US NSF Science and
+Technology Center, under grant agreement CCF-0939370 to BY.  In
+addition, MJW was partially supported by National Science Foundation
+grant NSF-DMS-1612948, and RD was partially supported by the Berkeley
+Fellowship.}
+
+
+\bibliography{mala_bib}
+
+\end{document}
+
+

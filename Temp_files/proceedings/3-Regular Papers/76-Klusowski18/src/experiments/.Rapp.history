@@ -1,0 +1,1836 @@
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0014, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}#
+#
+f <- function(x, p, delta, S) {#
+	if(x[1]%in%S + x[2]%in%S == 2) { (2*p-1+2*sqrt(delta*p*(1-p)))/(p^2) }#
+	else if(x[1]%in%S + x[2]%in%S == 1) { (1-p-sqrt(delta*p*(1-p)))/(p*(1-p)) }#
+	else { 0 }#
+}#
+#
+e <- length(E)#
+e_hat <- function(p) {	#
+ if(p > 1/d) { delta <- 0 }#
+ if(p <= 1/d) { delta <- (1-p)/(4*p) }#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+h <- function(x) { f(x, p, delta, S) }#
+sum <- sum(sapply(E, h))#
+c(abs(edge(G.S)/p^2-e)/e, abs(sum-e)/e)#
+}#
+e_hat <- Vectorize(e_hat)#
+m <- 10#
+n <- 5#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}#
+#
+f <- function(x, p, delta, S) {#
+	if(x[1]%in%S + x[2]%in%S == 2) { (2*p-1+2*sqrt(delta*p*(1-p)))/(p^2) }#
+	else if(x[1]%in%S + x[2]%in%S == 1) { (1-p-sqrt(delta*p*(1-p)))/(p*(1-p)) }#
+	else { 0 }#
+}#
+#
+e <- length(E)#
+e_hat <- function(p) {	#
+ if(p > 1/d) { delta <- 0 }#
+ if(p <= 1/d) { delta <- (1-p)/(4*p) }#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+h <- function(x) { f(x, p, delta, S) }#
+sum <- sum(sapply(E, h))#
+c(abs(edge(G.S)/p^2-e)/e, abs(sum-e)/e)#
+}#
+e_hat <- Vectorize(e_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+e
+d
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+summary
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0014, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0014, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+w
+d
+cc
+length(E)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}#
+#
+f <- function(x, p, delta, S) {#
+	if(x[1]%in%S + x[2]%in%S == 2) { (2*p-1+2*sqrt(delta*p*(1-p)))/(p^2) }#
+	else if(x[1]%in%S + x[2]%in%S == 1) { (1-p-sqrt(delta*p*(1-p)))/(p*(1-p)) }#
+	else { 0 }#
+}#
+#
+e <- length(E)#
+e_hat <- function(p) {	#
+ if(p > 1/d) { delta <- 0 }#
+ if(p <= 1/d) { delta <- (1-p)/(4*p) }#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+h <- function(x) { f(x, p, delta, S) }#
+sum <- sum(sapply(E, h))#
+c(abs(edge(G.S)/p^2-e)/e, abs(sum-e)/e)#
+}#
+e_hat <- Vectorize(e_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+t
+length(T)
+T
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0014, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)
+T
+length(T)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)
+length(T)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+length(T)
+v(G0)
+v(G)
+d
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}#
+#
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 15#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0005, type = "gnp")
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+d
+w
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.001, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+d
+w
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}
+broken(G)
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 15#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.002, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+length(T)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+length(T)
+d
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+length(E)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0005, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+d
+length(E)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.005, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+length(E)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}#
+#
+f <- function(x, p, delta, S) {#
+	if(x[1]%in%S + x[2]%in%S == 2) { (2*p-1+2*sqrt(delta*p*(1-p)))/(p^2) }#
+	else if(x[1]%in%S + x[2]%in%S == 1) { (1-p-sqrt(delta*p*(1-p)))/(p*(1-p)) }#
+	else { 0 }#
+}#
+#
+e <- length(E)#
+e_hat <- function(p) {	#
+ if(p > 1/d) { delta <- 0 }#
+ if(p <= 1/d) { delta <- (1-p)/(4*p) }#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+h <- function(x) { f(x, p, delta, S) }#
+sum <- sum(sapply(E, h))#
+c(abs(edge(G.S)/p^2-e)/e, abs(sum-e)/e)#
+}#
+e_hat <- Vectorize(e_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+d
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.005, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}#
+#
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 15#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}
+broken(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.001, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.01, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken(G)
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.005, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.002, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}#
+#
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 15#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+W
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.01, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}
+broken(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.001, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+d
+broken(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.002, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0015, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}#
+#
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 15#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape2)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.001, type = "gnp")#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}
+broken(G)
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 15#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}#
+#
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	W[((i-1)*m+1):(i*m), 2] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))[2,]#
+}#
+W <- as.data.frame(W)
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+b_hat(0.1)
+d
+broken(G)
+d
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.05, type = "gnp")
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}#
+#
+f <- function(x, p, S, G) {#
+	d_1 <- degree(G, x[1]) #
+	d_2 <- degree(G, x[2])#
+	f_1 <- (p*d_1+1-p)/(p*(p*d_1+2*(1-p)))#
+	f_2 <- (p*d_2+1-p)/(p*(p*d_2+2*(1-p)))#
+	if(x[1]%in%S && x[2]%in%S) { #
+	(1-p*(1-p)*( f_1 + f_2 ))/p^2#
+    }#
+	else if(x[1]%in%S && !x[2]%in%S) { f_1 }#
+	else if(!x[1]%in%S && x[2]%in%S) { f_2 }#
+	else { 0 }#
+}#
+#
+e <- length(E)#
+e_hat <- function(p) {	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+h <- function(x) { f(x, p, S, G) }#
+sum <- sum(sapply(E, h))#
+c(abs(edge(G.S)/p^2-e)/e, abs(sum-e)/e)#
+}#
+e_hat <- Vectorize(e_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	E_hat <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- E_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- E_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+W
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.05, type = "gnp")
+ecount(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.005, type = "gnp")
+ecount(G)
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+edge <- function(graph) {#
+	length(cliques(graph, min = 2, max = 2))#
+}#
+#
+f <- function(x, p, S, G) {#
+	d_1 <- degree(G, x[1]) #
+	d_2 <- degree(G, x[2])#
+	f_1 <- (p*d_1+1-p)/(p*(p*d_1+2*(1-p)))#
+	f_2 <- (p*d_2+1-p)/(p*(p*d_2+2*(1-p)))#
+	if(x[1]%in%S && x[2]%in%S) { #
+	(1-p*(1-p)*( f_1 + f_2 ))/p^2#
+    }#
+	else if(x[1]%in%S && !x[2]%in%S) { f_1 }#
+	else if(!x[1]%in%S && x[2]%in%S) { f_2 }#
+	else { 0 }#
+}#
+#
+e <- length(E)#
+e_hat <- function(p) {	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+h <- function(x) { f(x, p, S, G) }#
+sum <- sum(sapply(E, h))#
+c(abs(edge(G.S)/p^2-e)/e, abs(sum-e)/e)#
+}#
+e_hat <- Vectorize(e_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	E_hat <- e_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- E_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- E_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")#
+#
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+boxplot(subgraph ~ frac, data = W, outline = FALSE, xlab = "p", ylab = "Relative error")
+lenght(T)
+length(T)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.01, type = "gnp")
+ecount(G)
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.01, type = "gnp")
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)
+length(T)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")#
+#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)
+length(T)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	T_hat <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- T_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- T_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+d
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	T_hat <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- T_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- T_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")#
+#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+length(T)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	T_hat <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- T_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- T_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.002, type = "gnp")#
+#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}
+broken(G)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.0015, type = "gnp")#
+#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+broken <- function(graph) {#
+	(degree(graph)%*%degree(graph)-2*length(cliques(graph, min = 2, max = 2))-6*length(cliques(graph, min = 3, max = 3)))/2#
+}#
+#
+path <- graph(c(1:2, 2:3), directed = FALSE)#
+B <- subgraph_isomorphisms(path, G, method = "lad", induced = TRUE)#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+b <- length(B)/2#
+b_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(broken(G.S)/p^3-b)/b, abs(sum(sapply(B, h))/2-b)/b)#
+}#
+b_hat <- Vectorize(b_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	B_hat <- b_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- B_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- B_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	T_hat <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- T_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- T_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")#
+#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+length(T)
+## Download and install the package#
+#install.packages("igraph")#
+#install.packages("reshape2")#
+#install.packages("ggplot2")#
+#install.packages("plyr")#
+#
+## Load package#
+library(igraph)#
+library(reshape)#
+library(ggplot2)#
+library(plyr)
+## big Erdos-Renyi graph#
+N <- 1000#
+G <- erdos.renyi.game(N, 0.02, type = "gnp")#
+#
+## calculate triangles and edges#
+T <- cliques(G, min = 3, max = 3)#
+E <- cliques(G, min = 2, max = 2)#
+#
+## clique number#
+w <- clique_num(G)#
+## maximum degree#
+d <- max(degree(G))#
+## components#
+cc <- components(G)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	T_hat <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- T_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- T_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+triangle <- function(graph) {#
+	length(cliques(graph, min = 3, max = 3))#
+}#
+#
+g <- function(x, p, gamma, S) {#
+	if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 3) { (3*sqrt(p*(1-p)*gamma)+3*p-2)/(p^3) }#
+	else if(x[1]%in%S + x[2]%in%S + x[3]%in%S == 2) { (1-p-sqrt(p*(1-p)*gamma))/(p^2*(1-p)) }#
+	else { 0 }	#
+}#
+#
+t <- length(T)#
+t_hat <- function(p) {#
+if(p > 1/d) { gamma <- 0 }#
+if(p <= 1/d) { gamma <- 4*(1-p)/(9*p) }	#
+   X <- rbinom(1, vcount(G), p)#
+   S <- sample(V(G), size = X, replace = FALSE)#
+   G.S <- induced_subgraph(G, S)#
+   h <- function(x) { g(x, p, gamma, S) }#
+c(abs(triangle(G.S)/p^3-t)/t, abs(sum(sapply(T, h))-t)/t)#
+}#
+t_hat <- Vectorize(t_hat)#
+m <- 10#
+n <- 10#
+W <- matrix(ncol = 3, nrow = n*m)#
+for(i in 1:n) {#
+	W[((i-1)*m+1):(i*m), 1] <- round(seq(0.1, 0.9, 0.8/(m-1)), digits = 2)#
+	T_hat <- t_hat(seq(0.1, 0.9, 0.8/(m-1)))#
+	W[((i-1)*m+1):(i*m), 2] <- T_hat[1,]#
+	W[((i-1)*m+1):(i*m), 3] <- T_hat[2,]#
+}#
+W <- as.data.frame(W)#
+colnames(W) = c("frac", "subgraph", "neighborhood")
+W <- melt(W, id = "frac")#
+summary <- ddply(W, c("variable", "frac"), summarise, mean = mean(value), sd = sd(value))#
+u <- max(summary$mean + summary$sd)#
+w <- min(summary$mean - summary$sd)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+par(mar=c(5, 5, 5, 5))#
+	p <- summary[summary$variable == "subgraph", "frac"]#
+mean <- summary[summary$variable == "subgraph", "mean"]#
+sd <- summary[summary$variable == "subgraph", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)
+p <- summary[summary$variable == "neighborhood", "frac"]#
+mean <- summary[summary$variable == "neighborhood", "mean"]#
+sd <- summary[summary$variable == "neighborhood", "sd"]#
+plot(p, mean, ylim = c(w, u), pch = 15, xlab = "p", ylab = "Relative error", cex.lab=2, cex.axis=1.5, cex.main=1.5, cex.sub=1.5)#
+arrows(p, mean - sd, p, mean + sd, length = 0.05, angle = 90, #
+	code = 3)

@@ -1,0 +1,260 @@
+\section{Proof of Lemma~\ref{lem:phase-length}}
+\label{sec:lemma4-proof}
+
+\begin{rlemma}{Lemma}{\ref{lem:phase-length}}
+For any $s\geq 3$, the expected length of phase $s$ is at most
+$\ARMNUM \cdot \log(s)$ time steps.
+
+More generally, for any set of types $A$, the expected number of times that 
+an agent with a type in $A$ appears in a phase $s$ is at most 
+$f(A) \cdot \ARMNUM \cdot \log(s)$,
+where $f(A) := \Prob[\AgV \sim \AgentDist]{\AgV \in A}$.
+\end{rlemma}
+
+\begin{proof}
+We show the second claim for general $A$,
+which implies the first claim by taking $A$ to be the support of $\AgentDist$.
+
+Fix a phase $s$, and let $S_t$ be the set of arms that have been
+pulled at most $s$ times by time $t$.
+Let $\tau_m$ be the maximum of $t_s$ (the start of phase $s$)
+and the time $t$ when $S_t$ first contains (at most) $m$ elements.
+The phase ends when $S_t$ contains no elements, i.e., $\tau_0 = t_{s+1}$.
+We consider the expected number of pulls during times
+$t \in [\tau_m, \tau_{m-1})$ made by agents whose types are in $A$. 
+
+Consider a counter starting from $0$ at time $\tau_m$ that increments
+each time an agent arrives with a type in $A$,
+and that is stopped the first time an arm in $S_t$ is pulled.
+For any stopping time $t \in [\tau_m, \tau_{m-1})$, 
+the conditional probability that the counter increments,
+given the history of pulls, payments, and observations at time $t$,
+is $f(A)$.
+The conditional probability that the counter is stopped by that
+agent's pull is at least $1/\log(s)$.
+To see this, consider two cases.
+In the first case, there is at least one payment-eligible arm,
+in which case the principal incentivizes an arm in $S_t$.
+In the second case, there are no payment-eligible arms.
+Then, by definition of payment-eligibility,
+each arm $i \in S_t$ has conditional probability at least $1/\log(s)$ of being pulled.
+
+The expected value of this counter when it is stopped is bounded above
+by the expected stopped value of another counter whose conditional
+probability of being stopped is exactly $1/\log(s)$.
+(This can be shown more formally via a coupling argument.) 
+Let $V_\ell$ be the conditional expectation of this second counter's value when it is stopped,
+given that its current value is $\ell$ and it has not been stopped.
+Observe that $V_\ell = \ell + V_0$.
+Enumerating outcomes
+(either the counter increments or not; either it stops or it continues)
+gives us the recurrence relation
+$V_0 = f(A) \frac{1}{\log(s)} + f(A) (1-\frac{1}{\log(s)}) V_1
+   + (1-f(A))(1-\frac{1}{\log(s)}) V_0$.
+Using that $V_1 = 1 + V_0$, this equation simplifies to 
+$V_0 = f(A) + (1-\frac{1}{\log(s)}) V_0$.
+Noting that $V_0$ is finite and solving for $V_0$ gives us that
+$V_0 = f(A) \log(s)$.
+Thus, the conditional expected number of pulls (given the history at time $\tau_m$)
+by an agent with a type in $A$ during times in $[\tau_m, \tau_{m-1})$
+is no more than $f(A) \log(s)$.
+
+We may write the total number of pulls by agents with types in $A$
+during phase $s$ as a sum of this quantity over $m$ ranging from
+$|S_{t_s}|$ down to 1.
+Noting that $|S_{t_s}| \leq \ARMNUM$ and taking the expectation of
+this sum completes the proof. 
+\end{proof}
+
+
+
+
+
+
+
+\section{Proof of Lemma~\ref{lem:round-prob}}
+\label{sec:lemma5-proof}
+
+\begin{rlemma}{Lemma}{\ref{lem:round-prob}}
+Recall the noise is a mean-zero sub-Gaussian($\sigma^2$) random variable.
+Let \LatePhase be a phase cutoff, 
+and let $x_n, x'_n > 0$ be functions satisfying that
+$\sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x_n^2}{16 \sigma^2}}
+\leq \frac{n x'_n}{2 \sigma}$,
+for all $n \geq \LatePhase$.
+Let $\tau_s$ be a stopping time
+(which may depend on the entire past history)
+which is almost surely in phase $s$,
+i.e., satisfying $\tau \in [t_s, t_{s+1})$ almost surely.
+
+Then, for any arm $i$, attribute $j$, and phase $s \geq \LatePhase$,
+we have that
+$\Prob{\AccE{\tau_s}{i}{j}{x'_s}}
+\geq 1 - 24 \exp\left(-\frac{1.8 s x_s^2}{16 \sigma^2} \right)$.
+\end{rlemma}
+
+The proof of Lemma~\ref{lem:round-prob} is based on an adaptive
+concentration inequality due to \cite{zhao2016adaptive},
+given as Lemma~\ref{lem:ACI-inequality}.
+
+\begin{lemma}[Corollary 1 of \cite{zhao2016adaptive}]
+\label{lem:ACI-inequality}
+Let $X_i$ be zero-mean $1/2$-subgaussian random variables,
+and $\SET{S_n = \sum_{i=1}^n X_i, n \geq 1}$ the corresponding random walk.
+Let $J$ be any stopping time with respect to $\SET{X_1, X_2, \ldots}$.
+(We allow $J$ to take the value $\infty$,
+defining $\Prob{J = \infty} = 1 - \lim_{n \to \infty} \Prob{J \leq n}$.)
+Define 
+$g(n)  = \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + n \cdot b}$.
+
+Then, 
+$\Prob{J < \infty \mbox{ and } S_J \geq g(J)} \leq 12 \e^{-1.8 b}$.
+\end{lemma}
+
+\begin{extraproof}{Lemma~\ref{lem:round-prob}}
+Fix an arm $i$ and attribute $j$.
+By the assumptions of the lemma,
+the stopping time $\tau_s$ is such that almost surely,
+each arm --- and in particular arm $i$ --- has been pulled at least
+$s \geq \LatePhase$ times at time $\tau_s$.
+Define $J$ to be the number of times that $i$ has been pulled at
+time $\tau_s$.
+For any $n \geq 1$, let $k_n$ be the time step right after arm $i$ has
+been pulled for the \Kth{n} time. Define
+$S_n := \frac{n \cdot (\ArmE{k_n}{i}{j} - \Arm{i}{j})}{2 \sigma}$
+to be the sum of all attribute-$j$ noise components up to and
+including the \Kth{n} pull of arm $i$,
+renormalized to be a mean-zero sub-Gaussian($1/2$) random variable.
+The $S_n$ define an unbiased half-subgaussian random walk,
+and we can therefore apply Lemma~\ref{lem:ACI-inequality} to them and
+the stopping time $J$.
+Specifically, we set $b = \frac{x_J^2}{16 \sigma^2}$,
+and obtain that
+
+\begin{align*}
+\Prob{J < \infty \mbox{ and } S_J \geq 
+\sqrt{0.6 J \cdot \log (\log_{1.1}(J) + 1) + \frac{J x_J^2}{16 \sigma^2}}}
+& \leq 12 \exp \left( \frac{-1.8 J x_J^2}{16 \sigma^2} \right).
+\end{align*}
+
+Applying Lemma~\ref{lem:ACI-inequality} to $-S_n$ with the same choice
+of $b$, and taking a union bound over both cases, we obtain that
+
+\begin{align*}
+\Prob{J < \infty \mbox{ and } |S_J| \geq 
+\sqrt{0.6 J \cdot \log (\log_{1.1}(J) + 1) + \frac{J x_J^2}{16 \sigma^2}}}
+& \leq 24 \exp \left( \frac{-1.8 J x_J^2}{16 \sigma^2} \right).
+\end{align*}
+
+Because $J$ will be finite with probability 1, we can drop the
+$J < \infty$ part of the event:
+\begin{align*}
+& \Prob{S_J \geq 
+\sqrt{0.6 J \cdot \log (\log_{1.1}(J) + 1) + \frac{J^2 x_J^2}{16
+    \sigma^2}}}\\
+= & \Prob{J < \infty \mbox{ and } S_J \geq 
+\sqrt{0.6 J \cdot \log (\log_{1.1}(J) + 1) + \frac{J^2 x_J^2}{16
+    \sigma^2}}}.
+\end{align*}
+
+In the high-probability case, we now apply the assumed inequality
+between $x_J$ and $x'_J$, to obtain that
+\[
+|S_J| \; \leq \;
+\sqrt{0.6 J \cdot \log (\log_{1.1}(J) + 1) + \frac{J x_J^2}{16 \sigma^2}}
+\; \leq \; \frac{J x'_J}{2 \sigma}.
+\]
+
+Substituting the definition of $S_J$ and canceling common terms,
+the inequality implies that
+$|\ArmE{k_J}{i}{j} - \Arm{i}{j}| \leq x'_J$.
+The choice of $J$ ensures that
+$\ArmE{k_J}{i}{j} = \ArmE{\tau_s}{i}{j}$,
+and we have thus shown that
+$|\ArmE{\tau_s}{i}{j} - \Arm{i}{j}| \leq x'_s$.
+\end{extraproof}
+
+
+
+
+\section{Proof of Lemma~\ref{lem:right-choice}}
+\label{sec:lemma7-proof}
+
+\begin{rlemma}{Lemma}{\ref{lem:right-choice}}
+Let $x > 0$ be arbitrary.
+When \AccEU{t}{x} happens,
+no agent \AgV will pull a highly suboptimal arm, i.e., an arm $i$ with 
+$\AgV \cdot (\ArmV{\Best{\AgV}} - \ArmV{i}) > 2\Diam d x$.
+\end{rlemma}
+
+\begin{proof}
+By definition, when \AccEU{t}{x} happens,
+for all arms $i$ and attributes $j$,
+all arm attribute estimates are accurate to within $x$,
+in the sense that
+$|\ArmE{t}{i}{j} - \Arm{i}{j}| \leq x$.
+
+Consider any agent type \AgV.
+Let $i \neq \Best{\AgV}$ be any arm
+with much smaller true reward than the best arm:
+$\AgV \cdot (\ArmV{\Best{\AgV}} - \ArmV{i}) > 2\Diam d x$.
+Because each coordinate of \ArmEV{t}{\Best{\AgV}} and of
+\ArmEV{t}{i} is estimated accurately to within $x$, 
+we get that 
+$\AgV \cdot (\ArmEV{t}{\Best{\AgV}} - \ArmV{\Best{\AgV}})
+\geq - \Diam d x$
+and
+$\AgV \cdot (\ArmEV{t}{i} - \ArmV{i}) \leq \Diam d x$.
+Hence, 
+
+\begin{align}
+\AgV \cdot (\ArmEV{t}{\Best{\AgV}} - \ArmEV{t}{i})
+& =
+\AgV \cdot (\ArmEV{t}{\Best{\AgV}} - \ArmV{\Best{\AgV}})
++ \AgV \cdot (\ArmV{\Best{\AgV}} - \ArmV{i})
++ \AgV \cdot (\ArmV{i} - \ArmEV{t}{i}) \nonumber\\
+& > -\Diam d x + 2 \Diam d x - \Diam d x
+\; = \; 0, \label{equ:choice}
+\end{align}
+which means that the agent with type \AgV will not pull arm $i$.
+\end{proof}
+
+
+\section{Proof of Lemma~\ref{lem:no-incentives}}
+\label{sec:lemma8-proof}
+
+\begin{rlemma}{Lemma}{\ref{lem:no-incentives}}
+Fix an arm $i$.
+Let $s \geq \exp(2/\MinProb)$, and let $\tau_s$ be the (random)
+time when arm $i$ is pulled for the \Kth{s} time.
+Let $\hat{x} = \frac{1}{2\Diam d}
+  \cdot \min(\TieCutoff, \frac{\MinProb}{2\TieDensity})$.
+Under \AccEU{\tau_s}{\hat{x}},
+this pull of arm $i$ is not incentivized.
+\end{rlemma}
+
+\begin{proof}
+By Lemma~\ref{lem:right-choice},
+under the event \AccEU{\tau_s}{\hat{x}},
+all agent types \AgV with
+$\AgV \cdot (\ArmV{\Best{\AgV}} - \ArmV{\Second{\AgV}})
+> 2\Diam d \hat{x}$
+will pull their best arm \Best{\AgV}.
+Notice that $2\Diam d \hat{x}
+= \min(\TieCutoff, \frac{\MinProb}{2 \TieDensity})$
+
+By Assumption~\ref{A1},
+the measure of agents (across all arms)
+whose best and second-best arm differ in utility by less
+than $\min(\TieCutoff, \frac{\MinProb}{2 \TieDensity})$
+is at most
+$\TieDensity \cdot \min(\TieCutoff, \frac{\MinProb}{2 \TieDensity})
+\leq \frac{\MinProb}{2}$.
+In particular, this bound holds for agents whose best arm is $i$.
+By Assumption~\ref{A3}, at least a measure \MinProb of agents has $i$
+as their best arm, and thus, at least a measure $\frac{\MinProb}{2}$
+will myopically pull arm $i$.
+Because $1/\log(s) \leq \frac{\MinProb}{2}$ for
+$s \geq \exp(2/\MinProb)$, arm $i$ is not payment-eligible at time
+$\tau_s$.
+\end{proof}

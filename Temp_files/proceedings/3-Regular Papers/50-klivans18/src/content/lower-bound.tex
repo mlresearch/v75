@@ -1,0 +1,90 @@
+%!TEX root = ../main.tex
+
+
+\section{Statistical Limits of Outlier-Robust Regression}
+\label{sec:lower-bounds}
+Here we exhibit statistical lower bounds for what can be achieved for outlier-robust regression. In particular, these simple examples illustrate strong separations between regression and regression in the presence of contamination and also demonstrate that several of the assumptions we make are necessary. 
+
+%For the lower bounds we actually work in Huber's contamination model which is slightly more benign than the adversarial corruption model we used for our algorithmic results. 
+
+\paragraph{Necessity of Distributional Assumptions}
+A classical result in analysis of regression is \emph{consistency} of the least-squares estimator when the labels are bounded. Concretely, let $\cD$ be a distribution on $\R^d \times [-1,1]$. Let $(x_1,y_1),\ldots,(x_n,y_n)$ be i.i.d samples from $\cD$. Let 
+$\hat{\ell} = \arg\min_{\ell} \sum_{i=1}^n (y_i - \iprod{\ell,x_i})^2,$
+be the least-squares estimator. Then, (say, via Theorem 11.3 in \cite{DBLP:books/daglib/0035701}) %\mnote{Need to cite Gyorfi here.}
+$\err_{\cD}(\hat{\ell}) \leq \frac{O(d)}{n} + 8 \cdot \arg\min_{\ell}\err_{\cD}(\ell).$
+
+In particular, in the realizable-case, i.e., when $(x,y) \sim \cD$ satisfies $y = \iprod{\ell^*,x}$, the error of the least-squares estimator approaches zero as $n \rightarrow \infty$ irrespective of the marginal distribution $\cD_X$. 
+
+Given the above bound, it is natural to ask if we could get a similar marginal-distribution independent bound in the presence of outliers: Does there exist an estimator which achieves error $h(\eta)$ with $\eta$-fraction of corruptions for some function $h:\R \to \R$ with $h \rightarrow 0$ as $\eta \rightarrow 0$? It turns out that this is statistically impossible in the presence of sample contamination.
+\begin{lemma}\label{lm:lb1}
+There is a universal constant $c > 0$ such that the following holds. For all $\eta > 0$, there is no algorithm that given $\eta$-corrupted samples\footnote{The lemma also holds in the weaker \emph{Huber's} contamination model even though we do not study this model in this work.} $(x,y)$ from distributions $\tilde{\cD}$ on $\R^d \times [-1,1]$ finds a hypothesis vector $\ell \in \R^d$ such that $\E[\err_{\tilde{\cD}}(\ell)] < c$. 
+\end{lemma}
+
+\ignore{
+\begin{lemma}
+There exists a universal constant $c > 0$ such that for all $\eta > 0$, there exist two distributions $\cD, \cD'$ on $\R^2 \times [-1,1]$ and associated random variables $(x,y), (x',y')$ on $\R^2 \times \R$ satisfying:
+\begin{enumerate}
+\item Realizability: There exist $\ell, \ell' \in \R^2$ such that $y = \iprod{\ell,x}$ and $y' = \iprod{\ell',x}$ for some $\ell, \ell'$. 
+\item Closeness in statistical distance: $\|\cD - \cD'\|_{TV} \leq \eta$. 
+\item For any $w \in \R^2$, $\max(\err_\cD(w), \err_{\cD'}(w)) \geq c$. 
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+Fix $\kappa \geq 2$ and let $D$ be the distribution of the random variable sampled as follows: 1) Sample $\alpha$ uniformly at random from $[-1,1]$; 2) With probability $1-\eta$ output $(\alpha, \alpha)$; 3) With probability $\eta$ output $(\kappa\cdot \alpha,\alpha)$.
+
+Let $D'$ be the distribution of the random variable sampled as follows: 1) Sample $\alpha$ uniformly at random from $[-1,1]$; 2) With probability $1-\eta$ output $(\alpha, \alpha)$; 3) With probability $\eta$ output $(\alpha,\kappa \alpha)$.
+
+Let $\ell = (0,1)$, $\ell' = (1,0)$. Finally, let $\cD$ be the distribution of $(x, \iprod{\ell,x})$ for $x \sim D$ and let $\cD'$ be the distribution of $(x', \iprod{\ell',x'})$ for $x' \sim D'$. 
+
+It is easy to check that $\|\cD - \cD'\|_{TV} \leq \eta$. Finally, it is not too hard to check that for any $w$, 
+$$\err_{\cD}(w) + \err_{\cD'}(w) \geq \Omega(1) \cdot \frac{ \eta \kappa^2}{1 + \eta \kappa^2}.$$
+
+It follows that for some universal constant $c > 0$, 
+$$\min(\err_\cD(w), \err_{\cD'}(w)) \geq c \min(1, \eta \kappa^2).$$
+The claim now follows. 
+\end{proof}}
+
+\begin{proof}
+Suppose there is an algorithm as above. Let $\delta = \eta/(2-\eta)$ and let $\kappa \geq 2$ be sufficiently large to be chosen later. 
+Let $\cD$ be the distribution of the random variable on $\R^2 \times \R$ samples as follows: 1) Sample $\alpha$ uniformly at random from $[-1,1]$; 2) With probability $1-\eta$ output $((\alpha, \alpha), \alpha)$; 3) With probability $\eta$ output $((\kappa\cdot \alpha,\alpha),\alpha)$. Note that for $(x,y) \sim \cD$, $y = \iprod{\ell,x}$ for $\ell = (0,1)$. 
+
+Similarly, let $\cD'$ be the distribution of the random variable on $\R^2 \times \R$ samples as follows: 1) Sample $\alpha$ uniformly at random from $[-1,1]$; 2) With probability $1-\eta$ output $((\alpha, \alpha), \alpha)$; 3) With probability $\eta$ output $((\alpha,\kappa \cdot \alpha),\alpha)$. Note that for $(x',y') \sim \cD$, $y' = \iprod{\ell',x'}$ for $\ell = (1,0)$. 
+
+It follows from a few elementary calculations that for any $w \in \R^2$, 
+$\err_{\cD}(w) + \err_{\cD'}(w) \geq \Omega(1) \cdot \frac{ \eta \kappa^2}{1 + \eta \kappa^2}.$
+
+It follows that for some universal constant $c > 0$, and $\kappa = 1/\sqrt{\eta}$, $\min(\err_\cD(w), \err_{\cD'}(w)) \geq c .$
+
+
+Finally, let $\cD''$ be the distribution of the random variable sampled as follows: 
+1) Sample $\alpha$ uniformly at random from $[-1,1]$; 2) With probability $1-\delta$ output $((\alpha, \alpha), \alpha)$; 3) With probability $\delta/2$ output $((\kappa\cdot \alpha,\alpha),\alpha)$; 4) With probability $\delta/2$ output $((\alpha, \kappa \cdot \alpha),\alpha)$. 
+
+Note that $\cD''$ can be obtained by a $(\eta/2)$-corruption of $\cD$ as well as $\cD'$. On the other hand, for any $w \in \R^2$, one of $\err_\cD(w), \err_{\cD'}(w)$ is at least $c$ where $c$ is the constant from the previous lemma. Thus no algorithm can output a good hypothesis for both $\cD$ or $\cD'$. The claim now follows. 
+\end{proof}
+
+\paragraph{Optimality of Our Algorithm for Hypercontractive Distributions}
+We also show that the additive $O(\sqrt{\eta})$ dependence in our bounds is necessary for $4$-hypercontractive distributions. 
+
+\begin{lemma}\label{lm:lb1}
+There is a universal constants $c, C > 0$ such that the following holds. For all $\eta > 0$, there is no algorithm that given $\eta$-corrupted samples from distributions $\tilde{\cD}$ on $\R^d \times \R$ with (1) $\tilde{\cD}_X$ $(C,4)$-certifiably hypercontractive, and (2) $E[y^4] \leq C$, finds a hypothesis vector $w \in \R^d$ such that $\E[\err_{\tilde{\cD}}(w)]  = (1 + o(\sqrt{\eta})) \cdot \left(\min_{\ell^* \in \R^d} \err_{\tilde{\cD}}(\ell^*)\right) + o(\sqrt{\eta})$. 
+\end{lemma}
+
+The above should be compared with Theorem~\ref{th:intro4} which for $\tilde{cD}$ as in the lemma efficiently finds a $\ell$ with $\E[\err_{\tilde{\cD}}(\ell) = (1 + O(\sqrt{\eta})) \cdot \left(\min_{\ell^* \in \R^d} \err_{\tilde{\cD}}(\ell^*)\right) + O(\sqrt{\eta})$. Thus Theorem \ref{th:intro4} is optimal for the class of $4$-hypercontractive distributions up to multiplicative constants. 
+\begin{proof}[Proof Sketch]% \ref{lm:lb1}]
+Fix some $\delta = \Theta(\eta)$ to be chosen later. For brevity, let $U$ be the uniform distribution on $[-1,1]$ and let $Z$ be the distribution of the random variable sampled as follows: 1) With probability $1-\delta$, sample $\alpha$ uniformly at random from $[-1,1]$ and output $\eta \cdot \alpha$; 2) With probability $\delta/2$ output $1/\delta^{1/4}$; 3) With probability $\delta/2$ output $-1/\delta^{1/4}$. 
+
+It follows from standard calculations that $Z$ is $(C_1,4)$-certifiably hypercontractive for a fixed constant $C_1$. Further, if we let $X = (U, Z)$ for $U,Z$ generated independently, then $X$ is also $(C_1,4)$-certifiably hypercontractive; we skip the details from this sketch.
+
+Now let $\ell = (1,1)$ and $\ell' = (1,-1)$. Let $\cD$ be the distribution of $(X, \iprod{\ell,X} + U)$ for $U$ independent from $X$; similarly, let $\cD'$ be the distribution of $(X, \iprod{\ell',X} + U)$. 
+
+We first claim that $\|\cD - \cD'\|_{TV}\| = O(\delta)$. To see this, let us consider a coupling between $\cD, \cD'$ obtained by choosing the same $X$ for both. Then, with probability $1-\delta$ over $X$, $|\iprod{\ell,X} - \iprod{\ell',X}| \leq 2 \delta$; further, whenever this happens, the statistical distance between $\iprod{\ell,X} + U$ and $\iprod{\ell',X} + U$ is at most $O(\delta)$. Therefore, $\|\cD - \cD'\|_{TV} = O(\delta)$. 
+
+Finally, note that 
+$$\E[ (\iprod{\ell,X} - \iprod{\ell',X})^2] = 4 \E[Z^2] \geq 4 \delta (1/\delta^{1/4})^2 = 4 \sqrt{\delta}.$$
+Therefore, for any $w$, 
+$$\E[ (\iprod{w,X} - \iprod{\ell,X})^2] + \E[ (\iprod{w,X} - \iprod{\ell',X})^2] \geq 4 \sqrt{\delta}.$$
+In particular, for any $w$, $\max\left(\E[ (\iprod{w,X} - \iprod{\ell,X})^2], \E[ (\iprod{w,X} - \iprod{\ell',X})^2]\right) \geq 2 \sqrt{\delta}$. Now, note that for any $w$, $\err_\cD(w) = E[U^2] + \E[ (\iprod{w,X} - \iprod{\ell,X})^2]$ and a similar equality holds for $\err_{\cD'}(w)$. 
+
+Combining the above we get that for any $w$, $\max(\err_\cD(w), \err_{\cD'}(w)) \geq \E[U^2] + 2 \sqrt{\delta}$. Note that $\min_{\ell^*} \err_\cD(\ell^*) = \E[U^2]$ and the same holds for $\cD'$ as well. Finally, as $\|\cD - \cD'\|_{TV} = O(\delta) \leq \eta$, by setting $\delta = \Theta(\eta)$ appropriately. Therefore, $\cD, \cD'$ could be $\eta$-corruptions of each other and no $w$ could get error better than $\E[U^2] + 2 \sqrt{\delta} = \E[U^2] + \Omega(\sqrt{\eta})$ on both of them. The claim now follows.
+\end{proof}
+%We defer the proof to appendix; see Section \ref{app:deferred}.

@@ -1,0 +1,255 @@
+%!TEX root = LookingGlass.tex
+
+In this section, we use the \ourack\ framework to give the first algorithm with a dimension-free, constant competitive ratio for online convex optimization with switching costs in general Euclidean spaces, under mild assumptions on the structure of the cost functions.  Recall that, for the most general case, where no constraints other than convexity are applied to the cost functions, Proposition \ref{prop: lowerbound} shows that the competitive ratio of any online algorithm must be $\Omega(\sqrt{d})$ for $\ell_2$ switching costs, i.e., must grow with the dimension $d$ of the decision space. Our goal in this section is to understand when a dimension-free, constant competitive ratio can be obtained.  Thus, we are naturally led to restrict the type of cost functions we consider. 
+ 
+Our main result in this section is a new online algorithm whose competitive ratio is constant with respect to dimension when the cost functions are \emph{locally polyhedral}, a class that includes the form of cost functions used in many applications of online convex optimization, e.g, tracking problems and penalized estimation problems. Roughly speaking, locally polyhedral functions are those that grow at least linearly as one moves away from the minimizer, at least in a small neighborhood. 
+
+\begin{definition}
+A function $f_t$ with minimizer $v_t$ is \textbf{\textit{locally $\alpha$-polyhedral}} with respect to the norm $\| \cdot \|$ if there exists some $\alpha, \epsilon > 0$, such that for all $x \in \mathcal{X}$ such that $\norm{x - v_t} \le \epsilon$, $f_t(x) - f_t(v_t)\ge  \alpha \norm{x - v_t}$.
+\label{locallypolyhedraldef}
+\end{definition}
+
+Note that all strictly convex functions $f_t$ which are locally $\alpha$-polyhedral automatically satisfy $f_t(x) - f_t(v_t) \ge \alpha \norm{x - v_t}$ for all $x$, not just those $x$ which are $\epsilon$ close to the minimizer $v_t$. In this setting, local polyhedrality  is analogous to strong convexity; instead of requiring that the cost functions grow at least quadratically as one moves away from the minimizer, the definition requires that cost functions grow at least linearly. The following examples illustrate the breadth of this class of functions. One important class of examples are functions of the form $\|x - v_t \|_a$ where $\| \cdot \|_a$ is an arbitrary norm; it follows from the equivalence of norms that such functions are locally polyhedral with respect to any norm. Intuitively, such functions represent ``tracking'' problems, where we seek to get close to the point $v_t$. Another important example  is the class $f(x_t) = g(x_t) + h(x_t)$ where $g$ is locally polyhedral and $h$ is an arbitrary non-negative convex function whose minimizer coincides with that of $g$; since $f(x_t) - f(v_t) \geq g(x_t) - g(v_t)$, $f$ is also locally polyhedral. This lets us handle interesting functions such as $f(x_t) = \|x_t\|_1 + x_t' Q x_t$ with $Q$ psd, or even $f(X_t) = 2\|X_t\|_{\infty}  -\log{\det{\left( I + X_t \right)}}$ where the decision variable $X_t$ is a PSD matrix. Note that locally polyhedral function have previously been applied in the networking community, e.g., by \cite{huang2011} to study delay-throughput trade-offs for stochastic network optimization and by \cite{lin2012} to design online algorithm for geographical load balancing in data centers.   
+ 
+Let us now informally describe how the \ouralg\ framework described in Section \ref{sec: alg-meta} can be instantiated to give a competitive online algorithm for locally polyhedral cost functions.  \ouralg\ is, in some sense, \textit{lazy}: instead of moving directly towards the minimizer $v_t$, it moves to the closest point which results in a suitably large decrease in the hitting cost. This can be interpreted as projecting onto a sublevel set of the current cost function. The trick is to make sure that not too much switching cost is incurred in the process. This is accomplished by carefully picking the sublevel set so that the hitting costs and switching costs are balanced. A formal description is given Algorithm \ref{alg: online-projection-CR}. By Lemma \ref{lem: continuity-distance}, step \ref{projection-step-cr} can be computed efficiently via bisection on $l$. Note that the memoryless algorithm proposed in \cite{bansal2015} can be seen as a special case of Algorithm \ref{alg: online-projection-CR} when the decision variables are scalar. %Additionally note that Algorithm \ref{alg: online-projection-CR} can be implemented efficiently using the bisection method presented in Section \ref{sec: alg-meta}.
+
+
+\begin{algorithm}[t]
+	\begin{algorithmic}[1]
+% 		\REQUIRE Initial state $x_0$, mirror map $\Phi$, balance parameter $\beta \in (\frac{2\sqrt{\kappa}-1}{\alpha}, 1)$.
+			\FOR{$t=1, \ldots, T$}
+                  \STATE Observe cost function $f_t$, set $v_t = \argmin_{x} f_t(x)$.
+			\IF{$\norm{x_{t-1}-v_t} < \beta f_t(v_t)$}
+            \STATE Set $x_t = v_t$ 
+            \ELSE
+			\STATE Let $x(l) = \Pi_{K_t^l}^\Phi (x_{t-1})$,
+            %\argmin_{x \in K_l} D_\Phi(x, x_{t-1})$, 
+            increase $l$ until $\norm{x(l) - x_{t-1}} = \beta l$. Here $K_t^l$ is the $l$-sublevel set of $f_t$, i.e., $K_t^l = \{ x \mid f_t(x) \le l\}$. 
+			\label{projection-step-cr}
+            \STATE $x_t = x(l)$.
+            \ENDIF
+			\ENDFOR
+	\end{algorithmic}
+\caption{(Primal) \ouralg}
+\label{alg: online-projection-CR}
+\end{algorithm}
+
+
+
+%\adam{rewrite the discussion of the algorithm so that it makes sense indpendently of the pseudocade.  Basically, write it like "To apply the meta-algorithm in this context we ... This is summarized in Algorithm 2} The key step in Algorithm \ref{alg: online-projection-CR} is step \ref{projection-step-cr}, where we carefully pick a sublevel set so as to precisely balance the hit cost $f_t(x_t)$ and the movement cost $\norm{x_t - x_{t-1}}$; the parameter $\beta$ trades off between the two. 
+
+
+ 
+
+The main result of this section is a characterization of the competitive ratio of Algorithm \ref{alg: online-projection-CR}.
+
+% The key idea of choosing $K_l$ in step \ref{alg: gradient-step} of Algorithm \ref{alg: online-projection} is to strike balance between movement cost and hit cost (or size of the gradient). In the following lemma we show that there exist an $l$ that achieve such balance, moreover, we find such $l$ efficiently via bisection. The proof is included in the Appendix. 
+% %Note that the hit cost $f_t(x_t) = l$, and the movement cost $\norm{x_t - x_{t-1}} = \norm{x_{t-1}, K_l}$ where we define the distance from a point to a convex set $d(u, K) = \min_{v \in K} \norm{u-v}$. 
+% \begin{lemma}
+% 		Let $x(l) = \argmin_{K_l} D_{\Phi}(x, x_{t-1}) $. The function $g(l) = \norm{x(l) - x_{t-1}}$ is continuous in $l$. 
+% 		\label{lem: continuity-distance}
+% \end{lemma}
+
+
+
+% Given Lemma \ref{lem: continuity-distance}, let $l_0 = f_t(v_t)$, and $l_1 = f_t(x_{t-1})$,  we know that $ g(l_0) > \beta l_0 $, and $0 = g(l_1) < \beta l_1$. By intermediate value theorem, there exists $l_0 < l < l_1$ such that $ g(l) = \beta l$, i.e., $\norm{x_t - x_{t-1}} = \beta f_t(x_t)$.
+
+% Further, by continuity of the function  $ g(l) - \beta l$, we can use bisection to find $l$ such that $g(l) = \beta l$. Computing the projection $\Pi_{K_l}(x_{t-1})$ for each individual $l$ is a convex problem, hence we can compute step \ref{projection-step-cr} in polynomial time independent of $T$.
+
+
+\begin{theorem}
+\label{threeCR}
+For every $\alpha > 0$, there exists a choice of $\beta$ such that Algorithm \ref{alg: online-projection-CR} has competitive ratio at most $3 + O(1/\alpha)$ when run on locally $\alpha$-polyhedral cost functions with $\ell_2$ switching costs. More generally, let $\| \cdot \|$ be an arbitrary norm. There exists a choice of $\beta$ such that Algorithm \ref{alg: online-projection-CR} has competitive ratio at most $\frac{\max\{k_2, 1\}}{\min\{k_1, 1\}} \left(3 + O(1/\alpha)\right)$ when run on locally $\alpha$-polyhedral cost functions with switching cost $\| \cdot \|$. Here  $k_1$ and $k_2$ are constants such that $k_1\norm{x} \le \norm{x}_2 \le k_2\norm{x}$.  
+\end{theorem}
+
+We note that in the $\ell_2$ setting Theorem \ref{threeCR} has a form which is connected to the best known lower bound on the competitive ratio of memoryless algorithms. In particular, \cite{bansal2015} use a 1-dimensional example with locally polyhedral cost functions to prove the following bound. 
+
+\begin{proposition} No memoryless algorithm can have a competitive ratio less than 3. 
+\label{thm: lower-bound}
+\end{proposition}
+
+%\noindent Thus, for the $L_2$ setting Algorithm \ref{alg: online-projection-CR} is only $O(1/\alpha)$ from this lower bound. 
+
+Beyond the $\ell_2$ setting, the competitive ratio in Theorem \ref{threeCR} is no longer dimension-free.  It is interesting to note that, when the switching costs are $\ell_1$ or $\ell_{\infty}$ and $\alpha$ is fixed, \ouralg\ has a competitive ratio that is $O(\sqrt{d})$. In particular, we showed in Section \ref{sec: model} that for general cost functions, there is a $\Omega(d)$ lower bound on the competitive ratio for SOCO with $\ell_{\infty}$ switching costs; hence our $O(\sqrt{d})$ result highlights that local polyhedrality is useful beyond the $\ell_2$ case.
+
+%, matching the lower bound in \cite{Friedman1993} and \cite{antoniadis2016}.  \niangjun{Not quite true. That bound is only valid for $l_2$ case. If you go through their example, they showed a competitive ratio of $d / \norm{1_d}$ where $1_d$ is the all 1 vector. So CR is $\sqrt{d}$ if the norm is $l_2$, $d$ if norm is $l_\infty$, and 1 if norm is in $l_1$.}
+
+While Theorem \ref{threeCR} suggests that \ouralg\ has a constant (dimension-free) competitive ratio only in the $\ell_2$ setting, a more detailed analysis shows that it can be constant-competitive outside of the $\ell_2$ setting as well, though for a more restrictive class of locally polyhedral functions.  This is summarized in the the following theorem.
+
+\begin{theorem}\label{generalconstant}
+Let $\| \cdot \|$ be any norm such that the corresponding mirror map $\Phi$ has Bregman divergence $D_{\Phi}$ satisfying $\frac{m}{2}\norm{x-y}^2 \le D_{\Phi}(x,y) \le \frac{M}{2}\norm{x-y}^2$  
+for all $x, y \in \mathbb{R}^d$ and some positive constants $m$ and $M$. Let $\kappa = M/m$. For every $\alpha > 2\sqrt{\kappa - 1}$, there exists a choice of $\beta$ so that Algorithm \ref{alg: online-projection-CR} has competitive ratio at most $3 + O(1/\alpha)$ when run on locally $\alpha$-polyhedral cost functions with switching costs given by $\| \cdot \|$.
+\end{theorem}
+
+This theorem highlights that for any given locally polyhedral cost functions, the task of finding a constant-competitive algorithm can be reduced to finding an appropriate $\Phi$.  In particular, given a class of polyhedral cost functions with $\alpha >0$ and norm $\norm{\cdot}$, the problem of finding a dimension-free competitive algorithm can be reduced to finding a convex function $\Phi$ that satisfies the differential inequality $\frac{1}{2}\norm{x-y}^2\le \Phi(x) - \Phi(y) - \langle \nabla \Phi(y), x - y\rangle \le \frac{\alpha^2+4}{8}\norm{x-y}^2$ for all $x,y \in \mathcal{X}$.
+
+
+
+%Now, let us return to the proof of Theorem \ref{threeCR}. Before giving the formal argument, 
+We present an intuitive overview of our proof techniques here, and defer the details to the appendix. We use a potential function argument to bound the difference in costs paid by our algorithm and the offline optimal.  Our potential function tracks the distance between the points $x_t$ picked by our algorithm and the points $x_t^*$ picked by the offline optimal. 
+%Using a simple triangle inequality argument, we observe we may assume that in each round the offline algorithm has already moved; this simplifies the analysis since we do not need to consider the offline movement cost.
+There are two cases to consider. Either the online point or the offline point has smaller hit cost. The first case is easy to deal with, since our algorithm is designed so that the movement cost is at most a constant $\beta$ times the hit cost; hence if our online hit cost is less than the offline algorithm's hit cost, our total per-step cost will at most be a constant times what the offline paid. The second case is more difficult. The key step is Lemma  \ref{lem: potential-change}, where we show that the potential must have decreased if the offline has smaller hit cost. We use this fact to argue that the total per-step cost we charge \ouralg, namely the sum of the hit cost, movement cost, and change in potential, must be non-positive. 
+
+% In this section we discuss performance guarantee for functions that are polyhedral, i.e., there exists $\alpha >0$ such that $f_t(x) \ge \alpha \norm{x - v_t}$ for all $t$. Note that \textit{locally polyhedral} function\footnote{there exist $\epsilon, L>0$, such that for all $x \in \mathcal{X}$ with $\norm{x - v_t} \le \epsilon$, $f_t(x) \ge f_t(v_t) + L\norm{x - v_t}$.} used in \cite{huang2011} to show $(\log^2(V), 1/V)$ trade-off in queue size utility trade-off in stochastic network optimization problem are polyhedral functions. The polyhedral property also holds for convex functions that are increasing, $\mathcal{X} \subset \mathbb{R}^n_+$, and $f(x) \ge c x$ as used in \cite{lin2012}. 
+
+% \begin{theorem}
+% Let $\Phi$ be $m$-strongly convex and $M$-smooth in $\norm{\cdot}$ and let $\kappa = M / m$. For polyhedral function $f_t$ where there exists $\alpha>2\sqrt{\kappa -1}$, such that $f_t(x_t) \ge \alpha \norm{x_t - v_t}, \forall t$.  Algorithm \ref{alg: online-projection} with $\beta \in \left(\frac{2\sqrt{\kappa-1}}{\alpha}, 1\right)$ is $C$-competitive for $C = \max \left\{ \frac{1+\beta}{1-\beta}, \frac{1+\beta}{\beta} \frac{1}{\gamma}\right\}$, where $\gamma = \frac{1}{\sqrt{\kappa}}\sqrt{1 + \left( \frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$.
+% %\niangjun{ substituting $\gamma$ gives \[ C = \max \left \{ \frac{1+\beta}{1-\beta} , \frac{1+\beta}{\beta} \left( \frac{ \sqrt{\kappa}\left( \sqrt{ 1 + \left(\frac{2}{\alpha\beta}\right)^2 } + \frac{2}{\alpha\beta}\sqrt{\kappa} \right) }{ 1 + \left( \frac{2}{\alpha\beta}\right) - \frac{2}{\alpha\beta} \sqrt{\kappa}} \right)\right\}. 
+% %\]}
+% \label{thm: competitive-ratio}
+% \end{theorem}
+
+% Theorem \ref{thm: competitive-ratio} shows that, whenever $\alpha > 2\sqrt{\kappa-1}$, for any $\beta \in (0, 1)$, Algorithm \ref{alg: online-projection-CR} is constant competitive, where the constant is \textit{dimension-free}. Furthermore, as $C$ is positively correlated to $\kappa$, we should choose mirror map $\Phi$ for $\norm{\cdot}$ such that $\kappa$ is small. For example, when the switching cost is measured in $2$-norm, we should use $\Phi(x) = \frac{1}{2}\norm{x}^2$ with $\kappa = 1$. 
+
+% In addition, if we know the value of $\alpha$ apriori, we can choose $\beta$ to optimize the performance guarantee $C$ in the following manner: 
+
+% Note that $g(\beta) = \frac{1+\beta}{1-\beta}$ is an increasing function in $\beta$, and tends to $+\infty$ as $\beta \rightarrow 1$, and $h(\beta) =  \frac{1+\beta}{\beta} \frac{1}{\gamma} $ is a decreasing function in $\beta$, and tends to $+\infty$ when $\beta \rightarrow \frac{2\sqrt{\kappa-1}}{\alpha}$, hence the value of $C = \max\{ g(\beta), h(\beta) \}$ is minimized when $\beta$ takes value such that $g(\beta) = h(\beta),$ formally stated in the following Corollary: 
+% \begin{corollary}
+% When $\kappa = 1$, Algorithm \ref{alg: online-projection-CR} is $(3+8/\alpha)$-competitive where $\beta = \frac{1}{2} + \frac{1}{\alpha+2},$ when $\kappa > 1$, 
+% Algorithm \ref{alg: online-projection-CR} is $C$-competitive for 
+% \[
+% C = \frac{2 \alpha \sqrt{(\alpha^2 + 4\alpha  + 8) \kappa - 4} + \alpha^2 + 4 \alpha \kappa + 4 \kappa - 4}{\alpha^2 - 4 \kappa + 4} = 3 + O\left(\frac{1}{\alpha}\right),
+% \]
+% where
+% \[ \beta =  \frac{(\alpha+2)\kappa - \sqrt{ (\alpha^2+4\alpha+8)\kappa-4  } }{\alpha(\kappa-1)}. 
+% \]
+% \label{cor: online-projection-CR}
+% \end{corollary}
+% \todo{1. provide some intuition about corollary 6; 2. discuss about different $\kappa$ in different norms}
+
+
+%We can see that Algorithm \ref{alg: online-projection-CR} performs better for when $\alpha$ is large. This is not surprising since Algorithm \ref{alg: online-projection} in general is only acting on the current information about $f_t$, $\alpha$ can be roughly seen as the amount of information presented to the online algorithm, and larger $\alpha$ implies bigger gains in moving in the negative gradient direction.  
+
+The proof of Theorem \ref{generalconstant} parallels that of Theorem \ref{threeCR}. The key difference is the use of a more general form of Lemma \ref{lem: potential-change}, which uses Bregman projection to show that the potential decreases. The Bregman divergence is with respect to the mirror map induced by $\| \cdot \|$. %The rest of the proof is unchanged. The general form of Lemma \ref{lem: potential-change} that is used is stated and proven in the appendix.
+
+
+
+
+
+
+
+
+
+
+
+
+% In this Section, we discuss the design and analysis of high dimensional online algorithm with constant competitive ratio. Define distance from a point $u$ to a convex set $K$ to be 
+% $d(u, K) = \min_{v \in K} \norm{u - v}$, and let $\beta \in (0, 1)$. The proofs of the theoretical results can be found in the Appendix.
+   
+% \begin{algorithm}
+% 	\begin{algorithmic}[1]
+% 			\FOR{$t=1, \ldots, T$}
+% 			\STATE If $\norm{x_{t-1}-v_t} \le \beta f_t(v_t)$, then set $x_t = v_t$.
+% 			\STATE Otherwise, increase $l$ from $l=f_t(v_t)$ until $d(x_{t-1}, K_l) = \beta l$, where $K_l$ is the $l$-sublevel set of $f_t$, i.e., $K_l = \{ x | f_t(x) \le l\}$. 
+% 			\label{projection-step-cr}
+% 			 \STATE $x_t = \Pi_{K_l}(x_{t-1})$.
+% 			\ENDFOR
+% 	\end{algorithmic}
+% \caption{Online projection for constant competitive ratio}
+% \label{alg: online-projection-CR}
+% \end{algorithm}
+
+% The key step in Algorithm \ref{alg: online-projection-CR} is step \ref{projection-step-cr}, which is to find a suitable sublevel set, such that the hit cost $f_t(x_t)$ and the movement cost $\norm{x_t - x_{t-1}}$ is balanced, and the parameter $\beta$ control such balance.   
+% %The immediate questions for step \ref{projection-step-cr} are 
+% %\begin{enumerate}
+% %	\item Is it well defined?
+% %	\item If so, what's the computational complexity of computing it?
+% %\end{enumerate} 
+% As shown in Section \ref{sec: balance-movement-hit}, step \ref{projection-step-cr} can be computed efficiently. 
+% %The immediate questions are whether Step \ref{projection-step-cr} is well-defined and computationally efficient, we show that this is indeed the case by the following Lemma: 
+
+
+
+% Note that Algorithm \ref{alg: online-projection-CR} can be viewed as a generalization of the memoryless algorithm proposed in \cite{bansal2015} when the decision variables are scalar. 
+
+
+
+
+% \subsection{Polyhedral Functions}
+% In this section we discuss performance guarantee for functions that are polyhedral, i.e., there exists $\alpha >0$ such that $f_t(x) \ge \alpha \norm{x - v_t}$ for all $t$. Note that \textit{locally polyhedral} function\footnote{there exist $\epsilon, L>0$, such that for all $x \in \mathcal{X}$ with $\norm{x - v_t} \le \epsilon$, $f_t(x) \ge f_t(v_t) + L\norm{x - v_t}$.} used in \cite{huang2011} to show $(\log^2(V), 1/V)$ trade-off in queue size utility trade-off in stochastic network optimization problem are polyhedral functions. The polyhedral property also holds for convex functions that are increasing, $\mathcal{X} \subset \mathbb{R}^n_+$, and $f(x) \ge c x$ as used in \cite{lin2012}. 
+
+% \begin{theorem}
+% For polyhedral function $f_t$, i.e., there exists $\alpha>0$, such that $f_t(x_t) \ge \alpha \norm{x_t - v_t}, \forall t$.  Algorithm \ref{alg: online-projection} is $C$-competitive for $C = \max \left \{ \frac{1+\beta}{1-\beta} , \frac{1+\beta}{\beta} \left( \sqrt{\left(\frac{2}{\alpha\beta}\right)^2 + 1}  + \frac{2}{\alpha\beta} \right)\right\}$ for $\beta \in (0, 1)$. 
+% \label{thm: competitive-ratio}
+% \end{theorem}
+
+% Theorem \ref{thm: competitive-ratio} shows that, whenever $\alpha > 0$, for any $\beta \in (0, 1)$, Algorithm \ref{alg: online-projection-CR} is constant competitive, where the constant is \textit{dimension-free}. In addition, if we know the value of $\alpha$ apriori, we can choose $\beta$ to optimize the performance guarantee $C$ in the following manner: 
+
+% Note that $g(\beta) = \frac{1+\beta}{1-\beta}$ is an increasing function in $\beta$, and tends to $+\infty$ as $\beta \rightarrow 1$, and $h(\beta) =  \frac{1+\beta}{\beta} \left( \sqrt{\left(\frac{2}{\alpha\beta}\right)^2 + 1}  + \frac{2}{\alpha\beta} \right) $ is a decreasing function in $\beta$, and tends to $+\infty$ when $\beta \rightarrow 0$, hence the value of $C = \max\{ g(\beta), h(\beta) \}$ is minimized when $\beta$ takes value such that $g(\beta) = h(\beta),$ formally stated in the following Corollary: 
+% \begin{corollary}
+% Algorithm \ref{alg: online-projection-CR} is $3+8/\alpha$-competitive when $\beta = \frac{1}{2} + \frac{1}{\alpha+2}$.
+% \label{cor: online-projection-CR}
+% \end{corollary}
+% We can see that Algorithm \ref{alg: online-projection-CR} performs better for when $\alpha$ is large. This is not surprising since Algorithm \ref{alg: online-projection} in general is only acting on the current information about $f_t$, $\alpha$ can be roughly seen as the amount of information presented to the online algorithm, and larger $\alpha$ implies bigger gains in moving in the negative gradient direction.  
+% \begin{proof}[Theorem \ref{thm: competitive-ratio}]
+% Let $H_t = f_t(x_t), M_t=\norm{x_t - x_{t-1}}$. Using potential function $\phi_t = C \norm{x_t - x_{t-1}}$, where $\phi_0 = 0$. To show Algorithm \ref{alg: online-projection-CR} is $C$-competitive, we just need to show that for all $t$,
+% \begin{equation}
+%  	H_t + M_t + \phi_t - \phi_{t-1} \le C(H_t^* + M_t^*),
+%     \label{eqn: potential-ineq}
+% \end{equation}
+% then summing up the inequality over $t$ implies the result.
+
+% Firstly, since 
+% \begin{align}
+% 	\phi_t - \phi_{t-1} &= C (\norm{x_t - x_t^*} - \norm{x_{t-1} - x_{t-1}^*}) \notag \\
+% 	&= C ( \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}} + \norm{x_t^* - x_{t-1}} -  \norm{x_{t-1} - x_{t-1}^*}) \notag \\
+% 	&\le C  (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) + C M_t^*
+%     \label{eqn: potential-change}
+% \end{align}
+% Combining \eqref{eqn: potential-change} and \eqref{eqn: potential-ineq}, we can show Algorithm \ref{alg: online-projection-CR} is $C$-competitive by show that 
+% \[
+% 	H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \le C H_t^*, \tag{$\dagger$}
+% \]
+% We divide our analysis to the following two cases:
+
+% \begin{enumerate}
+% 	\item $H_t \le H_t^*$: in this case, $M_t \le \beta H_t$, by the triangle inequality,
+% 	\begin{align*} 
+% 		&H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \\
+% 		\le & H_t + (1+C) M_t \le (1 + \beta(1+C))H_t \le CH_t^*,
+% 	\end{align*}
+% 	the last inequality sign holds when $C \ge\frac{1+\beta}{1 - \beta}$. 
+% 	\item $H_t > H_t^*$: in this case, $M_t = \beta H_t$,  we use the following Lemma:  
+% \begin{lemma}
+% 	For Algorithm \ref{alg: online-projection-CR}, when $H_t > H_t^*$ and $f_t(x) \ge \alpha\norm{x - v_t}$, we have 
+% 	\[ \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1} } \le -\gamma \norm{x_t - x_{t-1}}, \]
+% 	where $\gamma = \sqrt{(\frac{2}{\alpha\beta})^2+1} - \frac{2}{\alpha\beta}$.
+% 	\label{lem: potential-change}
+% \end{lemma}
+%  With Lemma \ref{lem: potential-change}, we have 
+% \begin{align*} 
+% 	&H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \\
+% 	\le & H_t + M_t - C (\gamma M_t) = (1 + \beta(1 - C\gamma)) H_t
+% \end{align*}
+% To show $(\dagger)$, we just need $ 1 + \beta \left (1 - C \gamma \right) \le 0, $
+% which is equivalent to $C \ge \frac{1+\beta}{\beta} \cdot \frac{1}{\gamma}$. Substitute $\gamma = \sqrt{(\frac{2}{\alpha\beta})^2+1} - \frac{2}{\alpha\beta}$ from Lemma \ref{lem: potential-change}, $(\dagger)$ holds in this case if 
+% \[
+% C \ge \frac{1+\beta}{\beta} \left(\sqrt{\left(\frac{2}{\alpha\beta}\right)^2+1}+\frac{2}{\alpha\beta}\right),
+% \]
+% \end{enumerate}
+% Combining case 1 and 2, we conclude that Algorithm \ref{alg: online-projection-CR} is $C$-competitive for 
+% \[C = \max \left \{ \frac{1+\beta}{1-\beta} , \frac{1+\beta}{\beta} \left( \sqrt{\left(\frac{2}{\alpha\beta}\right)^2 + 1}  + \frac{2}{\alpha\beta} \right)\right\},\] 
+% which completes the proof.
+% \end{proof}
+
+
+% \subsection{Generalizing to arbitrary norms}
+% \gautam{It's definitely important that we mention this and give lots of example. My suspicion is that this is a bit too trivial to merit its own section with a full proof; everyone at COLT will understand this immediately}
+% We can generalize the results in Theorem \ref{thm: competitive-ratio} and Corollary \ref{cor: online-projection-CR} to arbitrary norms for Algorithm \ref{alg: online-projection-CR}. Note that in the finite dimensional space, all norms are equivalent up to a constant, i.e., for all norms $\norm{\cdot}_a$, there exists $k_1, k_2 >0$, such that 
+% $ k_1\norm{x}_a \le \norm{x} \le k_2\norm{x}_a.$
+% \niangjun{note that this requires running Algorithm 2 with the Euclidean norm instead of the norm defined by the switching cost}
+% \begin{corollary}
+% For any norm $\norm{\cdot}_a$, such that $k_1 \norm{x}_a \le \norm{x} \le k_2 \norm{x}_a$ for all $x \in \mathbb{R}^n$, then if Algorithm \ref{alg: online-projection-CR} is $C$-competitive in Euclidean norm, then it is $\left(C \frac{\max\{k_2, 1\}}{\min\{k_1, 1\}} \right)$-competitive in $\norm{\cdot}_a$.   
+% \label{cor: general-norms}
+% \end{corollary}
+% \begin{proof}[Corollary \ref{cor: general-norms}]
+% Since $f_t(x) \ge 0$ for all $x$, and norms are always non-negative, we have 
+% \begin{align}
+% \label{eqn: norm1}
+% \sumt f_t(x_t) + \norm{x_t - x_{t-1}} &\ge \min\{1, k_1\} \left(\sumt f_t(x_t) + \norm{x_t - x_{t-1}}_a\right) \\
+% \label{eqn: norm2}
+% \sumt f_t(x_t^*) + \norm{x_t^* - x_{t-1}^*} &\le \max\{1, k_2\} \left(\sumt f_t(x_t^*) + \norm{x_t^* - x_{t-1}^*}_a\right) 
+% \end{align}
+% Combining \eqref{eqn: norm1} and \eqref{eqn: norm2} with $ \sumt f_t(x_t) + \norm{x_t - x_{t-1}} \le C \left(\sumt f_t(x_t^*) + \norm{x_t^* - x_{t-1}^*}\right)$ finishes the proof. 
+% \end{proof}
+

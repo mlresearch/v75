@@ -1,0 +1,77 @@
+%!TEX root = main.tex
+%\vspace{-.5cm}
+\section{Proof Sketch} \label{sec:pfsketch}
+\vspace{-1.22pt}
+We provide an overview of the arguments that comprise the proof of Theorem \ref{thm:main} (full details are deferred to \myapp{app_pfsketch}). We highlight three key steps. First, since we assume the iterates $x_n$
+produced from SGD converge to within $\sim O(\sqrt{\gamma_n})$ of $x_\star$, we can perform a
+Taylor expansion of the recursion in \eq{grad_desc}, to relate the points $x_n$ on the manifold $\M$ to vectors $\Delta_n$ in the tangent space $T_{x_\star}\M$. This
+generates a (perturbed) linear recursion governing the evolution of the vectors $\Delta_n \in T_{x_\star} \M$.
+Recall that as $x_\star$ is unknown, $\Delta_n$ is not accessible, but is primarily a tool for our analysis. Second, we can show a fast $O(\frac{1}{n})$ convergence rate for the averaged vectors $\bar{\Delta}_n \in T_{x_\star} \M$, using techniques from the Euclidean setting.
+Finally, we once again use a local expansion of \eq{ave_grad_desc} to connect the averaged tangent vectors $\bar \Delta_n$ to the streaming, Riemannian average $\tilde \Delta_n$---transferring the fast rate for the inaccessible vector $\bar{\Delta}_n$ to the computable point $\tilde x_n$.
+Throughout our analysis we extensively use Assumption~\ref{assump:manifold}, which restricts the iterates $x_n$ to the subset $\X$.
+\vspace{-4.11pt}
+\subsection{From $\M$ to $T_{x_\star}\M$ } \label{sec:pfsketch1}
+\vspace{-.0856cm}
+We begin by linearizing the progress of the SGD iterates $x_n$ in the tangent space of $x_\star$ by considering the evolution of $\Delta_n = R_{x_\star}^{-1}(x_n)$.
+\begin{itemize}
+\vspace*{-6pt}
+  \item First, as the $\Delta_n$ are all defined in the vector space $T_{x_\star} \M$, Taylor's theorem applied  to $R_{x_\star}^{-1} \circ R_{x_n}:T_{x_n} \M \to T_{x_\star} \M$ along with \eq{grad_desc} allows us to conclude that \vspace*{-4pt}
+  \[
+  \D_{n+1} = \D_n - \gamma_{n+1} [\te{x_\star}{x_n}]^{-1} (\nabla f_{n+1}(x_n)) + O(\gamma_{n+1}^2).
+  \vspace*{-6pt}
+  \]
+  See Lemma \ref{lem:tangent_rec} for more details.
+ \vspace*{-6pt}
+ \item Second, we use the manifold version of Taylor's theorem and appropriate Lipschitz conditions on the gradient to further expand the gradient term $ \tp{x_n}{x_\star} \nabla f_{n+1}(x_n)$ as \vspace*{-6pt}
+  \[
+ \tp{x_n}{x_\star} \nabla f_{n+1}(x_n)=\Hess f(x_\star)\Delta_n + \nabla f_{n+1}(x_\star)+ \xi_{n+1}+O(\Vert \Delta_n\Vert^2), \vspace*{-6pt}
+  \]
+  where the noise term is controlled as $\E[\ \xi_{n+1}\vert\mathcal F_{n}]=0$, and $\E[\Vert \xi_{n+1}\Vert^2 \vert\mathcal F_{n}]=O( \Vert\Delta_n\Vert^2)$. See Lemma \ref{lem:tangent_rec_2} for more details.
+ \vspace*{-6pt}
+ \item Finally, we argue that the operator $ [\te{x_\star}{x_n}]^{-1}\tp{x_\star}{x_n} : T_{x_\star}\M \to  T_{x_\star}\M$ is a local isometry up to second-order terms:
+ $
+    [\te{x_\star}{x_n}]^{-1}\tp{x_\star}{x_n} = I + O(\norm{\Delta_n}^2),
+  $
+  which crucially rests on the fact $R$ is a second-order retraction. See Lemma \ref{lem:tangent_rec_3} for more details.
+
+ \item  \vspace*{-6pt} Assembling the aforementioned lemmas allows us to derive a (perturbed) linear recursion, governing the tangent vectors $\{ \Delta_n \}_{n \geq 0}$ as \vspace*{-6pt}
+  \begin{equation} \label{eq:final_proof_sketch}
+    \D_{n+1} = \D_n - \gamma_{n+1} \Hess f(x_\star) \D_n  -\gamma_{n+1} \nabla f_{n+1}(x_\star)  -\gamma_{n+1}\xi_{n+1}   +  O(\norm{\D_n}^2\gamma_n + \gamma_n^2).  \vspace*{-6pt}
+  \end{equation}
+  See Theorem \ref{thm:linear} for more details.
+\end{itemize}
+\vspace{-.6cm}
+\subsection{Averaging in $T_{x_\star} \M$} \label{sec:pfsketch2}
+\vspace{-.0856cm}
+Our next step is to prove both asymptotic and non-asymptotic convergence rates for a general, perturbed linear recursion (resembling \eq{final_proof_sketch}) of the form,
+\begin{align}
+  \D_{n}=\D_{n-1} -\gamma_n \Hess f(x_\star) \D_{n-1}+ \gamma_n (\eps_n+\xi_{n}+e_{n}),\label{eq:rec_with_error}
+\end{align}
+under appropriate assumptions on the error $\{ e_n \}_{n \geq 0}$ and noise $\{ \eps_n \}_{n \geq 0}$, $\{ \xi_n \}_{n \geq 0}$ sequences detailed in \myapp{conv_rates}. Under these assumptions we can derive an asymptotic rate for the average, $\bar{\Delta}_n = \frac{1}{n}\sum_{i=1}^{n} \Delta_i$, under a first-moment condition on $e_n$:
+  \[
+  \sqrt n \bar{\Delta}_n  \overset{D}{\to} \mathcal N (0,  \Hess f(x_\star)^{-1}\Sigma \Hess f(x_\star)^{-1}),
+  \]
+  and, under a slightly stronger second-moment condition on $e_n$ we have:
+  \[
+    \mathbb{E}[\Vert \bar{\Delta}_n \Vert ^2] \leq \frac{1}{n} \tr [\Hess f(x_\star)^{-1} \Sigma \Hess f(x_\star)^{-1}] +  O(n^{-2\alpha}) + O(n^{\alpha-2}),
+  \]
+  where $\Sigma$ denotes the asymptotic covariance of the noise $\eps_n$. The proof techniques are similar to those of \citet{polyak1992acceleration} and \citet{moulines2011non} so we do not detail them here. See Theorems \ref{thm:asymp_ave} and \ref{thm:nonasymp_ave} for more details.
+  Note that $\bar{\Delta}_n$ is \textit{not} computable, but does have an interesting interpretation as an upper bound on the Riemannian center-of-mass, $K_n = \arg \min_{x \in \M}\sum_{i=1}^{n} \norm{R_{x}^{-1}(x_i)}^2$, of a set of iterates $\{ x_n \}_{n \geq 0}$ in $\M$
+   \citep[see \mysec{com} and][for more details]{Afs11}.
+\vspace{-3.11pt}
+\subsection{From $T_{x_\star} \M$ back to $\M$} \label{sec:pfsketch3}
+\vspace{-.0856cm}
+Using the previous arguments, we can conclude that the averaged vector $\bar{\Delta}_n$ obeys both asymptotic and non-asymptotic Polyak-Ruppert-type results. However, $\bar{\Delta}_n$
+is \textit{not} computable. Rather, $\tilde{\Delta}_n = R_{x_\star}^{-1}(\tilde{x}_n)$ corresponds to the computable, Riemannian streaming average $\tilde{x}_n$ defined in \eq{ave_grad_desc}. In order to conclude our result, we argue that $\tilde{\Delta}_n = R_{x_\star}^{-1}(\tilde{x}_n)$ and $\bar{\Delta}_n$ are close up to $O(\gamma_n)$ terms. The argument proceeds in two steps:
+\begin{itemize}
+\vspace*{-6pt}
+  \item Using the fact that $x \to \norm{R_{x_\star}^{-1}(x)}^2$ is retraction convex we can conclude that $\E[\norm{\Delta_n}^2] = O(\gamma_n)$ implies that  $\E[\Vert \tilde{\Delta}_n\Vert^2] = O(\gamma_n)$ as well. See Lemma \ref{lem:avg_iters} for more details.
+  \vspace*{-6pt}
+  \item Then, we can locally expand \eq{ave_grad_desc} to find that,
+  \vspace*{-6pt}
+  \[
+    \tilde{\Delta}_{n+1} = \tilde{\Delta}_n + \frac{1}{n+1}(\Delta_{n+1}-\tilde{\Delta}_n)+\tilde{e}_n,
+ \vspace*{-6pt} \]
+  where $\E[\Vert \tilde{e}_n\Vert] = O(\frac{\gamma_n}{n+1})$. Rearranging and summing this recursion shows that $\tilde{\Delta}_n = \bar{\Delta}_n+e_n$ for $\E[\Vert e_n\Vert] = O(\gamma_n)$, showing these terms are close. See Lemma \ref{lem:stream_avg_iters} for details.
+  \vspace*{-6pt}
+\end{itemize}

@@ -1,0 +1,64 @@
+\label{s:discreteerror}
+In this section, we study the solutions of the discrete process \eqref{e:discretelangevindiffusion} up to $t=\delta$ for some small $\delta$. Here, $\delta$ represents a \emph{single step} of the Langevin MCMC algorithm. In Theorem \ref{t:discretizationerror}, we will bound the discretization error between the continuous-time process \eqref{e:exactlangevindiffusion} and the discrete process \eqref{e:discretelangevindiffusion} starting from the same initial distribution.
+In particular, we bound $W_2 (\Phi_\delta p_0,\Phit_\delta p_0 )$. This will be sufficient to get the convergence rate stated in Theorem \ref{t:kstepconvergence}. Recall the definition of $\Phi_t$ and $\Phit_t$ from \eqref{d:phi}.
+
+Furthermore, we will assume for now that the kinetic energy (second moment of velocity) is bounded for the continuous-time process,
+\begin{equation}
+\label{e:energyisbounded}
+\forall t\in [0,\d]\quad \Ep{p_t} {\|v\|_2^2}\leq \ke.
+\end{equation}
+We derive an explicit bound on $\ke$ (in terms of problem parameters $d,L,m$ etc.) in Lemma \ref{l:kineticenergyisbounded} in Appendix \ref{s:kineticenergybound}. 
+
+In this section, we will repeatedly use the following inequality:
+$$\eu{\int_0^t v_s ds}_2^2  =  \eu{\frac{1}{t}\int_0^t t \cdot v_s ds}_2^2 \leq t\int_0^t \|v_s\|_2^2 ds,$$
+which follows from Jensen's inequality using the convexity of $\|\cdot\|_2^2$.  
+
+We now present our main discretization theorem:
+\begin{theorem}\label{t:discretizationerror}
+Let $\Phi_t$ and $\Phit_t$ be as defined in \eqref{d:phi} corresponding to the continuous-time and discrete-time processes respectively. Let $p_0$ be any initial distribution and assume that the step size $\delta\le 1$. As before we choose $u = 1/L$ and $\gamma = 2$. Then the distance between the continuous-time process and the discrete-time process is upper bounded by
+$$W_2(\Phi_\d p_0,\Phit_\d p_0)\leq \d^2 \sqrt{\frac{2\ke}{5}}.$$
+\end{theorem}
+\begin{Proof} We will once again use a standard synchronous coupling argument, in which $\Phi_\d p_0$ and $\Phit_\d p_0$ are coupled through the same initial distribution $p_0$ and common Brownian motion $B_t$. 
+
+First, we bound the error in velocity. By using the expression for $v_t$ and $\tilde{v}_t$ from Lemma \ref{l:explicitform}, we have 
+\begin{align*}
+\E{\eu{v_s -\vt_s }_2^2 } & \overset{(i)}{=} \mathbb{E} \left[ \left\lv u \int_0^s e^{-2(s-r)}\left( \nabla f(x_r) - \nabla f(x_0) \right)dr\right\rv_2^2\right]\\
+& = u^2 \mathbb{E} \left[ \left\lv  \int_0^s e^{-2(s-r)}\left( \nabla f(x_r) - \nabla f(x_0) dr\right)\right\rv_2^2\right]\\
+& \overset{(ii)}{\le} s u^2 \int_0^s \mathbb{E} \left[ \left\lv e^{-2(s-r)}\left( \nabla f(x_r) - \nabla f(x_0) \right)\right\rv_2^2\right]dr\\
+& \overset{(iii)}{\le} s u^2 \int_0^s \mathbb{E} \left[ \left\lv \left( \nabla f(x_r) - \nabla f(x_0) \right)\right\rv_2^2\right]dr \overset{(iv)}{\le} s u^2 L^2 \int_0^s \mathbb{E} \left[\left \lv x_r - x_0 \right \rv_2^2\right]dr\\
+& \overset{(v)}{=} s u^2 L^2 \int_0^s  \mathbb{E} \left[\left \lv \int_0^r v_w dw \right \rv_2^2\right]dr \overset{(vi)}{\le} s u^2 L^2\int_0^s r \left(\int_0^r \mathbb{E}\left[ \lv v_w \rv_2^2\right] dw\right)dr\\
+& \overset{(vii)}{\le} s u^2 L^2 \ke \int_0^s r \left(\int_0^r dw\right) dr = \frac{s^4 u^2 L^2 \ke}{3},
+\end{align*}
+where $(i)$ follows from the Lemma \ref{l:explicitform} and $v_0=\vt_0$, $(ii)$ follows from application of Jensen's inequality, $(iii)$ follows as $\lvert e^{-4(s-r)}\rvert \le 1$, $(iv)$ is by application of the $L$-smoothness property of $f(x)$, $(v)$ follows from the definition of $x_r$, $(vi)$ follows from Jensen's inequality and $(vii)$ follows by the uniform upper bound on the kinetic energy assumed in \eqref{e:energyisbounded}, and proven in Lemma \ref{l:kineticenergyisbounded}. This completes the bound for the velocity variable. Next we bound the discretization error in the position variable:
+%\begin{align*}
+%& \E{\eu{v_s -\vt_s }_2^2 }\\
+%=& \E{\eu{\int_0^s (-2 v_r - \frac{1}{L}\nabla f(x_r)) - (-2 \vt_r - \frac{1}{L} \nabla f(\xt_0))dr }_2^2}\\
+%\leq& 2\E{\eu{\int_0^s v_r - \vt_r dr}_2^2} + 2 \E{\eu{\int_0^s\frac{1}{L} \nabla f(x_r) - \frac{1}{L} \nabla f(\xt_r) dr}_2^2}\\
+%\leq& 2s\int_0^s\E{\eu{ v_r - \vt_r }_2^2}dr + 2s\int_0^s \E{\eu{\frac{1}{L} \nabla f(x_r) - \frac{1}{L} \nabla f(\xt_r) }_2^2} dr\\
+%\leq& 2s^2\E{\eu{ v_s - \vt_s }_2^2} + 2s\int_0^s \E{\eu{\frac{1}{L} \nabla f(x_r) - \frac{1}{L} \nabla f(\xt_r) }_2^2} dr
+%\end{align*}
+%Rearranging the terms, and assuming that $s\leq \delta \leq \frac{1}{2}$, we get
+%\begin{align*}
+%& \E{\eu{v_s -\vt_s }_2^2 }\\
+%\leq& \frac{4s}{L^2}\int_0^s \E{\eu{ \nabla f(x_r) - \nabla f(\xt_r) }_2^2} dr\\
+%\leq&  4s \int_0^s \E{\eu{x_r-x_0}_2^2} dr\\
+%=& 4s \int_0^s \E{\eu{\int_0^r v_t dt}_2^2} dr\\
+%\leq& 4s \int_0^s r \int_0^r \E{\eu{v_t}_2^2} dt dr\\
+%\leq & 4 s^4 C
+%\end{align*}
+%
+%Where the third line is by $L$-lipschitz continuous gradients, the fourth line is by \eqref{e:energyisbounded}, the fifth line is by Jensens, and the last line is by the assumption in \eqref{e:energyisbounded}.
+\begin{align*}
+\E{\eu{x_s - \xt_s}_2^2} & = \E{\eu{\int_0^s (v_r - \vt_r) dr}_2^2} \leq s\int_0^s \mathbb{E} \left[\lv v_r - \tilde{v}_r \rv_2^2\right]dr\\
+& \le s \int_0^s \frac{r^4u^2L^2\ke}{3}dr = \frac{s^6 u^2 L^2 \ke }{15},
+\end{align*}
+where the first line is by coupling through the initial distribution $p_0$, the second line is by Jensen's inequality and the third inequality uses the preceding bound. Setting $s = \delta$ and by our choice of $u= 1/L$ we have that the squared Wasserstein distance is bounded as
+\begin{align*}
+W^2_2(\Phi_\delta p_0,\tilde{\Phi}_{\delta} p_0) \le \ke \left(\frac{\delta^4}{3}+ \frac{\delta^6}{15}\right).
+\end{align*}
+Given our assumption that $\delta$ is chosen to be smaller than 1, this gives the upper bound:
+\begin{align*}
+W^2_2(\Phi_\delta p_0,\tilde{\Phi}_{\delta} p_0) \le \frac{2\ke \delta^4}{5}.
+\end{align*}
+Taking square roots establishes the desired result.
+\end{Proof}

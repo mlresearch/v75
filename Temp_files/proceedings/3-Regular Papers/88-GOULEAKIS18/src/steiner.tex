@@ -1,0 +1,81 @@
+% !TeX root = main.tex
+\subsection{Steiner tree} \label{ssec:steinerIOpt}
+
+In the classic Steiner tree problem, the input is a positively weighted graph $G=(V,E,w)$ and the set of vertices $V$ is partitioned into two disjoint sets $T$ and
+$U$ such that $V=T\cup U$. Usually $T$ is called the set of \emph{terminal} nodes and $U$ the set of \emph{Steiner} nodes. The goal is to compute a connected
+subgraph of $G$ that has the smallest possible weight and has a set of vertices $T\subseteq V^\prime \subseteq V$ that includes all \emph{terminal} nodes and any number of steiner nodes.
+
+  Here, we are going to examine the Steiner tree problem in the following setting: We are given a fixed graph $G=(V,E)$ on $\vert V\vert$ vertices and we also have
+$\vert \Workers\vert$ values from the set of records $\Workers$. Each record is a node from the set $V$ claiming that this node is in the set $T\subseteq V$ of
+terminal nodes that need to be connected by the tree. However, the records might be invalid and the algorithm is allowed to do verifications on those records.
+Let $\vec{x}_\Workers$ be the input vector whose coordinates are vertices claimed to be in the set $T$ of terminal nodes. Similarly, let $\vec{x}_A$ be a vector
+containing only a subset $A\subseteq \Workers$ of those vertices. Our goal is again to be able to either output a sufficiently accurate answer for the cost of the
+optimal Steiner tree of find an invalid record.
+
+As in the previous section we are going to use theorem \ref{thm:wcont} to achieve this. The conditions of theorem \ref{thm:wcont} are satisfied in this case due to
+the following lemma:
+
+\begin{lemma}\label{lm:steiner}
+    Let $G=V,E$ be a graph and $f_G : V^* \to \reals$ be the function mapping a set of vertices $T\subseteq V$ to the minimum cost of a steiner tree connecting the
+  vertices in $T$.  Then, there exists a vector $\vec{w}\in \reals_+^n$ such that $f$ is $\vec{w}$-continuous and also
+  $\sum_{i\in \Workers}w_i = O(f_G(\vec{x}_\Workers))$.
+\end{lemma}
+
+\begin{proof}
+We need to show that there exists a vector $\vec{w}\in \reals_+^n=(w_1,\dots,w_n)$, such that for any $S\subseteq\Workers$, the following inequality holds:
+
+ \begin{equation}\label{steiner:ineq} f(\xw) \le f(\vec{x}_{\Workers\setminus S}) + \sum_{i \in S} w_i
+ \end{equation}
+
+We start by introducing some notation. Let $t$ be a tree subgraph of $G$. We denote by $H_t$ the Eulerian graph that results when we double each edge in $t$. Also,
+let $t_A$ denote the optimal Steiner tree for the set $A\subseteq V$ of terminal nodes. Thus, $\forall A: f(\vec{x}_A)=cost(t_A)$.
+
+Now let $t_R$ be the optimal Steiner tree for some set $R=\Workers\setminus S\subseteq V$ of terminal nodes. In order to show equation \eqref{steiner:ineq}, it suffices to show that
+there exists a tree $t$ and a vector $\vec{w}\in \reals_+^n$, such that $t$ is a valid Steiner tree for the set $\Workers$ of terminal nodes and its cost is:
+$cost(t)\le cost(t_R)+\sum_{i\in S}w_i$.
+
+In other words, we would like to find a weight vector $\vec{w}\in \reals_+^n$, such that starting from the Steiner tree $t_R$ and using the weight assigned to the
+set $ S=\Workers\setminus R$ as budget, we are able to construct a Steiner tree the \emph{covers} the set $\Workers$. To keep the number of verifications low, we also
+require this vector to be such that $\sum_{i\in \Workers}w_i =O(f_G(\vec{x}_\Workers))$.
+
+Now fix a specific Euler tour (i.e an ordering of the nodes) $U_\Workers$ for the graph $H_{t_\Workers}$ and also fix an Euler tour  $U_R$ for the graph $H_{t_R}$.
+Note that the cost of each Euler tour is exactly twice the cost of the corresponding Steiner tree (e.g $cost(U_R)=2cost(t_R)$ where $cost(\cdot)$ denotes the sum of
+weights of all edges in the Euler tour or the tree).
+
+We define each weight $w_i$ to be the length of the path from the predecessor to the successor of node $i$ in the ordering $U_\Workers$.
+
+Our goal is to find a new Euler tour which directly corresponds to a valid Steiner tree \footnote{That is, the traversing each edge of that tree twice and in
+opposite directions.} for the set $\Workers$ and is within our budget $\sum_{i\in S}w_i$.
+
+Now let $U_\Workers=v_1v_2\dots v_n$ be the ordering in which the terminal nodes are visited in the Euler tour of $H_{t_\Workers}$ and $j_1<j_2\dots <j_r$ be the
+indices at which the points of the set $R=\Workers\setminus S$ appear in this Euler tour.  Consider two consecutive points $v_{j_k},v_{j_{k+1}}$ in this sequence and let
+$P_k=\{v_{j_k+1},v_{j_k+2},\dots, v_{j_{k+1}-1}\}\subseteq  S$ be the set of consecutive points in the Euler tour $U_\Workers$ between $v_{j_k}$ and
+$v_{j_{k+1}}$. Note that the sets $P_k$ are mutually disjoint and therefore: $\sum_{k=1}^r \sum_{i\in P_k}w_i \le \sum_{i\in  S}w_i$. Also,
+$\sum_{i\in P_k}w_i$ is enough budget to add the set of nodes $P_k$ in the ordering $U_R$ between $v_{j_k}$ and $v_{j_{k+1}}$. \footnote{To be more precise here, we
+need an argument similar to the two paths argument in the proof of lemma \ref{lm:tsp}.}  By repeating this for all $k\in [r]$, we get the desired Steiner tree $t$
+that \emph{covers} all nodes in $\Workers$ and is such that:
+
+\[
+2\cdot cost(t_\Workers)\le 2\cdot cost(t) \le 2\cdot cost(t_R) +   \sum_{i\in  S}w_i \Rightarrow
+\]
+
+
+\[
+ cost(t_\Workers)\le  cost(t_R) +   \sum_{i\in  S}\frac{w_i}{2} \Leftrightarrow
+\]
+
+
+\[
+ f(\vec{x}_\Workers)\le  f(\vec{x}_{\Workers\setminus S}) +   \sum_{i\in S}w_i^\prime
+\]where $w_i^\prime=\frac{w_i}{2}$.
+
+Thus, $f$ is $\frac{\vec{w}}{2}$-continuous and also $\sum_{i\in \Workers}w_i^\prime = \frac{1}{2}\cdot 2\cdot cost(U_\Workers)=2\cdot f(\vec{x}_\Workers)$.
+\end{proof}
+
+
+The following corollary is a direct application of  lemma \ref{lm:steiner} and theorem \ref{thm:wcont}:
+
+\begin{corollary}
+Let $G=V,E$ be a graph and $f_G : V^* \to \reals$ be the function mapping a set of vertices $T\subseteq V$ to the minimum cost of a steiner tree connecting the
+vertices in $T$. Then, there exists a verification scheme that uses at most $O(\frac{1}{\eps}\log(\frac{1}{\delta}))$ verifications per correction.
+\end{corollary}

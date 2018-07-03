@@ -1,0 +1,52 @@
+% !TEX root = paper.tex
+
+In this section we discuss an efficient (i.e. polynomial time in the parameters of the problem) randomized implementation of \pref{alg:mixing_multiclass}. The main idea is to exploit the log-concavity of the density of $P_t$ in the algorithm and to use well-established Markov chain Monte Carlo samplers for such densities to collect enough matrices $W$ sampled from the distribution to approximate the prediction $\zh_t$ sufficiently well to ensure the increase in regret is small.
+
+Fix a round $t$. Recall that the density on $\cW$ we wish to sample from in round $t$ of the algorithm is 
+\[
+  P_{t}(W) \propto \exp\prn{-\tfrac{1}{L}\textstyle{\sum}_{s=1}^{t-1}\ls(Wx_s, y_s)}.
+\]
+For notational convenience, define the function $F_t: \cW \rightarrow \R$ as $F_t(W) := \exp\prn{-\tfrac{1}{L}\textstyle{\sum}_{s=1}^{t-1}\ls(Wx_s, y_s)}$. It is easy to check that $F_t$ is log-concave.
+\begin{assumption}
+\label{ass:sampler}
+We have access to a sampler that makes $\text{poly}(1/\veps, n, d, B, R)$ queries to $F_t$ and produces a sample $W$ with distribution $\tilde{P}_t$ such that $d_{\textrm{TV}}(\tilde{P}_t, P_t)\leq{}\veps$.
+\end{assumption}
+
+Such samplers are well-known in the literature: for example, the hit-and-run sampler \citep{lovasz2006fast}, the projected Langevin Monte Carlo sampler \citep{bubeck2015sampling}, and the Dikin walk sampler \citep{narayanan2017efficient}. It is easy to derive appropriate bounds on all the relevant parameters of $F_t$ that are involved in the analysis of these samplers so that the samplers run in polynomial time. While this gives a theoretically efficient implementation, the running time bounds are too loose to be practical (for example, see the calculations below for projected Langevin Monte Carlo sampler). We have not attempted to improve these running time bounds; that is a direction for future work.
+
+\begin{example}[\cite{bubeck2015sampling}]
+Let $W$ have density $P\propto e^{-f}$ for some $\beta$-smooth, $S$-Lipschitz convex function $f$ over a convex body $\cW$ contained in a euclidian ball of radius $D$ in dimension $d$.
+Projected Langevin Monte Carlo produces a sample from $\wt{P}$ with $d_{\textrm{TV}}(\wt{P}, P)\leq{}\veps$ after
+$O\prn*{
+\frac{D^{6}\max\crl*{d, DS, D\beta}^{12}}{\veps^{12}}
+}
+$
+evaluations. For our setting, when $\nrm*{x_t}_{2}\leq{}R$ and $\nrm*{y_t}_{1}\leq{}L$, the loss $w\mapsto{}\ls(\tri*{w,x_t}, y_t)$ is $O(RL)$-Lipschitz and smooth. We therefore have $S,\beta\leq{}RLn$ and $D=B$, which yields the following bound on the number of queries to $F_t$:
+\[
+O\prn*{
+\frac{B^{6}\max\crl*{dK, BRLn}^{12}}{\veps^{12}}
+}.
+\]
+
+\end{example}
+
+Given access to a sampler, we can now prove \pref{prop:alg_polytime}. In the following, we use the phrase ``with high probability'' to indicate that the statement referred to holds with probability at least $1 - \delta$ for any $\delta > 0$. We also use the notation $\tilde{O}(\cdot)$ and $\tilde{\Omega}(\cdot)$ to suppress logarithmic dependence on $1/\delta$, $d$, $K$, and $n$.
+\begin{proof}[Proof of \pref{prop:alg_polytime}.]
+The idea is very straightforward: for some parameters $m \in \mathbb{N}$ and $\veps > 0$ to be specified later, in each round $t$, simply use the sampler with error tolerance $\frac{\veps}{2}$ repeatedly $m$ times to collect samples $W^{(i)}$ for $i \in [m]$ and then approximate the prediction by $\zt_t = \mb{\sigma}^{+}\prn*{\smooth\prn*{\En_{i \sim [m]}\brk*{\mb{\sigma}(W^{(i)}x_t)}}}$. Here, ``$i \sim [m]$'' denotes sampling $i$ uniformly from $[m]$, and $m = \text{poly}(n, d, B, R, 1/\delta)$ will be chosen to be large enough to ensure that this approximation incurs only $1/n$ additional loss in each round, with high probability, and thus at most $O(1)$ additional loss over all $n$ rounds.
+
+\newcommand{\tp}{\tilde{p}}
+\newcommand{\ttp}{\tilde{\tilde{p}}}
+
+It remains to provide appropriate bounds on $m$. In the following, we will fix the round $t$ and drop the subscript $t$ from $P_t, \tilde{P}_t, x_t, y_t$, etc. for notational clarity. 
+
+Define the distributions $p =\smooth\prn*{\En_{W \sim P}\brk*{\mb{\sigma}(Wx)}}$, $\tp = \smooth\prn*{\En_{W \sim \tilde{P}}\brk*{\mb{\sigma}(Wx)}}$ and $\ttp = \smooth\prn*{\En_{i \sim [m]}\brk*{\mb{\sigma}(W^{(i)}x)}}$. Then standard Chernoff-Hoeffding bounds and a union bound over all $k \in [K]$ imply that if $m = \tilde{\Omega}\prn*{1/\veps^2}$, then with high probability, we have $\|\tp - \ttp\|_\infty \leq \frac{\veps}{2}$. Furthermore, the sampler ensures $d_{\textrm{TV}}(\tilde{P}, P)\leq{} \frac{\veps}{2}$, which implies that $\|p - \tp\|_\infty \leq \frac{\veps}{2}$ since each coordinate of $p$ and $\tp$ are i n $[0, 1$. Thus, by the triangle inequality, we have $\|p - \ttp\|_\infty \leq \veps$.
+
+We now bound the excess loss for using $\ttp$ instead of $p$ in the algorithm, using the fact the weighted multiclass logistic loss can be equivalently viewed as a weighted multiclass log loss after passing the logits through the softmax function $\mb{\sigma}$. Thus, the additional loss equals
+\[ \sum_{k \in [K]} y_k \log\prn*{\tfrac{p_k}{\ttp_k}} \leq \sum_{k \in [K]} y_k \log\prn*{\tfrac{\ttp_k + \veps}{\ttp_k}} \leq \sum_{k \in [K]} y_k \log\prn*{1 + \tfrac{\veps K}{\mu}} \leq \tfrac{\veps KL}{\mu}.\]
+The first inequality above follows from the bound $\|p - \ttp\|_\infty \leq \veps$, and the second from the fact that $\ttp_k \geq \frac{\mu}{K}$ for all $k \in [K]$, and the third from $\log(1 + a) \leq a$ for all $a \in \R_+$ and $\|y\|_1 \leq L$. Thus, setting $\veps = \frac{\mu}{KLn}$ ensures that the additional loss is at most $1/n$ with high probability, as required.
+\end{proof}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

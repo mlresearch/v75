@@ -1,0 +1,64 @@
+%!TEX root = paper.tex
+
+Logistic regression is a classical model in statistics used for
+estimating conditional probabilities \citep{Berkson1944}. The model,
+also known as \emph{conditional maximum entropy model}
+\citep{BergerDellaPietraDellaPietra1996}, has been extensively studied
+in statistical and online learning and has been widely used in
+practice both for binary classification and multi-class
+classification in a variety of applications.
+
+This paper presents a new study of logistic regression in online
+learning.  The basic logistic regression problem consists of learning a
+linear predictor with performance measured by the \emph{logistic loss}. In the online setting, when
+the hypothesis class is that of $d$-dimensional linear predictors with
+$\ls_{2}$ norm bounded by $B$, there are two main algorithmic
+approaches to logistic regression: Online Gradient Descent \citep{Zinkevich03,shalev2007convex,nemirovski2009robust}, which
+admits a regret guarantee of $O(B\sqrt{n})$ over $n$ rounds, and
+Online Newton Step \citep{hazan2007logarithmic}, whose regret bound is in $O(de^{B}\log(n))$. While
+the latter bound is logarithmic in $n$, its poor dependence on
+$B$ makes it weaker and guarantees an improvement only when $B \ll \frac{1}{2}\log(n)$. The question of whether this dependence on $B$ could be improved was posed as an open problem in COLT 2012 by \citet{mcmahan2012open}. \citet{hazan2014logistic} answered this in the negative, showing a lower bound of $\Omega(\sqrt{n})$ for $B\geq{}\Omega(\log(n))$.
+
+The starting point for this work is a simple observation: the logistic loss, when viewed as a function of the prediction and the true outcome, is $1$-mixable\footnote{To the best of our knowledge, the mixability of the logistic loss has surprisingly not appeared in the literature, although similar observations were made in \citep{kakade2005online}.} (see \pref{sec:prelims} for definitions). This observation can be used in conjunction with Vovk's Aggregating Algorithm~\citep{vovk1995game}, which leverages mixability in order to achieve regret bounds scaling logarithmically in an appropriate notion of complexity of the space of predictors, and can be implemented in \emph{polynomial time} in relevant parameters using MCMC methods (\pref{sec:logistic}). Mixability and efficient implementability open the door to fast rates for online logistic regression and related problems via \emph{improper learning}: using predictions that may not be linear in the instances $x_{t}$s.
+
+The power of improper learning manifests itself in solutions we present for three open problems. First, we give an \emph{efficient} online learning algorithm that circumvents the lower bound of \citet{hazan2014logistic} via improper learning and attains a substantially more favorable regret guarantee of $O(d\log(Bn))$; this is a \emph{doubly-exponential improvement} of the dependence on the scale parameter $B$. This algorithm provides a positive resolution to to a variant of the open problem of \citet{mcmahan2012open} where improper predictions are allowed. Second, the same technique provides an algorithm (\pref{sec:bandit_multiclass}) for the \emph{online multiclass learning with bandit feedback problem} \citep{kakade2008efficient} with an $\tilde{O}(\sqrt{n})$ relative mistake bound with respect to the multiclass logistic loss. This algorithm provides a solution to an open problem of \citet{abernethyR09a}, improving upon the previous algorithm of \citet{hazan2011newtron} by providing the $\tilde{O}(\sqrt{n})$ mistake bound guarantee for all possible ranges of parameter sets. Third, the technique provides a new \emph{online multiclass boosting} algorithm (\pref{sec:online_boosting}) with optimal sample complexity, thus partially resolving an open problem from \citep{beygelzimer2015optimal,jung2017onlinemulticlass} (the algorithm is sub-optimal in the number of weak learners it uses, though it is no worse in this regard than previous adaptive algorithms). For clarity of exposition, descriptions of all of these applications are given as concisely as possible without presenting the results in the most general form possible.
+
+We further present a series of new results for batch statistical
+learning. We show how to convert our online improper logistic
+regression algorithm into a solution admitting a high-probability
+excess risk guarantee of $O(d\log(Bn)/n)$
+(\pref{sec:online_to_batch}). While it is straightforward to achieve such a result in expectation using standard
+online-to-batch conversion techniques, the a high-probability bound is more technically challenging. We achieve this using a new technique based on a
+modified version of the ``boosting the confidence'' scheme proposed by
+\citet{mehta2016fast} for exp-concave losses.  We also prove a lower bound showing that the logarithmic dependence on $B$ of the guarantee of our new algorithm cannot be improved.  Finally, we show how to (non-constructively)
+generalize the $\log(B)$ dependence on predictor norm from linear to arbitrary function classes via sequential symmetrization and chaining arguments
+(\pref{sec:general_class}). Our general bound indicates that the
+extent to which dependence on the predictor range $B$ can be improved for general classes is completely determined by their (sequential) metric entropy. We also show how to extend this technique to the log loss, where we obtain a minimax rate for general function classes that uniformly improves on the minimax log loss rates in \cite{RakSri15}.
+
+
+\subsection{Preliminaries}
+\label{sec:prelims}
+
+\paragraph{Notation.} Let $\R^d$ be the $d$-dimensional Euclidean space with $\langle \cdot, \cdot \rangle$ denoting the standard inner product in $\R^d$. Let $\|\cdot\|$ be a norm on $\R^d$ with dual norm denoted by $\|\cdot\|_\star$. In the multiclass learning problem, the input feature space is the set $\cX = \{x \in \R^d|\ \|x\|_\star \leq R\}$ for some unknown $R>0$. The number of output classes is $K$ and the set of output classes is denoted by $\brk{K} := \{1, 2, \ldots, K\}$. The set of distributions over $\brk{K}$ is denoted $\Delta_K$. Linear predictors are parameterized by weight matrices in $\R^{K \times d}$ so that for an input vector $x \in \cX$, $Wx \in \R^K$ is the vector of scores assigned by $W$ to the classes in $\brk{K}$. For a weight matrix $W$ and $k \in \brk{K}$, we denote by $W_k$ the $k$-th row of $W$. The space of parameter weight matrices is a convex set $\cW \subseteq \{W \in \R^{K \times D}|\ \forall k \in \brk{K}, \|W_k\| \leq B\}$ for some known parameter $B > 0$. Thus for all $x \in \cX$ and $W \in \cW$, we have $\|Wx\|_\infty \leq BR$.
+
+ Define the softmax function $\mb{\sigma}:\bbR^{K}\to\Delta_{K}$ via $\mb{\sigma}(z)_{k} = \frac{e^{z_k}}{\sum_{j\in\brk{K}}e^{z_j}}$ for $k \in \brk{K}$. We also define a pseudoinverse for $\mb{\sigma}$ via $\mb{\sigma}^{+}(p)_{k}=\log(p_k)$ which has the property that for all $p \in \Delta_{K}$, we have $\mb{\sigma}(\mb{\sigma}^{+}(p)) = p$ and $\sum_{k \in \brk{K}}e^{\mb{\sigma}^{+}(p)_k} = 1$. The multiclass logistic loss, also referred to as \emph{softmax-cross-entropy} loss, is defined as $\ls: \bbR^{K}\times{}\brk{K}\to\bbR$ as $\ls(z, y) := -\log(\mb{\sigma}(z)_{y})$. 
+
+ It will be convenient to overload notation and define a weighted version of the multiclass logistic loss function as follows: let $\cY\ldef\crl*{y\in\bbR^{K}_{+}\mid{} \nrm*{y}_{1}\leq{}L}$ for some known parameter $L > 0$. Then the weighted multiclass logistic loss function $\ls:\bbR^{K}\times{}\cY\to\bbR$ is defined by $\ls(z, y) = -\sum_{k\in\brk{K}}y_{k}\log(\mb{\sigma}(z)_{k})$. It can also be seen by straightforward manipulation that the above definition is equivalent to $\ls(z, y) = \sum_{j\in\brk{K}}y_j\log\prn*{1 + \sum_{k\neq{}j}e^{z_k-z_j}}$.
+ 
+In the binary classification setting, the standard definition of the logistic loss function is (superficially) different: the label set is is $\{-1, 1\}$, and the logistic loss $\ls: \R \times \{-1, 1\} \rightarrow \R$ is defined as $\ls_\text{bin}(z, y) = \log(1 + \exp(-yz))$. Linear predictors are parameterized by weight vectors $w \in \R^d$ with $\|w\|_2 \leq B$, and the loss for a predictor with parameter $w \in \R^d$ on an example $(x, y) \in \R^d \times \{-1, 1\}$ is $\ls_\text{bin}(\langle w, x\rangle, y)$. This loss can be equivalently viewed in the multiclass framework above setting $K = 2$, $\cW = \{W \in \R^{2 \times d}|\ \nrm*{W_1}_2 \leq B, W_2 = 0\}$, and mapping the labels $1 \mapsto 1$ and $-1 \mapsto 2$.
+
+Finally, we make frequent use of a smoothing operator $\smooth: \Delta_K \rightarrow \Delta_K$ for a parameter $\mu \in [0, 1/2]$, defined via $\smooth(p) = (1-\mu)p + \mu\ones{}/K$ where $\ones \in \R^K$ is the all ones vector. We use the notation $\mb{1}[\cdot]$ to denote the indicator random variable for an event.
+
+\paragraph{Online multiclass logistic regression.} We use the following multiclass logistic regression protocol. Learning proceeds over a series of rounds indexed by $t=1,\ldots,n$. In each round $t$, nature provides $x_{t}\in\mathcal{X}$, and the learner selects prediction $\zh_{t}\in\bbR^{K}$ in response. Then nature provides an outcome $y_t \in \brk{K}$ or $y_t\in\cY$, depending on application, and the learner incurs multiclass logistic loss $\ls(\zh_t, y_t)$. The regret of the learner is defined to be $\sum_{t=1}^n \ell(\zh_t, y_t) - \inf_{W \in \cW} \sum_{t=1}^n \ell(Wx_t, y_t)$.
+
+The learner is said to be \emph{proper} if it generates $\zh_t$ by choosing a weight matrix $W_t \in \cW$ \emph{before} observing the pair $(x_t, y_t)$ and setting $\zh_t = W_tx_t$. This is the standard protocol when the problem is viewed as an instance of online convex optimization, and is the setting for previous investigations into fast rates for logistic regression \citep{bach2010self,mcmahan2012open,bach2013non, bach2014adaptivity}, including the negative result of \citet{hazan2014logistic}. The more general online learning setting that is described above allows \emph{improper} learners which may generate $\zh_t$ arbitrarily using knowledge of $x_t$. 
+
+\paragraph{Fast rates and mixability.} Conditions under which \emph{fast rates} for online/statistical learning (meaning that average regret or generalization error scales as $\tilde{O}(1/n)$ rather than $O(1/\sqrt{n})$) are achievable have been studied extensively (see \citep{van2015fast} and the references therein). For the purpose of this paper, a rather general condition on the structure of the problem that leads to fast rates is Vovk's notion of \emph{mixability}~\citep{vovk1995game}, which we define in an abstract setting below. Consider a prediction problem where the set of outcomes is $\cY$ and the set of predictions is $\cZ$, and the loss of a prediction on an outcome is given by a function $\ell: \cZ \times \cY \rightarrow \R$. For a parameter $\eta > 0$, the loss function $\ell$ is said to be $\eta$-mixable if for any probability distribution $\pi$ over $\cZ$, there exists a \emph{``mixed''} prediction $z_\pi \in \cZ$ such that for all possible outcomes $y \in \cY$, we have $\En_{z \sim \pi}[\exp(-\eta \ell(z, y))] \leq \exp(-\eta \ell(z_\text{mix}, y))$.
+
+Now suppose that we are given a finite reference class of predictors $\cF$ consisting of functions $f: \cX \rightarrow \cZ$, where $\cX$ is the input space. The problem of online learning over $\cF$ with an $\eta$-mixable loss function admits an \emph{improper} algorithm, viz. Vovk's Aggregating Algorithm~\citep{vovk1995game}, with regret bounded by $\frac{\log|\cF|}{\eta}$, a \emph{constant} independent of the number of prediction rounds $n$. The algorithm simply runs the standard exponential weights/Hedge algorithm \citep{PLG} with learning rate set to $\eta$. In each round $t$, given an input $x_t$, the distribution over $\cF$ generated by the exponential weights algorithm induces a distribution over $\cZ$ via the outputs of the predictors on $x_t$, and the Aggregating Algorithm plays the mixed prediction for this distribution over $\cZ$. Finally, if $\cF$ is infinite, under appropriate conditions on $\cF$ fast rates can be obtained by running a continuous version of the same algorithm. This is the strategy we employ in this paper for the logistic loss.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

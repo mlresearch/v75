@@ -1,0 +1,239 @@
+%\documentclass[11pt]{article}
+\documentclass[final,12pt]{colt2018}
+\usepackage{times}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{lmodern}
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+%\usepackage{amsmath,amsthm,amssymb,comment,bbm,algorithm,algorithmic,framed,hyperref,color,fullpage}
+\usepackage{vfmacros-mod,framed,algorithm,algorithmic,bbm,natbib}
+
+\newcommand{\INDSTATE}[1][1]{\STATE\hspace{#1\algorithmicindent}}
+
+%\newcommand{\ex}[2]{{\ifx&#1& \mathbb{E} \else \underset{#1}{\mathbb{E}} \fi \left[#2\right]}}
+%\newcommand{\pr}[2]{{\ifx&#1& \mathbb{P} \else \underset{#1}{\mathbb{P}} \fi \left[#2\right]}}
+%\newcommand{\var}[2]{{\ifx&#1& \mathsf{Var} \else \underset{#1}{\mathsf{Var}} \fi \left[#2\right]}}
+
+\newcommand{\ex}[2]{{\ifx&#1& \E \else \E_{#1} \fi \left[#2\right]}}
+\newcommand{\var}[2]{{\ifx&#1& \Var \else \Var_{#1}\fi \left[#2\right]}}
+\newcommand{\MAD}{\mathop{\mathrm{mad}}}
+\newcommand{\sdv}{\mathop{\mathrm{sd}}}
+\newcommand{\veps}{\varepsilon}
+
+\newcommand{\dkl}[2]{\mathrm{D}\left(#1\middle\|#2\right)}
+\newcommand{\prob}[2]{\pr_{#1}\left[#2\right]}
+\newcommand{\nope}[1]{}
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+%\newtheorem{lem}{Lemma}
+%\newtheorem{thm}[lem]{Theorem}
+\newtheorem{prop}[thm]{Proposition}
+%\newtheorem{defn}[prop]{Definition}
+\newtheorem{alg}[thm]{Algorithm}
+%\newtheorem{cor}[prop]{Corollary}
+%\newtheorem{remark}[prop]{Remark}
+
+\newcommand{\interact}[2]{#1 {\rightarrow \atop \leftarrow} #2}
+
+\iffalse
+\newcommand{\vnote}[1]{\textcolor{red}{{\bf (Vitaly:} {#1}{\bf ) }} }
+\newcommand{\tnote}[1]{\textcolor{blue}{{\bf (Thomas:} {#1}{\bf ) }}}
+\else
+\newcommand{\vnote}[1]{}
+\newcommand{\tnote}[1]{}
+\fi
+
+\newcommand{\quant}[2]{\mathrm{cdf}^{-1}_{#1}(#2)}
+\newcommand{\cump}[2]{\mathrm{cdf}_{#1}(#2)}
+\newcommand{\cumps}[2]{\overline{\mathrm{cdf}}_{#1}(#2)}
+\newcommand{\iqr}[2]{\mathrm{qi}_{#1}\left(#2\right)}
+\newcommand{\ind}{\mathbbm{1}}
+\newcommand{\median}{\mathrm{median}}
+
+
+\providecommand\X{\mathcal{X}}
+\providecommand\Z{\mathcal{Z}}
+\providecommand{\D}{{\mathcal D}}
+\providecommand{\F}{{\mathcal F}}
+\providecommand{\cP}{{\mathcal P}}
+\providecommand{\cQ}{{\mathcal Q}}
+\providecommand{\cY}{{\mathcal Y}}
+\providecommand{\cO}{{\mathcal O}}
+\providecommand{\cS}{\mathcal{S}}
+
+\newcommand{\mymax}[2]{\max\left\{#1,#2\right\}}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+
+\title[Calibrating Noise to Variance in Adaptive Data Analysis]{Calibrating Noise to Variance\\in Adaptive Data Analysis}
+
+%\author{Vitaly Feldman\thanks{Google Brain. Part of this work was done while at IBM Research -- Almaden and while visiting the Simons Institute, UC Berkeley  \dotfill  \texttt{vitaly@post.harvard.edu}} \and Thomas Steinke\thanks{IBM Research -- Almaden  \dotfill  \texttt{alkls@thomas-steinke.net}}}\date{}%\date{IBM Research -- Almaden}
+\coltauthor{\Name{Vitaly Feldman} \Email{vitaly@post.harvard.edu}\\ \addr Google Brain \AND \Name{Thomas Steinke} \Email{alkls@thomas-steinke.net}\\ \addr IBM Research -- Almaden }
+\begin{document}
+
+\maketitle
+
+
+\begin{abstract}
+Datasets are often used multiple times and each successive analysis may depend on the outcome of previous analyses. Standard techniques for ensuring generalization and statistical validity do not account for this adaptive dependence. A recent line of work studies the challenges that arise from such adaptive data reuse by considering the problem of answering a sequence of ``queries'' about the data distribution where each query may depend arbitrarily on answers to previous queries.
+
+The strongest results obtained for this problem rely on differential privacy -- a strong notion of algorithmic stability with the important property that it ``composes'' well when data is reused. However the notion is rather strict, as it requires stability under replacement of an arbitrary data element. The simplest algorithm is to add Gaussian (or Laplace) noise to distort the empirical answers. However, analysing this technique using differential privacy yields suboptimal accuracy guarantees when the queries have low variance.
+
+Here we propose a relaxed notion of stability based on KL divergence that also composes adaptively. We show that our notion of stability implies a bound on the mutual information between the dataset and the output of the algorithm and then derive new generalization guarantees implied by bounded mutual information. We demonstrate that a simple and natural algorithm based on adding noise scaled to the standard deviation of the query provides our notion of stability. This implies an algorithm that can answer statistical queries about the dataset with substantially improved accuracy guarantees for low-variance queries. The only previous approach that provides such accuracy guarantees is based on a more involved differentially private median-of-means algorithm and its analysis exploits stronger ``group'' stability of the algorithm.
+\end{abstract}
+
+\footnotetext{Extended abstract. Full version appears as \citep[v2]{FeldmanSteinke17arxiv}.}
+%\begin{keywords} Generalization, Adaptive data analysis, Statistical queries, Noise addition, Algorithmic stability, Differential privacy \end{keywords}
+
+%\blfootnote{Extended abstract. Full version appears as \url{https://arxiv.org/abs/1712.07196}.}
+
+\section{Introduction}
+The central challenge in statistical data analysis is to infer the properties of some unknown population given only a small number of samples from that population. While a plethora of techniques for guaranteeing statistical validity are available, few techniques can account for the effects of \emph{adaptivity}. Namely, if a single dataset is used multiple times, then the choice of which subsequent analyses to perform may depend on the outcomes of previous analyses. This adaptive dependence increases the risk of overfitting --- that is, inferring a conclusion that does not generalize to the underlying population.
+
+To formalize this problem, \citet{DworkFHPRR14:arxiv} and subsequent works \cite[][etc.]{HardtU14,SteinkeU15,BassilyNSSSU16,FeldmanS17} study the following question: How many data samples are necessary to accurately answer a sequence of queries about the data distribution when the queries are chosen adaptively -- that is, each query can depend on answers to previous queries? Each query corresponds to a procedure that the analyst wishes to execute on the data. The goal is to design an algorithm that provides answers to these adaptive queries that are close to answers that would have been obtained had each corresponding analysis been run on independent samples freshly drawn from the data distribution.
+
+A common and relatively simple class of queries are statistical queries \citep{Kearns:98}. A statistical query is specified by a function $\psi:\X \rar [0,1]$ and corresponds to analyst wishing to compute the true mean $\ex{X\sim \cP}{\psi(X)}$ of $\psi$ on the data distribution $\cP$. (This is usually done by using the empirical mean $\frac{1}{n} \sum_{i=1}^n \psi(S_i)$ on a dataset $S$ consisting of $n$ i.i.d.~draws from the distribution $\cP$.)  For example, such queries can be used to to estimate the true loss (or error) of a predictor, the gradient of the loss function, or the moments of the data distribution. Standard concentration results imply that, given $n$ independent samples from $\cP$, $k$ fixed (i.e.~not adaptively-chosen) statistical queries can be answered with an additive error of at most $O \left( \sqrt{\log(k)/n} \right)$ with high probability by simply using the empirical mean of each query. At the same time it is not hard to show that, for a variety of simple adaptive sequences of queries, using the empirical mean to estimate the expectation leads to an error of $\Omega(\sqrt{k/n})$ \citep{DworkFHPRR14:arxiv}. Equivalently, in the adaptive setting, the number of samples required to ensure fixed error scales linearly (rather than logarithmically in the non-adaptive setting) with the number of queries and, in particular, in the worst case, using empirical estimates gives the same guarantees as using fresh samples for every query (by splitting the dataset into $k$ parts).
+
+\citet{DworkFHPRR14:arxiv} showed that, remarkably, it is possible to quadratically improve the dependence on $k$ in the adaptive setting by simply perturbing the empirical answers. Specifically, let $S \in \X^n$ denote a dataset consisting of $n$ i.i.d.~samples from some (unknown) probability distribution $\cP$. Given $S$, the algorithm receives $k$ adaptively-chosen statistical queries $\psi_1, \ldots, \psi_k : \X \to [0,1]$ one-by-one and provides $k$ approximate answers $v_1, \ldots, v_k  \in \R$. Namely, $v_j = \frac{1}{n} \sum_{i = 1}^n \psi_j(S_i) + \xi_j$, where each ``noise'' variable $\xi_j$ is drawn independently from $\mathcal{N}(0,\sigma^2)$. The results of \citet{DworkFHPRR14:arxiv} and subsequent sharper analyses \citep{BassilyNSSSU16,Steinke16} show that%\begin{equation}\ex{}{\max_{ j \in \{1, \cdots, k\}}~ \left| v_j - \ex{X \sim \cP}{\psi_j(X)} \right| }\leq O \left( \sqrt{\frac{\sqrt{k \log k}}{n}} \right).\label{eqn:additive}\end{equation}
+, with high probability (over the drawing of the sample $S \sim \cP^n$, the noise $\xi$, and the choice of queries), we have the following guarantee \begin{equation}\forall j \in \{1, \cdots, k\} ~~~~~ \left| v_j - \ex{X \sim \cP}{\psi_j(X)} \right| \leq O \left( \sqrt{\frac{\sqrt{k \log k}}{n}} \right).\label{eqn:additive}\end{equation}
+This quadratic relationship between $n$ and $k$ was also shown to be optimal in the worst case \citep{HardtU14,SteinkeU15}.
+
+
+The approach of \citet{DworkFHPRR14:arxiv} relies on properties of differential privacy \citep{DworkMNS:06,DworkKMMN06} and known differentially private algorithms. Differential privacy is a stability property of an algorithm, namely it requires that replacing any element in the input dataset results in a small change in the output distribution of the algorithm. Specifically, a randomized algorithm $M : \X^n \to \mathcal Y$ is $(\varepsilon,\delta)$-differentially private if, for all datasets $s,s' \in \X^n$ that differ on a single element and all events $E \subseteq \mathcal{Y}$, $$\prob{}{M(s) \in E} \leq e^\varepsilon \prob{}{M(s')\in E} + \delta.$$% This condition is equivalent to $\delta$-approximate infinity divergence between the output distributions being at most $\varepsilon$.
+
+This stability notion implies that a function output by a differentially private algorithm on a given dataset generalizes to the underlying distribution \citep{DworkFHPRR14:arxiv,BassilyNSSSU16}. Specifically, if a differentially private algorithm is run on a dataset drawn i.i.d~from any distribution and the algorithm outputs a function, then the empirical mean of that function on the input dataset is close to the expectation of that function on sample from the same distribution.
+
+The second crucial property of differential privacy is that it composes adaptively: running several differentially private algorithms on the same dataset still is differentially private (with somewhat worse parameters) even if each algorithm depends on the output of all the previous algorithms. This property makes it possible to answer adaptively-chosen queries with differential privacy and a number of algorithms have been developed for answering different types of queries. The generalization property of differential privacy then implies that such algorithms can be used to provide answers to adaptively-chosen queries while ensuring generalization \citep{DworkFHPRR14:arxiv}. Specifically, the algorithm for answering statistical queries mentioned above is based on the most basic differentially private algorithm: perturbation by adding Laplace or Gaussian noise \citep{DworkMNS:06}.
+
+Differential privacy requires that the output distribution of an algorithm does not change much when any element of a dataset is replaced with an arbitrary other element in the domain $\X$. As a result, the amount of noise that needs to be added to ensure differential privacy scales linearly with the range of the function $\psi$ whose expectation needs to be estimated. If the range of $\psi$ is comparable to the standard deviation of $\psi(x)$ on $x$ drawn from $\cP$ (such as when $\psi$ has range $\zo$ and mean $1/2$) then the error resulting from addition of noise is comparable to the standard deviation of $\psi$. However, for queries whose standard deviation is much lower than the range, the error introduced by noise is much worse than the sampling error. Variance is much smaller than the range for a variety of common settings, for example, difference between candidate predictors for the same problem or individual input features when the input is usually sparse.
+
+Achieving error guarantees in the adaptive setting that scale with the standard deviation instead of range is a natural problem. Recently, \citet{FeldmanS17}
+gave a different algorithm that achieves such a guarantee. Specifically, their algorithm ensures that with probability at least $1-\beta$, \begin{equation}\forall j \in \{1, \cdots, k\} ~~~~~ \left| v_j - \ex{X \sim \cP}{\psi_j(X)} \right| \leq \sdv(\psi_j(\cP)) \cdot O \left( \sqrt{\frac{\sqrt{k \log^3 (k/\beta)}}{n}} \right) + \beta,\label{eqn:sdv}\end{equation} where $\sdv(\psi_j(\cP)) = \sqrt{\ex{Y \sim \cP}{(\psi_j(Y)-\ex{X \sim \cP}{\psi_j(X)})^2}}$ is the standard deviation of $\psi_j$ on the distribution $\cP$ and $\beta>0$ can be chosen arbitrarily.
+Their algorithm is based on an approximate version of the median of means algorithm and its analysis still relies on differential privacy. (Their results extend beyond statistical queries, but we restrict our attention to statistical queries in this paper.)
+
+
+In this work, we ask: does the natural algorithm that perturbs the empirical answers with noise scaled to the standard deviation suffice to answer adaptive queries with accuracy scaling to sampling error? To answer this seemingly simple question, we address a more fundamental problem: does there exist a notion of stability that has the advantages of differential privacy (namely, allows adaptive composition and implies generalization) but avoids the poor dependence on the worst-case sensitivity of the query. This algorithm was analyzed by \citet{BassilyFreund:16} via a notion of typical stability they introduced. Their analysis shows that the algorithm will ensure the correct scaling of the error with standard deviation but it does not improve on the naive mechanisms in terms of scaling with $k$.
+Several works have considered relaxations of differential privacy in this context. For example, \citet{BassilyNSSSU16} considered a notion of stability based on using KL divergence or total variation distance in place of differential privacy (which can be defined in terms of approximate max divergence). \citet{Wang16} considered the expected KL divergence between the output of the algorithm when run on a random i.i.d~dataset versus the same dataset with one element replaced by a fresh sample; unfortunately, their stability definition does \emph{not} compose adaptively. Notions based on the mutual information between the dataset and the output of the algorithm and their relationship to differential privacy have also been studied \citep{DworkFHPRR15:arxiv,RussoZ16,RogersRST16,RaginskyRTWX16,XuR17}. However, to the best of our knowledge, these approaches do not give a way to analyze the calibrated noise addition that ensures correct dependence on $k$.
+
+\subsection{Our Contributions}
+We introduce new stability-based and information-theoretic tools for analysis of the generalization of algorithms in the adaptive setting. The stability notion we introduce is easier to satisfy than differential privacy, yet has the properties crucial for application in adaptive data analysis. These tools allow us to demonstrate that calibrating the variance of the perturbation to the empirical variance of the query suffices to ensure generalization, as long as the noise rate does not become too small. To ensure this lower bound on the noise rate we simply add a second order term to the variance of the perturbation.  Specifically, our algorithm is described in Figure \ref{fig:scaledgauss}. The only difference between our algorithm and previous work \citep{DworkFHPRR14:arxiv,BassilyNSSSU16} is that in prior work the variance of the Gaussian perturbation is fixed.%calidepends on the data.
+
+\begin{figure}[h!]
+\begin{framed}
+\begin{algorithmic}
+\INDSTATE[0]{Parameters: $t,T>0$.}
+\INDSTATE[0]{Input: $s \in \X^n$.}
+\INDSTATE[0]{For $j=1,2, \cdots, k$ do:}
+\INDSTATE[1]{Receive a statistical query $\psi_j : \X \to [0,1]$.}
+\INDSTATE[1]{Compute $\mu_j = \frac{1}{n} \sum_{i=1}^n \psi_j(s_i)$ and $\sigma_j^2 = \frac{1}{n} \sum_{i = 1}^n \left( \psi_j(s_i) - \mu_j \right)^2$.}
+%\INDSTATE[1]{Sample $v_j \sim \mathcal{N}(\mu_j, \mymax{\sigma_j^2/t}{1/T})$.}
+\INDSTATE[1]{Sample $\xi_j \sim \mathcal{N}(0,1)$.}
+\INDSTATE[1]{Let $v_j = \mu_j + \xi_j \cdot \sqrt{\mymax{\sigma_j^2/t}{1/T}}$.}
+\INDSTATE[1]{Output answer $v_j$.}%, truncated to $[0,1]$ if necessary.}
+\end{algorithmic}
+\end{framed}
+%\vspace{-6mm}
+\caption{Calibrating noise to variance for answering adaptive queries.}\label{fig:scaledgauss}
+\end{figure}
+
+
+We prove that this algorithm has the following accuracy guarantee.
+
+\begin{thm}[Main Theorem]\label{thm:main-intro}
+Let $\cP$ be a distribution on $\X$ and let $M$ be our algorithm from Figure \ref{fig:scaledgauss} instantiated with $T=n^2/k$ and $t=n\sqrt{2\ln(2k)/k}$. Suppose $M$ is given a sample $S \sim \cP^n$ and is asked adaptive statistical queries $\psi_1, \cdots, \psi_k : \X \to [0,1]$. Then $M$ produces answers $v_1, \cdots, v_k \in \R$ satisfying the following. $$ \ex{}{\max_{j=1}^k \frac{|v_j - \ex{X \sim \cP}{\psi_j(X)}|}{\mymax{\tau \cdot \sdv(\psi_j(\cP))}{\tau^2}}} \leq 4,~~~~~\text{where}~~~~~ \tau = \sqrt{\frac{\sqrt{2k \ln (2k)}}{n}}.$$
+\end{thm}
+Intuitively (that is, ignoring the second term in the maximum), the conclusion of Theorem \ref{thm:main-intro} states that, with good probability, the error in each answer scales as the standard deviation of the query multiplied by $\tilde{O}\left(\sqrt{\sqrt{k}/n}\right)$ --- which is what would be expected if we used $n/\sqrt{k}$ fresh samples for each query. The $\ln k$ factor arises from the fact that we take a union bound over the $k$ queries.
+
+More precisely, applying Markov's inequality to the conclusion of Theorem \ref{thm:main-intro}, shows that, with probability at least $90\%$, \begin{equation}\forall j ~~~~ \left| v_j - \ex{X \sim \cP}{\psi_j(X)} \right| \leq 40 \cdot \mymax{\tau \cdot \sdv(\psi_j(\cP))}{\tau^2} \leq \sdv(\psi_j(\cP)) \cdot 40\sqrt{\frac{\sqrt{2k \ln (2k)}}{n}} + 40 {\frac{\sqrt{2k \ln (2k)}}{n}}.\label{eqn:sdv2}\end{equation}
+This guarantee is directly comparable to the earlier bound \eqref{eqn:sdv} of \citet{FeldmanS17} -- though it is weaker in two ways: First, Theorem \ref{thm:main-intro} is a bound on the expectation and does not readily yield high probability bounds (other than via Markov's inequality). Second, the second term in the maximum (which we think of as a low-order term) still depends linearly on the sensitivity and is potentially larger. The advantage of this algorithm is that it is substantially simpler than the earlier work.
+
+\medskip
+
+Now we turn to the analysis tools that we introduce. Clearly the \emph{empirical error} of our algorithm --- that is $|v_j - \mu_j|$ --- scales with the empirical standard deviation $\sigma_j$. However, we must bound the \emph{true error}, namely $|v_j - \ex{X \sim \cP}{\psi_j(X)}|$. By the triangle inequality, it suffices to bound the \emph{generalization error} $| \mu_j - \ex{X \sim \cP}{\psi_j(X)}|$ in terms of standard deviation and to relate the empirical standard deviation $\sigma_j$ to the true standard deviation $\sdv(\psi_j(\cP))$.
+
+
+\subsubsection{Average leave-one-out KL stability and generalization}
+The key to our analysis is the following stability notion.
+
+\newcommand{\KLAS}{ALKL stable}
+\begin{defn}[Average Leave-one-out KL stability]\label{defn:klas-intro}
+An algorithm $M : \left(\X^n \cup \X^{n-1} \right) \to \mathcal{Y}$ is $\varepsilon$-\KLAS{} if, for all $s \in \X^n$, $$\frac{1}{n} \sum_{i \in [n]} \dkl{M(s)}{M(s_{-i})} \leq \varepsilon,$$ where $s_{-i} \in \X^{n-1}$ denotes $s$ with the $i^\text{th}$ element removed. Here $\dkl{\cdot}{\cdot}$ denotes the Kullback-Leibler divergence.% measured in nats.
+\end{defn}
+
+Our notion differs from differential privacy in three significant ways.\footnote{These relaxations mean that ALKL stability is \emph{not} a good privacy definition, in contrast to differential privacy. In particular, because of the averaging, ALKL stability cannot distinguish between an algorithm that offers good privacy to all individuals and one that offers great privacy for $n-1$ individuals but terrible privacy for the last individual. Compromising a single data point is, however, not an issue for generalization.} First, we use stability to leaving one out (LOO) rather than replacing one element. Second, we average the stability parameter across the $n$ dataset elements. Third, we use KL divergence instead of (approximate) max divergence. This is necessary to obtain stronger bounds for our calibrated noise addition as our algorithm does not satisfy differential privacy with parameters that would be suitable to ensure generalization. We note that average LOO stability is a well-studied way to define algorithmic stability for the loss function (\eg, \citep{BousquettE02,PoggioRMN04}).
+The use of KL divergence appears to be necessary to ensure adaptive composition of our averaged notion. Specifically, the following composition result is easy to prove.
+\begin{lem}[Composition]\label{lem:composition-intro}
+Suppose $M : \left(\X^n \cup \X^{n-1} \right) \to \mathcal{Y}$ is $\varepsilon$-\KLAS{} and $M' : \mathcal{Y} \times \left(\X^n \cup \X^{n-1} \right) \to \mathcal{Z}$ is such that $M'(y,\cdot) : \left(\X^n \cup \X^{n-1} \right) \to \mathcal{Z}$ is $\varepsilon'$-\KLAS{} for all $y \in \mathcal{Y}$. Then the composition $s \mapsto M'(M(s),s)$ is $(\varepsilon+\varepsilon')$-\KLAS{}.
+\end{lem}
+
+Using composition, we can show that our algorithm (Figure \ref{fig:scaledgauss}, with the parameters set as in Theorem \ref{thm:main-intro}) is $\frac{kt}{n^2}$-\KLAS{}. In particular, we show that each one of the $k$ answers is computed in a way that is $\frac{t}{n^2}$-\KLAS{}. This follows from the properties of the KL divergence between Gaussian distributions and the way we calibrate the noise. (Alternatively, we could use Laplace noise to obtain similar results.)
+
+We note that $\sqrt{2\varepsilon}$-differential privacy \citep{DworkMNS:06}, notions based on Renyi differential privacy \citep{BunS16,Mironov17}, and $\varepsilon$-KL-stability \citep{BassilyNSSSU16} all imply $\varepsilon$-ALKL stability\footnote{It may be necessary to extend an algorithm satisfying one of these definitions to inputs of size $n-1$ to satisfy ALKL stability. This can be done by simply padding such an input with one arbitrary item.} Thus we can also compose any ALKL stable algorithm with any of the many algorithms satisfying one of the aforementioned definitions.
+
+Crucially, average KL-divergence is strong enough to provide a generalization guarantee that scales with the standard deviation of the queries, as we require. Our proof is based on the high-level approach introduced by \citet{DworkFHPRR15:arxiv} who first convert a stability guarantee to an upper bound on information between the input dataset and the output of the algorithm and then derive generalization bounds from the bound on information. Here, we demonstrate that ALKL stability implies a bound on the mutual information between the input and output of the algorithm when run on independent samples and then derive generalization guarantees from the bound on mutual information.\footnote{We thank Adam Smith for suggesting that we try this approach to proving generalization for ALKL stable algorithms.}
+\begin{prop}\label{prop:gen-intro}
+Let $M : \left( \mathcal{X}^n \cup \mathcal{X}^{n-1} \right) \to \mathcal{Q}$ be $\varepsilon$-\KLAS{}. Let $S \in \mathcal{X}^n$ consist of $n$ independent samples from some distribution $\cP$. Then \begin{equation}I(S;M(S)) \leq \varepsilon n,\label{eqn:MI-men}\end{equation} where $I$ denotes mutual information.
+\end{prop}
+
+To prove Proposition \ref{prop:gen-intro}, we introduce an intermediate notion of stability:
+\newcommand{\MIS}{MI stable}
+\begin{defn}[Mutual Information Stability]
+\label{def:mis}
+A randomized algorithm $M : \X^n \to \mathcal{Y}$ is $\varepsilon$-\MIS{} if, for any random variable $S$ distributed over $\X^n$ (including non-product distributions), $$\frac{1}{n} \sum_{i=1}^n I(M(S);S_i|S_{-i}) \leq \varepsilon.$$
+\end{defn}
+This notion is based on the notion of stability studied in \citep{RaginskyRTWX16} that considers only product distributions over the datasets and, as a result, does not compose adaptively.
+
+We prove Proposition \ref{prop:gen-intro} by combining the following two facts.
+\begin{itemize}
+\item[(i)] $\varepsilon$-ALKL stability implies $\varepsilon$-MI stability. To show this, we express $I(M(S);S_i|S_{-i})$ as the expectation over $S$ of the KL divergence of the distribution (over the randomness of $M$) of $M(S)$ from an appropriately weighted convex combination of distributions $M(S')$. (Specifically, $S'$ is $S$ with $S_i$ ``resampled.'') The ``mean-as-minimizer'' property of KL divergence means we can simply replace this convex combination with $M(S_{-i})$ to complete the proof.
+\item[(ii)] $\varepsilon$-MI stability implies the mutual information bound \eqref{eqn:MI-men}. To prove this, we invoke the chain rule for mutual information along with the fact that $S_i$ is independent from $S_{-i}$ (which helps resolve the conditioning).
+\end{itemize}
+Further,  we point out that mutual information stability composes adaptively in the same way as ALKL stability and hence could be useful for understanding adaptive data analysis for more general queries (\eg unlike ALKL stability it does not require $M(S_{-i})$ to be defined).
+
+%$\mu_j = \frac{1}{n} \sum_{i=1}^n \psi_j(S_i)$ is subgaussian (or, more generally, subexponential) when $\psi_j$ is fixed independent from the sample $S$ consisting of $n$ i.i.d.~draws from $\cP$, then, as long as
+
+As first shown in the context of PAC-Bayes bounds \citep{McAllester13} and more recently in \citep{RussoZ16}, a bound on mutual information implies generalization results. Using a similar technique, we show that, if the mutual information $I(S;\psi_j)$ is small (with $S$ consisting of $n$ i.i.d.~draws from $\cP$), we have $\ex{}{\frac{1}{n} \sum_{i=1}^n \psi_j(S_i)} \approx \ex{X \sim \cP}{\psi_j(X)}$. Moreover, the quality of the approximation scales with the standard deviation. (Specifically, the approximation bound depends on the moment generating function $\ex{}{e^{\lambda \mu_j}}$ of $\mu_j = \frac{1}{n} \sum_{i=1}^n \psi_j(S_i)$, which we bound using both the variance and the range of $\mu_j$.) We can similarly relate the empirical variance $\sigma_j^2$ to the true variance. Thus a bound on mutual information suffices to bound generalization error and, thus, prove Theorem \ref{thm:main-intro}.
+
+Another known implication of bounded mutual information is that any event that would happen with sufficiently low probability on fresh data will still happen with low probability \citep{RussoZ16,RogersRST16}. In particular, if $E$ is some ``bad'' event -- such as overfitting the data or making a false discovery -- and we know that we are exponentially unlikely to overfit fresh data $S'$, then the probability of $M$ overfitting its input data $S$ is also small, provided the mutual information is small.
+
+One downside of using mutual information is that does not allow us to prove high probability bounds, as can be done with differential privacy and the notion of approximate max-information \citep{DworkFHPRR15:arxiv}. We note, however, that our analysis still upper bounds the expectation of the largest error among all the queries that were asked. In other words, a union bound over queries is built into the guarantees of the algorithm. Using known techniques, the confidence can be amplified at the expense of a somewhat more complicated algorithm. In addition, our algorithm yields stronger stability guarantees than just ALKL stability. For example, the minimum noise level of $1/T$ ensures differential privacy (albeit with relatively large parameters\footnote{Specifically, with the parameter setting from Theorem \ref{thm:main-intro}, our algorithm satisfies $\left(O\left(\sqrt{\log(1/\delta)}\right),\delta\right)$-differential privacy for all $\delta>k^{-\Omega(k)}$.}). The parameters can be improved using the averaging over the indices that we use in ALKL stability but that leads to a notion that does not appear to compose adaptively. Using a different analysis technique it might be possible to exploit the stronger stability properties of our algorithm to prove high probability generalization bounds. We leave this as an open problem.  On the other hand, stability with KL divergence is easier to analyze and allows a potentially wider range of algorithms to be used.
+
+\subsection{Related work}
+Our use of mutual information to derive generalization bounds is closely related to PAC-Bayes bounds first introduced by \citet{McAllester99} and extended in a number of subsequent works (see \citep{McAllester13} for an overview). In this line of work, the expected generalization error of a predictive model (such as classifier) randomly chosen from some data-dependent distribution $\cQ(S)$ is upper-bounded by the KL divergence between $\cQ$ and an arbitrary data-independent prior distribution $\cP_0$. One natural choice of $\cQ(S)$ is the output distribution of a randomized learning algorithm $\cA$ on $S$. By choosing the prior $\cP_0$ to be the distribution of the output of $\cA$ on a dataset drawn from $\cP^n$ one obtains that the expected generalization error is upper-bounded by the expected KL divergence between $\cQ(S)$ an $\cP_0$ \citep{McAllester13}. While this has not been pointed out in \citep{McAllester13}, this is exactly the mutual information between $S$ and $\cA(S)$.
+
+Recently, interest in using information-based generalization bounds was revived by applications in adaptive data analysis \citep{DworkFHPRR15:arxiv}.
+Specifically, \citet{DworkFHPRR15:arxiv} demonstrate that approximate max-information  between the input dataset and the output of the algorithm (a notion based on the infinity divergence between the joint distribution and the product of marginals) implies generalization bounds with high probability. They also showed that $(\eps,0)$-differential privacy implies an upper bound on approximate max-information (and this later extended to $(\eps,\delta)$-differential privacy by \citet{RogersRST16}). \citet{RussoZ16} show that mutual information can also be used to derive bounds on expected generalization error and discuss several applications of these bounds. \citet{XuR17} show how to derive ``low-probability'' bounds on the generalization error in this context. (We note that \citep{RussoZ16,XuR17} use the same technique as that used in PAC-Bayes bounds and appear to have overlooked the direct connection between their results and the PAC-Bayes line of work.)
+
+Recent work \citep{BassilyMNSY18} studies learning algorithms in the PAC model whose output has low mutual information with the input dataset. They also discuss generalization bounds based on mutual information and (independently) derive results similar to those we give for low-probability events.
+
+
+
+
+\subsection*{Acknowledgements} We thank Adam Smith for his suggestion to analyze the generalization of ALKL stable algorithms via mutual information. This insight greatly simplified our initial analysis and allowed us to derive additional corollaries. We also thank Nati Srebro for pointing out the connection between our results and the PAC-Bayes generalization bounds.
+Part of this work was done while Vitaly Feldman was at IBM Research -- Almaden and while visiting the Simons Institute, UC Berkeley.
+
+%\bibliographystyle{alpha}
+
+
+\bibliography{refs,vf-allrefs}
+
+%{\center The full version of this extended abstract appears at \url{https://arxiv.org/abs/1712.07196}.}
+
+\end{document}
+
+
+

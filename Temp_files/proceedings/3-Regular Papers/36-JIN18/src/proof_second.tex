@@ -1,0 +1,428 @@
+%!TEX root = main.tex
+
+\subsection{Proof for negative-curvature scenario}
+We prove Lemma \ref{lem:negHess} in this section. 
+We consider two trajectories, starting at $\x_0$
+and $\modify{\x}_0$, with $\v_0=\modify{\v}_0$, where $\w_0 =
+\x_0 -  \modify{\x}_0 = r_0\e_1$, where $\e_1$ is the minimum 
+eigenvector direction of $\H$, and where $r_0$ is not too small. 
+We show that at least one of the trajectories will escape 
+saddle points efficiently.
+
+\begin{lemma}[Formal Version of Lemma \ref{lem:informal_neg_curve}]\label{lem:2nd_seq}
+% Let $r$ be choosen according to Theorem \ref{thm:main}, $\tilde{\x}$ satisfies 
+% \begin{equation*}
+% \norm{\nabla f(\tilde{\x})} \le \epsilon \quad \quad \text{~and~} \quad \quad \lambda_{\min}(\hess f(\tilde{\x})) \le - \sqrt{\rho\epsilon}
+% \end{equation*}
+% And $\x_0,  \modify{\x}_0$ are at most $r$ distance away from $\tilde{\x}$, $\v_0 = \modify{\v}_0$.
+% $\w_0 =\x_0 -  \modify{\x}_0 = \Omega(\delta r/\sqrt{d}) \cdot \e_1$ where $\e_1$ is the minimum eigenvector direction of $\H$. Then we have:
+% \begin{align*}
+% \min\{E_\utime - E_0, \modify{E}_\utime - \modify{E}_0\} \le - 2\ufun
+% \end{align*}
+
+Under the same setting as Theorem \ref{thm:main}, suppose $\norm{\nabla f(\tilde{\x})} \le \epsilon$ and $\lambda_{\min}(\hess f(\tilde{\x})) \le - \sqrt{\rho\epsilon}$. 
+Let $\x_0$ and $\modify{\x}_0$ be at distance at most $r$ from $\tilde{\x}$.
+%, $\v_0 = \modify{\v}_0$.
+Let $\x_0 -  \modify{\x}_0 = r_0 \cdot \e_1$ and let $\v_0 = \modify{\v}_0 = \tilde{\v}$ where $\e_1$ is the minimum eigen-direction of $\hess f(\tilde{\x})$. 
+Let $r_0 \ge \frac{\delta\ufun }{2\Delta_f}\cdot\frac{r}{\sqrt{d}}$. 
+Then, running~\nag~starting at $(\x_0, \v_0)$ and $(\x'_0, \v'_0)$ respectively, we have:
+\begin{align*}
+\min\{E_{\utime} - \widetilde{E}, \modify{E}_{\utime} - \widetilde{E}\} \le - \ufun,
+\end{align*}
+where $\widetilde{E},E_{\utime}$ and $\modify{E}_{\utime}$ are the Hamiltonians at $(\tilde{\x}, \tilde{\v}), (\x_{\utime}, \v_{\utime})$ and $(\modify{\x}_{\utime}, \modify{\v}_{\utime})$ respectively.
+
+\end{lemma}
+
+\begin{proof}
+Assume none of the two sequences decrease the Hamiltonian fast enough; that is,
+\begin{align*}
+\min\{E_{\utime} -E_0, \modify{E}_{\utime} - \modify{E}_0\} \ge - 2\ufun,
+\end{align*}
+where $E_0$ and $\modify{E}_0$ are the Hamiltonians at $(\x_0, \v_0)$ and $(\modify{\x}_0, \modify{\v}_0)$.
+Then, by Corollary \ref{cor:localball} and the Cauchy-Swartz inequality, we have
+for any $t \le \utime$:
+\begin{equation*}
+\max\{\norm{\x_t - \tilde{\x}},  \norm{\modify{\x}_t - \tilde{\x}}\} \le 
+r + \max\{\norm{\x_t - \x_0},  \norm{\modify{\x}_t - \modify{\x}_0}\}
+\le r + \sqrt{4\eta \utime \ufun/\theta} \le 2\uspace.
+\end{equation*}
+Fix the origin $\zero$ at $\tilde{\x}$ and let $\H$ be the Hessian at $\tilde{\x}$. Recall that the update equation of AGD (Algorithm \ref{algo:AGD}) can be re-written as:
+\begin{align*}
+\x_{t+1}  =& (2-\theta) \x_{t} - (1-\theta)  \x_{t-1}
+ -\eta \grad f((2-\theta) \x_{t} - (1-\theta)  \x_{t-1}) 
+\end{align*}
+Taking the difference of two AGD sequences starting from $\x_0,  \modify{\x}_0$, and let $\w_t = \x_t - \modify{\x}_t$, we have:
+\begin{align*}
+\w_{t+1} =& (2-\theta) \w_{t} - (1-\theta)  \w_{t-1}
+-\eta \grad f( \y_{t}) 
++ \eta \grad f(\modify{\y}_{t})\\ 
+=& (2-\theta)(I - \eta\H - \eta\Delta_t) \w_{t} - (1-\theta)(I - \eta\H  -\eta\Delta_t) \w_{t-1},
+\end{align*}
+where $\Delta_t = \int_{0}^1 (\hess f(\phi\y_{t} + (1-\phi)\modify{\y}_{t}) - \H) \mathrm{d}\phi$. In the last step, we used 
+\begin{align*}
+\grad f( \y_{t}) - \grad f(\modify{\y}_{t})
+= (\H + \Delta_t)(\y_{t} - \modify{\y}_{t})
+= (\H + \Delta_t)[(2-\theta) \w_{t} - (1-\theta)  \w_{t-1}].
+\end{align*}
+We thus obtain the update of the $\w_t$ sequence in matrix form:
+\begin{align}
+\pmat{\w_{t+1} \\ \w_t}=& \pmat{(2-\theta) (\I - \eta \H)&  -(1-\theta) (\I - \eta \H) \\\I& 0}
+\pmat{\w_{t} \\ \w_{t-1}} \nn \\
+&- \eta\pmat{(2-\theta) \Delta_t \w_t - (1 - \theta) \Delta_{t} \w_{t-1} \\ 0} \nn \\
+=& \A\pmat{\w_t \\ \w_{t-1}} -\eta\pmat{ \delta_t \\ 0} = \A^{t+1}\pmat{\w_0 \\ \w_{-1}} 
+-\eta\sum_{\tau = 0}^t \A^{t-\tau}\pmat{ \delta_\tau \\ 0},
+\label{eq:update_w}
+\end{align}
+where $\delta_t = (2-\theta) \Delta_t \w_t - (1 - \theta) \Delta_{t} \w_{t-1}$. Since $\v_0 = \v'_0$, we have $\w_{-1} = \w_0$, and $\norm{\Delta_t} \le \rho\max\{\norm{\x_t - \tilde{\x}},  \norm{\modify{\x}_t- \tilde{\x}}\}
+\le 2\rho\uspace$, as well as $\norm{\delta_\tau} \le  6\rho\uspace(\norm{\w_\tau} + \norm{\w_{\tau-1}})$. According to \eqref{eq:update_w}:
+\begin{align*}
+\w_t
+=& \pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}} -\eta\pmat{\I & 0}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{ \delta_\tau \\ 0}.
+\end{align*}
+Intuitively, we want to say that the first term dominates. Technically, we will 
+set up an induction based on the following fact:
+\begin{align*}
+\norm{\eta\pmat{\I, 0}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{\delta_\tau \\ 0} }
+\le \frac{1}{2}\norm{\pmat{\I, 0}\A^{t}\pmat{\w_0 \\ \w_{0}}}.
+\end{align*}
+% \cnote{No need to do $t/T$, $1/2$ suffices.}
+
+It is easy to check the base case holds for $t=0$. Then, assume that for all time steps less than or equal to $t$, the induction assumption hold. We have:
+% \cnote{modify this to hold for $t$, use new notation}
+\begin{align*}
+\norm{\w_t} 
+\le& \norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}}} +\norm{\eta\pmat{\I & 0}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{ \delta_\tau \\ 0} } \\
+\le& 2\norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}}},
+\end{align*}
+which gives:
+\begin{align*}
+\norm{\delta_t} \le& O(\rho\uspace)(\norm{\w_t} + \norm{\w_{t-1}})
+\le O(\rho\uspace) \left[\norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}}}
++ \norm{\pmat{\I & 0}\A^{t-1}\pmat{\w_0 \\ \w_{0}}}\right] \\
+\le& O(\rho\uspace) \norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}}},
+\end{align*}
+where in the last inequality, we used Lemma \ref{lem:aux_increase_t} 
+for monotonicity in $t$.
+
+
+To prove that the induction assumption holds for $t+1$ we compute:
+\begin{align}
+\norm{\eta\pmat{\I, 0}\sum_{\tau = 0}^{t} \A^{t-\tau}\pmat{\delta_\tau \\ 0} }
+\le& \eta \sum_{\tau = 0}^{t} \norm{\pmat{\I, 0}\A^{t-\tau}\pmat{\I \\ 0}}
+\norm{\delta_\tau}  \nn \\
+\le& O(\eta\rho\uspace) \sum_{\tau = 0}^{t} \norm{\pmat{\I, 0}\A^{t-\tau}\pmat{\I \\ 0}}
+\norm{\pmat{\I & 0}\A^{\tau}\pmat{\w_0 \\ \w_{0}}}. \label{eq:saddle_app}
+\end{align}
+By the precondition we have $\lambda_{\min}(\H) \le -\sqrt{\rho\epsilon}$. 
+Without loss of generality, assume that the minimum eigenvector direction 
+of $\H$ is along he first coordinate $\e_1$, and denote the corresponding 
+$2\times 2$ matrix as $\A_1$ (as in the convention of \eqref{eq:definition_Aj}. 
+Let:
+\begin{equation*}
+(a^{(1)}_{t}, ~-b^{(1)}_t) =\pmat{1 & 0 }\A_1^{t}.
+\end{equation*} 
+We then see that (1) $\w_0$ is along the $\e_1$ direction, 
+and (2) according to Lemma \ref{lem:aux_increase_x}, the matrix 
+$\pmat{\I, 0}\A^{t-\tau}\pmat{\I \\ 0}$ is a diagonal matrix, where the spectral norm is achieved along the first coordinate which corresponds to the eigenvalue 
+$\lambda_{\min}(\H)$. Therefore, using Equation \eqref{eq:saddle_app}, we have:
+\begin{align*}
+\norm{\eta\pmat{\I, 0}\sum_{\tau = 0}^{t} \A^{t-\tau}\pmat{\delta_\tau \\ 0} }
+\le& O(\eta\rho\uspace) \sum_{\tau = 0}^t a^{(1)}_{t-\tau}(a^{(1)}_{\tau} - b^{(1)}_{\tau}) \norm{\w_0}\\
+\le& O(\eta\rho\uspace) \sum_{\tau =0}^t [\frac{2}{\theta} + (t+1)] |a^{(1)}_{t+1} - b^{(1)}_{t+1}|\norm{\w_0}\\
+\le& O(\eta\rho\uspace\utime^2)\norm{\pmat{\I, 0}\A^{t+1}\pmat{\w_0 \\ \w_{0}}},
+\end{align*}
+where, in the second to last step, we used Lemma \ref{lem:aux_eigen_combo_inequal}, and in the last step we used $1/\theta \le \utime$. Finally,
+$O(\eta\rho\uspace\utime^2) \le O(c^{-1})\le 1/2$ by choosing a sufficiently large constant $c$. Therefore, we have proved the induction, which gives us:
+\begin{align*}
+\norm{\w_t} =& \norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}} }
+-\norm{\eta\pmat{\I & 0}\sum_{\tau = 0}^{t-1} \A^{t-1-\tau}\pmat{ \delta_\tau \\ 0} }
+\ge \frac{1}{2}\norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}} }.
+\end{align*}
+Noting that $\lambda_{\min}(\H) \le -\sqrt{\rho\epsilon}$, by applying Lemma \ref{lem:aux_increase_t} we have 
+\begin{equation*}
+\frac{1}{2}\norm{\pmat{\I & 0}\A^{t}\pmat{\w_0 \\ \w_{0}}}
+\ge \frac{\theta}{4}(1+ \Omega(\theta))^t r_0,
+\end{equation*}
+which grows exponentially. Therefore, for  $r_0 \ge \frac{\delta\ufun }{2\Delta_f}\cdot\frac{r}{\sqrt{d}}$,
+and $\utime = \Omega(\frac{1}{\theta}\cdot\chi c)$ where $\chi =\max\{1, \log \frac{d \ell\Delta_f}{\rho \epsilon\delta}\}$, where the constant $c$ is sufficiently large, 
+we have
+$$\norm{\x_\utime - \modify{\x}_\utime} = \norm{\w_\utime} \ge \frac{\theta}{4}(1+ \Omega(\theta))^\utime r_0 \ge 4\uspace,$$
+which contradicts the fact that:
+\begin{equation*}
+\forall t \le \utime, \max\{\norm{\x_t - \tilde{\x}},  \norm{\modify{\x}_t - \tilde{\x}}\} \le O(\uspace).
+\end{equation*}
+This means our assumption is wrong, and we can therefore conclude:
+\begin{align*}
+\min\{E_{\utime} -E_0, \modify{E}_{\utime} - \modify{E}_0\} \le - 2\ufun.
+\end{align*}
+On the other hand, by the precondition on $\tilde{x}$ and the gradient Lipschitz
+property, we have:
+\begin{align*}
+\max\{E_0 - \tilde{E}, \modify{E}_0- \tilde{E}\}
+\le \epsilon r + \frac{\ell r^2}{2} \le \ufun,
+\end{align*}
+where the last step is due to our choice of $r= \eta\epsilon\cdot \chi^{-5}c^{-8}$ 
+in \eqref{eq:parameter}.  Combining these two facts:
+\begin{align*}
+\min\{E_{\utime} -\tilde{E}, \modify{E}_{\utime} - \tilde{E}\}
+\le \min\{E_{\utime} -E_0, \modify{E}_{\utime} - \modify{E}_0\} +
+\max\{E_0 - \tilde{E}, \modify{E}_0- \tilde{E}\} \le -\ufun,
+\end{align*}
+which finishes the proof.
+\end{proof}
+
+We are now ready to prove the main lemma in this subsection, which states 
+with that random perturbation, PAGD will escape saddle points efficiently 
+with high probability.
+\begingroup
+\def\thetheorem{\ref{lem:negHess}}
+\begin{lemma}[Negative curvature]
+Consider the setting of Theorem~\ref{thm:main}. 
+If $\norm{\grad f(\x_0)} \le \epsilon$, $\lambda_{\min} (\hess f(\x_0)) < -\sqrt{\rho\epsilon}$, 
+and a perturbation has not been added in iterations $\tau \in [-\utime, 0)$, 
+then, by running Algorithm \ref{algo:PAGD}, we have $E_{\utime} - E_0 \le -\ufun$ 
+with probability at least $1-\frac{\delta \ufun}{2\Delta_f}$.
+\end{lemma}
+% \begin{lemma}[Negative curvature]
+% Consider the setting of Theorem~\ref{thm:main}. 
+% If $\norm{\grad f(\x_0)} \le \epsilon$ and $\lambda_{\min} (\hess f(\x_0)) < -\sqrt{\rho\epsilon}$, then by running Algorithm \ref{algo:PAGD}, we have $E_{\utime} - E_0 \le -\Omega (\ufun)$ with high probability.
+% \end{lemma}
+\addtocounter{theorem}{-1}
+\endgroup
+
+
+\begin{proof}
+Since a perturbation has not been added in iterations $\tau \in [-\utime, 
+0)$, according to PAGD (Algorithm \ref{algo:PAGD}), we add perturbation at 
+$t=0$, the Hamiltonian will increase by at most:
+\begin{align*}
+\Delta E
+\le \epsilon r + \frac{\ell r^2}{2} \le \ufun,
+\end{align*}
+where the last step is due to our choice of $r= \eta\epsilon\cdot \chi^{-5}c^{-8}$ in \eqref{eq:parameter} with constant $c$ sufficiently large.
+Again by Algorithm \ref{algo:PAGD}, a perturbation will never be added in 
+the remaining iterations, and by Lemma \ref{lem:energy_nonconvex} and 
+Lemma \ref{lem:NCE_decrease} we know the Hamiltonian always decreases 
+for the remaining steps. Therefore, if at least one NCE step is performed 
+in iteration $\tau \in [0, \utime]$, by Lemma \ref{lem:NCE_decrease} we 
+will decrease $2\ufun$ in that NCE step, and at most increase by $\ufun$ 
+due to the perturbation. This immediately gives $E_\utime -E_0 \le -\ufun$.
+
+Therefore, we only need to focus on the case where NCE is never used in 
+iterations $\tau \in [0, \utime]$.
+% Since we adding perturbation in first iteration, let $\tilde{\x_0}$ be the iterate after adding perturbation, and $\tilde{E}_0$ be its corresponding Hamiltonion. The actual decrease in Hamiltonian can be decompose into two parts:
+% \begin{equation*}
+% E_{\utime} - E_0
+% = E_{\utime} - \tilde{E}_0 + \tilde{E}_0 - E_0
+% \end{equation*}
+% since we only add perturbation to $\x$ not momentum, we have:
+% \begin{equation*}
+% \tilde{E}_0 - E_0
+% = f(\tilde{\x}_0) - f(\x_0)  \le \epsilon r + \frac{\ell r^2}{2} \le \ufun
+% \end{equation*}
+Let $\mathbb{B}_{\x_0}(r)$ denote the ball with radius $r$ around $\x_0$. According to algorithm \ref{algo:PAGD}, we know the iterate after adding perturbation to $\x_0$ is uniformly sampled from the ball $\mathbb{B}_{\x_0}(r)$. Let $\mathcal{X}_{\text{stuck}} \subset \mathbb{B}_{\x_0}(r)$ be the region where AGD is stuck (does not decrease the
+Hamiltonian $\ufun$ in $\utime$ steps).
+Formally, for any point $\x \in \mathcal{X}_{\text{stuck}}$, let $\x_1, \cdots, \x_\utime$ be the AGD sequence starting at $(\x, \v_0)$, then $E_\utime - E_0 \ge -\ufun$. By Lemma \ref{lem:2nd_seq}, $\mathcal{X}_{\text{stuck}}$ can have at most width 
+$r_0 = \frac{\delta\ufun }{2\Delta_f}\cdot\frac{r}{\sqrt{d}}$ along the
+minimum eigenvalue direction. Therefore,
+\begin{align*}
+\frac{\text{Vol}(\cXs)}{\text{Vol}(\ball^{(d)}_{\x_0}(r))}
+\le \frac{r_0 \times \text{Vol}(\ball^{(d-1)}_0(r))}{\text{Vo{}l} (\ball^{(d)}_0(r))}
+= \frac{r_0}{r\sqrt{\pi}}\frac{\Gamma(\frac{d}{2}+1)}{\Gamma(\frac{d}{2}+\frac{1}{2})}
+\le \frac{r_0}{r\sqrt{\pi}} \cdot \sqrt{\frac{d}{2}+\frac{1}{2}} \le \frac{\delta\ufun }{2\Delta_f}.
+\end{align*}
+% Since $\delta$ only comes in dependence on logarithmic factor of $\utime$, we say it is high probability.
+Thus, with probability at least $1-\frac{\delta\ufun }{\Delta_f}$, the
+perturbation will end up outside of $\cXs$, which give $E_{\utime} - E_0\le -\ufun$. 
+This finishes the proof.
+
+
+\end{proof}
+
+\subsection{Proof of Theorem \ref{thm:main}}
+
+Our main result is now easily obtained from Lemma \ref{lem:largeGrad} and Lemma \ref{lem:negHess}.
+
+\begin{proof}[Proof of Theorem \ref{thm:main}]
+Suppose we never encounter any \ESSP. Consider the set $\mathfrak{T} = \{\tau | \tau \in [0, \utime] \text{~and~}
+\norm{\grad f(\x_\tau)} \le \epsilon\}$, and two cases: (1) $\mathfrak{T} = \varnothing$, in which case we know all gradients are large and by Lemma \ref{lem:largeGrad} we have $E_{\utime} - E_0 \le -\ufun$;
+(2) $\mathfrak{T} \neq \varnothing$.  In this case, define $\tau' = \min \mathfrak{T}$; i.e., the earliest iteration where the gradient is small. Since by assumption, $\x_\tau'$ is not an \ESSP, this gives $\hess f(\x_{\tau'}) \le - \sqrt{\rho\epsilon}$, and by Lemma \ref{lem:negHess}, we can conclude $E_{\tau'+\utime} - E_0 \le
+E_{\tau'+\utime} - E_{\tau'} \le -\ufun$. Clearly $\tau'+\utime \le 2\utime$. That is, in either case, we will decrease the Hamiltonian by $\ufun$ in at most $2\utime$ steps.
+
+Then, for the the first case, we can repeat this argument starting at iteration $\utime$, and for the second case, we can repeat the argument starting at iteration $\tau'+\utime$. Therefore, we will continue to obtain a decrease of the Hamiltonian by an average of $\ufun/(2\utime)$ per step. Since the function $f$ is lower bounded, we know the Hamiltonian can not decrease beyond $E_0 - E^\star = f(\x_0) - f^\star$, which means that in $\frac{2(f(\x_0) - f^\star)\utime}{\ufun}$ steps, we must encounter an \ESSP~at least once.
+
+Finally, in $\frac{2(f(\x_0) - f^\star)\utime}{\ufun}$ steps, we will call Lemma \ref{lem:negHess} at most $\frac{2\Delta_f}{\ufun}$ times, and since Lemma \ref{lem:negHess} holds with probability $1-\frac{\delta \ufun}{2\Delta_f}$, by a union bound, we know that the argument above is true with probability at least:
+$$1-\frac{\delta \ufun}{2\Delta_f}\cdot \frac{2\Delta_f}{\ufun} = 1-\delta,$$
+which finishes the proof.
+% two cases: 1) If $\norm{\grad f(\x_\tau)} \ge \epsilon$ for all $ \tau \in [0, \utime]$ then by Lemma \ref{lem:largeGrad}, Hamiltonian decrease by $\Omega(\ufun)$ in $\utime$ steps.
+% 2) If there is $\tau'\in [0, \utime]$ such that $\norm{\grad f(\x_{\tau'})} \le \epsilon$. Let $\tau'$ be the earlest such time where since gradient small $\x_{\tau'}$ must has negative curvature in Hessian, by Lemma \ref{lem:negHess}, we know Hamiltonian decrease $\Omega(\ufun)$ in next $\utime$ iterations.
+% Overall, as long as all $\x_t$ are not \ESSP, we always guarantees decrease in Hamiltonian by $\Omega(\ufun)$
+% in at most $2\utime$ iterations. Since function $f$ is lower bounded, we know Hamiltonian can not decrease beyond $E_0 - E^\star = f(\x_0) - f^\star$, this means in $O(\frac{(f(\x_0) - f^\star)\utime}{\ufun})$ we must encounter \ESSP at least once, which finishes the proof.
+\end{proof}
+
+% ~
+
+% Denote $\proj_\perp = \I - \e_1\e_1\trans$. We use induction to prove $\e_1\trans \w_t \ge 0, \e_1\trans\v_t \ge 0$ and :
+% \begin{equation*}
+% \frac{t}{T} \cdot \e_1\trans [\w_t + (1-\theta)\v_t] \ge \norm{\proj_\perp\w_t} + (1-\theta)\norm{\proj_\perp\v_t}
+% \end{equation*}
+
+% ~
+
+% Suppose $\lambda_{\min}(\H) = -\gamma \le \sqrt{\rho\epsilon}$.
+
+% ~
+
+% First we verify this is enough to prove the theorem, this is because we have:
+% \begin{align*}
+% \norm{\w_t + (1-\theta)\v_t}
+% \le& \norm{\w_t} + (1-\theta)\norm{\v_t}
+% \le \norm{\proj_\perp\w_t} + |\e_1\trans \w_t|
+% + (1-\theta)(\norm{\proj_\perp\v_t} + |\e_1\trans \v_t|)\\
+% \le& 2 (\e_1\trans [\w_t + (1-\theta)\v_t])
+% \end{align*}
+% where the last inequality used all three induction assumption. This gives:
+% \begin{align*}
+% \e_1\trans\w_{t+1} =& (1+\eta\gamma)
+% (\e_1\trans [\w_t + (1-\theta)\v_t])
+% - 2\eta\sqrt{c\rho\epsilon}(\e_1\trans [\w_t + (1-\theta)\v_t])\\
+% \ge &(1+\eta\frac{\sqrt{\rho\epsilon}}{2})(\e_1\trans [\w_t + (1-\theta)\v_t])
+% \end{align*}
+% which will explode in $O(\frac{1}{\theta})$ iteration.
+
+% Now we do the induction. Easy to verify, the base case $t=0$ holds. We have update equation for both $\w_t$ and $\v_t$ as follows:
+% \begin{align*}
+% \w_{t+1} =& (\I - \eta\H - \eta\Delta_t)(\w_t + (1-\theta)\v_t)\\
+% \v_{t+1} =& \w_{t+1} - \w_t = -\eta(\H + \Delta_t)\w_t +  (\I - \eta\H - \eta\Delta_t)(1-\theta)\v_t
+% \end{align*}
+% Therefore:
+% \begin{align*}
+% \e_1\trans\w_{t+1}
+% \ge& (1+\eta\gamma)\e_1\trans(\w_t + (1-\theta)\v_t) - \eta\sqrt{c\rho\epsilon}\norm{\w_t + (1-\theta)\v_t} \\
+% \norm{\proj_\perp \w_{t+1}}
+% \le& (1+\eta\gamma)\norm{\proj_\perp (\w_t + (1-\theta)\v_t)} + \eta\sqrt{c\rho\epsilon}\norm{\w_t + (1-\theta)\v_t} \\
+% \e_1\trans \v_{t+1}
+% \ge & \eta\gamma \e_1 \trans \w_t + (1+\eta\gamma) \e_1\trans(1-\theta)\v_t- \eta\sqrt{c\rho\epsilon}\norm{\w_t + (1-\theta)\v_t} \\
+% \norm{\proj_\perp \v_{t+1}}
+% \le & \eta\gamma \norm{\proj_\perp \w_t}
+% + (1+\eta\gamma) \norm{\proj_\perp (1-\theta)\v_t}+\eta\sqrt{c\rho\epsilon}\norm{\w_t + (1-\theta)\v_t} \\
+% \end{align*}
+% By using $\norm{\w_t + (1-\theta)\v_t} \le $
+
+% \newpage
+
+% ???Suppose we expand the coordinate system align with eigenvectors of $\H$, let $\S$ be the subspace consists of all eigenvectors whose eigenvalue less than $-\frac{\sqrt{\rho\epsilon}}{\overh}$. $\S^c$ be the subspace of remaining eigenvectors.
+% Denote $\balpha_t = \proj_{\S} \u_{t}$, and $\bbeta_t = \proj_{\Scomp} \u_{t}$.
+
+% Since $\norm{\w_0 -\tilde{\x}} \le \norm{\u_0 - \tilde{\x}} + \norm{\v_0} \le 2 \uspace\cdot \log^{-1}(d\cn) /\cn$, directly applying Lemma \ref{lem:1st_seq}, we know $\w_t\le O( \uspace\cdot\ca )$ for all $t \le T$. By condition of Lemma \ref{lem:2nd_seq}, we know $\norm{\u_t} \le O( \uspace\cdot\ca )$ for all $t<T$.
+% This gives:
+% \begin{equation} \label{eq:bound_v}
+% \norm{\v_t} \le \norm{\u_t} + \norm{\w_t} \le O( \uspace\cdot \ca) \text{~for all~} t<T
+% \end{equation}
+
+% On the other hand, denote $\psi_t$ be the norm of $\v_t$ projected to $\e_1$ direction, and $\varphi_t$ be the norm of $\v_t$ projected to remaining subspace. By Eq.\eqref{eq:v_dynamic}, this gives for some constant $\cb$:
+% \begin{align*}
+% \psi_{t+1} \ge& (1+\gamma \eta)\psi_t - \nu\sqrt{\psi_t^2 + \varphi_t^2}\\
+% \varphi_{t+1} \le &(1+\gamma\eta)\varphi_t + \nu\sqrt{\psi_t^2 + \varphi_t^2}
+% \end{align*}
+% where $\nu = \cb\eta\rho  \uspace\cdot\ca$, now we use induction to prove for all $t \le T$:
+% \begin{equation*}
+% \varphi_t \le 4 \nu t \cdot \psi_t
+% \end{equation*}
+% By assumption of Lemma \ref{lem:2nd_seq}, we know $\varphi_0 = 0$, thus initial condition holds. Assume for $\tau\le t$ induction holds, then for $t+1 \le T$, we have:
+% \begin{align*}
+% 4\nu(t+1)\psi_{t+1} 
+% \le & 4\nu (t+1) \left( (1+\gamma \eta)\psi_t - \nu \sqrt{\psi_t^2 + \varphi_t^2}\right) \\
+% \varphi_{t+1} \le &4 \nu  t(1+\gamma\eta) \psi_t + \nu \sqrt{\psi_t^2 + \varphi_t^2}
+% \end{align*} 
+% To prove the induction assumption, we only need to show:
+% \begin{equation*}
+%  \left(1+4\nu (t+1)\right)\sqrt{\psi_t^2 + \varphi_t^2}
+%  \le 4 (1+\gamma \eta)\psi_t
+% \end{equation*}
+% By choosing small enough $\eta$, we can make $4\nu (t+1) \le 4\nu T \le \cb \frac{\rho}{\gamma}\uspace \ca^2 \log(d\cn) \le 1$. This gives:
+% \begin{align*}
+% 4 (1+\gamma \eta)\psi_t \ge 4\psi_t \le 2\sqrt{2\psi_t^2}\ge \left(1+4\nu (t+1)\right)\sqrt{\psi_t^2 + \varphi_t^2}
+% \end{align*}
+% which finishes the induction.
+
+% ~
+
+% Now, we know $\varphi_t \le 4  \nu t \cdot \psi_t \le \psi_t$, this gives:
+% \begin{equation}
+% \psi_{t+1} \ge (1+\gamma \eta)\psi_t - \sqrt{2}\nu\psi_t
+% \ge (1+\frac{\gamma \eta}{2})\psi_t \label{eq:growth_v}
+% \end{equation}
+
+
+% Finally, combining Eq.\eqref{eq:bound_v} and \eqref{eq:growth_v} we have for all $t<T$:
+% \begin{align*}
+% O( \uspace\cdot \ca)
+% \ge &\norm{\v_t} \ge \psi_t \ge (1+\frac{\gamma \eta}{2})^t \psi_0\\
+% = &(1+\frac{\gamma \eta}{2})^t c_0 \frac{\uspace}{\cn\sqrt{d}}\log^{-1}(d\cn)
+% \ge 0.01(1+\frac{\gamma \eta}{2})^t \frac{\uspace}{\cn\sqrt{d}}\log^{-1}(d\cn)
+% \end{align*}
+% By choosing constant $\ca$ to be large enough, we will have:
+% \begin{equation*}
+% T < \frac{1}{2}\frac{\log O( \cn\sqrt{d}\cdot \overh)}{\log (1+\frac{\gamma \eta}{2})}
+% \le \ca\frac{\log (d\cn)}{\eta\gamma} =\ca\utime
+% \end{equation*}
+
+% This finishes the proof.
+% \end{proof}
+
+% \begin{lemma}\label{lem:one_in_two}
+% Let $\tilde{\x}$ satisfies the condition in Theorem \ref{thm:main_saddle}, and $\v_0 = (c_0\uspace\cdot \log^{-1}(d\cn)/(\cn\sqrt{d})) \cdot \e_1$ where $\e_1$ is the minimum eigenvector direction of $\H$, and $c_0 \in [0.01, 1]$. Then for any point $\u_0$ with $\norm{\u_0 - \tilde{\x}} \le \uspace\cdot \log^{-1}(d\cn) /\cn$ and $\w_0 = \u_0 + \v_0$,
+% there exist some small $\eta = O(1/\ell)$, for some $T^\star = O(\utime)$ at least one of followings is true:
+% \begin{enumerate}
+% \item $f(\u_{T^\star})  - f(\u_0) \le -1.8\ufun$
+% \item $f(\w_{T^\star})  - f(\w_0) \le -1.8\ufun$
+% \end{enumerate}
+% \end{lemma}
+
+% \begin{proof}
+% W.L.O.G, let $\tilde{\x} = 0$. Let $\ca$ to be the constant so that Lemma \ref{lem:2nd_seq} holds, 
+% and let $T^\star = \ca\utime$. Again, define:
+% \begin{equation*}
+% T = \inf_t\left\{t| \tilde{f}_{\u_0}(\u_t) - f(\u_0)  \le -2\ufun \right\}
+% \end{equation*}
+% Let's consider following two cases:
+
+% \paragraph{Case $T \le T^\star$:} In this case, by Lemma \ref{lem:1st_seq}, we know $\norm{\u_{T-1}} \le O(\uspace )$, and therefore
+% \begin{align*}
+% \norm{\u_T} \le \norm{\u_{T-1}} + \eta \norm{\grad f(\u_{T-1})}
+% \le \norm{\u_{T-1}} + \eta \norm{\grad f(\tilde{\x})} + \eta \ell \norm{\u_{T-1}}
+% \le O(\uspace )
+% \end{align*}
+% By choosing appropriately small $\eta$, this gives:
+% \begin{align*}
+% f(\u_T) - f(\u_0) \le& \grad f(\u_0)\trans (\u_T-\u_0) + \frac{1}{2}(\u_T-\u_0)\trans \hess f(\u_0) (\u_T-\u_0)
+% + \frac{\rho}{6} \norm{\u_T-\u_0}^3 \\
+% \le& \tilde{f}_{\u_0}(\u_t) - f(\u_0) + \frac{\rho}{2}\norm{\u_0 - \tilde{\x}}\norm{\u_T-\u_0}^2+ \frac{\rho}{6} \norm{\u_T-\u_0}^3 \\
+% \le& -2\ufun + O(\rho \uspace^3) \le -1.8\ufun
+% \end{align*}
+% Since $\eta < \frac{1}{\ell}$, by property of gradient descent, we know:
+% \begin{equation*}
+% f(\u_{T^\star})  - f(\u_0) \le f(\u_T) - f(\u_0) \le -1.5\ufun
+% \end{equation*}
+
+% \paragraph{Case $T > T^\star$:} In this case, by Lemma \ref{lem:1st_seq}, we know $\norm{\u_t}\le O(\uspace )$ for all $t\le T^\star$. Define 
+% \begin{equation*}
+% T' = \inf_t\left\{t| \tilde{f}_{\w_0}(\w_t) - f(\w_0)  \le -2\ufun \right\}
+% \end{equation*}
+% By Lemma \ref{lem:2nd_seq}, we immediately have $T' \le T^\star$. Apply same argument as in first case, we have $f(\w_{T^\star})  - f(\w_0) \le -1.8\ufun$.
+% \end{proof}
+
+% \begin{proof}[Proof of Theorem \ref{thm:main_saddle}]
+% By adding noise, we have:
+% \begin{equation*}
+% \E f(\x_0) - f(\tilde{\x}) \le \frac{1}{2}\E \xi\trans \H \xi \le \frac{1}{2}\ell(\frac{\uspace}{\cn \cdot \overs})^2 \le \frac{1}{2}\ufun
+% \end{equation*}
+% By applying Lemma \ref{lem:one_in_two}, we know after adding noise, with probability $\frac{9}{10}$, we will have
+% $f(\x_T) - f(\x_0) \le -1.8\ufun$. This gives:
+% \begin{align*}
+% \E f(\x_T) - f(\tilde{\x}) =& \E f(\x_T)  - \E f(\x_0) + \E f(\x_0) - f(0) \\
+% \le & -\frac{9}{10}1.8\ufun + \frac{1}{2}\ufun \le -\ufun
+% \end{align*}
+
+% \end{proof}

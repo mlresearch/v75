@@ -1,0 +1,278 @@
+%!TEX root = ../submission.tex
+
+\section{Sum of Squares proofs and Sum of Squares Optimization}
+\label{sec:sospreliminaries}
+% The \emph{symmetrized Hausdorff distance} between two sets $S_0,S_1 \subseteq \R^n$ is defined as the $ \max_{b \in \{0,1\}} \min_{s \in S_b} \max_{t \in S_{1-b}} \frac{\langle s,t \rangle^2}{\|s\|^2\|t\|^2} \geq 1-\epsilon$. We say that two matrices $A, A'$ are $\epsilon$-close in symmetrized Hausdorff distance if the set of columns of $A, A'$ are $\epsilon$-close in symmetrized Hausdorff distance.
+
+
+% We write $\Perm{[n]}{r}$ for the set of all $r$-tuples formed by taking $r$ \emph{distinct} elements from $[n]$. The Kronecker product $T$ of $v_1 \otimes v_2 \otimes \ldots v_k$ for vectors $v_i \in \R^{n_i}$ is a vector in $\R^{n_1 \times n_2 \times \cdots n_k}$ with entries indexed by tuples $(i_1, i_2, \ldots, i_k)$ where any $i_j \in [n_j]$ defined by $T(i_1, i_2, \ldots, i_k) = \Pi_{j \leq k} v_j(i_j)$. $\|\cdot \|$ for matrices will denote the spectral norm and for vectors, the Euclidean norm.
+
+In this section, we define pseudo-distributions and sum-of-squares proofs.
+See the lecture notes~\citep{BarakS16} for more details and the appendix in~\citet{DBLP:journals/corr/MaSS16} for proofs of the propositions appearing here.
+
+Let $x = (x_1, x_2, \ldots, x_n)$ be a tuple of $n$ indeterminates and let $\R[x]$ be the set of polynomials with real coefficients and indeterminates $x_1,\ldots,x_n$.
+We say that a polynomial $p\in \R[x]$ is a \emph{sum-of-squares (sos)} if there are polynomials $q_1,\ldots,q_r$ such that $p=q_1^2 + \cdots + q_r^2$.
+
+
+
+\ignore{
+\begin{theorem}[\cite{BM:2002}] \label{generalizationbound}
+	%%
+	Let $\mathcal{D}$ be a distribution over $\mathcal{X} \times \mathcal{Y}$ and let $\mathcal{L} : \mathcal{Y}^\prime
+	\times \mathcal{Y}$ (where $\mathcal{Y} \subseteq \mathcal{Y}^\prime \subseteq \mathbb{R}$) be a
+	$b$-bounded loss function that is $L$-Lipschitz in its first argument.  Let
+	$\mathcal{F} \subseteq (\mathcal{Y}^\prime)^\mathcal{X}$ and for any $f \in \mathcal{F}$, let $\mathcal{L}(f; \mathcal{D}) := \E_{(\textbf{x}, y)
+	\sim \mathcal{D}}[\mathcal{L}(f(\textbf{x}), y)]$ and $\hat{\mathcal{L}}(f; S) := \frac{1}{n} \sum_{i = 1}^n
+	\mathcal{L}(f(\textbf{x}_\textbf{i}), y_i)$, where $S = ((\textbf{x}_\textbf{1}, y_1), \ldots,  (\textbf{x}_\textbf{n}, y_n))  \sim
+	\mathcal{D}^n$. Then for any $\delta > 0$, with probability at least $1 - \delta$
+	(over the random sample draw for $S$), simultaneously for all $f \in
+	\mathcal{F}$, the following is true:
+	%%
+	\[
+		|\mathcal{L}(f; \mathcal{D}) - \hat{\mathcal{L}}(f; S)| \leq 4 \cdot L \cdot \mathcal{R}_\textbf{n}(\mathcal{F})
+		+ 2\cdot b \cdot \sqrt{\frac{\log (1/\delta)}{2n}}
+	\]
+	where $\mathcal{R}_\textbf{n}(\mathcal{F})$ is the Rademacher complexity of the function class $\mathcal{F}$. 
+\end{theorem}
+
+For a linear concept class, the Rademacher complexity can be bounded as follows.
+
+\begin{theorem}[\cite{KST:2008}] \label{rademachercomplexity}
+	Let $\mathcal{X}$ be a subset of a Hilbert space equipped with inner product $\langle
+	\cdot, \cdot \rangle$ such that for each $\textbf{x} \in \mathcal{X}$, $\langle \textbf{x}, \textbf{x}
+	\rangle \leq X^2$, and let $\mathcal{W} = \{ \textbf{x} \mapsto \langle \textbf{x} , \textbf{w} \rangle
+	~|~ \langle \textbf{w}, \textbf{w} \rangle \leq W^2 \}$ be a class of linear functions.
+	Then it holds that
+	%%
+	\[
+		\mathcal{R}_\textbf{n}(\mathcal{W}) \leq X \cdot W \cdot \sqrt{\frac{1}{n}}.
+	\]
+\end{theorem}
+
+The following result is useful for bounding the Rademacher complexity of a smooth function of a concept class.
+
+\begin{theorem}[\cite{BM:2002, LT:1991}]
+\label{rademachercomplexity2}
+	Let $\phi : \mathbb{R} \rightarrow \mathbb{R}$ be  $L_{\phi}$-Lipschitz
+	and suppose that $\phi(0) = 0$. Let $\mathcal{Y} \subseteq \mathbb{R}$, and for a function $f \in \mathcal{Y}^{\mathcal{X}}$. 
+	Finally, for $\mathcal{F} \subseteq \mathcal{Y}^{\mathcal{X}}$, let $\phi \circ \mathcal{F} = \{\phi \circ f \colon f \in \mathcal{F}\}$.
+	It holds that $\mathcal{R}_\textbf{n}(\phi
+	\circ \mathcal{F}) \leq 2 \cdot L_{\phi} \cdot \mathcal{R}_\textbf{n}(\mathcal{F})$.
+\end{theorem}
+}
+\subsection{Pseudo-distributions}
+
+Pseudo-distributions are generalizations of probability distributions.
+We can represent a discrete (i.e., finitely supported) probability distribution over $\R^n$ by its probability mass function $D\from \R^n \to \R$ such that $D \geq 0$ and $\sum_{x \in \mathrm{supp}(D)} D(x) = 1$.
+Similarly, we can describe a pseudo-distribution by its mass function.
+Here, we relax the constraint $D\ge 0$ and only require that $D$ passes certain low-degree non-negativity tests.
+
+Concretely, a \emph{level-$\ell$ pseudo-distribution} is a finitely-supported function $D:\R^n \rightarrow \R$ such that $\sum_{x} D(x) = 1$ and $\sum_{x} D(x) f(x)^2 \geq 0$ for every polynomial $f$ of degree at most $\ell/2$.
+(Here, the summations are over the support of $D$.)
+A straightforward polynomial-interpolation argument shows that every level-$\infty$-pseudo distribution satisfies $D\ge 0$ and is thus an actual probability distribution.
+We define the \emph{pseudo-expectation} of a function $f$ on $\R^d$ with respect to a pseudo-distribution $D$, denoted $\pE_{D(x)} f(x)$, as
+\begin{equation}
+  \pE_{D(x)} f(x) = \sum_{x} D(x) f(x) \,\mper
+\end{equation}
+The degree-$\ell$ moment tensor of a pseudo-distribution $D$ is the tensor $\E_{D(x)} (1,x_1, x_2,\ldots, x_n)^{\otimes \ell}$.
+In particular, the moment tensor has an entry corresponding to the pseudo-expectation of all monomials of degree at most $\ell$ in $x$.
+The set of all degree-$\ell$ moment tensors of probability distribution is a convex set.
+Similarly, the set of all degree-$\ell$ moment tensors of degree $d$ pseudo-distributions is also convex.
+Key to the algorithmic utility of pseudo-distributions is the fact that while there can be no efficient separation oracle for the convex set of all degree-$\ell$ moment tensors of an actual probability distribution, there's a separation oracle running in time $n^{O(\ell)}$ for the convex set of the degree-$\ell$ moment tensors of all level-$\ell$ pseudodistributions.
+
+\begin{fact}[\citep{MR939596-Shor87,parrilo2000structured,MR1748764-Nesterov00,MR1846160-Lasserre01}]
+  \label{fact:sos-separation-efficient}
+  For any $n,\ell \in \N$, the following set has a $n^{O(\ell)}$-time weak separation oracle (as defined in ~\citet{MR625550-Grotschel81}):
+  \begin{equation}
+    \Set{ \pE_{D(x)} (1,x_1, x_2, \ldots, x_n)^{\otimes d} \mid \text{ degree-d pseudo-distribution $D$ over $\R^n$}}\,\mper
+  \end{equation}
+\end{fact}
+This fact, together with the equivalence of weak separation and optimization~\citep{MR625550-Grotschel81} allows us to efficiently optimize over pseudo-distributions (approximately)---this algorithm is referred to as the sum-of-squares algorithm.
+
+The \emph{level-$\ell$ sum-of-squares algorithm} optimizes over the space of all level-$\ell$ pseudo-distributions that satisfy a given set of polynomial constraints---we formally define this next.
+
+\begin{definition}[Constrained pseudo-distributions]
+  Let $D$ be a level-$\ell$ pseudo-distribution over $\R^n$.
+  Let $\cA = \{f_1\ge 0, f_2\ge 0, \ldots, f_m\ge 0\}$ be a system of $m$ polynomial inequality constraints.
+  We say that \emph{$D$ satisfies the system of constraints $\cA$ at
+    degree $r$}, denoted $D \sdtstile{r}{} \cA$, if for every
+  $S\subseteq[m]$ and every sum-of-squares polynomial $h$ with $\deg h
+  + \sum_{i\in S} \max\set{\deg f_i,r} \leq \ell$,
+  \begin{displaymath}
+    \pE_{D} h \cdot \prod _{i\in S}f_i  \ge 0\,.
+  \end{displaymath}
+  We write $D \sdtstile{}{} \cA$ (without specifying the degree) if $D \sdtstile{0}{} \cA$ holds.
+  Furthermore, we say that $D\sdtstile{r}{}\cA$ holds \emph{approximately} if the above inequalities are satisfied up to an error of $2^{-n^\ell}\cdot \norm{h}\cdot\prod_{i\in S}\norm{f_i}$, where $\norm{\cdot}$ denotes the Euclidean norm\footnote{The choice of norm is not important here because the factor $2^{-n^\ell}$ swamps the effects of choosing another norm.} of the cofficients of a polynomial in the monomial basis.
+\end{definition}
+
+We remark that if $D$ is an actual (discrete) probability distribution, then we have  $D\sdtstile{}{}\cA$ if and only if $D$ is supported on solutions to the constraints $\cA$.
+
+We say that a system $\cA$ of polynomial constraints is \emph{explicitly bounded} if it contains a constraint of the form $\{ \|x\|^2 \leq M\}$.
+The following fact is a consequence of Fact~\ref{fact:sos-separation-efficient} and~\citet{MR625550-Grotschel81},
+
+\begin{fact}[Efficient Optimization over Pseudo-distributions]
+There exists an $(n+ m)^{O(\ell)} $-time algorithm that, given any explicitly bounded and satisfiable system\footnote{Here, we assume that the bitcomplexity of the constraints in $\cA$ is $(n+m)^{O(1)}$.} $\cA$ of $m$ polynomial constraints in $n$ variables, outputs a level-$\ell$ pseudo-distribution that satisfies $\cA$ approximately. 
+\end{fact}
+
+A property of pseudo-distributions that we will use frequently is the following:
+\begin{fact}[H\"older's inequality] \label{fact:pseudo-Holders}
+Let $f,g$ be SoS polynomials. 
+Let $p,q$ be positive integers so that $1/p + 1/q = 1$. 
+Then, for any pseudo-distribution $\tmu$ of degree $r \geq pq \cdot deg(f) \cdot deg(g)$, we have:
+\[
+(\pE_{\tmu} [f \cdot g])^{pq} \leq \pE[f^{p}]^{q} \cdot \pE[g^{q}]^{p}
+\]
+In particular, for all even integers $k \geq 2$, and polynomial $f$ with $deg(f) \cdot k \leq r$, 
+$$(\pE_{\tmu}[ f])^k \leq \pE_{\tmu}[f^k].$$
+\end{fact}
+%\Pnote{we also need the more general one in our SoS proof for certifiability where we apply it f = $\err$ and $g$, a sparse indicator}
+
+\subsection{Sum-of-squares proofs}
+
+Let $f_1, f_2, \ldots, f_r$ and $g$ be multivariate polynomials in $x$.
+A \emph{sum-of-squares proof} that the constraints $\{f_1 \geq 0,
+\ldots, f_m \geq 0\}$ imply the constraint $\{g \geq 0\}$ consists of
+(sum-of-squares) polynomials $(p_S)_{S \subseteq [m]}$ such that
+\begin{equation}
+g = \sum_{S \subseteq [m]} p_S \cdot \Pi_{i \in S} f_i
+\mper
+\end{equation}
+We say that this proof has \emph{degree $\ell$} if for every set $S \subseteq [m]$, the polynomial $p_S \Pi_{i \in S} f_i$ has degree at most $\ell$.
+If there is a degree $\ell$ SoS proof that $\{f_i \geq 0 \mid i \leq r\}$ implies $\{g \geq 0\}$, we write:
+\begin{equation}
+  \{f_i \geq 0 \mid i \leq r\} \sststile{\ell}{}\{g \geq 0\}
+  \mper
+\end{equation}
+
+
+Sum-of-squares proofs satisfy the following inference rules.
+For all polynomials $f,g\colon\R^n \to \R$ and for all functions $F\colon \R^n \to \R^m$, $G\colon \R^n \to \R^k$, $H\colon \R^{p} \to \R^n$ such that each of the coordinates of the outputs are polynomials of the inputs, we have:
+
+\begin{align}
+&\frac{\cA \sststile{\ell}{} \{f \geq 0, g \geq 0 \} } {\cA \sststile{\ell}{} \{f + g \geq 0\}}, \frac{\cA \sststile{\ell}{} \{f \geq 0\}, \cA \sststile{\ell'}{} \{g \geq 0\}} {\cA \sststile{\ell+\ell'}{} \{f \cdot g \geq 0\}} \tag{addition and multiplication}\\
+&\frac{\cA \sststile{\ell}{} \cB, \cB \sststile{\ell'}{} C}{\cA \sststile{\ell \cdot \ell'}{} C}  \tag{transitivity}\\
+&\frac{\{F \geq 0\} \sststile{\ell}{} \{G \geq 0\}}{\{F(H) \geq 0\} \sststile{\ell \cdot \deg(H)} {} \{G(H) \geq 0\}} \tag{substitution}\mper
+\end{align}
+
+Low-degree sum-of-squares proofs are sound and complete if we take low-level pseudo-distributions as models.
+
+Concretely, sum-of-squares proofs allow us to deduce properties of pseudo-distributions that satisfy some constraints.
+
+\begin{fact}[Soundness]
+  \label{fact:sos-soundness}
+  If $D \sdtstile{r}{} \cA$ for a level-$\ell$ pseudo-distribution $D$ and there exists a sum-of-squares proof $\cA \sststile{r'}{} \cB$, then $D \sdtstile{r\cdot r'+r'}{} \cB$.
+\end{fact}
+
+If the pseudo-distribution $D$ satisfies $\cA$ only approximately, soundness continues to hold if we require an upper bound on the bit-complexity of the sum-of-squares $\cA \sststile{r'}{} B$  (number of bits required to write down the proof).
+
+In our applications, the bit complexity of all sum of squares proofs will be $n^{O(\ell)}$ (assuming that all numbers in the input have bit complexity $n^{O(1)}$).
+This bound suffices in order to argue about pseudo-distributions that satisfy polynomial constraints approximately.
+
+The following fact shows that every property of low-level pseudo-distributions can be derived by low-degree sum-of-squares proofs.
+
+\begin{fact}[Completeness]
+  \label{fact:sos-completeness}
+  Suppose $d \geq r' \geq r$ and $\cA$ is a collection of polynomial constraints with degree at most $r$, and $\cA \vdash \{ \sum_{i = 1}^n x_i^2 \leq B\}$ for some finite $B$.
+
+  Let $\{g \geq 0 \}$ be a polynomial constraint.
+  If every degree-$d$ pseudo-distribution that satisfies $D \sdtstile{r}{} \cA$ also satisfies $D \sdtstile{r'}{} \{g \geq 0 \}$, then for every $\epsilon > 0$, there is a sum-of-squares proof $\cA \sststile{d}{} \{g \geq - \epsilon \}$.
+\end{fact}
+
+We will use the following standard sum-of-squares inequalities:
+
+\begin{fact}[SoS H\"older's Inequality]
+Let $f_1, f_2, \ldots, f_n$ and $g_1, g_2, \ldots, g_n$ be SoS polynomials over $\R^d$. Let $p, q$ be integers such that $1/p + 1/q = 1$. Then, 
+\[
+\sststile{pq}{f_1, \ldots, f_n,g_1, \ldots, g_n} \Set{ \Paren{\frac{1}{n} \sum_{i} f_i g_i }^{pq} \leq \Paren{\frac{1}{n} \sum_{i=1}^n f_i^p}^q \Paren{\frac{1}{n} \sum_{i=1}^n g_i^q}^p }
+\]
+
+\end{fact}
+\begin{fact}
+For any $a_1, a_2,\ldots,a_n$, 
+\[
+\sststile{k}{a_1, a_2, \ldots, a_n} \Set{ (\sum_i a_i)^k \leq n^k \Paren{\sum_i a_i^k} } 
+\]
+\end{fact}
+%\begin{fact}[Basis SoS Proofs]  \label{fact:sos-hypercontractivity}
+% Let $\mu$ be a distribution on $\R^n$ such that: 
+% \begin{enumerate}
+% \item $\E[x(i)^\tau] = 1$ for every even $\tau \leq d$.
+% \item $\E[ x^{\alpha}] =0$ whenever $\alpha$ has some odd individual degree, $|\alpha|\leq d$.
+% \item $|\E[ x^{\alpha}]| \leq \beta$ for every $\alpha$ that is even, $|\alpha| \leq d$.
+% \end{enumerate}
+% Then, $\E[\langle x, u \rangle^{2\tau}] \leq \beta \cdot \tau^{2\tau} \E[\langle x, u \rangle^2] ^{\tau}$ for any $\tau \leq d/2$.
+% \end{fact}
+
+
+
+
+% \paragraph{Notation}
+% For polynomial $p, q$ of degree at most $d$ in $v = (v_1, v_2, \ldots, v_n)$, we say that $p \preceq q$ if $q(v)-p(v)$ is a sum-of-squares polynomials in $v$.
+
+% \subsection{Sum-of-Squares Norms}
+% The convex set of moment tensors of degree $d$ pseudo-distributions naturally defines a norm on $d$-tensors over $\R^{n}$. 
+
+% \begin{definition}[$sos_k$-norm] \label{def:SoS-norm}
+% Given a tensor $T \in (\R^{n})^{\otimes d}$, we define the $sos_k$ ($k \geq d$) norm of $T$, denoted by $\|T\|_{\sos_k}$  and defined by
+% \[
+% \|T\|^2_{\sos_k} = \sup_{D: D \vDash_k \{\|u\|^2  = 1\}} \pE_{D(u)} [T(u)^2].
+% \]
+% \end{definition}
+
+% It is instructive to compare the $\sos_k$ norm with the injective tensor norm of $T$:
+
+% \begin{definition}[Symmetric Injective Tensor Norm]
+% Let $T \in (\R^{n})^{\otimes d}$ be a $d$-dimension tensor on $\R^n$. The injective tensor norm of $T$ is defined as 
+% \[
+% \|T\|^2_{inj} = \sup_{x \in \bbS^{n-1}} T(x)^2.
+% \]
+% That is, $\|T\|^2_{inj}$ is the supremum of the square of the homogenous degree $d$ polynomial whose coefficients are the entries of $T$.  \footnote{Without the symmetry constraints, the injective tensor norm of $T$ is defined as the supremum over the polynomial $\langle T, \otimes_{i \leq d} x_i \rangle$ where $x_i$ are $n$ dimensional unit vectors which is also a well-studied notion. We omit further discussion here but direct the reader to \cite{}.}
+% \end{definition}
+% The (symmetric) injective tensor norm of $T$ is NP-hard to compute in general and can be thought of as the ``optimization'' version of the problem of constructing a separation oracle for the convex set of all moment tensors of an actual probability distribution. 
+
+% It is simple to verify that the above definition is equivalent to saying 
+% \[
+% \|T\|^2_{inj} = \sup_{D: D\vDash_{\infty} \{\|x\|^2 \geq 0\}}  \E_{D}[ T(x)^2] 
+% \]
+
+% Thus, the $\sos_k$ norm of $T$ is a relaxation of the injective tensor and can be efficiently computed following the discussion from the previous section.
+
+
+
+% \subsection{Concentration Results}
+% We will need some standard concentration results. 
+
+% The following gives concentration bounds in spectral norm for sums of independent rank 1 matrices.
+% \begin{fact}[See Vershynin] \label{fact:vershynin-conc}
+% Let $z_1, z_2, \ldots, z_m$ be independent random variables in $\R^n$ with identical covariance $\E[z_iz_i^{\top}] = \Sigma$. Let $\|z_i\| \leq \sqrt{R}$ almost surely for all $i$. Then, there's a constant $c > 0$ such that for every $t \geq 0$, with probability at least $1-n \exp(-ct^2),$
+% \[
+% \| \frac{1}{m} \sum_{i = 1}^m z_i z_i^{\top} - \Sigma  \| \leq \max (\|\Sigma\|^{1/2} \gamma, \gamma^2),
+% \]
+% where $\gamma = t \sqrt{R/m}$.
+% \end{fact}
+
+% The following stronger concentration result holds when individual rank 1 terms are from a subgaussian distribution. 
+% \begin{fact}[\cite{}] \label{fact:subgaussian-conc}
+% Let $x \in \R^n$ have a subgaussian distribution with constant subgaussian norm and covariance $\Sigma$. Let $x_1, x_2, \ldots, x_m$ be independent samples from $x$.
+
+% Then, with probability at least $1- 2e^{-nt^2}$ and $m = \Omega( (t/\epsilon)^2 n)$, $\| \frac{1}{m} \sum_{i = 1}^m x_i x_i^{\top}  - \Sigma\| \leq \epsilon$. 
+% \end{fact}
+
+% We will need the following concentration results for polynomials on the gaussian distribution and uniform distribution on $\on^n$. 
+
+% \begin{fact}[Hypercontractivity\cite{}] \label{fact:hypercontractivity}
+% Let $f(z))$ be a degree $d$ polynomial. Then,
+% $$\Pr_{z}[ |f(z) - \E[f(z)]| \geq t] \leq e^2 \cdot \exp(- (\frac{t^2}{RVar[f]})^{1/d}),$$ where $Var[f] = \E[f^2]$ and $R$ is some absolute constant. Here, $z$ is a random vector with each coordinate $z(i)$ being distributed independently as $\cN(0,1)$ or uniform over $\on$.
+% \end{fact}
+
+% % \begin{fact}[Concentration of Sum of Independent Subgaussian Rank 1 Terms] \label{fact:subgaussian-conc}
+
+% % Let $z_1,z_2, \ldots, z_m$ be independent random vectors in $\R^n$ satisfying: $\E[ z_i z_i^{\top}] = 0$ and $\E[ exp(u^{\top} x_i )] \leq e^{\|u\|_2^2 \gamma/2}$ for every $u \in \R^n$ for every $1 \leq i \leq n$ almost surely. 
+% % % For all $\epsilon_0 \in (0,1/2)$ and $\delta \in (0,1)$,
+% % % $\Pr[ \| \frac{1}{m} \sum_{i = 1}^m z_i z_i^{\top} \| > \frac{1}{1-2\epsilon_0} \zeta] \leq \delta$ where $$\zeta = \gamma \cdot \left(     \sqrt{\frac{32 n \log{(1+2/\epsilon_0)} + 32 \log{(2/\delta)}}{m}} + \frac{2 n\log{(1+2/\epsilon_0)} + \log{(2/\delta)} }{m} \right)$$.
+% % For every $\delta \in (0,1)$,
+% % % In particular, for $\epsilon_0  = \frac{1}{4}$, the above bound says:
+% % $\Pr[ \| \frac{1}{m} \sum_{i = 1}^m z_i z_i^{\top} \| > 2 \zeta] \leq \delta$ where $$\zeta \leq 10\gamma \cdot \left(   \sqrt{ \frac{n + \log{(2/\delta)}}{m}} + \frac{2 n + \log{(2/\delta)} }{m} \right)$.$
+
+% % \end{fact}
+

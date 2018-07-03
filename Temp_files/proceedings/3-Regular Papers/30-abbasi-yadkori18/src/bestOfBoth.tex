@@ -1,0 +1,136 @@
+% !TEX root = Main.tex
+%
+\section{The best of both worlds challenge}
+\label{s:FormuBOB}
+%
+In this section, we ask if we can have a learner 
+that performs optimally under adversarial and stochastic rewards. 
+The lower bound in Theorem~\ref{th:lowBOB} shows that in general,
+this is impossible.\vspace{.2cm}
+
+%First we recall the stochastic problem and introduce its notations.
+
+%therefore this not a very interesting problem in the sense that no smart thing can be done in the worst case. So why not having an algo that still possess this worst case guaranty like uniform but also has a nice behaviour on easier data such as, as a start, the stochastic case and perform there as good as SR.
+%
+\paragraph{Existing robust solutions?} In the stochastic setting,
+a state-of-the-art algorithm, Sequential Halving (\SH{}, 
+\citealp{Karnin13AO})---see also Successive Rejects (\SR{}) 
+by~\cite{Audibert10BA})---guarantees 
+$\ProErr_{\stoPro}(\timeHorizon) \leq \cO\left(\log\nArms\exp
+\left(-\timeHorizon/(\complexitySR\log\nArms)\right)\right)$. 
+However, as discussed in the introduction, \SR{} or \SH{} can fail  
+against a worst-case adversary.
+On the other hand, as discussed by~\cite{Audibert10BA},  
+uniform-like algorithms (like \RULE{}) can only guarantee that
+in the stochastic case, we get $\ProErr_{\stoPro}(\timeHorizon) \leq  
+\tcO\left(\exp\left(-\timeHorizon/\complexityUnif\right)\right)$.
+In general, $\complexitySR\leq\complexityUnif$ and 
+in some problems, we even have $\complexitySR=\complexityUnif/\nArms$. 
+Therefore, \SH{} can notably outperform uniform 
+algorithms in the stochastic case.%\vspace{.2cm}
+
+%Un
+
+%So the stochastic environment is already solved (reference the literature). State of the art algorithm are of the successive regret, SR, family. More over the uniform type algorithm are shown to be sub-optimal.
+%As discussed somewhere (\todo{not done yet} not done yet! put it here or in the previous section? ) we have that SR is easily beaten in the adversarial setting.
+%So we can notice that the algorithms that are optimal in one setting are suboptimal in the other. This raise a question:
+%But what about solving it and 
+%being as good as uniform against adversaries. can we have best of both worlds. 
+%we think no and we first provide a lower bound.
+%
+\paragraph{The best of both worlds} We now reveal the holy grail of our endeavor, which is the following question: Does there exist 
+a learner, unaware of the nature of the reward-generating process, that guarantees for any  $\timeHorizon$, for any stochastic problem 
+\stoPro{}, and any set of rewards~$\gainVector$ that 
+ its respective probabilities 
+of misidentification $\ProErr_{\stoPro}(\timeHorizon) $ and
+$\ProErr_{\advPro(\gainVector)}(\timeHorizon) $ simultaneously verify 
+%for any iid problem and adversarial $\gainVector$,
+%\todomi{in sto and adv, the expectation is taken (maybe) over different things. Is this not a problem when we compare them to each other?}
+\[
+\ProErr_{\stoPro}(\timeHorizon) 
+\leq
+\tcO\left(\exp\left(-\frac{\timeHorizon}{\complexitySR\log\nArms}\right)\right)
+\text{ ~~~and~~~ }
+\ProErr_{\advPro(\gainVector)}(\timeHorizon) 
+\leq  
+\tcO
+\left(\exp\left(-\frac{\timeHorizon}{\complexityUnif(\gainVector)}\right)\right)\textbf{?}
+\]
+%where $c_\nArms$ and $c'_\nArms$ are quantiti
+%
+\paragraph{Why is the BOB question challenging?}
+The learner could choose, 
+for arm $k$, at round $t$, to use the 
+cumulative gain  estimator  $\estBiasCumulGain_{k,t} = 
+\frac{t\sum_{t'=1}^{t}\indicator{\pulledArm_{t'}=k}\gainVector_{k,t'}}{\sum_{t'=1}^{t}\indicator{\pulledArm_{t'}=k}} 
+$.
+This estimator can be potentially highly biased if it is used against a 
+malignant adversary. For this reason, we base our approach on 
+the estimator $\estCumulGainVector_{k,t} = \sum_{t'=1}^{t}
+\frac{\gainVector_{k,t'}}{\learnerDist_{k,t'}}\indicator{\pulledArm_{t'} = k}$.
+However, this usage potentially introduces high variance in our estimates;
+the final amount of variance of $\estCumulGainVector_{k,n}$ 
+is the sum of the variance of each~$\estGainVector_{k,t}$ and 
+therefore scales with $\sum_{t'=1}^{t} 1/ \learnerDist_{k,t'}$.
+% scaling with $\sum_{t'=1}^{t}\frac{1}{\learnerDist_{k,t'}}$.
+The high variance is most damaging in the stochastic case when trying 
+to have a learner based on $\estCumulGainVector_{k,t}$ to obtain the 
+optimal error rates of \cite{Karnin13AO}. Indeed, these 
+optimal rates are obtained by algorithms using 
+$\estBiasCumulGain_{k,t}$, which has no bias and small 
+variance in the stochastic case.
+Therefore,  
+we strive to characterize the minimum amount of 
+unavoidable variance of the mean estimators of each arm.
+%As a consequence,  we are capturing the power of the adversary to fool the 
+%learner.
+%This is especially critical in the stochastic case where the learner is trying to obtain an error rate comparable to the one of the stochastic state-of-the-art algorithm that are usually  using $\estBiasCumulGain_{k,t}$ in a safe
+%If the arms are pulled uniformly, the variance is of order $K$, 
+%which is very large.
+The learner would like to allocate more pulls at any round $t$ 
+to the arms that are among the best arms, which means having large 
+$\learnerDist_{k,t}$ for these arms. Indeed,  discriminating 
+between them is the hardest part of the task and large 
+$\learnerDist_{k,t}$ reduces the variance term $1/\learnerDist_{k,t}$. 
+%However pulling more the best arm especially difficult for the 
+%  Moreover, because of our use of $\estCumulGainVector_{k,t}$, the learner should try to pull more the best
+%  arms  as early in the game as possible %\todom{not sure, this  statements depends on how $1/\learnerDist_{k,t}$ depends on $t$}
+%   to reduce, for small $t$, the variance term $1/\learnerDist_{k,t}$.
+%But pulling more the best arms is exactly the problem the 
+%learner is already trying to solve.
+However, it is natural to 
+think that the learner is not able to guarantee that it pulls 
+the best arms at the beginning of the game more than in a 
+uniform fashion.
+If the arms are pulled uniformly, the variance is of order $K$, 
+which is very large.
+The amount of time that the learner accumulates large variance on its estimate of the best arms because they are not yet well identified  determines the final probability of error. 
+Intuitively, the lower bound in Theorem~\ref{th:lowBOB} 
+constructs worst-case examples 
+showing that any learner cannot pull the best arm more than 
+a certain amount in some period of the game because it is difficult to identify the best arms. 
+Therefore, 
+this learner is susceptible to be tricked by an adversary. Our new learner
+in Section~\ref{s:UpperBOB} tries to limit this effect by 
+making early and almost costless bets on what are the 
+best arms given the early rewards and starts to pull them more right away.
+Note that if any learner allocates pulls uniformly for the first half of 
+as it is 
+done in  algorithms like \SR{} or \SH{}, %~\citep{Audibert10BA}, 
+then even if the pulls are randomized,
+the variance of the  
+estimator  $\estBiasCumulGain_{k}$ of  arm $k$ would still scale with $\nArms$ which prevents 
+outperforming even the static random uniform learner.
+
+Another approach could be a learner that determines online 
+if the observed rewards are stochastic. This was used by~\cite{Bubeck12BB} and~\cite{Auer16AA}. They 
+detect if the difference between $\estBiasCumulGain_{k,t}$
+and $\estCumulGainVector_{k,t}$
+is way too large. However, their bound itself uses  terms 
+depending
+on $\nArms$ and the variance of each arm, 
+$1/\learnerDist_{k,t}$, which leads to similar open questions 
+as discussed just above. In this paper, inspired by the approach 
+of~\cite{Seldin14OP},  we give a practical 
+simple parameter-free and versatile algorithm.  Furthermore,  the algorithms
+that are based on stochastic tests are usually cumbersome and complex,  as discussed by~\citealp{Seldin14OP}.

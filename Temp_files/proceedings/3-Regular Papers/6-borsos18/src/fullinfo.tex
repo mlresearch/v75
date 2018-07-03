@@ -1,0 +1,147 @@
+% !TEX root = onlinevarinancebandits.tex
+
+\section{Full Information Setting} \label{sec:full-info}
+In this section, we analyze variance reduction with full-information feedback.
+We henceforth consider the same setting as in Fig.~\ref{fig:Protocal_bandit}, with the difference that in each round the player receives as a feedback the loss vector at all points $(l_t(1), l_t(2), \dots, l_t(n))$ instead of only $l_t(I_t)$. 
+We introduce a new algorithm based on the FTRL approach, and establish an $\O(\sqrt{T})$ regret bound for our method 
+in Theorem~\ref{thm:full-info-main}. 
+While this setup in itself has little practical relevance, it  
+  later  serves as a mean for investigating the bandit setting. 
+%We henceforth consider the same setting as in Fig.~\ref{fig:Protocal_bandit}, with the difference that in each round the player receives as a feedback the loss vector of all points $(l_t(1), l_t(2), \cdots, l_t(n))$ instead of only $l_t(I_t)$. 
+%This section presents a new algorithm for  
+  
+  
+%  In this setting, we assume that in each round $t$ the player receives as a feedback the loss vector of all points $(l_t(1), l_t(2), \cdots, l_t(n))$ instead of only $l_t(I_t)$. 
+
+Follow-the-Regularized-Leader (FTRL) is a  powerful approach to online learning problems. According to FTRL, in each round, one selects a point that minimizes the cost functions over past rounds plus a regularization term, i.e., $p_t \gets \argmin_{p\in\Delta} \sum_{\tau=1}^{t-1} f_\tau(p) + \R(p)$. The  regularizer $\R$ usually assures that the choices do not change abruptly over the rounds. We choose \linebreak  $\R(p) =\gamma \sum_{i=1}^n \frac{1}{p(i)}$ which allows to write   FTRL  as   
+%For notational brevity in the proofs, we redefine $f_t(p) = \sumin \frac{\ell_t^2(i)}{p(i)}$ so that $\regret_T=\frac{1}{n^2}\left(  \sumtt f_t(p_t) -  \min_{p\in \Delta}  \sumtt f_t(p) \right)$ and  propose the following FTRL scheme in each round $t\in [T]$:
+\begin{equation} \label{eq:ftrl-def}
+ p_t \gets \argmin_{p\in\Delta} \sum_{\tau=1}^{t-1}f_\tau(p)  + \gamma \sum_{i=1}^n \frac{1}{p(i)}
+~.
+\end{equation}
+The regularizer $\R(p)=\gamma \sum_{i=1}^n {1}/{p(i)}$ is a natural candidate in our setting, since
+it has the same structural form as the cost functions. It also prevents FTRL from assigning vanishing probability mass to any component, thus ensuring that the incurred costs never explode. Moreover, $\R$
+assures a closed form  solution to the FTRL as the following lemma shows. 
+%
+%Why is  $\gamma \sum_{i=1}^n \frac{1}{p(i)}$ a suitable regularizer? Firstly, it assures closed form analytical solution to the minimization problem in Equation \eqref{eq:ftrl-def}, as presented in Lemma \ref{lemma:ftrl-sol}. Secondly, it penalizes distributions with low entropy and achieves its minimum $\gamma n^2$ with the uniform distribution. On the other hand, it is unbounded, which renders the application of classical results from FTRL challenging.
+%
+\begin{lemma} \label{lemma:ftrl-sol}
+Denote $l_{1:t}^2(i):=\sum_{\tau=1}^{t}\ell_\tau^2(i)$. The solution to Eq. \eqref{eq:ftrl-def} is given by $p_t(i) \propto \sqrt{\ell_{1:t-1}^2(i)+\gamma}$. 
+\end{lemma}
+\begin{proofarg}{sketch}
+Recalling  $f_t(p) = \sumin \frac{\ell_t^2(i)}{p(i)}$, allows to 
+write the FTRL objective  as follows,  
+$$\sum_{\tau=1}^{t-1} f_\tau(p)  + \gamma \sum_{i=1}^n {1}/{p(i)}
+  = \sumin {(\ell_{1:t-1}^2(i) +\gamma)}/{p(i)}~.$$
+It is immediate to validate that the offered solution satisfies the first order optimality conditions in $\Delta$.
+Global optimality follows since the FTRL objective is convex in the simplex.
+%Since the FTRL objective 
+%Writing down the first order optimality conditions it is is immediate to 
+%Recalling that the above objective is convex in $\Delta$, writing down tho first order optimality conditions the above lemma immediately follows.
+%Formulating  the Lagrangian of the optimization problem of  minimizing the term $\sum_{\tau=1}^{t-1} f_\tau(p)  + \gamma \sum_{i=1}^n \frac{1}{p(i)}$ subject to $\sum_{i=1}^n p(i)=1$ and $p(i) \geq 0, \; \forall i \in [n]$, then set the partial derivatives w.r.t $p(i)$ to 0. We argue that the obtained solution is the global minimizer based on convexity.
+\end{proofarg}
+
+%   \begin{algorithm}[h]
+%             \caption{Variance Reduction under Full Information}
+%             \label{alg:full-info}
+%             \begin{algorithmic}
+%      \State {\bfseries Input:} $\gamma$, n
+%      \State Initialize $w(i)=0$ for all $i \in [n]$
+%      \For{$t=1$ {\bfseries to}  $T$}
+%       \State $p_t(i) = \frac{\sqrt{w(i) + \gamma}}{\sum_{j=1}^n \sqrt{w(j) + \gamma}} $, $\forall i \in [n]$
+%         \State sample $i$ with probability $p_t(i)$ , $\forall i \in [n]$ 
+%         \State receive losses $l_t(1), l_t(1), \dots, l_t(n)$
+%         \State $w(i) = w(i) + l^2_t(i)$, $\forall i \in [n]$
+%      \EndFor
+%   \end{algorithmic}
+%      \end{algorithm}
+     
+     We are interested in the regret incurred by our method. The following theorem  shows that, despite the non-standard form of the cost functions,  we can obtain $\mathcal{O}(\sqrt{T})$ regret. 
+     \begin{theorem}\label{thm:full-info-main} Setting $\gamma=L$, the regret of the FTRL scheme proposed in Equation \eqref{eq:ftrl-def} is: 
+\begin{equation*}
+\regret_T \leq \frac{27\sqrt{L}}{n}\left(\sum_{i=1}^n \sqrt{ \ell_{1:T}^2(i) }  \right) +44L.
+\end{equation*}
+Furthermore, since $\ell^2_t(i) \leq L$ we have
+$\regret_T \leq 27L\sqrt{T} +44L$.
+\end{theorem}
+
+    Before presenting the proof, we briefly describe it. Trying to apply the classical FTRL regret bounds, we encounter a difficulty, namely that the regularizer in Equation \eqref{eq:ftrl-def} can be unbounded. To overcome this issue, we first consider competing with the optimal distribution on a restricted simplex  where $\R(\cdot)$ is bounded. Then we investigate  the cost of considering  the restricted simplex instead of the full simplex. 
+ 
+ Along the lines described above,  
+consider the simplex $\Delta$ and the restricted simplex \linebreak $\Delta'=\{ p\in \Delta |  \; p(i) \geq \pmin, \forall i \in [n] \}$ where  $\pmin \leq 1/n$ is to be defined later. We can now decompose the regret  as follows,
+\begin{align} \label{eq:regret}
+n^2 \cdot \regret_T
+=
+ \underset{\rA}{\underbrace{ \sumtt f_t(p_t)  - \min_{p \in \Delta'} \sumtt f_t(p)   }} 
+ +  
+ \underset{\rB}{\underbrace{\min_{p \in \Delta'} \sumtt f_t(p) - \min_{p \in \Delta} \sumtt f_t(p)   }}.
+\end{align}
+We continue by separately bounding the above terms.
+To bound $\rA$, we will use standard tools which relate the regret to the stability of the FTRL decision sequence (FTL-BTL lemma). Term $\rB$ is  bounded by a direct calculation of the minimal values in $\Delta$ and $\Delta'$.
+%follows from well-known FTRL regret bounds tied with analysis of series, whereas (B) follows from simple arguments based on Lagrangian minimization as the following lemmas show:
+The following lemma bounds term $\rA$.
+\begin{lemma} \label{lemma:ub-a} Setting $\gamma =L$, we have:
+\begin{equation*}
+\sumtt f_t(p_t)   - \min_{p \in \Delta'} \sumtt f_t(p)  \leq 
+22n\sqrt{L} \cdot \left( \sum_{i=1}^n \sqrt{ \ell_{1:T}^2(i) } \right) +22n^2L+\frac{nL}{\pmin}.
+\end{equation*}
+\end{lemma}
+\begin{proofarg}{sketch of Lemma  \ref{lemma:ub-a} } 
+The regret of FTRL may be related to the stability of the online decision sequence as shown in
+ the following lemma due to \cite{kalai2005efficient} (proof 
+ can also be found in \cite{Hazan09}  or in \cite{shalev2012online}):
+\begin{lemma} \label{Lemma:FTL-BTL}
+Let $\K$ be a convex set and  $\R:\K\mapsto\reals$ be a regularizer. Given a sequence of cost functions $\{f_t \}_{t\in[T]}$ defined over $\K$, then setting $p_t = \argmin_{p\in\Delta}\sum_{\tau=1}^{t-1}f_{\tau}(p)+\R(p)$ 
+ensures,
+\begin{align*}
+\sum_{t=1}^T f_t(p_t)-\sum_{t=1}^T f_t(p)\leq \sum_{t=1}^T\left( f_t(p_t) -f_t(p_{t+1}) \right) +(\R(p)-\R(p_1)), \quad \forall p\in\K
+\end{align*}
+\end{lemma}
+
+Notice that $\R(p) =  L \sum_{i=1}^n {1}/{p(i)}$ is non-negative and bounded by $nL/\pmin$ over $\Delta'$. Thus,  applying the above lemma implies that $\forall \; p\in\Delta'$,
+%Denote $p^* = \arg \min_{p \in \Delta'} \sumtt f_t(p) $. Using Lemma 2.3 of \cite{shalev2012online}, we have that:
+\begin{equation*}
+\sumtt f_t(p_t)   - \sumtt f_t(p)  \leq  \sumtt \left( f_t(p_t)- f_t(p_{t+1}) \right) +  \frac{nL}{\pmin}  \leq \sum_{t=1}^T \sumin \ell_t^2(i) \left( \frac{1}{p_t(i)}  - \frac{1}{p_{t+1}(i)}\right) + \frac{nL}{\pmin}~.
+\end{equation*}
+Using the closed form solution for the  $p_t$'s (see Lemma.~\ref{lemma:ftrl-sol}) enables us to upper bound the last term as follows,
+\begin{align} \label{eq:frtl-ub0}
+\sum_{t=1}^T \sum_{i=1}^n \ell_t^2(i) \left( \frac{1}{p_t(i)}  - \frac{1}{p_{t+1}(i)}\right)
+& \leq 
+22n\sqrt{L} \sumin \sqrt{ \ell_{1:T}^2(i) +L}~.
+\end{align}
+Combining the above with $\sqrt{a+b}\leq \sqrt{a}+\sqrt{b}$ completes the proof.
+%Recalling the closed form of the $p_t$'s (see Lem.~\ref{lemma:ftrl-sol}) and denoting 
+% $c_t = \sum_{i=1}^n  \sqrt{\ell_{1:t-1}^2(i)+L}$, we can upper bound the first term as follows,
+%\begin{align} \label{eq:frtl-ub0}
+%\sum_{t=1}^T \sum_{i=1}^n \ell_t^2(i) \left( \frac{1}{p_t(i)}  - \frac{1}{p_{t+1}(i)}\right)
+%& \leq \sqrt{L} \cdot \frac{c_T}{2}  \sum_{i=1}^n \sum_{t=1}^T\frac{ \frac{\ell_t^4(i)}{L^2}  }{\left( \frac{\ell_{1:t}^2(i)}{L}  \right)^{3/2}} .
+%\end{align}
+%The last ingredient for the proof is upper bounding the double sum. For an index $i$, define $a_t: = \ell_t(i) / \sqrt{L}$ for $t \in [T]$ and note that $a_t\in [0, 1]$. For index $i$, the innermost sum is now $\sum_{t=1}^T \frac{a_t^4}{(a^2_{1:t})^{3/2}}$, which is upper bounded by 44. This can be shown using the following sets 
+%\begin{align*}
+%P_k &= \{ t\in[T]: 4^{k-1} a_1^2 < a^2_{1:t}\leq 4^{k} a_1^2 \}, & \forall k \in \{1, 2, \dots \ceil*{\log_2(1/a_1)}\}
+%\\
+%Q_k  &= \{t\in[T]:   k< a^2_{1:t} \leq k+1 \}, & \forall k \in \{1, 2, \dots\}
+%\end{align*}
+%such that $\sum_{t=1}^T \frac{a_t^4}{(a^2_{1:t})^{3/2}} \leq \sum_{k=1}^{\ceil{\log_2(1/a_1)}} \sum_{t \in P_k} \frac{a_t^4}{(a^2_{1:t})^{3/2}} +\sum_{k=1}^{\infty} \sum_{t \in Q_k} \frac{a_t^4}{(a^2_{1:t})^{3/2}} $. By using the upper bound 44 on the innermost sum and plugging the definition of $c_T$ in Equation \eqref{eq:frtl-ub0}, the proof is complete.
+\end{proofarg}
+The next lemma bounds term $\rB$.
+\begin{lemma}\label{lemma:ub-b}
+\begin{equation*}
+\min_{p \in \Delta'} \sumtt f_t(p)  - \min_{p \in \Delta} \ \sumtt f_t(p) \leq 6 n \cdot \pmin \cdot \left( \sumin \sqrt{  \ell_{1:T}^2(i)} \right)^2
+\end{equation*}
+\end{lemma}
+\begin{proofarg}{sketch of Lemma~\ref{lemma:ub-b}}
+Using first order optimality conditions we are able show that the  minimal value of the $\sumtt f_t(p)$ over $\Delta$ is exactly $\left(\sumin\sqrt{\ell_{1:t}^2(i)} \right)^2$.
+Similar analysis allows to extract a closed form solution to the best in hindsight over $\Delta'$. This in turn enables to upper bound the minimal value over $\Delta'$ by
+$\left(\sumin\sqrt{\ell_{1:t}^2(i)} \right)^2/\left(1- n \cdot \pmin\right)^2$. Combining these bounds together with $\pmin\leq 1/2n$ we are able to prove the lemma.
+%
+%The first step of the proof on the Lagrangian of minimizing $\ \sumtt f_t(p) $ subject to $\sum_{i=1}^n p(i)=1$ and $p(i) \geq \pmin$ for all $i \in [n]$. In the second step, we argue that $ \min_{p \in \Delta}  \sumtt f_t(p)  =  \left( \sumin \sqrt{  \ell_{1:T}^2(i)} \right)^2$ and that if $ p^* = \arg \min_{p \in \Delta} \ \sumtt f_t(p) $, then $p^*(i) \propto \sqrt{\ell^2_{1:T}(i)}$ is the best distribution in hindsight.
+\end{proofarg}
+
+\begin{proofarg}{of Theorem \ref{thm:full-info-main}}
+Combining Lemma \ref{lemma:ub-a} and \ref{lemma:ub-b}, we have after dividing by $n^2$,
+\begin{equation*}
+\regret_T \leq \frac{22\sqrt{L}}{n} \cdot \left( \sum_{i=1}^n \sqrt{ \ell_{1:T}^2(i) } \right) +22L+\frac{L}{n \cdot \pmin}+ \frac{6 \cdot \pmin}{n} \cdot \left( \sumin \sqrt{  \ell_{1:T}^2(i)} \right)^2
+\end{equation*}
+Since the choice of $\pmin$ is arbitrary and is relevant only for the theoretical analysis, we can set it to $\pmin = \min \left\{1/(2n), \, \sqrt{L}/\left( \sqrt{6}  \sumin \sqrt{  \ell_{1:T}^2(i)} \right) \right\}$ that yields the final result. 
+\end{proofarg}

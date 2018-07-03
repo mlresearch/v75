@@ -1,0 +1,79 @@
+\section*{General Case}
+
+In this section, we discuss the case where some arms are nobody's best arm. Without loss of generality, we assume $N_1$ arms are somebodies' best arms and $N_2$ arms are nobody's best arm ($N_1+N_2=N$). 
+
+Our algorithm for the general setting iterates between a classification phase and an incentivizing exploration phase. In the classification phase, it pulls all the arms a significant number of times and only select those arms that are likely to be someone's best arms to enter the incentivizing exploration phase. In the incentivizing exploration phase, we apply Algorithm~\ref{Alg1}. See Algorithm~\ref{Alg3} for details.
+
+\begin{algorithm}
+\caption{Algorithm: General Incentivizing Exploration}
+\label{Alg3}
+\begin{algorithmic}
+\STATE Set $u$ to denote the iteration number. Select $T_0$ as an input parameter.
+\FOR{$u=1,2,\cdots, $}{
+\STATE \textbf{Classification Phase}: Pull all arms $v(u)\log(2^u\times T_0)$ times, where $2\sigma^2 M^2(u^2\log(2^u T_0)-(u-1)^2\log(2^{u-1}T_0))$. Only based on the information collected in the classification phase, select those arms whose myopic pulling probability greater than $1/u$ to enter the exploitation phase. We denote the set of arms that are selected in the $u^{th}$ classification phase as $\mathcal{A}_{u}$.
+\STATE \textbf{Incentivizing Exploration Phase}: Use Algorithm~\ref{Alg1} for the next $2^{u}T_0 - v(u)\log(2^u\times T_0)$ time periods and only allow them to pull the arms in the exploitation phase; set the initial rounds number to be $n=\min_{i\in \mathcal{A}_{u}}N(i,t)$.
+}\ENDFOR
+
+\end{algorithmic}
+\end{algorithm}
+
+We now analyze the payment and regret for Algorithm~\ref{Alg3}. For the simplicity of our analysis below, we assume $v(1)\log(T_0)\geq n_0$.  We need to use the following Hoeffding's bound in the analysis.
+
+\begin{lemma}
+Suppose arm $i$ was pulled $n$ times, then
+\begin{align}
+P(|u_{i,t}^{j}-u_{i}^{j}|>\lambda)\leq 2\exp\left(-\frac{\lambda^2 n}{2\sigma^2}\right). \nonumber 
+\end{align}
+\end{lemma}
+
+\begin{lemma}
+At the end of the $u^{th}$ classification phase, the probability that we misclassify an arm is bounded above by $2^{u+1} Nm T_0$.
+\end{lemma}
+
+\begin{proof}
+At the end of the $n^{th}$ classification phase, we have pulled all arm $2\sigma^2 M^2 u^2 \log(2^u T_0)$ times. Denote $\delta_u = p^{-1}\left(\frac{1}{u}\right)$. Based on our Assumption~\ref{A1}, we know $p^{-1}(\frac{1}{u})\geq \frac{1}{M}\frac{1}{u}$. 
+
+Therefore, we have
+\begin{align}
+P(\text{select a wrong arm})\leq & P(\exists i, \exists j |u_{i,t}^{j}-u_{i}^{j}|>\delta_u) \nonumber \\
+\leq & 2Nm\exp\left(-\frac{2 \delta_u^2 \sigma^2 M^2 u^2\log(2^u T_0)}{2\sigma^2}\right) \nonumber  \\
+\leq & 2^{u+1}Nm T_0. \nonumber
+\end{align}
+
+\end{proof}
+
+Suppose we are at the $u_0^{th}$ iteration at time $T$, since
+\begin{align}
+(1+2^1 + \cdots 2^{u_0+1})T_0 <T, \nonumber 
+\end{align}
+we know $u_0 \leq \log(T/T_0) / log(2)$. Since we have pulled all arm $2\sigma^2 M^2 u_0^2 \log(2^{u_0}T_0)$, we know both the cumulative regret and payment in the classification phase occurred up to time $T$ is bounded above by $2\sigma^2 M^2 u_0^2 \log(T)=O((\log(T))^3)$.
+
+
+
+We now analyze the regret and payment occurred in the incentivizing exploration phase.
+
+\begin{lemma}
+The cumulative expected regret in the incentivizing exploration phase is bounded above by ;The cumulative expected payment in the incentivizing exploration phase up to time $T$ is bounded above by.
+\end{lemma}
+\begin{proof}
+We only prove this result for the regret. Similar proof holds true for the payment analysis. 
+
+Denote the start time and the end time of the $u^{th}$ incentivizing exploration phase as $t_u$ and $t^u$. Denote $z(u)$ as a binary variable, which equals to $1$ if we misclassify an arm and $0$ otherwise. Then
+\begin{align}
+&E\left[\sum_{u=1}^{u_0}\sum_{t=t_u}^{t^{u}}r(t)\right] \nonumber \\
+=&\sum_{u=1}^{u_0} \left(E\left[\sum_{t=t_u}^{t^{u}}r(t)|z(u)\right]P(z(u)) + E\left[\sum_{t=t_u}^{t^{u}}r(t)|\bar{z}(u)\right]P(\bar{z}(u))\right) \nonumber \\
+\leq & 2Nm u_0 + \sum_{u=1}^{u_0}E\left[\sum_{t=t_u}^{t^{u}}r(t)|\bar{z}(u)\right]P(\bar{z}(u)). \nonumber 
+\end{align}
+
+For $\sum_{u=1}^{u_0}E\left[\sum_{t=t_u}^{t^{u}}r(t)|\bar{z}(u)\right]P(\bar{z}(u))$, the round numbers in different iterations are non-overlapping, and we can apply a similar proof as our proof for Algorithm~\ref{Alg1}. Thus, we know the cumulative expected regret is bounded above by $O(Nm\log(T) + N^2m + Mm^2(\log(T))^2)$ and the cumulative expected payment is bounded above by $O(N^2 + Nm \log(T))$.
+
+
+\end{proof}
+
+\begin{theorem}
+For Algorithm~\ref{Alg3}, the cumulative regret up to time $T$ is bounded above by $O((\log(T))^3 + Nm\log(T) + N^2m + Mm^2(\log(T))^2)$ and the cumulative payment is bounded above by $O((\log(T))^3 + N^2 + Nm \log(T))$.
+\end{theorem}
+
+
+
+

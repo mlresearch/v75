@@ -1,0 +1,131 @@
+%!TEX root = main.tex
+\section{Appendices}
+
+In \myapp{main_proof} we provide the proof of Theorem \ref{thm:main}. In \myapp{app_pfsketch} we prove the relevant lemmas mirroring the proof sketch in \mysec{pfsketch}. In \myapp{appapp} we provide proofs of the results for the application discussed in \mysec{geostrong} about geodesically-strongly-convex optimization. \mysec{stream_pca_app} contains background and proofs of results discussed in \mysec{stream_pca} regarding streaming $k$-PCA. \mysec{counter} contains further experiments on synthetic PCA showing a counterexample to the convergence of averaged, constant step-size SGD mentioned in \mysec{experiments} in the main text.
+
+Throughout this section we will denote a sequence of vectors $X_{n}$ to be $X_{n} = O(f_n)$, for scalar functions $f_n$,
+if there exists a constant $C>0$, such that $\norm{X_{n+1}} \leq C f_n$ for all $n \geq 0$ almost surely.
+\section{Proofs for \mysec{results}} \label{sec:main_proof}
+Here we provide the proof of Theorem \ref{thm:main}. The first statement follows by combining Theorems \ref{thm:linear}, \ref{thm:asymp_ave}, Lemma \ref{lem:stream_avg_iters} and Slutsky's theorem. The second statement follows by using Theorems \ref{thm:linear}, \ref{thm:nonasymp_ave}, and Lemma \ref{lem:stream_avg_iters_4mom}.
+
+\section{Proofs for \mysec{pfsketch}} \label{sec:app_pfsketch}
+Here we detail the proofs results necessary to conclude our main result sketched in
+\mysec{pfsketch}.
+
+\subsection{Proofs in \mysec{pfsketch1}}
+We begin with the proofs of the geometric lemmas detailed in \mysec{pfsketch1},
+showing how to linearize the progress of the SGD iterates $x_n$ in the tangent space of $x_\star$ by considering the evolution of $\Delta_n = R_{x_\star}^{-1}(x_n)$. Note that since by Assumption~\ref{assump:manifold}, for all $n\geq0$, $x_n\in\X$, the vectors $\Delta_n$ all belong to the compact set $R_{x_\star}^{-1}(\X)$.
+
+% Moreover considering iterates restricted to a compact $\X$, using Assumption~\ref{assump:manifold}, no global conditions on curvature are necessary for Theorem \ref{thm:main}, since as smooth function restricted to $\X$ they will be bounded.
+
+In the course of our argument it will be useful to consider the function $F_{x, y}(\eta_x) = R_y^{-1} \circ R_x(\eta_x) : T_x \M \to T_x \M$
+ (which crucially
+is a function defined on a vector space) and further $D R_x(\eta_x) : T_x \M \to T_{R_x(\eta_x)} \M$, the linearization of the retraction map. The first recursion we will study is that of $\Delta_{n+1} = F_{x_n, x_\star}(-\gamma_{n+1} \nabla f_{n+1}(x_n))$:
+\begin{lemma}\label{lem:tangent_rec}
+Let Assumption \ref{assump:manifold} hold. If $\Delta_n = R_{x_\star}^{-1}(x_n)$ for a sequence of iterates evolving as in  \eq{grad_desc}, then there exists a constant $C_{\text{manifold}}>0$ depending on $\X$ such that,
+  \[
+  \D_{n+1} = \D_n - \gamma_{n+1} [\te{x_\star}{x_n}]^{-1} (\nabla f_{n+1}(x_n)) + \gamma_{n+1} g_n,
+  \]  where $\norm{g_n} \leq \gamma_{n+1} C_{\text{manifold}} \norm{\nabla f_{n+1}(x_n)}^2$.
+\end{lemma}
+\begin{proof}
+  Using the chain rule for the differential of a mapping on a manifold and the first-order property of the retraction ($D R_x (0_x) = \idm_{T_x\M}$)
+  we have that:
+  \begin{multline*}
+      D F_{x, y}(0_x) = D(R_y^{-1} \circ R_x)(0_x) = D R_{y}^{-1}(R_x(0_x)) \circ D R_x(0_x) \\= [D R_y(R_{y}^{-1}(R_x(0_x)))]^{-1} \circ \idm_{T_x \M} =    [DR_y(R_{y}^{-1}(x))]^{-1}=[\te{y}{x}]^{-1},
+  \end{multline*}
+  where the last line follows by the inverse function theorem on the manifold $\M$.
+ Smoothness of the retraction  implies the Hessian of $F_{x, y}$ is uniformly bounded in norm on the compact set $F_{x, y}^{-1}(R_{x_\star}^{-1}(\X))$. We use $C_{\text{manifold}}$ to denote a bound on the operator norm of the Hessian of $F_{x, y}$ in this compact set. In the present situation,
+  we have that $\Delta_{n+1} = F_{x_n, x_\star}(-\gamma_{n+1} \nabla f_{n+1}(x_n))$. Since $F_{x_n, x_\star}$ is a function defined on vector spaces the result follows using a Taylor expansion,
+  $F_{x_n, x_\star}(0)=\Delta_n$, the previous statements regarding the differential of $F_{x_n, x_\star}$, and the uniform bounds on the second-order terms. In particular, the second-order term in the Taylor expansion is upper bounded as $\gamma_{n+1} C_{\text{manifold}} \norm{\nabla f_{n+1}(x_n)}^2$ so the bound on the error term $g_n$ follows.
+\end{proof}
+We now further develop this recursion by also considering an asymptotic expansion of the gradient term near the optima.
+\begin{lemma}\label{lem:tangent_rec_2}
+Let Assumptions \ref{assump:HessianLip}, \ref{assump:noiseunbiased},  and \ref{assump:noiseLip} hold.
+If $\Delta_n = R_{x_{\star}}^{-1}(x_n)$ for a sequence of iterates evolving as in \eq{grad_desc},  then there exist sequences $\{ \tilde \xi_n \}_{n \geq 0}$ and $\{ \tilde e_n \}_{n \geq 0}$ such that
+  \[
+ \tp{x_n}{x_\star} \nabla f_{n+1}(x_n)=\Hess f(x_\star)\Delta_n + \nabla f_{n+1}(x_\star)+\tilde \xi_{n+1}+\tilde e_{n+1},
+  \]
+where $\E[\ \tilde \xi_{n+1}\vert\mathcal F_{n}]=0$, $\E[\Vert \tilde\xi_{n+1}\Vert^2 \vert\mathcal F_{n}]\leq 4 L \Vert \Delta_n\Vert^2$ and $\tilde e_{n+1}$ such that $\Vert\tilde e_{n+1}\Vert \leq \frac{M}{2}\Vert \Delta_n\Vert^2$.
+\end{lemma}
+\begin{proof}
+We begin with the decomposition:
+\BEAS
+\Hess \!\! f(x_\star)\Delta_n&\!\!\!=\!\!\!& \tp{x_n}{x_\star} \nabla f(x_n) - \nabla f(x_\star) +[\Hess \!\!f(x_\star)\Delta_n-\tp{x_n}{x_\star} \nabla f(x_n) - \nabla f(x_\star) ] \\
+&\!\!\!=\!\!\!&  \tp{x_n}{x_\star}\!\! \nabla f_{n+1}(x_n) - \nabla f_{n+1}(x_\star) +[\Hess \!\!f(x_\star)\Delta_n-\tp{x_n}{x_\star} \!\!\nabla f(x_n) \!-\! \nabla f(x_\star) ] \\
+&&+  [\tp{x_n}{x_\star} \nabla f(x_n) - \nabla f(x_\star) - \tp{x_n}{x_\star} \nabla f_{n+1}(x_n) + \nabla f_{n+1}(x_\star)].
+\EEAS
+Under Assumption \ref{assump:HessianLip}, using the manifold version of Taylor's theorem (see \citet{absil2009optimization} Lemma 7.4.8) we have for $\tilde e_{n+1}=   \Hess f(x_\star) \Delta_n -\tp{x_n}{x_{\star}} \nabla f(x_n)$, that
+\[
+\Vert \tilde e_{n+1}\Vert \leq \frac{M}{2}\Vert \D_n\Vert^2.
+\]
+Denoting $\tilde \xi_{n+1}=  [\tp{x_n}{x_\star} \nabla f(x_n) - \nabla f(x_\star) - \tp{x_n}{x_\star} \nabla f_{n+1}(x_n) + \nabla f_{n+1}(x_\star)]$, Assumption \ref{assump:noiseunbiased} directly implies that $\E[\ \tilde \xi_{n+1}\vert\mathcal F_{n}]=0$. Finally, using Assumption \ref{assump:noiseLip} and the elementary inequality $2 \E[A \cdot B | \F_n] \leq \E[A^2 | \F_n] + \E[B^2 | \F_n]$ for square-integrable random variables $A, B$ shows that,
+\BEAS
+\E[\Vert \tilde\xi_{n+1}\Vert^2 \vert\mathcal F_{n}]
+&\leq& 2\Vert \tp{x_n}{x_\star} \nabla f(x_n) - \nabla f(x_\star) \Vert^2 + 2 \E \left[\Vert \tp{x_n}{x_\star} \nabla f_{n+1}(x_n) - \nabla f_{n+1}(x_\star) \Vert^2 | \F_n \right] \\
+&\leq &4L^2 \Vert \D_n \Vert^2.
+\EEAS
+\end{proof}
+The last important step to conclude a linear recursion in $\Delta_n$ is to argue that the operator composition
+$ [\te{x_\star}{x_n}]^{-1}\tp{x_\star}{x_n} : T_{x_\star}\M \to  T_{x_\star}\M$, is in fact an
+isometry (up to 2nd-order terms) since $x_n$ is close to $x_\star$. The following argument crucially uses the fact that $R_{x_\star}$ is a second-order retraction.
+\begin{lemma} \label{lem:tangent_rec_3}
+ Let Assumption \ref{assump:manifold}. Let $\Delta_n = R_{x_{\star}}^{-1}(x_n)$ for a sequence  $\{ x_n \}_{n \geq 0}$ evolving as in \eq{grad_desc}. Then there exists a trilinear operator $K(\cdot,\cdot,\cdot)$ such that
+  \[
+    [\te{x_\star}{x_n}]^{-1}\tp{x_\star}{x_n} = I - K(\Delta_n,\Delta_n, \cdot)   + O(\norm{\Delta_n}^3).
+  \]
+\end{lemma}
+As noted in the proof, when the exponential map is used as the retraction, the operator $K$ is precisely the Riemann curvature tensor $R_{x_\star}(\D_n, \cdot)\D_n$ (up to a constant prefactor).
+\begin{proof}
+  We derive a Taylor expansion for the operator composition $[\tp{x}{y}]^{-1}\te{x}{y}$ when $y$ is close to $x$. Consider the function $G(v)= [\tp{x}{R_x(v)}]^{-1}\te{x}{R_x(v)}: T_x\M\to L(T_x\M)$ where $L(T_x\M)$ denotes the set of linear maps on the vector space $T_x\M$. Now, recall that $\tp{x}{R_x(tv)}$ is precisely the parallel translation operator along the curve $\gamma(t)=R_y(tv)$. From Proposition 8.1.2 by \citet{absil2009optimization}, we have that
+  \[
+  \frac{d}{dt} G(tv)\vert_{t=0} =   \frac{d}{dt}  [\tp{x}{R_x(tv)}]^{-1}\te{x}{R_x(tv)}\vert_{t=0} = \nabla_{\dot \gamma(0)} D R_y,
+  \]
+  where $\nabla$ denotes the Levi-Civita connection (see also the proof of \citet[Lemma 7.4.7]{absil2009optimization} and \citet[Chapter 2, Exercise 2]{do2016differential}). Using the definition of the covariant derivative $\nabla_{v}$ along a vector $v$, and of the acceleration vector field $\dot{\gamma}$ \citep[Section 5.4]{absil2009optimization}
+  we have that
+  \[
+   \nabla_{\dot \gamma(0)} D R_y= \frac{D}{dt} D R_y(\gamma(t))\vert_{t=0} = \frac{D^2}{dt^2} R_y(tv)\vert_{t=0}=0,
+  \]
+  since $R$ is a second-order retraction. Thus, $  \frac{d}{dt} G(tv)\vert_{t=0}=0$.
+
+ We use $K$ to denote the symmetric trilinear map $d^2G(0)$, where $K(v,v,\cdot)=\frac{1}{2}\frac{d^2}{dt^2} G(tv)\vert_{t=0}$. Thus, since $G$ is smooth and the iterates are restricted to $\X$ by Assumption \ref{assump:manifold},
+ a Taylor expansion gives, for $v\in R_{x_\star}^{-1}(\X)$,
+ $
+ G(v)=G(0)+K(v,v,\cdot)+O(\Vert v \Vert^3)
+ $.
+ For $x=x_\star$ and $v=\Delta_n$, this yields
+ \[
+ [\tp{x_\star}{x_n}]^{-1}\te{x_\star}{x_n}= I+K(\Delta_n,\Delta_n,\cdot)+O(\Vert \D_n \Vert^3).
+ \]
+ Lastly, as
+  $  [\te{x_\star}{x_n}]^{-1}\tp{x_\star}{x_n} = \left([\tp{x_\star}{x_n}]^{-1} \te{x_\star}{x_n} \right)^{-1} = \left( I + K(\Delta_n,\D_n, \cdot) + O(\norm{\Delta_n}^3)) \right)^{-1} = I -  K(\Delta_n, \D_n,\cdot)  + O(\norm{\Delta_n}^3)$
+  the conclusion follows.
+In the special case the exponential map is used as retraction, \citet[][Theorem A.2.9]{waldmann2012geometric}  directly relates $K$ to the Riemann curvature tensor. They show $K(v,v,\cdot)=-\frac{1}{6}R_{x_\star}(v,\cdot)v$ for $v\in T_{x_\star}\M$. However the result by \citet{waldmann2012geometric} provides the Taylor expansion up to arbitary order in $\Vert v \Vert$.
+\end{proof}
+Assembling Lemmas  \ref{lem:tangent_rec}, \ref{lem:tangent_rec_2} and \ref{lem:tangent_rec_3} we obtain the desired linear recursion:
+\begin{theorem}\label{thm:linear}
+  Let Assumptions \ref{assump:manifold}, \ref{assump:HessianLip}, \ref{assump:noiseunbiased},  and \ref{assump:noiseLip} hold. If $\Delta_n = R_{x_{\star}}^{-1}(x_n)$ for a sequence of iterates evolving as in \eq{grad_desc}, then there exists a martingale-difference sequence $\{ \xi_{n} \}_{n \geq 0}$ satisfying  $\E[\xi_{n+1}\vert \F_{n}]=0$,
+$ \E[\Vert \xi_{n+1}\Vert^2 \vert \F_{n}] = O(\norm{\D_n}^2) $, and an error sequence $\{ e_n \}_{n \geq 0}$ satisfying $\mathbb{E}[ \norm{ e_{n+1} } | \F_{n} ] \Vert = O(\norm{\Delta_n}^2 + \gamma_{n+1})$ and
+$\mathbb{E}[ \norm{ e_{n+1} }^2 | \F_n ] \Vert = O(\norm{\Delta_n}^4 + \gamma_{n+1}^2)$ such that
+  \[
+    \D_{n+1} = \D_n - \gamma_{n+1} \Hess f(x_\star) \Delta_n  -\gamma_{n+1} \nabla f_{n+1}(x_\star) \\ -\gamma_{n+1}\xi_{n+1}  -\gamma_{n+1} e_{n+1}.
+  \]
+\end{theorem}
+\begin{proof} Combining Lemmas \ref{lem:tangent_rec},  \ref{lem:tangent_rec_2} and \ref{lem:tangent_rec_3},
+\BEAS
+  \D_{n+1} &=& \D_n - \gamma_{n+1} [\te{x_\star}{x_n}]^{-1} (\nabla f_{n+1}(x_n)) + \gamma_{n+1} g_n \\
+   &=& \D_n - \gamma_{n+1} [\tp{x_n}{x_\star}\te{x_\star}{x_n}]^{-1} \tp{x_n}{x_\star}(\nabla f_{n+1}(x_n)) + \gamma_{n+1} g_n \\
+   &=& \D_n - \gamma_{n+1} [I -  K(\Delta_n,\D_n, \cdot) ] \circ (\Hess f(x_\star)\Delta_n + \nabla f_{n+1}(x_\star)+\tilde\xi_{n+1}+\tilde e_{n+1}) \\
+   && + \gamma_{n+1} g_n + O( \gamma_{n+1} \Vert \D_{n}\Vert^3)\\
+   &=& \D_n - \gamma_{n+1} \Hess f(x_\star)\Delta_n  -\gamma_{n+1} \nabla f_{n+1}(x_\star)\\
+   &&-\gamma_{n+1}\tilde \xi_{n+1}  +{\gamma_{n+1}} K(\Delta_n,\Delta_n,\nabla f_{n+1}(x_\star)+\tilde \xi_{n+1} ) \\
+      &&-\gamma_{n+1}\tilde e_{n+1} +{\gamma_{n+1}} K(\Delta_n,\Delta_n,\Hess f(x_\star) \Delta_n +\tilde e_{n+1}) \\
+      && + \gamma_{n+1} g_n + O( \gamma_{n+1} \Vert \D_{n}\Vert^3).
+ \EEAS
+ Let $\xi_{n+1} = \tilde \xi_{n+1}  -{\gamma_{n+1}} K(\Delta_n,\Delta_n,\nabla f_{n+1}(x_\star)+\tilde \xi_{n+1} )$. By linearity of the map $K(\D_n,\D_n,\cdot)$,  $\E[\xi_{n+1}\vert \F_{n}]=0$. Moreover by smoothness of the retraction, the tensor $K$ is uniformly bounded in injective norm on the compact set $R_{x_\star}^{-1}(\X)$, so $\E[\Vert \xi_{n+1}\Vert^2 \vert \F_{n}] = O(\Vert \D_n\Vert^2)$.
+
+ Let $e_{n+1}=\tilde{e}_{n+1} - K(\Delta_n,\Delta_n,\nabla^2 f(x_\star)+\tilde{e}_{n+1} ) - g_{n} +O( \Vert \D_{n}\Vert^3)$. Using Assumptions \ref{assump:manifold}, \ref{assump:noiseLip} and the almost sure upper bound on $\tilde {e}_{n+1}$ we have that this term satisfies
+ \[
+ \E[\Vert e_{n+1}\Vert ^2 | \F_n] = \O \left(\norm{\Delta_n}^4 + \gamma_{n+1}^2 \right).
+ \]
+\end{proof}
+Note that sharper bounds may be obtained under higher-order assumptions on the moments of the noise.  This would provide a sharp constant of the leading asymptotic term of $O(\frac{1}{n})$, when the step-size $\gamma_n=\frac{1}{\sqrt{n}}$ is used.

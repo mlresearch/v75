@@ -1,0 +1,64 @@
+% !TeX root = main.tex
+\subsection{Optimal Travelling Salesman Tour} \label{ssec:tspIOpt}
+
+In this section we examine the \textit{metric travelling salesman problem} where we are given $n$ points (each provided by one record in $\Workers$) in a metric space
+$\mathcal{X}$ and we wish to find the length of the minimum cycle going through each point in the set $\Truth\subseteq \Workers$ of correct answers. As usual we let
+$\vec{x}_\Workers$ be the input vector with record values whose coordinates are points in the metric space $\mathcal{X}$. Our goal is to find a certification
+scheme for this metric travelling salesman problem. That is, the algorithm should either output a sufficiently accurate value (according to \ref{eq:verH0}) for the
+minimum weight cycle going through the points in $\vec{x}_\Truth$  or find a invalid record \footnote{Note that throughout this paper we don't consider the
+computational complexity of the problems, since we are more interested in the number of verifications needed. Besides that in the case of Euclidean TSP we could
+use the $(1 + \eps)$-approximation algorithm that we know in order to get similar results and avoid $\NP$-completeness.}. The following lemma combined with Theorem \ref{thm:wcont} give us
+the desired result.
+
+\begin{lemma}\label{lm:tsp}
+    Let $f : \Domain^* \to \reals$ be the function mapping a set of points in a metric space $\mathcal{X}$ to their minimum TSP tour and let $v_1v_2\dots v_n$ be the
+  minimum TSP tour. Also, let $\vec{w} \in \reals_+^n=(w_1,\dots,w_n)$, where
+  $w_i=d(v_{i-1},v_i)+d(v_i,v_{i+1})$ and the second indices are mod $n$. Then, $f$ is $\vec{w}$-continuous.
+\end{lemma}
+
+\begin{proof}
+According to definition \ref{def:wcont}, we need to show that for any $S\subseteq\Workers$:
+
+    \begin{equation}\label{tsp:ineq} f(\xw) \le f(\vec{x}_{\Workers\setminus S}) + \sum_{i \in S} w_i
+    \end{equation}
+To see why this inequality is satisfied, %consider the walk that contains
+let $T_R$ be the minimum TSP tour going through the points in $R=\Workers\setminus S$ and $T_\Workers=v_1v_2\dots v_n$ be the minimum TSP tour that goes through all the points in the
+set $\Workers\supseteq R$. Now let $j_1<j_2\dots <j_r$ be the indices at which the points of the set $R$ appear in this TSP tour.  Consider two consecutive points
+$v_{j_k},v_{j_{k+1}}$ in this sequence and let $P_k=\{v_{j_k+1},v_{j_k+2},\dots, v_{j_{k+1}-1}\}$ be the set of consecutive points in the tour $T_\Workers$ between
+$v_{j_k}$ and $v_{j_{k+1}}$. Clearly, $\forall k: P_k\subseteq  S$ and therefore the weights of those points appear in the sum that is in the rhs of
+equation \eqref{tsp:ineq}. Now consider the two paths $p_{1,k}=v_{j_k},v_{j_k+1},\dots, v_{j_{k+1}-1}$ and $p_{2,k}=v_{j_k+1},v_{j_k+1},\dots, v_{j_{k+1}}$ which are
+both part of $T_\Workers$. We have that:
+\[
+\sum_{i\in P_k} w_i = d(v_{j_k},v_{j_k+1})+d(v_{j_{k+1}-1},v_{j_{k+1}})+2\cdot \sum_{i=j_k+1}^{j_{k+1}-2} d(v_i,v_{i+1})=l(p_{1,k})+l(p_{2,k})
+\]
+where $l(\cdot)$ denotes the length of a path. %Suppose that, without loss of generality, $l(p_{1,k})<l(p_{2,k})$.
+We now consider the walk that goes through all the vertices in $\Workers$ and has the following two properties:
+\begin{itemize}
+  \item It respects the order in which the vertices in $R$ are visited by $T_R$
+  \item Between any two consecutive such vertices, it follows whichever path among $p_{1,k}$ and $p_{2,k}$ has smaller length in the forward and then backwards
+direction.
+\end{itemize}
+
+We know that $f(\xw)$ smaller or equal to the walk we have just defined, since the walk goes through all the given points and even repeats the points in
+$R$ \footnote{Since we are working on a metric space, skipping points in the order that we visit them can only decrease the cost.}. Thus,
+
+\begin{align*}
+ f(\xw) &\le f(\vec{x}_{\Workers\setminus S}) + \sum_{k=1}^s 2\cdot \min\{(d(v_{j_k},v_{j_k+1}),d(v_{j_{k+1}-1})\}+ 2\cdot \sum_{i=j_k+1}^{j_{k+1}-2} d(v_i,v_{i+1}) \\
+ &\le f(\vec{x}_{\Workers\setminus S}) + \sum_{k=1}^s\sum_{i\in P_k}w_i\\
+ &\le f(\vec{x}_{\Workers\setminus S}) + \sum_{i \in  S} w_i
+\end{align*}
+\end{proof}
+
+Using lemma \ref{lm:tsp} and theorem \ref{thm:wcont}, we get the following corollary:
+
+\begin{corollary}
+    Let $f : \Domain^* \to \reals$ be the function mapping a set of points in a metric space $\mathcal{X}$ to their minimum TSP tour. Then, there exists a
+  verification scheme that uses at most $O(\frac{1}{\eps}\log(\frac{1}{\delta}))$ verifications per correction.
+\end{corollary}
+
+\begin{proof}
+This is a straightforward application of lemma \ref{lm:tsp} and theorem \ref{thm:wcont} since $\sum_{i\in \Workers} w_i$ contains each of the edges in the optimal TSP tour $T_\Workers$ exactly twice. Thus,
+\[
+\sum_{i\in \Workers} w_i=2f(\vec{x}_\Workers)
+\]
+\end{proof}

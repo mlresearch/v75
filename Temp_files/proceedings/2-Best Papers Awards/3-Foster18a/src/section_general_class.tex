@@ -1,0 +1,61 @@
+%!TEX root = paper.tex
+
+We now turn to the question of extending our techniques to general, non-linear predictors. We characterize the minimax regret for learning with the unweighted multiclass logistic loss\footnote{We only consider the unweighted case in this section to avoid excessive notation.} for a general class $\F$ of predictors $f: \cX \rightarrow \R^K$ and abstract instance space $\cX$. This is the same setting as in \pref{sec:prelims}, but with the benchmark class $\crl*{x\mapsto{}Wx\mid{}W\in\cW}$ replaced with an arbitrary class $\cF$, where the loss of a predictor $f\in\cF$ on an example $(x, y) \in \cX \times [K]$ is given by $\ls(f(x), y) = -\log(\mb{\sigma}(f(x))_y)$. The bounds we present in this section---based on sequential covering numbers---substantially increase the scope of results from earlier sections. We note however that they are purely information-theoretic results in the vein of \cite{RakSriTew14jmlr, RakSri14a,RakSri15}, not algorithmic.
+
+Recall that the minimax regret---the best regret bound achievable against the worst-case adaptively chosen sequence of examples---is given by
+\begin{equation} \label{eq:minimax_def}
+\mathcal{V}_n(\F) = \dtri*{\sup_{x_t\in\cX} \inf_{\zh_t\in\bbR^{K}} \max_{y_t \in [K]}}_{t=1}^n\left[ \sum_{t=1}^n \ell(\zh_t,y_t) - \inf_{f \in \mathcal{F}} \sum_{t=1}^n \ell(f(x_t),y_t)\right],
+\end{equation}
+where, following \cite{RakSriTew14jmlr}, the $\dtri*{\star}_{t=1}^n$ notation indicates sequential application of the operators contained within $n$ times.
+
+
+Our bounds on $\cV_n(\cF)$ exploit that the logistic loss can be viewed in two complementary ways: since the loss is $1$-mixable, one can attain a bound of $O(\log |\F|)$ for finite function classes $\F$ using the Aggregating Algorithm, and since the loss is $2$-Lipschitz (in the $\ell_\infty$ norm), for more complex classes one can obtain bounds using sequential complexity measures such as sequential Rademacher complexity \citep{RakSriTew14jmlr}. Our analysis uses both properties simultaneously.
+
+Here is a sketch of the idea for a special case in which we make the simplifying assumption that $\cF$ admits a pointwise cover. 
+% We caution that this is a restrictive assumption and our final result is considerably more general. 
+Recall that a pointwise cover for $\F$ at scale $\gamma$ is a set $V$ of functions $g: \cX \rightarrow \R^K$ such that for any $f \in \F$, there is a $g \in V$ such that for all $x \in \X$, $\|f(x) - g(x)\|_{\infty} \leq \gamma$. Let $N(\gamma)$ be the size of a minimal such cover. For every $g \in V$, let $\F_g = \{f \in \F\mid \sup_{x\in\cX}\nrm*{f(x)-g(x)}_{\infty} \leq \gamma\}$. Now consider the following two-level algorithm. Within each $\F_g$, run the minimax online learning algorithm for this set, then aggregate the predictions for these algorithms over all $g \in V$ using the Aggregating Algorithm to produce the final prediction $\zh_t$.
+
+For each $g \in V$, the regret of the minimax optimal online learning algorithm competing with $\F_g$ can be bounded by the sequential Rademacher complexity of $\F_g$, which can in turn be bounded by the Dudley integral complexity using that the loss is $2$-Lipschitz and that the $L_\infty$ ``radius'' of $\F_g$ is at most $\gamma$ \citep{RakSriTew14jmlr}. The Aggregating Algorithm, via $1$-mixability, ensures a regret bound of $\log N(\gamma)$ against any sub-algorithm. This algorithm has the following regret bound:
+\begin{align}
+  \label{eq:chaining_simple}
+\sum_{t=1}^{n}\ls(\zh_t, y_t) - \inf_{f \in \F}\sum_{t=1}^{n}\ls(f(x_t), y_t) \le \inf_{\gamma >0}  \left\{ \log N(\gamma) + \inf_{\alpha > 0}\left\{8 \alpha n + 24 \sqrt{n} \int_{\alpha}^\gamma \sqrt{\log N(\delta)} d \delta  \right\} \right\}.
+\end{align}
+This procedure already yields the same bound for the $d$-dimensional linear setting explored earlier: For a class $x\mapsto{}Wx$ with $\nrm*{W}_{2}\leq{}B$ it holds that $N(\gamma) \leq{} \left(\frac{B}{\gamma}\right)^{Kd}$, and we can use this bound in conjunction with \pref{eq:chaining_simple} and the setting $\alpha = \gamma = 1/n$ to get the desired regret bound of $O(dK \log(Bn/dK))$ on the minimax regret.
+
+Unfortunately, this simple approach fails on classes $\F$ for which the pointwise cover is infinite. This can happen for well-behaved function classes that have small \emph{sequential covering number}, even though bounded sequential covering number is sufficient for learnability in the online setting \citep{RakSriTew14jmlr}. We now provide a bound that replaces the pointwise covering number in the argument above with the sequential covering number. The definition of the $L_2$ covering number $\mathcal{N}_2(\alpha,\ell \circ \F)$ that appears in the statement of the theorem below is based on a multiclass generalization of a sequential cover and appears in \pref{app:general_class} due to space limitations.
+\begin{theorem}
+  \label{thm:logistic_minimax}
+Any function class $\cF$ that is uniformly bounded\footnote{Boundedness is required to apply the minimax theorem, but does not explicitly enter our quantitative bounds.} over $\cX$ enjoys the minimax value bound:
+\begin{equation}
+\label{eq:logistic_minimax}
+\cV_{n}(\cF) \leq{} \inf_{\gamma >0}  \left\{ \log \mathcal{N}_2(\gamma, \ell \circ \mathcal{F}) + \inf_{\gamma\geq \alpha > 0}\left\{8 \alpha n + 24 \sqrt{n} \int_{\alpha}^\gamma \sqrt{\log \prn*{\mathcal{N}_2(\delta,\ell \circ \mathcal{F})\cdot{}n}} d \delta  \right\} \right\} + 4.
+\end{equation}
+\end{theorem}
+This rate overcomes several shortcomings faced when trying to apply previously developed minimax bounds for general function classes to the logistic loss. Specifically, \cite{RakSriTew14jmlr} applies to our logistic loss setup but ignores the curvature of the loss and so cannot obtain fast rates, while \cite{RakSri15} obtain fast rates but scale with $e^{B}$, where $B$ is a bound on the magnitude of the predictions, because they use exp-concavity.
+
+Our general function class bound is especially interesting in light of rates obtained in \cite{RakSri14a} for the square loss, which are also based on sequential covering numbers. In the binary case the bound \pref{eq:logistic_minimax} precisely matches the general class bound of \cite[Lemma 5]{RakSri14a} in terms of dependence on the sequential metric entropy. However, \pref{eq:logistic_minimax} does not depend on $B$ explicitly, whereas their Lemma 5 bound for the  square loss explicitly scales with $B^{2}$. In other words, compared to other common curved losses the logistic loss has a desirable property:
+\begin{center}\emph{The minimax rate for logistic regression only depends on scale through capacity of the class $\cF$.}\end{center}
+
+Let us examine some rates obtained from this bound for concrete settings. These examples are based on sequential covering bounds that appeared in \cite{RakSri14a,RakSri15}.
+
+\begin{example}[Sparse linear predictors]
+Let $\mathcal{G} = \{g_1,\ldots, g_M \}$ be a set of $M$ functions $g_i:\mathcal{X} \mapsto [-B,B]$. Define $\F$ to be the set of all convex combinations of at most $s$ out of these $M$ functions.  The sequential covering number can be easily upper bounded: We can choose $s$ out of $M$ functions in ${M \choose s}$ ways. For each choice, the sequential covering number for the set of all convex combinations of these $s$ bounded functions at scale $\beta$ is bounded as $\frac{B^s}{\beta^s}$. Hence, using that the logistic loss is Lipschitz, we conclude that $\mathcal{N}_2(\F,\beta) = O\prn*{\left(\frac{e M}{s}\right)^s \cdot \beta^{-s } B^s}$. Using this bound with \pref{thm:logistic_minimax} we obtain $\mathcal{V}_n(\F) \le O\left(s \log(BMn/s)\right)$.
+\end{example}
+The bounds from \cite{RakSriTew14jmlr, RakSri14a,RakSri15} either pay $O(B\sqrt{n})$ or $O(e^{B})$ on this example, whereas the new bound from \pref{eq:logistic_minimax} correctly obtains $O(\log(B))$ scaling.
+
+\begin{example}[Besov classes]
+Let $\X$ be a compact subset of $\mathbb{R}^d$. Let $\F$ be the ball of radius $B$ in Besov space $B^s_{p,q}(\X)$. When $s > d/p$ it can be shown that the pointwise log covering number of the space at scale $\beta$ is of order $(B/\beta)^{d/s}$. When $p \ge 2$ one can obtain a sequential covering number bound of order $(B/\beta)^p$ \citep[Section 5.8]{RakSri15a}. These bounds imply:
+\begin{enumerate}
+ \item If $s \ge d/2$, then $\mathcal{V}_n(\F) \le \tilde{O}\left(B^{\frac{2d}{d + 2s}} n^{\frac{d}{d + 2s}} \right)$.
+ \item $s < d/2$, then: if $p > 1 + d/2s$ then $\mathcal{V}_n(\F) \le \tilde{O}\left(B n^{1 - \frac{s}{d}} \right)$; if not, $\mathcal{V}_n(\F)  \le \tilde{O}(B n^{1 - 1/p})$.
+\end{enumerate}
+\end{example}
+%\vspace{.5em}
+\begin{remark}
+Using the machinery from the previous section, we can generically lift the general function class bounds given by \pref{thm:logistic_minimax} to high-probability bounds for the i.i.d. batch setting.
+\end{remark}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

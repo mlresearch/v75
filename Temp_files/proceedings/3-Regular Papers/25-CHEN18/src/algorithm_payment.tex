@@ -1,0 +1,124 @@
+\subsection{Bounding the Total Payment}
+
+As a first step towards bounding the total payment (and also regret),
+we show that for sufficiently late phases,
+under the event \AccEU{t}{x} for suitably small $x$,
+the algorithm does not offer any payments.
+
+\begin{lemma} \label{lem:no-incentives}
+Fix an arm $i$.
+Let $s \geq \exp(2/\MinProb)$, and let $\tau_s$ be the (random)
+time when arm $i$ is pulled for the \Kth{s} time.
+Let $\hat{x} = \frac{1}{2\Diam d}
+  \cdot \min(\TieCutoff, \frac{\MinProb}{2\TieDensity})$.
+Under \AccEU{\tau_s}{\hat{x}},
+this pull of arm $i$ is not incentivized.
+\end{lemma}
+
+Towards bounding the algorithm's total payment, we now bound by a
+constant the \emph{number} of rounds in which the algorithm makes a
+payment.
+This bound also turns out to be useful for bounding the total regret.
+
+\begin{lemma} \label{lem:numP}
+The expected number of time steps in which
+Algorithm~\ref{alg:basic-incentivizing}
+makes any payment is at most $O\left( N\exp\left(\frac{2}{p}\right) \right)$.
+\end{lemma}
+
+\begin{proof}
+We partition phases into early and late phases.
+For each of the early phases,
+we crudely bound the number of payments by \ARMNUM,
+using that each arm is incentivized at most once per phase.
+For later phases,
+we use Lemma~\ref{lem:no-incentives},
+which rules out any incentives unless large misestimates of the arm
+locations occur, which is exponentially unlikely by 
+Lemma~\ref{lem:round-prob}.
+
+To make this intuition precise, we set
+$x = x' = \frac{1}{2 \Diam d} \cdot \min(\TieCutoff, \frac{\MinProb}{2 \TieDensity})$
+(which is independent of the phase number $s$
+and is equal to $\hat{x}$ defined in Lemma~\ref{lem:no-incentives}).
+We set the cutoff point between early and late phases to
+$\EvenLaterPhase = \max(2, \frac{30 \sigma^3}{x^3}, \exp(\frac{2}{\MinProb}))$.
+We verify below that
+$\sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x^2}{16 \sigma^2}}
+\leq \frac{n x}{2 \sigma}$
+for all $n \geq \max(2, \frac{30 \sigma^3}{x^3})$.
+
+Fix an arm $i$, let $s \geq \EvenLaterPhase$, and 
+define $\tau_s$ as in Lemma~\ref{lem:no-incentives}.
+By Lemma~\ref{lem:round-prob} (with our choice of $x = x'$),
+and a union bound over all $i,j$, we bound the probability
+$\Prob{\AccEU{\tau_s}{x}}
+\geq 1 - 24 \ARMNUM d \cdot \exp\left(-\frac{1.8 s x^2}{16 \sigma^2} \right)$.
+And by Lemma~\ref{lem:no-incentives},
+under the event ${\mathcal E}_{\tau_s}(x)$,
+arm $i$ is not payment-eligible.
+
+Thus, for any $s \geq \EvenLaterPhase$,
+the \Kth{s} pull of arm $i$ is incentivized  
+with probability at most
+$24 \ARMNUM d \cdot \exp \left(
+- \frac{1.8 s}{256 \Diam^2 d^2 \sigma^2}
+  \cdot \min(\TieCutoff, \frac{\MinProb}{\TieDensity})^2
+\right)$.
+Summing over all arms and phases $s$,
+adding the at most $\ARMNUM \EvenLaterPhase$ incentivizations in
+the first \EvenLaterPhase phases, 
+and using that $\exp(-x) \leq 1-x/2$ for $x \leq 1$,
+the expected total number of arm incentivizations is at most
+\begin{align*}
+\lefteqn{\ARMNUM \EvenLaterPhase
+  + 24 \ARMNUM^2 d \cdot \frac{1}{1 - \exp \left(
+- \frac{1.8}{256 \Diam^2 d^2 \sigma^2}
+  \cdot \min(\TieCutoff, \frac{\MinProb}{\TieDensity})^2
+  \right)}}
+\\ & = O\left( \max \left(
+     \frac{\ARMNUM \TieDensity^3 \Diam^3 d^3 \sigma^3}{\MinProb^3},
+\frac{\ARMNUM \Diam^3 d^3 \sigma^3}{\TieCutoff^3},
+     \ARMNUM \exp \left(\frac{2}{\MinProb} \right) \right)
++ \max \left(
+     \frac{\ARMNUM^2 d^3 \TieDensity^2 \sigma^2 \Diam^2}{\MinProb^2},
+\frac{\ARMNUM^2 d^3 \sigma^2 \Diam^2}{\TieCutoff^2}
+\right) \right)
+\\ & = O\left( \ARMNUM \exp \left(\frac{2}{\MinProb}\right) \right).
+\end{align*}
+
+It remains to show that
+$\sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x^2}{16 \sigma^2}}
+\leq \frac{n x}{2 \sigma}$
+for all $n \geq \max(2, \frac{30 \sigma^3}{x^3})$.
+We first use that $\sqrt{\cdot}$ is sublinear to bound
+\[
+  \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x^2}{16 \sigma^2}}
+\; \leq \; \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1)} + \frac{n x}{4 \sigma}
+\]
+(here we use the fact $\sqrt{n} \leq n$).
+Next, we show that
+$\sqrt{0.6 n \log (\log_{1.1}(n) + 1)} \leq \frac{n x}{4 \sigma}$;
+then, adding the two terms gives the desired bound.
+
+By squaring the claimed statement and rearranging,
+it is equivalent to show that
+$\frac{n}{\log(\log_{1.1}(n)+1)} \geq \frac{9.6\sigma^2}{x^2}$.
+Because $n \geq 2$,
+a numerical calculation and derivative test shows that
+$\frac{n}{\log(\log_{1.1}(n)+1)} \geq n^{2/3}$,
+and because $n \geq \frac{30 \sigma^3}{x^3}$,
+we get that
+$n^{2/3} \geq \frac{9.6 \sigma^2}{x^2}$, completing the proof.
+\end{proof}
+
+It would be desirable to simply identify a constant upper bound on the
+payment made each time.
+Unfortunately, while the agent types are drawn from a bounded support,
+the noise in arm locations is not;
+hence, with small probability, arm locations may be grossly
+misestimated, resulting in high incentive payments.
+As a result, the actual analysis of the total payment is significantly more
+intricate;
+the proof of Theorem~\ref{rst:budget} is given in
+Appendix~\ref{sec:payment-proof}.

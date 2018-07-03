@@ -1,0 +1,42 @@
+\section{Proof of Theorem~\ref{thm:rectangleslb}}
+\label{sec:proper-lb-proof}
+  We describe the construction of the lower-bound below:
+  \begin{itemize}
+  \item The distribution $p$ assigns probability $1/d$ to each standard basis vector $\vec {e_i}$, i.e., the vector with $i$-th entry equal to $1$ and all other coordinates equal to $0$.
+  \item For some arbitrary vector $y \in \{0,1\}^d$ with $|y| = \sum_{i=1}^d y_i = d/3$, we define $\Inv(x)$ as: $$\Inv(x) = \begin{cases}
+       0 &\quad\textbf{if } |x| < d/6 \textbf{ or } \text{for all } i, x_i \le y_i\\
+       1 &\quad\text{otherwise.} \\ 
+     \end{cases}$$
+  \item The loss function is the coverage function, i.e., $L(q_x) = \Ind[ q_x = 0 ]$, where we pay a loss of $1$ for each point $q$ assigns $0$ mass to, and $0$ otherwise.
+\end{itemize}
+
+Given this instance, the optimal $q^*$ is uniform over the box $\times_{i=1}^d \{0,y_i\}$ and has loss $\frac 2 3$. In order to achieve loss $\frac 23 + \frac 1 {2d}$, the output distribution $\hat q$ must include at least $d/3$ of the vectors $\vec e_i$ in its support. Thus, $\hat q$ must be a box $\times_{i=1}^d \{0,y'_i\}$ defined by some vector $y' \in \{0,1\}^d$ with 
+$|y'| \ge d/3$. Moreover, it must be that $y' = y$. This is because if there exists a coordinate $j$ such that $y'_j=1$ and $y_j=0$, then with probability greater than $1/4$, the distribution $q$ produces a sample $x$ with $x_j=1$ and $|x| \ge d/6$. Since such a sample is invalid, $\Inv(\hat q) > \frac 14$ which would lead to a contradiction.
+
+Therefore the goal is to find the vector $y$. 
+Since any samples from $p$ only produce points $e_i$ they provide no information about $y$.
+Furthermore, queries to $\Inv$ at points $x$ with $|x| < d/6$ or $|x| > d/3$ also provide no information about $y$, as in the former case $\Inv(x) = 0$ since $|x| < d/6$, and in the latter case $\Inv(x) = 1$ since there will always be an $i$ where $1 = x_i > y_i = 0$. 
+Therefore, it only makes sense to query points with $|x| \in [d/6,d/3]$.
+
+We show that the number of queries needed to identify the true $y$ is exponential in $d$. 
+We do this with a Gilbert-Varshamov style argument.
+To see this, consider a set of vectors $Y \subset \{0,1\}^d$ such that for all $y' \in Y$ we have that $|y'|=d/3$ and any two distinct vectors $y^1, y^2 \in Y$ have fewer than $d/6$ coordinates where they are both 1, i.e. $\sum_i y^1_i \cdot y^2_i < d/6$.
+
+Given this set $Y$, note that any query to $\Inv$ at a point $x$ with $|x| \in [d/6,d/3]$ eliminates at most a single $y' \in Y$.
+Thus with fewer than $|Y|/2$ queries, the probability that the true $y$ is identified is less than $1/2$.
+
+To complete the proof, we show that a set $Y$ exists with $|Y| = e^{d/216}$. We will use a randomized construction where we pick $|Y|$ random points $y^1,...,y^{|Y|} \in \{0,1\}^d$ with $|y^a|=d/3$ uniformly at random. Consider two such random points $y^a$ and $y^b$. 
+
+Define the random variable $z_i$ to be 1 if $y^1_i = y^2_i = 1$ and 0 otherwise. We have
+$$\Pr [z_i = 1] = \frac{1}{3} \cdot \frac{1}{3} = \frac{1}{9}.$$
+Although $z_i$'s are not independent, they are negative correlated. We can apply the multiplicative Chernoff bound:
+$$
+\Pr\left[\sum_{i=1}^d z_i \ge d/6\right] \leq e^{-d/108}
+$$
+
+Then by a union bound over all pairs $a<b$, we have
+\[
+\Pr[\forall 1 \leq a < b \leq |Y|, \sum_i y^a_i \cdot y^b_i < d/6 ] > 1- \binom{|Y|}{2} \cdot e^{-d/108} > 0. 
+\]
+This shows that the number of queries an algorithm must make to succeed with probability at least $3/4$ is at least $2^{\Omega(d)}$.
+

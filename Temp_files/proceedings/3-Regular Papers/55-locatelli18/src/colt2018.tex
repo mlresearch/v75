@@ -1,0 +1,1005 @@
+\documentclass[final,12pt]{colt2018}
+% \documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Adaptivity in $\mathcal X$-armed bandits]{Adaptivity to Smoothness in $\mathcal X$-armed bandits}
+\usepackage{times}
+\usepackage[normalem]{ulem}
+\usepackage{bbm}
+\usepackage[maths]{jmlrutils}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\newtheorem{asu}{Assumption}
+\newtheorem{lem}{Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem{defi}{Definition}
+\newtheorem{cor}{Corollary}
+\newtheorem{ex}{Example}
+\usepackage{color}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\bigO}[1]{\mathcal O\left( #1 \right)}
+\newcommand{\tildeO}[1]{\tilde{\mathcal O}\left( #1 \right)}
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+\newlength\myindent
+\setlength\myindent{2em}
+\newcommand\bindent{%
+  \begingroup
+  \setlength{\itemindent}{\myindent}
+  \addtolength{\algorithmicindent}{\myindent}
+}
+\newcommand\eindent{\endgroup}
+\usepackage{multicol}
+
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+ \coltauthor{\Name{Andrea Locatelli} \Email{andrea.locatelli@ovgu.de}\\
+  \addr Mathematics Department, Otto-von-Guericke-Universität Magdeburg
+ \AND
+ \Name{Alexandra Carpentier} \Email{alexandra.carpentier@ovgu.de}\\
+ \addr Mathematics Department, Otto-von-Guericke-Universität Magdeburg
+ }
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We study the stochastic continuum-armed bandit problem from the angle of adaptivity to \emph{unknown regularity} of the reward function $f$. We prove that there exists no strategy for the cumulative regret that adapts optimally to the \emph{smoothness} of $f$. We show however that such minimax optimal adaptive strategies exist if the learner is given \emph{extra-information} about $f$. Finally, we complement our positive results with matching lower bounds.
+\end{abstract}
+
+\begin{keywords}
+bandits with infinitely many arms, minimax rates, adaptivity, smoothness
+
+\end{keywords}
+
+\section{Introduction}
+In the classical multi-armed bandit problem, an online algorithm (the \emph{learner}) attempts to maximize its gains by sequentially allocating a portion of its budget of $n$ pulls among a finite number of available options (arms). As the learner starts with no information about the environment it is facing, this naturally induces an exploration/exploitation trade-off. The learner needs to make sure it explores sufficiently to perform well in the future, without neglecting immediate performance entirely. In this setting, the performance of the learner can be measured by its \emph{cumulative regret}, which is the difference between the sum of rewards it would have obtained by playing optimally (i.e. only choosing the arm with the highest expected reward), and the sum of rewards it has collected. \\
+\noindent\textbf{Continuum-armed bandit problems.} In this work, we operate in a setting with infinitely many arms, which are embedded in $\mathcal X$ a bounded subset of $\mathbb R^d$, say $[0,1]^d$. Each arm $x \in \mathcal X$ is associated to a mean reward $f(x)$ through the reward function $f$. At each time $t$, the learner picks $X_t \in [0,1]^d$, and receives a noisy sample $Y_t = f(X_t) + \epsilon_t$ with $\mathbb E(Y_t) = f(X_t)$. This continuous setting is very relevant for practitioners: for example, if a company wishes to optimize the revenue associated with the price of a new product, it should consider the continuum $\mathbb R^+$ of possible prices. While it is known (see for example~\cite{bubeck2011pure}) that in the absence of additional assumptions that link $\mathcal X$ and the reward function, there exists no universal algorithm that achieves sub-linear regret in this setting with infinitely many arms, under some additional structural assumptions on the reward function (such as unimodality), it is possible to optimize this price \emph{online} to achieve non-trivial regret guarantees. When $\mathcal X$ is a metric space, a common assumption in the literature is to consider smooth reward functions (\cite{agrawal1995continuum, kleinberg2004a}). This \emph{smoothness} of the reward function can either be local (\cite{auer2007improved,grill2015black}) or global (\cite{kleinberg2008multi,cope2009regret,bubeck2011x,minsker2013estimation}). In most of these works, the smoothness of the reward function is \emph{known} to the learner: for example, if $f$ such that for any $x,y \in \mathcal X$, we have $|f(x) - f(y)| \leq L|x-y|_\infty^\alpha$ \footnote{In fact, as in~\cite{bubeck2011pure}, we will only assume $f$ to be \emph{weakly-Lipschitz}, allowing us to consider $\alpha > 1$ - see Definition~\ref{defC}}, then the learner has access to $L$ and $\alpha$ (see e.g.~\cite{auer2007improved,bubeck2011x}). Furthermore, in this work we will use a parametrization akin to the popular Tsybakov noise condition (see e.g.~\cite{tsybakov2004optimal,audibert2007fast}). As in~\cite{auer2007improved,minsker2013estimation}, we will assume that the volume of $\Delta$-optimal regions decreases as $\bigO{\Delta^\beta}$ for some unknown $\beta \geq 0$. Under these assumptions, there exists strategies as e.g. \texttt{HOO} in~\cite{bubeck2011x}\footnote{In~\cite{bubeck2011x} problems are parametrized with the \emph{near-optimality} dimension $D$. Under our smoothness assumptions, these two parametrizations are equivalent with $D = \frac{d-\alpha\beta}{\alpha}$.}, that enjoy nearly optimal cumulative regret bounds of order $\tildeO{n^{(\alpha+d-\alpha\beta)/(2\alpha+d-\alpha\beta)}}$\footnote{We use the $\tilde{\mathcal O}$ notation to hide logarithmic factors $n$ or $\delta^{-1}$}, if they are tuned optimally with $\alpha$. Importantly, these strategies naturally adapt to $\beta$, which controls the difficulty of the problem (with the hardest case $\beta = 0$). However, it is argued in~\cite{bubeck2011lipschitz} that this perspective is flawed, as one should instead consider strategies that can \emph{adapt} to multiple different environments - and not strategies that are adapted to a specific environment.\\
+\noindent\textbf{Adaptivity in continuum-armed bandit.} While the problem of adaptivity to unknown Lipschitz constant $L$ (with $\alpha = 1$ known to the learner) for cumulative regret minimization has been studied in~\cite{bubeck2011lipschitz}, adaptivity to unknown smoothness exponent $\alpha$ remains a very important open question, which, to the best of our knowledge, has only been studied in optimization. In optimization, the learner's goal is to recommend a point $x(n) \in \mathcal X$ such that its \emph{simple regret} $r_n = \sup_{x\in \mathcal X}f(x) - f(x(n))$ is as small as possible. It has first been shown in~\cite{valko2013stochastic} (which is an extension from~\cite{munos2011optimistic} that operates in a deterministic setting) that when $\alpha\beta = d$ i.e.~if the function is \emph{easy} to optimize\footnote{This assumption corresponds to the fact that the \emph{near-optimality} dimension $D$ from~\cite{bubeck2011x} is $0$, i.e.~roughly functions that have a unique maximum $x^*$ and depart from it faster than $|x - x^*|_\infty^\alpha$.}, there exists adaptive strategies with optimal simple regret of order $\tildeO{n^{-1/2}}$. These results were later extended in~\cite{grill2015black} to the more general setting $\alpha\beta \leq d$, in which case their adaptive algorithm \texttt{POO} has an expected simple regret upper-bounded as $\tildeO{n^{-\alpha/(2\alpha+d-\alpha\beta)}}$, without prior knowledge of the smoothness. This leaves open two questions. First, is this bound minimax optimal for the simple regret? And, more importantly, outside of very restrictive technical conditions on $f$ such (e.g. self-similarity as in~\cite{minsker2013estimation}), is there a smoothness adaptive strategy such its cumulative regret can be upper-bounded as $\tildeO{n^{(\alpha+d-\alpha\beta)/(2\alpha+d-\alpha\beta)}}$ for all $\alpha$ and $\beta$?
+
+\noindent\textbf{Adaptivity in statistics.} Even though the concept of smoothness adaptive procedures is still fairly unexplored in the continuum-armed bandit setting, it has been studied extensively in the statistics literature under the name of~\textit{adaptive inference}. The first question in this field is the one of constructing estimators that adapt to the unknown model at hand (e.g.~to the smoothness), i.e.~adaptive estimators (see among many others \cite{golubev1987adaptive, birge1997model, lepski1997optimal,tsybakov2004optimal}). The main takeaway is that adaptivity to unknown regularity for \emph{estimation} is possible under most standard statistical models using model selection or aggregation techniques. These adaptive strategies were later adapted to sequential settings such as active learning by~\cite{Hann2,Kolt, minsker2012non,locatelli2017adaptivity} or nonparametric optimization~\cite{grill2015black}, where they use a cross-validation scheme. These approaches however are not suited for cumulative regret minimization, as they typically trade-off exploitation in favor of exploration. Another fundamental question in adaptive inference is the construction of \emph{adaptive and honest} confidence sets. Importantly, such confidence sets would naturally give rise to an upper-confidence bound type of strategy with optimal adaptive cumulative regret guarantees. However a fundamental negative result is the non-existence of adaptive confidence sets in $L_\infty$ for Hölder smooth functions~\cite{juditsky2003nonparametric, cai2006adaptive,hoffmann2011adaptive}. Interestingly, adaptive confidence sets for regression do exist under additional assumptions on the model, such as \emph{shape constraints} (see e.g.~\cite{cai2013adaptive,bellec2016adaptive}). 
+
+\noindent\textbf{Learning with Extra-information.} In the classical multi-armed bandit problem, this shape constrained setting was introduced in~\cite{bubeck2013bounded}. They show that if the learner is supplied with the mean reward $\mu^*$ of the best arm, and $\Delta$ the \emph{gap} between $\mu^*$ and the second best arm's mean reward, then there exists a strategy with \emph{bounded} regret. Recently, it was shown in~\cite{garivier2016explore} that only the knowledge of $\mu^*$ is necessary to achieve bounded regret. Outside of the very important and studied convexity constraint, such questions remain unexplored in our nonparametric setting, with the exception of~\cite{kleinberg2013bandits}. In this work, they consider the case where $\sup_{x\in \mathcal X} f(x) \approx 1$ and the noisy rewards $Y_t$ are bounded in $[0,1]$ (i.e. the noise decays close to the maxima). Under these assumptions, they obtain faster rates for the cumulative regret in the case where $f$ is Lipschitz. This leaves open the question whether shape constraints could facilitate adaptivity to unknown smoothness when the cumulative regret is targeted. Finally, we remark that the case $\alpha\beta = d$, which can be thought of as a shape constraint as well, has been partially treated in~\cite{bull2015adaptive} for the special class of \emph{zooming continuous} functions (first studied in~\cite{slivkins2011multi}). In this setting,~\cite{bull2015adaptive} introduced an adaptive strategy such that its expected cumulative regret is bounded as $\tildeO{\sqrt{n}}$. However, it was shown in~\cite{grill2015black} (see Appendix E therein) that the class of functions we consider here is more general than the one in~\cite{slivkins2011multi,bull2015adaptive}, making these two lines of work not directly comparable. In a one-dimensional setting equivalent to ours for $\alpha\beta = 1$ but with the additional constraint that $f$ is unimodal,~\cite{yu2011unimodal} and~\cite{combes2014unimodal} also get an adaptive rate for the cumulative regret of order $\tildeO{\sqrt{n}}$. Extending these results to our entire class of functions is a relevant question in this canonical setting.
+
+
+% We show that in our setting, if the learner is supplied with $M(f)$ the value of $f$ at its maxima, then adaptivity to unknown smoothness becomes possible for the cumulative regret, that is, there exists an agnostic procedure that performs as well as the minimax optimal strategy which requires $\alpha$ to operate. We also consider another extra-information setting in which the learner is supplied with the attainable \emph{rate}. This is linked with the setting considered in~\cite{agarwal2016corralling}, which studies adaptivity to multiple environments simultaneously, thanks to a meta algorithm \texttt{CORRAL} that allocates on-the-fly the available budget to multiple base algorithms. These base algorithms are assumed to perform well in specific environments. However, for this meta algorithm to perform well, one should tune its learning rate with respect to the regret that one of the base algorithms would have incurred if run in isolation with the entire budget $n$.
+% \subsection{Relation to Previous Work}\label{sec:related} {\color{red} Ici a ta place je fusionnerais avec la partie precedente}
+% In this work, we consider the arms space to be $\mathcal X = [0,1]^d$ and, as in~\cite{bubeck2011x}, we assume $f$ the reward function to be \emph{weakly-Lipschitz} with respect to the dissimilarity function ${\ell(x,y)= |x-y|_{\infty}^{\alpha}}$ (see Definition~\ref{defC}) for some $\alpha \in [0,+\infty)$. For $\alpha \leq 1$, this setting is a generalization of the setting considered in~\cite{kleinberg2004a,minsker2013estimation}. While~\cite{bubeck2011x} is concerned with the setting where the dissimilarity $\ell$ (and thus $\alpha$) is known to the learner, the scope of our work is to understand the fundamental difficulties faced by the learner if $\alpha$ is~\emph{unknown}, especially for the problem of cumulative regret minimization.\\
+% As in~\cite{auer2007improved} and~\cite{minsker2013estimation}, we make a second assumption, akin to the popular Tsybakov noise condition in the statistics literature (see e.g.\cite{tsybakov2004optimal,audibert2007fast}), which says that the volume of $\Delta$-optimal regions decreases as $\bigO{\Delta^\beta}$. Combined with our first assumption on the smoothness $f$, this can easily be related to the near-optimality dimension $D$ (as defined in~\cite{bubeck2011x}) with the following relation $D = (d - \alpha\beta)/\alpha$. In this setting,~\cite{grill2015black} showed that for optimization, there exists an adaptive (to both $\alpha$ and $\beta$) strategy whose expected simple regret is bounded as $\tilde{\mathcal O}\left(n^{-\alpha/(2\alpha + d - \alpha\beta)}\right)$, while the \texttt{HOO} strategy of~\cite{bubeck2011x} tuned with $\ell$ has a cumulative regret in expectation of order at most $\tilde{\mathcal O}\left(n^{(\alpha + d - \alpha\beta)/(2\alpha + d - \alpha\beta)}\right)$, which is minimax optimal up to logarithmic factors. This naturally poses the following question: is there an \emph{adaptive} strategy that enjoys the same regret guarantee? In this work, perhaps surprisingly, we answer this question negatively.\\
+% Importantly, it was shown in~\cite{grill2015black} (see Appendix E therein) that the class of functions they consider is more general than the one in~\cite{slivkins2011multi,bull2015adaptive}, making these two lines of work not directly comparable. This is also true for the setting we consider here, as one can easily check that the function considered in their example falls into our setting. However, at the intersection of the setting of~\cite{bull2015adaptive} and the one we consider here,~\cite{bull2015adaptive} showed that there exists an adaptive strategy whose cumulative regret is $\tilde{\mathcal O}(\sqrt{n})$ for $D=0$. We extend this result to the functions that do not fall in this intersection, such as the one in the example given by~\cite{grill2015black}.
+\subsection{Contributions and Outline}
+We now state our main contributions.
+\begin{itemize}
+\item Our main result Theorem~\ref{thm:adap_cumul} proves that no strategy can be optimal simultaneously over all smoothness classes for cumulative regret minimization.
+\item We show that under various shape constraints, adaptivity to unknown smoothness becomes possible if the learner is given this extra-information about the environment. In particular, we show that in the case $\alpha\beta = d$, there exists a smoothness adaptive strategy whose regret grows as $\tildeO{\sqrt{n}}$ i.e. independently of $\alpha$ and $d$, without access to $\alpha$.
+\item Finally, we show lower bounds for the simple and cumulative regret that match the known upper-bounds. Importantly, these bounds also hold in the shape-constrained settings.
+\end{itemize}
+
+In Section~\ref{sec:prelim}, we introduce our setting formally and show a high-probability result for a simple non-adaptive Subroutine (\texttt{SR}). In Section~\ref{sec:adap}, we prove a lower-bound for the simple regret that matches the best known upper-bound for adaptive strategies (such as \texttt{POO} in~\cite{grill2015black}) in the optimization setting. We then prove our main result on the non-existence of adaptive strategies for cumulative regret minimization. In Section~\ref{sec:info}, we study the shape constrained settings and introduce an adaptive Meta-Strategy, which relies on \texttt{SR} and our high-probability result of Section~\ref{sec:prelim}.
+\section{Preliminaries}\label{sec:prelim}
+\subsection{Objective}
+We consider the $d$-dimensional continuum-armed bandit problem. At each time step $t = 1, 2, \ldots, n$, the learner  chooses $X_t \in [0,1]^d$ and receives a return (or \textit{reward}) $Y_t~=~f(X_t)~+~\epsilon_t$. We will further assume that $\epsilon_t$ is independent from $\big((X_1,Y_1), \ldots (X_{t-1},Y_{t-1})\big)$ conditionally on $X_t$, and it is a zero-mean 1-sub-Gaussian\footnote{We say that a random variable $Z$ is $\sigma$-sub-Gaussian if for all $t \in \mathbb R$, we have $\mathbb E[\exp(tZ)] \leq \exp(\frac{\sigma^2 t^2}{2})$} random variable. Finally we assume that $f$ takes values in a bounded interval, say $[0,1]$ and we denote ${M(f)\doteq \sup_{x\in [0,1]^d} f(x)}$. In optimization, the objective of the learner is to recommend at the end of the game a point ${x(n) \in [0,1]^d}$, such that the following loss
+$$
+r_n = M(f) - f(x(n))
+$$
+is as small as possible, under the constraint that it can only observe $n$ couples $(X_t, Y_t)$ before making its recommendation. In the rest of the paper, we will refer to $r_n$ as the \textit{simple regret}. This objective is different from the typical bandit setting, where the cumulative regret $\widehat{R}_n = n M(f) - \sum_{t=1}^n Y_t$ is instead targeted. As a proxy for the cumulative regret, we will study the cumulative \textit{pseudo-regret}:
+$$
+R_n = n M(f) - \sum_{t=1}^n f(X_t).
+$$
+By the tower-rule, $\mathbb{E}(Y_t) = \mathbb{E}(\mathbb{E}(Y_t | X_t)) = \mathbb{E}(f(X_t))$, and thus we have $\mathbb{E}(\widehat{R}_n) = \mathbb{E}(R_n)$, where the expectation is taken with respect to the samples collected by the strategy and its (possible) internal randomization. Our primary goal will be to design sequential exploration strategies, such that the next point to sample $X_t$ may depend on all the previously collected samples $(X_i,Y_i)_{i < t}$, in order to optimize one of these two objectives. We note here that one can easily show that a strategy with good \emph{cumulative regret} gives rise naturally to a strategy with good \emph{simple regret} (for example, by choosing $x(n)$ uniformly at random over the points visited). However, the converse is obviously not true.
+\subsection{Assumptions}
+In this section, we state our assumptions on the mean reward function $f: [0,1]^d \rightarrow [0,1]$. Our first assumption characterizes the continuity, or \textit{smoothness} of $f$.
+
+\begin{defi}\label{defC} We say that $g: [0,1]^d \rightarrow [0,1]$ belongs to the class $\Sigma(\lambda, \alpha)$ if there exists constants $\lambda\geq1$, $\alpha>0$ such that for any $x,y \in [0,1]^d$:
+$$
+g(x) - g(y) \leq \max\{M(g) - g(x), \lambda|x-y|_{\infty}^{\alpha}\},
+$$
+where $|z|_{\infty} = \max_{i \leq d}z^{(i)}$ and $z^{(i)}$ denotes the value of the $i$-th coordinate of the vector $z$, with $M(g)~\doteq~\sup_{x\in [0,1]^d}g(x)$.
+\end{defi}
+
+For completeness, we also define the Hölder smoothness classes for $\alpha \in (0,1]$. 
+
+\begin{defi}\label{defH} We say that $g: [0,1]^d \rightarrow [0,1]$ belongs to the Hölder smoothness class $\Sigma^*(\lambda, \alpha)$ if there exists constants $\lambda \geq1$, $0~<~\alpha~\leq~1$ such that for any $x,y \in [0,1]^d$:
+$$
+|g(x) - g(y)| \leq \lambda|x-y|_{\infty}^{\alpha}.
+$$
+\end{defi}
+
+% \begin{asu}\label{asuC} There exists constants $\lambda \geq1$, $0~<~\alpha~\leq~1$ such that for any $x,y \in [0,1]^d$:
+% $$
+% |f(x) - f(y)| \leq \lambda|x-y|_{\infty}^{\alpha}.
+% $$
+% \end{asu}
+
+\begin{asu}\label{asuC} There exists constants $\lambda \geq1$, $\alpha > 0$ such that $f \in \Sigma(\lambda, \alpha)$.
+\end{asu}
+
+This assumption forbids the function $f$ from jumping erratically close to its maximum, which would render learning extremely difficult. Indeed, for any $x^*$ such that $f(x^*) = M(f)$, the condition simply rewrites for any $x \in [0,1]^d$: $$M(f) - f(x) \leq \lambda|x^*-x|_{\infty}^{\alpha}.$$ For $\alpha \leq 1$, it is weaker than assuming that $f$ belongs to the Hölder class $\Sigma^*(\lambda,\alpha)$, which is the case for example in~\cite{kleinberg2004a,minsker2013estimation} (it is important to note that in~\cite{minsker2013estimation} a second assumption related to the notion of \emph{self-similarity} is required to allow adaptivity to unknown smoothness $\alpha$). Moreover, it allows us to consider $\alpha > 1$, without forcing the function to be constant.\\
+Our second assumption is similar to the well known \textit{margin assumption} (also called Tsybakov noise condition) in the binary classification framework.
+
+\begin{asu}\label{asuT}
+Let $\mathcal X(\Delta) \doteq \{x: M(f) - f(x) \leq \Delta\}$. There exists constants $B>0$, $\beta \in \mathbb{R}^+$ such that $\forall \Delta > 0$:
+$$
+\mu(\mathcal X(\Delta)) = \mu\left(\{x: M(f) - f(x) \leq \Delta\}\right) \leq B \Delta^\beta,
+$$
+where $\mu$ stands for the Lebesgue measure of a set $S~\subset~\mathbb [0,1]^d$.
+\end{asu}
+This assumption naturally captures the difficulty of finding the maxima of $f$: if $\beta$ is close to $0$, there is no restriction on the Lebesgue measure of the $\Delta$-optimal set - on the other hand, if $\beta$ is large, there are less potentially optimal regions in the space, and we hope that a good algorithm will take advantage of this to focus on these regions more closely, by discarding the many sub-optimal regions quicker.\\
+Intuitively, the smoother $f$ is around one of its maxima $x^*$, the harder it is for it to "take-off" from $x^*$, and thus higher values for $\beta$ are geometrically impossible. The following proposition (its proof is in Appendix~\ref{proof:ab_d}) formalizes this intuition, and characterizes the interplay between the different parameters of the problem, $\alpha$, $\beta$ and $d$.
+
+\begin{prop}\label{prop:ab_d}
+If $f$ is such that Assumptions~\ref{asuC} and~\ref{asuT} are satisfied for $\alpha > 0, \beta \in \mathbb{R}^+$, then $\alpha\beta \leq d$.
+\end{prop}
+
+In the rest of the paper, we will fix $B > 0$ as well and $\lambda = 1$. This can be relaxed to $\lambda \geq 1$ or a known upper bound on $\lambda$, such as $\log(n)$ for $n$ large enough, being known to the learner. We make this choice as our goal in the present work is to fundamentally understand adaptivity with respect to the smoothness $\alpha$.
+
+\begin{defi}\label{def_class}
+We say that $f \in \mathcal{P}(\alpha, \beta) \doteq \mathcal{P}(\lambda, \alpha, \beta, B, [0,1]^d)$ if $f$ is such that Assumptions~\ref{asuC} and~\ref{asuT} are satisfied for $\alpha > 0, \beta \geq 0$.
+\end{defi}
+
+\subsection{A simple strategy for known smoothness}
+The main building block on which our adaptive results are built is a non-adaptive Subroutine (\texttt{SR}), which takes $\alpha$ as input and operates on the dyadic partition of $[0,1]^d$. Importantly, our results depend on bounds that hold with high-probability, whereas to the best of our knowledge, the analysis of the $\texttt{HOO}$ in~\cite{bubeck2011x} yields results in expectation. For completeness, we introduce and analyze this simple Subroutine. The strategy, its description and analysis can be found in the Appendix~\ref{sec:sr}. We now state our main result for this non-adaptive Subroutine.
+\begin{prop}\label{prop:non-adap}
+Let $n \in \mathbb{N}^*$. The Subroutine run on a problem characterized by $f \in \mathcal{P}(\alpha,\beta)$ with input parameters $\alpha, n$ and $0<\delta< e^{-1}$ is such that with probability at least $1-4\delta$:
+\begin{itemize}
+\item $\mathcal X(0) \subset \mathcal A_{L+1} \subset \mathcal X\left(C\Big(\frac{n}{\log(\frac{n}{\delta})}\Big)^{-\alpha/(2\alpha + d - \alpha\beta)}\right)$, where $C>0$ does not depend on $n, \delta$.
+\item For any recommendation, $x(n) \in \mathcal A_{L+1}$, we have: $M(f) - f(x(n)) \leq C\Big(\frac{n}{\log(\frac{n}{\delta})}\Big)^{-\alpha/(2\alpha + d - \alpha\beta)}$
+\item For all $T \leq n$, we have $R_T \leq D\log(\frac{n}{\delta})^{\alpha/(2\alpha+d-\alpha\beta)}T^{(\alpha+d-\alpha\beta)(2\alpha+d-\alpha\beta)}$, where $D>0$ is a constant that does not depend on $T, n, \delta, \alpha$.
+\end{itemize}
+\end{prop}
+The proof of this result can be found in Appendix~\ref{proof_non_adap}. The second conclusion of Proposition~\ref{prop:non-adap} is a direct implication of the first conclusion, and shows that with high-probability, as we recover an entire level set of optimal size, recommending \emph{any} point in the active set $\mathcal A_{L+1}$ leads to optimal simple regret. This will prove handy for adaptivity to unknown smoothness for the simple regret objective. The third conclusion will be used in Section~\ref{sec:info}, where we show that if the learner is provided with extra-information, adaptivity to unknown smoothness is possible for cumulative regret. 
+
+% \begin{remark}
+% \emph{The rates in Proposition~\ref{prop:non-adap} hold with high-probability, however, by setting $\delta = 1/\sqrt{n}$, we can get results in expectation of the same order, as the fastest attainable rates for the simple regret and cumulative regret objectives are of order $\bigO{1/\sqrt{n}}$ and $\bigO{\sqrt{n}}$ respectively.}
+% \end{remark}
+\section{Adaptivity to unknown smoothness in optimization and regret minimization}\label{sec:adap}
+In this section, we explore the problem of adaptivity to \emph{unknown} smoothness $\alpha$ for both the simple regret and cumulative regret objectives. We show that for optimization, adaptivity is possible without sacrificing minimax optimality: there exists an agnostic strategy that performs almost as well as the optimal strategy that has access to the smoothness. For cumulative regret, we show that there exists no adaptive minimax optimal strategy.
+
+\subsection{Adaptivity for optimization}
+We start by proving a lower bound on the simple regret over the class of functions $\mathcal P(\alpha, \beta)$, which holds even for strategies that have access to both $\alpha$ and $\beta$.
+\begin{theorem}[Lower bound on simple regret]\label{thm:lb_sr}
+Fix $d \in \mathbb N^*$. Let $\alpha > 0$ and $\beta \geq 0$ such that $\alpha\beta \leq d$. For $n$ large enough, for any strategy that samples at most $n$ noisy function evaluations and returns a (possibly randomized) recommendation $x(n)$, there exists $f \in P(\alpha, \beta)$, where $M(f)$ is fixed and known to the learner, such that:
+$$
+\mathbb E[r_n] \geq C n^{-\alpha/(2\alpha+d-\alpha\beta)},
+$$
+where $C > 0$ is a constant that does not depend on $n$, and the expectation is taken with respect to both the noise in the sampling process and the possible randomization of the strategy.
+\end{theorem}
+
+The proof of this result can be found in Appendix~\ref{proof:sr}. It shows that even over a set of functions  that all belong to \emph{known} class $\mathcal P(\alpha,\beta)$, this is the best possible convergence rate for the simple regret that one can hope for. An important takeaway from the proof of this result is that it also holds in the easier setting where $M(f)$ the maximum of $f$ is known to the learner. A direct corollary of this result is a lower bound on the cumulative regret for any strategy.
+
+\begin{cor}[Lower bound on cumulative regret]\label{cor_lb_cr}
+Fix $d \in \mathbb N^*$. Let $\alpha > 0$ and $\beta \geq 0$ such that $\alpha\beta \leq d$. For $n$ large enough, any strategy with access to at most $n$ noisy function evaluations suffers a cumulative regret such that:
+$$
+\sup_{f \in \mathcal P(\alpha,\beta)} \mathbb E[R_n] \geq C n^{(\alpha+d-\alpha\beta)/(2\alpha+d-\alpha\beta)},
+$$
+where $C > 0$ is a constant that does not depend on $n$, and the expectation is taken with respect to both the noise in the sampling process and the possible randomization of the strategy.
+\end{cor}
+This result follows directly from Theorem~\ref{thm:lb_sr}, by remarking that any strategy with a good cumulative regret in expectation can output a recommendation $x(n)$ such that $\mathbb E[r_n] \leq \frac{\mathbb E[R_n]}{n}$ (see Section 3 in~\cite{bubeck2011pure}). Therefore, any strategy with a cumulative regret that's strictly smaller than the rate in Corollary~\ref{cor_lb_cr} would have an associated simple regret in contradiction with Theorem~\ref{thm:lb_sr}.\\
+
+We now exhibit \emph{adaptive} strategies that are minimax optimal (up to log factors) for the simple regret. Importantly, these strategies perform almost as well as the best strategies that have access to $\alpha$ and $\beta$.
+
+\begin{theorem}[Adaptive upper-bound for simple regret]\label{thm_adap_sr}
+Let $n \in \mathbb N^*$. Assume that $\alpha \in [1/\log(n), \log(n)]$ and $\beta \geq 0$ such that $\alpha\beta \leq d$, both unknown to the learner. There exists adaptive strategies such that for any $f \in \mathcal P(\alpha,\beta)$ with maximum $M(f)$:
+$$
+M(f) - \mathbb E[f(x(n))] \leq C \left(\frac{\log^p(n)}{n}\right)^{\alpha/(2\alpha+d-\alpha\beta)},
+$$
+where $C > 0$ is a constant that does not depend on $n$ and $p$ is a universal constant.
+\end{theorem}
+In order to match the rate in Theorem~\ref{thm:lb_sr} for the simple regret, a natural strategy is to aggregate different recommendations output by a non-adaptive (i.e. that takes the smoothness $\alpha$ as input) strategy, run with a diversity of smoothness parameters. We exhibit two such strategies that rely on this scheme.\\
+
+\textbf{Strategy 1 (Cross-validation)}: \cite{grill2015black} introduces a strategy (\texttt{POO}) that adapts to unknown smoothness for the simple regret. It launches several $\texttt{HOO}(i)$ (\cite{bubeck2011x}) instances in parallel according to a logarithmic schedule over the smoothness parameters $\alpha_i$ (indexing the instances). The final recommendation of the Meta-Strategy is made by first choosing the instance $\texttt{HOO}(i^*)$ with the best average empirical performance. The final recommendation is then drawn uniformly at random over the points $\{X_{i^*}(t)\}_t$ visited by $\texttt{HOO}(i^*)$. An important technical remark is that the fastest attainable rate in this setting is $\bigO{1/\sqrt{n}}$, which is is of the same order as the stochastic error induced by the final cross-validation scheme. For this strategy, we have $p = 2$ in Theorem~\ref{thm_adap_sr}.\\
+
+\textbf{Strategy 2 (Nested Aggregation):} The first conclusion of Proposition~\ref{prop:non-adap} shows that our Subroutine recovers with high-probability an \emph{entire level-set} of optimal size. As the smoothness classes $\Sigma(1, \alpha)$ are nested for increasing values of $\alpha$, this allows us to use directly the nested aggregation scheme (Algorithm 1) in~\cite{locatelli2017adaptivity} by splitting the budget among several \texttt{SR} instances indexed by smoothness parameters $\alpha_i$ over a grid that covers the range $[1/\floor{\log(n)}, \floor{\log(n)}]$. Importantly, the final recommendation $x(n)$ output by this nested aggregation procedure comes with high-probability guarantees which is an improvement over \texttt{POO}.\\
+
+A common caveat of these adaptive strategies is that their exploration of the space crucially depends on a covering of the possible smoothness parameters. This is necessary to ensure that there is a Subroutine run with a smoothness parameter which is very close to the true smoothness of the function. However, Subroutines (either our Subroutine~\ref{alg:warmup} or \texttt{HOO}) run with smoothness parameters $\alpha_i \ll \alpha$ incur a high-regret as they explore at a too small scale, while subroutines run with $\alpha_i > \alpha$ come with no regret guarantee. As the budget is split equally among the Subroutines run in parallel, the total cumulative regret of these adaptive exploration strategies cannot be bounded and is provably sub-optimal. This  naturally leads to the following question: is there an adaptive strategy that enjoys a minimax optimal cumulative regret over classes $\mathcal P(\alpha,\beta)$?
+
+\subsection{Impossibility result for cumulative regret}
+In this section, we answer the previous question negatively, and show that designing an adaptive strategy with minimax optimal cumulative regret is a hopeless quest. We first state this result in a general theorem and then instantiate it in multiple settings to show its implications.
+
+\begin{theorem}\label{thm:adap_cumul}
+Fix $\gamma \geq \alpha > 0$ and $\beta \geq 0$ such that $\gamma\beta \leq d$. Consider a strategy such that for any $f \in \mathcal P(\gamma, \beta)$, we have $\mathbb E[R_n] \leq R_{\gamma, \beta}(n)$ with $R_{\gamma,\beta}(n)^{(2\alpha+d-\alpha\beta)/(\alpha+d-\alpha\beta)} \leq 0.008n$. Then this strategy is also such that:
+$$
+\sup_{f \in \mathcal P(\alpha,\beta)} \mathbb E[R_n] \geq 0.008n R_{\gamma,\beta}(n)^{-\alpha/(\alpha+d-\alpha\beta)},
+$$
+where the expectations are taken with respect to the strategy and the samples collected.
+\end{theorem}
+
+The proof of this result can be found in Appendix~\ref{proof_non_adap} and uses the same techniques as in the proof of Theorem~\ref{thm:lb_sr}, but with the following twists: the value of the maximum across the set of problems we consider is not fixed, nor is the value of the smoothness, which can be either be $\alpha$ or $\gamma$, depending on the presence of a rough peak of smoothness $\alpha$. This construction forces any strategy into an exploration exploitation dilemma parametrized by $R_{\gamma,\beta}(n)$.\\
+
+Theorem~\ref{thm:adap_cumul} can be understood in the following way: for any strategy, performing at a certain rate $R_{\gamma,\beta}(n)$ uniformly over all problems in a subclass $\mathcal P(\gamma, \beta) \subset \mathcal P(\alpha, \beta)$ comes with a price: on at least one problem that belongs to the class $\mathcal P(\alpha, \beta)$, it has to suffer an expected regret that depends inversely on $R_{\gamma,\beta}(n)$. This directly leads to our claim that adaptivity to the smoothness for the cumulative regret objective is impossible. Consider strategies such that $R_{\gamma,\beta}(n) \leq \bigO{n^{1-\gamma/(2\gamma+d-\gamma\beta)+\epsilon}}$ for any $\epsilon > 0$ (we showed in Proposition~\ref{prop:non-adap} that such strategies exist). Then its regret over the class $\mathcal P(\alpha, \beta)$ is necessarily lower bounded as $\bigO{n^{1-\alpha/(2\alpha+d-\alpha\beta)+\nu}}$, where $\nu =\left(\frac{\alpha+d-\alpha\beta}{2\alpha+d-\alpha\beta} - \frac{\gamma+d-\gamma\beta}{2\gamma+d-\gamma\beta} - \epsilon\right)\frac{\alpha}{\alpha+d-\alpha\beta}$. As soon as $\alpha < \gamma$, we have $\nu > 0$ for $\epsilon$ small enough, which implies that the strategy considered is strictly sub-optimal over the class $\mathcal P(\alpha,\beta)$. We remark that by plugging $\alpha = \gamma$ in Theorem~\ref{thm:adap_cumul}, we recover the lower-bound of Corollary~\ref{cor_lb_cr}. We now illustrate our impossibility result in a very simple one-dimensional setting with $\beta = 1$.\\
+
+\noindent\textbf{Example.} Fix $\gamma =1$ and $\alpha = 1/2$, as well as $d = 1$ and $\beta = 1$. The minimax optimal rate for the cumulative regret over $\mathcal P(1, 1)$ is of order $\bigO{\sqrt{n}}$. One can easily check that the minimax optimal rate for the class $\mathcal P(1/2, 1)$ is of order $\bigO{n^{2/3}}$. The previous Theorem tells us that any strategy that achieves a regret of order $\bigO{n^{1/2}}$ over $\mathcal P(1, 1)$ incurs a regret of order at least $\bigO{n^{3/4}}$ on a problem in $\mathcal P(1/2, 1)$, which is strictly sub-optimal.
+
+
+% Another setting of interest (see~\cite{kleinberg2004a,auer2007improved}) is the case $\beta = 0$. This corresponds to the hardest possible setting if the smoothness is itself fixed.
+
+% \begin{ex}[$\beta = 0$] \emph{Fix $\gamma > \alpha$ and $\beta = 0$. Theorem~\ref{thm:adap_cumul} simply says that for any strategy that achieves optimal regret of order $\bigO{n^{1-\gamma/(2\gamma +d)}}$ over $\mathcal P(\gamma, 0)$, it incurs a regret of order at least $\bigO{n^{1-(\alpha(\gamma+d))/((2\gamma+d)(\alpha+d))}}$ on at least one problem that belongs to the class $\mathcal P(\alpha, 0)$. One can check immediately that this is strictly slower than the minimax optimal rate $\bigO{n^{1-\alpha/(2\alpha +d)}}$ over $\mathcal P(\alpha, 0)$, as we have $\frac{\alpha+d}{2\alpha+d} > \frac{\gamma+d}{2\gamma+d}$.}
+% \end{ex}
+
+% Finally, we show how to recover the bound in Corollary~\ref{cor_lb_cr} by instantiating Theorem~\ref{thm:adap_cumul} with $\alpha = \gamma$.
+
+% \begin{ex}[Lower bound for $\mathcal P(\alpha,\beta)$]
+% \emph{Fix $\gamma = \alpha$ and $\beta \geq 0$ such that $\alpha\beta \leq d$. We can recover the lower bound for the cumulative regret immediately, by setting $R_{\alpha,\beta}(n)^{(2\alpha+d-\alpha\beta)/(\alpha+d-\alpha\beta)} = 0.008n$, which yields $0.008 nR_{\alpha,\beta}(n)^{-\alpha/(\alpha+d-\alpha\beta)} = (0.008n)^{(\alpha + d -\alpha\beta)/(2\alpha + d - \alpha\beta)}$, and this quantity is precisely $R_{\alpha,\beta}(n)$. Therefore, for any strategy whose regret is bounded by $R_{\alpha,\beta}(n)$ uniformly over the class $\mathcal P(\alpha,\beta)$, this bound is tight.}
+% \end{ex}
+
+\subsection{Discussion}
+This result shows that for the problem of adaptivity to unknown smoothness, there exists a fundamental difference between optimization  and cumulative regret minimization. In optimization, adaptivity to unknown smoothness is possible (at the price of a logarithmic factor), while Theorem~\ref{thm:adap_cumul} rules out the existence of strategies that are minimax optimal simultaneously for two smoothness classes. This fundamental difference is related to the adaptive inference paradox in statistics: while adaptive estimation is usually possible, adaptive and honest confidence sets usually do not exist over standard models~\cite{cai2006adaptive,hoffmann2011adaptive}. The problem of simple regret minimization is akin to adaptive estimation, as it is a pure exploration problem. Model selection techniques (as e.g.~cross validation or Lepski's methods) can be safely employed to aggregate the output of several Subroutines run in parallel and corresponding to different values of $\alpha$, enabling thus adaptivity to $\alpha$. In a sense, there is no price to pay if one over-explores, which is akin to over-smoothing in adaptive estimation. On the other hand, the problem of cumulative regret minimization requires a careful trade-off between exploration and exploitation. Since this trade-off should depend on the unknown $\alpha$ \textit{exactly}, this leaves no room for over-exploration. This bears strong similarities with model testing and adaptive uncertainty quantification, i.e.~the problem of constructing adaptive and honest confidence sets, and as such it is not possible to adapt to the smoothness for the problem of cumulative regret minimization. This is particularly interesting in light of~\cite{bubeck2011pure}, where it is remarked that any strategy with good cumulative regret naturally gives rise to a strategy with good simple regret. We show here that in this adaptive setting, the minimax optimal attainable rates are not identical (up to a factor $n$). The proof of this result crucially depends on the fact that the value of the maximum over the class of functions we consider is not fixed and depends on the smoothness of $f$, which forces any strategy into an exploration and exploitation dilemma. We also remark here that $\beta$ is fixed in our construction: this shows that even for known $\beta$, minimax optimal adaptive strategies over the classes $\cup_{\alpha > 0} \mathcal P(\alpha, \beta)$ do not exist, and the intrinsic difficulty in the problem of adaptivity is tied to the unknown smoothness. Interestingly, despite $\beta$ being fixed, the minimax rate itself is not fixed as it depends on the smoothness which can take values $\alpha$ and $\gamma$. Finally, we remark that this rate is tight in the sense that there exists a  strategy that takes $R_{\gamma, \beta}(n)$ and $\alpha,\gamma,\beta$ as inputs and incurs the regret on $\mathcal P(\alpha,\beta)$ and $\mathcal P(\gamma, \beta)$ prescribed by Theorem~\ref{thm:adap_cumul}. This strategy is simply to use $R_{\gamma, \beta}(n)^{(2\alpha+d-\alpha\beta)/(\alpha+d-\alpha\beta)}$ samples with $\texttt{SR}(\alpha)$, and afterwards to play $\texttt{SR}(\gamma)$ within the confidence set output by $\texttt{SR}(\alpha)$.
+
+Even though adaptivity to the unknown smoothness for cumulative regret minimization is impossible in general, an interesting open problem is to find natural conditions under which adaptivity becomes possible, which we explore in the next section. This course of research was also taken in the problem of constructing adaptive and honest confidence sets, and while they mostly do not exist in all generality, it is well known that under some specific shape constraints, they exist~\cite{cai2013adaptive,bellec2016adaptive}. We refer to these settings as learning with \emph{extra-information}. First, we will show that adaptivity is possible over the subclass $\cup_{\alpha > 0} \mathcal P(\alpha, \beta, M(f))$ where $M(f)$ denotes the \emph{fixed} value of $f$ at its maxima. Next, we will show that adaptivity is possible over classes $\cup_{\alpha > 0} \mathcal P(\alpha, \beta(\alpha))$ for $\beta(\alpha) = (2r-1)/r + d/\alpha$ for some fixed $r \in [0,1/2]$.
+
+% , where we show that if the value of $f$ at its maxima is known, there exists a minimax optimal strategy. Another sufficient condition is that if the rate (as a function of $\alpha$ and $\beta$) is known to the forecaster, adaptivity is again possible. In both these settings, the previous dilemma of exploration and exploitation can be solved, as the strategy has a point of comparison which can be used to balance these two objectives.
+
+\section{Learning in the presence of extra-information}\label{sec:info}
+In this section, we investigate two settings where the learner is given \emph{extra-information} and show that adaptivity to unknown smoothness is possible for the cumulative regret. We explore two conditions: the case where $M(f)$ the value at the maxima is known to the learner and the \emph{known rate} setting, which we describe later. To solve these problems, we introduce meta-strategies which act on a set of subroutines (Subroutine~\ref{alg:warmup}, \texttt{SR}) initialized with different smoothness parameters. Specifically, different runs of Subroutine~\ref{alg:warmup} are kept active in parallel, and at each round the Meta-Strategy decides \emph{online} to further allocate a fraction $\sqrt{n}$ of the total budget $n$ to Subroutines that exhibit good early performances, in a sense we shall make clear later. Each time a Subroutine is given a fraction of the budget to perform new function evaluations, learning resumes for this Subroutine where it was halted: we stress here that the information acquired by Subroutines is never thrown.\\
+
+\textbf{Known $M(f)$ setting.} At the beginning of the game, the learner is given $M(f)$ the value of $f$ at its maxima, allowing for more efficient exploitation. In light of our the proof of Theorem~\ref{thm:adap_cumul} (which does not cover this setting), we see intuitively that the exploitation exploration dilemma leading to the impossibility result arose from the two different values that $M(f)$ could take in our class of functions. Here, as soon as the strategy has identified a region where $f$ is close in value to $M(f)$, it can exploit aggressively and keep track on-the-fly of the regret it incurs. By being aware of its own performance, the learner can adjust its exploration/exploitation trade-off optimally.\\
+
+\textbf{Known rate setting.} The learner is provided with extra-information $R^*(n,\delta)$ that we call the \emph{rate}. $R^*(n,\delta)$ is a high-probability bound on the pseudo-regret of one of the Subroutines used by the Meta-Strategy, had it been run in isolation with a budget $n$ of function evaluations. Although it is more general, this covers the canonical case $\alpha\beta = d$. A similar setup was explored in the recent work~\cite{agarwal2016corralling}, where they come up with a meta-strategy to aggregate bandit algorithms that also works under adversarial settings.
+
+\subsection{Description of the Meta-Strategy}
+We first describe the initialization phase of the Meta-Strategy and notations, and then explain how it operates in each setting.\\
+\setlength{\textfloatsep}{5pt}
+
+\setlength{\columnseprule}{0.5pt}
+\begin{algorithm}[ht]
+\caption{Extra-information Meta-Strategy}
+   \label{alg:extra}
+   \small
+\begin{algorithmic}
+   \begin{multicols}{2}
+    \STATE \textbf{\underline{Initialization}}
+   \STATE {\bfseries Input:} $n$, $\delta$, $M(f)$ or $R^*(n,\delta)$ and $\texttt{SR}$
+   \STATE $\delta_0 = \frac{\delta}{\floor{\log(n)}^2}$, $T = 0$
+   \FOR{$i = 1,..., \floor{\log(n)}^3$}
+   \STATE $\alpha_i = \frac{i}{\floor{\log(n)}^3}$
+   \STATE Initialize $\texttt{SR}(i)$ with $\delta_0$, $n$, $\alpha_i$
+   \STATE $T_i(T) = 0$, $\widehat{S}_T(i) = 0$
+   \ENDFOR
+   \STATE \textbf{\underline{Case 1 ($M(f)$ known):}}
+    \WHILE{$T < n$}
+    \STATE $k = \arg\min_i \big[ T_i(T) M(f) - \widehat{S}_T(i)$ \big]
+    \STATE Perform $\sqrt{n}$ function evaluations with $\texttt{SR}(k)$
+    \STATE $T_k(T) = T_k(T) + \sqrt{n}$, $T = T + \sqrt{n}$
+    \STATE $\widehat S_T(k) = \sum_{t=1}^{T_k(T)} Y_k(t)$
+   \ENDWHILE
+   \vfill\null
+	\columnbreak
+   \STATE \textbf{\underline{Case 2 ($R^*$ known):}}
+   \STATE $\mathcal A_1 = \{1,...,\floor{\log(n)}^3\}$ (set of active $\texttt{SR}(i)$)
+   \STATE $T = |\mathcal{A}_1|\sqrt{n}$, $N = 1$ (round)
+   \WHILE{$T < n$}
+    \FOR{$i \in \mathcal A_N$}
+    \STATE Perform $\sqrt{n}$ function evaluations with $\texttt{SR}(i)$
+    \STATE $T_i(T) = N\sqrt{n}$
+    \STATE $\widehat{S}_T(i) = \sum_{t=1}^{T_i(T)}Y_i(t)$
+    \ENDFOR
+    \STATE $k = \arg\max_{i \in \mathcal A_N} \widehat S_T(i)$
+    \STATE $\mathcal A_{N+1} = \mathcal A_{N}$
+    \FOR{$i \in \mathcal A_N$}
+    \IF{$\widehat{S}_T(k) - \widehat{S}_T(i) > R^*(n,\delta) + \sqrt{T_i(t)}\log(n\floor{\log(n)}^3/\delta)$}
+    \STATE Eliminate $\texttt{SR}(i)$, $\mathcal A_{N+1} = \mathcal A_{N+1} \setminus \{i\}$
+    \ENDIF
+    \ENDFOR
+    \STATE $N = N+1$, $T = T + |\mathcal A_{N}|\sqrt{n}$
+   \ENDWHILE
+   \STATE Spend rest of the budget with $\texttt{SR}(i)$ for $i \in \mathcal A_{N}$
+   \end{multicols}
+\end{algorithmic}
+\vspace{-0.3cm}
+\end{algorithm}
+
+
+\noindent\textbf{Initialization:} The Meta-Strategy has three parameters: the maximum budget $n$, which we assume for simplicity to be of the form $m^2$ for some $m \in \mathbb N^*$, and a confidence parameter $\delta$, as well as an extra-information parameter $M(f)$ or $R^*(n,\delta)$. It uses multiple instances of Subroutine~\ref{alg:warmup}, which are run in parallel with smoothness parameters $\alpha_i$ over the grid $\{i/\floor{\log(n)}^2\}$ with ${i \in \{1,..., \floor{\log(n)}^3\}}$. First, each Subroutine is initialized with a smoothness parameter $\alpha_i$, a confidence parameter $\delta_0 = \delta/\floor{\log(n)}^3$, and we refer to this Subroutine as $\texttt{SR}(i)$. $T_i(T)$ is the number of function evaluations performed by $\texttt{SR}(i)$ from time $t = 1$ to $T$. Each time $\texttt{SR}(i)$ performs a function evaluation in a point $X_i(t)$ (where $X_i(t)$ for $t \leq T_i(T)$ corresponds to the $t$-th function evaluation performed by $\texttt{SR}(i)$) it receives $Y_i(t)$, which is passed to the Meta-Strategy. In both settings, the Meta-Strategy updates the quantity $\widehat{S}_T(i) = \sum_{t=1}^{T_i(t)} Y_i(t)$ each time $\texttt{SR}(i)$ performs new function evaluations. We will also consider the empirical regret $\widehat{R}_T(i) = T_i(T)M(f) - \widehat{S}_T(i)$.\\
+
+\noindent\textbf{Case 1 ($M(f)$ known):} The Meta-Strategy is called with parameter $M(f) = \max_{x \in \mathcal X} f(x)$. After the initialization, the Meta-Strategy operates in rounds of length $\sqrt{n}$. At the beginning of each round at time $T = u \sqrt{n}$ for some $u \in \{0, ..., \sqrt{n}\}$, the next batch of $\sqrt{n}$ function evaluations are allocated to the Subroutine which has accumulated the smallest empirical regret up to time $T$. More precisely, the index $k = \arg\min_i \widehat{R}_T(i)$ is chosen, and $\texttt{SR}(k)$ resumes its learning where it was halted, performing $\sqrt{n}$ more function evaluations. The number of samples allocated to $\texttt{SR}(k)$ and its empirical regret $\widehat{R}_T(k)$ are then updated. As the heuristic is to allocate new samples to the Subroutine that has currently incurred the smallest regret, this ensures that the regret incurred by each of the Subroutines grows at the same rate and is of the same order at time $n$. Therefore, we expect the Meta-Strategy to perform almost as well as the best Subroutine it has access to, up to a multiplicative factor that depends on the total number of Subroutines.\\
+
+\noindent\textbf{Case 2 ($R^*$ known):} Here, the Meta-Strategy is called with parameter $R^*(n,\delta)$. It proceeds in rounds and performs a \emph{successive elimination} of the Subroutines. At round $N$, we call $\mathcal A_N$ the set of active Subroutines, with $\mathcal A_1 = \{1, ..., \floor{\log(n)}^3\}$. The rate $R^*(n,\delta)$ is such that there exists $i^* \in \mathcal A_1$ for which for all $T \in \{\sqrt{n}, ..., n\}$ we have: $TM(f) - \sum_{t=1}^T f(X_{i^*}(t)) \leq R^*(n,\delta)$ with probability at least $1-\delta$. For any $i \in \mathcal A_N$, the Meta-Strategy allocates $\sqrt{n}$ function evaluations to be performed by $\texttt{SR}(i)$, and the Meta-Strategy updates: $\widehat{S}_T(i) = \sum_{t=1}^{T_i(T)} Y_i(t)$. At the end of a round, the Meta-Strategy keeps computes the index $k = \arg\max_{i \in \mathcal A_T} \widehat{S}_T(i)$ of the best performing (active) Subroutine. Any active $\texttt{SR}(i)$ that meets the following condition is \emph{eliminated}:
+$$
+\widehat{S}_T(k) - \widehat{S}_T(i) > R^*(n,\delta) + 2\sqrt{T_i(t)}\log(n\floor{\log(n)}^3/\delta).
+\vspace{-0.1cm}
+$$
+Heuristically, the Meta-Strategy uses $\texttt{SR}(k)$ as a pivot to eliminate the remaining active Subroutines, as the samples collected by $\texttt{SR}(k)$ cannot be too far $M(f)$, and this difference depends on $R^*(n,\delta)$. This extra-information allows the Meta-Strategy to eliminate Subroutines that perform poorly at the optimal rate. It is important to note that this cannot be done in the general setting, as this rate depends on both $\alpha$ and $\beta$, which are unknown to the learner.
+
+\subsection{Main Results for the Meta-Strategy}
+
+% The Meta-Strategy uses multiple instances of Subroutine~\ref{alg:warmup}, which are run in parallel with smoothness parameters $\alpha_i$ over the grid $\{i/\floor{\log(n)}\}$ with ${i \in \{1,..., \floor{\log(n)}^3\}}$. First, each Subroutine $\texttt{SR}(i)$ is initialized with a smoothness parameter $\alpha_i$, a confidence parameter $\delta_0$, and it is allocated $\sqrt{n}$ function evaluations. We define $T_i(T)$ the total number of function evaluations allocated to $\texttt{SR}(i)$. Each time $\texttt{SR}(i)$ is called, new samples $Y_i(t)$ are obtained and passed to the Meta-Strategy, which updates the total regret incurred by $\texttt{SR}(i)$ up to time $T$. This quantity is simply $\widehat R_T(i) = T_i(T) M(f) - \sum_{t=1}^{T_i(T)} Y_i(t)$, where $Y_i(t)$ is the $t$-th sample obtained according to the sampling strategy of $\texttt{SR}(i)$. After the initialization, the Meta-Strategy operates in rounds of length $\sqrt{n}$. At the beginning of each round at time $T$, the next batch of $\sqrt{n}$ function evaluations are allocated to the Subroutine which has accumulated the smallest regret up to time $T$, namely it picks the $\texttt{SR}(k)$ with $k = \arg\min_i \widehat{R}_T(i)$. $\texttt{SR}(k)$ then resumes its learning where it was halted with $\sqrt{n}$ function evaluations are performed. The Meta-Strategy updates accordingly the cumulative regret and number of samples allocated to $\texttt{SR}(k)$. Intuitively, by always allocating samples to the Subroutine that has currently incurred the smallest regret, we ensure that the regret incurred by each of the Subroutines grow at the same rate and is of the same order for all the Subroutines at time $n$. Therefore, we only need at least one Subroutine with good regret guarantees in our set of Subroutines for the Meta-Strategy to perform as well as this Subroutine up to a multiplicative factor that depends on the total number of Subroutines that it uses.
+
+We now state our main \emph{adaptive} results for these shape-constrained settings.
+\begin{theorem}\label{thm:adap_f_star}
+Fix $\alpha \in [0.5\sqrt{d/\log(n)}, \floor{\log(n)}]$ and $\beta \geq 0$ such that $\alpha\beta \leq d$, with both parameters unknown to the learner. For any $f \in \mathcal P(\alpha,\beta)$ such that $f$ takes value $M(f)$ at its maxima, the Meta-Strategy~\ref{alg:extra} run with budget $n$, confidence parameter $\delta= 1/\sqrt{n}$ and $M(f)$ is such that its regret is bounded as:
+$$
+\mathbb E(R_n) \leq C\log^p(n) n^{1-\alpha/(2\alpha + d - \alpha\beta)},
+$$
+where the expectation is taken with respect to the samples, $C > 0$ and $p$ do not depend on $n$.
+\end{theorem}
+This matches (up to log factors) the minimax optimal rate for the class of functions $f \in \mathcal P(\alpha, \beta)$ with $M(f)$ fixed that we proved in Corollary~\ref{cor_lb_cr}.
+
+% \subsection{Rate is known}
+% We now explore the second direction left open by our proof of the impossibility result (Theorem~\ref{thm:adap_cumul}). In this proof, the hardness parameter $\beta$ is fixed and there are two smoothness hypotheses $\gamma$ and $\alpha$, with the constraint $\gamma\beta \leq d$. The (non-adaptive) minimax optimal rate over $\mathcal P(\alpha,\beta)$ and $\mathcal P(\gamma,\beta)$ differs as soon $\alpha < \gamma$ or $\gamma\beta \neq d$. A natural question is, what happens if the learner ignores the true value of the smoothness $\alpha$, but is supplied with the extra information that $\alpha\beta = d$. Although it is more general, this covers cases where $f$ behaves as $\Theta\left(|x-x^*|^\alpha\right)$ around its unique maximum but $\alpha$ is unknown to the learner. In this setting, in which our lower bound does not rule out the existence of an adaptive strategy, the optimal rate is fixed and of order $\bigO{\sqrt{n}}$, independently of the smoothness $\alpha$ or the dimension $d$.\\
+
+% More generally than the case $\alpha\beta = d$, we consider the setting where the learner is provided with extra-information $R^*: \{1, ..., n\} \rightarrow [0,n]$ that we call the \emph{rate}. This rate describes the achievable rate by one of the $\texttt{SR}(i)$ used the Meta-Strategy. As an illustration, in the setting $\alpha\beta = d$, we have $R^*(T) = \tilde{\mathcal O}(\sqrt{T})$.
+
+% \\which bounds the achievable regret had it known the smoothness $\alpha$. We assume that there exists $\alpha_i \in \{i/\floor{\log(n)}\}$ for $i \in \{1,..., \floor{\log(n)}^3\}$ such that if the Subroutine~\ref{alg:warmup} is run with parameters $\alpha_i$, $n$, $\delta$, then with probability at least $1-\delta$, for all $T \leq n$, we have:
+% $$
+% TM(f) - \sum_{t=1}^T f(X_i(t)) \leq R^*(T).
+% $$
+% As in the known $M(f)$ setting, our Meta-Strategy allocates function evaluations to non-adaptive Subroutines run with smoothness parameters over the grid $\{i/\floor{\log(n)}\}$ for $i \in \{1,..., \floor{\log(n)}^3\}$. This Meta-Strategy however operates a \emph{successive elimination} of the Subroutines. Similar to the Meta-Strategy~\ref{alg:f_star}, it operates in rounds of length $\sqrt{n}$. All active Subroutines are allocated $\sqrt{n}$ new samples, and the sum of the rewards obtained by $\texttt{SR}(i)$ up to time $T$ is updated: $\widehat{S}_T(i) = \sum_{t=1}^{T_i(T)} Y_i(t)$. After each round, the Meta-Strategy keeps track of the best performing $\texttt{SR}(k)$ where $k = \arg\max_{i\mathcal A_T} \widehat{S}_T(i)$. Any active $\texttt{SR}(i)$ that meets the following condition is \emph{eliminated}:
+% $$
+% \widehat{S}_T(k) - \widehat{S}_T(i) \geq R^*(T_i(t)) + 2\sqrt{T_i(t)}\log(n\floor{\log(n)}^3/\delta),
+% $$
+% where $R^*$ is such that there exists $\texttt{SR}(i^*)$ for which it holds with probability at least $1-\delta$ for all $\sqrt{n} \leq T\leq n$:
+% $$
+% TM(f) - \sum_{t=1}^T f(X_{i^*}(t)) \leq R^*(T),
+% $$
+% Intuitively, the Meta-Strategy uses $\texttt{SR}(k)$ as a pivot to eliminate other Subroutines, as the samples collected by $\texttt{SR}(k)$ cannot be too far $M(f)$, and this difference depends on $R^*(T)$. This information allows the Meta-Strategy to eliminate Subroutines that perform poorly at the optimal rate.
+
+\begin{theorem}\label{thm:adap_rate}
+Fix $\alpha$, $\beta$ as in Theorem~\ref{thm:adap_f_star}. For any $f \in \mathcal P(\alpha,\beta)$, the Meta-Strategy~\ref{alg:extra} run with budget $n$, confidence parameter $\delta$ and access to the parameter $R^*(n, \delta)$ is such that with probability at least $1-2\delta$, its pseudo-regret is bounded as:
+\vspace{-0.2cm}
+$$
+R_n \leq \floor{\log(n)}^3\left(2R^*(n, \delta) + 8\sqrt{n}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right) + \sqrt{n}\right),
+\vspace{-0.1cm}
+$$
+where the expectation is taken with respect to the samples.
+\end{theorem}
+By Lemma~\ref{lem:approx_grid} in the Appendix, which bounds the best attainable rate attainable by the Subroutines run smoothness parameters $\alpha_i$ over a grid of step-size $\floor{\log(n)}^2$, we know that there exists $\texttt{SR}(i^*)$ such that with probability at least $1-\delta$, its pseudo-regret is such that $R_n(i^*) \leq C\log^p\left(\frac{n}{\delta}\right) n^{1-\alpha/(2\alpha+d-\alpha\beta)}$ with $p \leq 1$ and where $C>0$ does not depend on $n$ and $\delta$.
+% Thus, if the Meta-Strategy is initialized with $\delta = n^{-1/2}$ and $R^*(n) = \log^2(n)  n^{1-\alpha/(2\alpha+d-\alpha\beta)}$, then for $n$ large enough we have $R_n(i^*) \leq R^*(n)$ with probability at least $1-n^{-1/2}$. 
+This naturally leads to the following Corollary:
+
+\begin{cor}\label{cor:adap_rate}
+Fix $\alpha$, $\beta$ as in Theorem~\ref{thm:adap_f_star}. Let $r = \frac{\alpha+d-\alpha\beta}{2\alpha + d - \alpha\beta}$ be known to the learner, without direct access to $\alpha$ nor $\beta$. Then for any $f \in \mathcal P(\alpha,\beta)$, the Meta-Strategy~\ref{alg:extra} run with budget $n$, confidence parameter $\delta = n^{-1/2}$ and $R^*(n) = \log^2(n)n^r$ is such that for $n$ large enough its expected pseudo-regret is upper-bounded as:
+$$
+\mathbb E[R_n] \leq \floor{\log(n)}^3\left(2\log^2(n)n^{1-\alpha/(2\alpha + d - \alpha\beta)} + 8\sqrt{n}\log\left(n^{3/2}\floor{\log(n)}^3\right) + \sqrt{n}\right),
+$$
+where the expectation is taken with respect to the samples.
+\end{cor}
+This matches the minimax optimal rate (up to log factors) for the cumulative regret that we proved in Corollary~\ref{cor_lb_cr}. In particular, if $\alpha\beta = d$, then our Meta-Strategy run with budget $n$, confidence parameter $\delta = n^{-1/2}$ and $R^*(n) = \log^2(n)\sqrt{n}$, is such that its expected pseudo-regret is of order $\tildeO{\sqrt{n}}$. This extends the result of~\cite{bull2015adaptive} to our setting and interestingly, we also recover a result of~\cite{yu2011unimodal} (Theorem 4.2 and Assumption 3.2) and \cite{combes2014unimodal} (Proposition 1 and Assumption 2) in the one-dimensional unimodal continuum-armed bandit setting, but \emph{without assuming unimodality}.
+% \begin{algorithm}[H]
+% \caption{Known rate Meta-Strategy}
+%    \label{alg:rate_known}
+% \begin{algorithmic}
+%    \STATE {\bfseries Input:} $n$, $\delta$, $R^*$ and a non-adaptive Subroutine
+% %   \STATE Set $\alpha_i =\frac{i}{\log(n)}$, for any $i \in [1, \floor{\log(n)}^3]$
+% %   \STATE $\delta' = \delta/\log(n)$
+%    \STATE Let $\delta_0 = \frac{\delta}{\floor{\log(n)}^3}$, $T = \sqrt{n}\floor{\log(n)}^3$
+%    \FOR{$i = 1,..., \floor{\log(n)}^3$}
+%    \STATE Define $\alpha_i = \frac{i}{\floor{\log(n)}}$ for $i \in \{1,..., \floor{\log(n)}^3\}$
+%    \STATE Initialize $T_i(T) = 0$ the number of samples allocated to $\texttt{SR}(i)$
+%    \ENDFOR
+%    \STATE Initialize set of active Subroutines: $\mathcal A_1 = \{1,...,\floor{\log(n)}^3\}$
+%    \STATE $T = |\mathcal{A}_1|\sqrt{n}$, $N = 1$
+%    \WHILE{$T < n$}
+%     \FOR{$i \in \mathcal A_N$}
+%     \STATE Perform $\sqrt{n}$ function evaluations by $\texttt{SR}(i)$ (with parameters $\delta_0, n$)
+%     \STATE Update sum of rewards: $\widehat{S}_T(i) = \sum_{t=1}^{T_i(T)}Y_i(t)$
+%     \STATE $T_i(T) = N\sqrt{n}$
+%     \ENDFOR
+%     \STATE Update current best $\texttt{SR}(k)$: $k = \arg\max_{i \in \mathcal A_T} \widehat S_T(i)$
+%     \STATE $\mathcal A_{N+1} = \mathcal A_{N}$
+%     \FOR{$i \in \mathcal A_T$}
+%     \IF{$\widehat{S}_T(k) - \widehat{S}_T(i) \geq R^*(T_i(t)) + 4\sqrt{T_i(t)}\log(n\floor{\log(n)}^3/\delta)$}
+%     \STATE Eliminate $\texttt{SR}(i)$: $\mathcal A_{N+1} = \mathcal A_{N+1} \setminus \{i\}$
+%     \ENDIF
+%     \ENDFOR
+%     \STATE $N = N+1$, $T = T + |\mathcal A_{N+1}|\sqrt{n}$
+%    \ENDWHILE
+% \end{algorithmic}
+% \end{algorithm}
+
+
+
+\acks{The authors would like to thank Samory Kpotufe for many useful discussions. This work is partly funded  by the Deutsche Foschungsgemeinschaft (DFG, German Research Foundation) on the Emmy Noether grant for the project MuSyAD (CA 1488/1-1) `anomaly detection in complex systems', on the GK 2297 MathCoRe on “Mathematical Complexity Reduction"  – 314838170, GRK 2297 MathCoRe, and on the SFB 1294 Data Assimilation on “Data Assimilation — The seamless integration of data and models", Project A03.}
+
+
+\bibliography{library1.bib}
+
+
+\appendix
+\section{Proofs of Section~\ref{sec:prelim}}
+\subsection{Proof of Proposition~\ref{prop:ab_d}}\label{proof:ab_d}
+\begin{proof}
+Consider $x^*$ such that $f(x^*) = M(f)$ and the $L_{\infty}$-ball of radius $r$ centered in $x^*$, $r \in (0,1]$. By smoothness of $f$ around $x^*$, for any $x$ such that $|x-x^*|_{\infty} \leq r$, we have:
+$$|f(x) - M(f)| \leq \lambda r^{\alpha},$$
+which brings $\mu(\mathcal X(\lambda r^\alpha)) \geq r^d$. On the other hand, by Assumption~\ref{asuT}, we have $\mu(\mathcal X(\lambda r^\alpha)) \leq B\lambda^\beta r^{\alpha\beta}$. Combining both conditions, we have for all $r \in (0, 1]$:
+$$
+\frac{1}{B\lambda^{\beta}} \leq r^{\alpha\beta - d}.
+$$
+As this has to hold true for all $r \in (0, 1]$, considering $r_l=2^{-l}$ yields $\alpha\beta \leq d$.
+
+\end{proof}
+\subsection{Non-adaptive Subroutine}\label{sec:sr}
+We first define a dyadic hierarchical partitioning of $[0,1]^d$, on which our strategy bases its exploration of the space. 
+\begin{defi}\label{def:grid}
+We write $G_l$ for the regular dyadic grid on the unit cube of mesh size $2^{-l}$. It defines naturally a partition of the unit cube in $2^{ld}$ smaller cubes, or cells $C\in G_l$ with volume $2^{-ld}$ and edge length $2^{-l}$. We have $[0,1]^d = \bigcup_{C\in G_l} C$ and $C\cap C' = \emptyset$ if $C\neq C'$, with $C,C' \in G_l^2$. We define $x_C$ as the center of $C\in G_l$, i.e.~the barycenter of $C$.\\
+We write $r_l \doteq \max_{x,y \in C} |x-y|_{\infty} = 2^{-l}$ for the diameter of cells $C \in G_l$.
+
+\end{defi}
+
+
+\begin{algorithm}
+\caption{Non-adaptive Subroutine (\texttt{SR})}
+   \label{alg:warmup}
+\begin{algorithmic}
+   \STATE {\bfseries Input:} $n$, $\delta$, $\alpha$%, $\mathcal{X}$
+   \STATE {\bfseries Initialization:} $t=2^dt_{1,\alpha}$, $l=1$, $\mathcal{A}_1 \doteq G_1$ (active space), $\forall l'>1, \mathcal{A}_{l'} \doteq \emptyset$
+   \WHILE{$t \leq n$}
+   \STATE $\widehat{M}_l = 0$
+   \FOR{each active cell $C \in \mathcal{A}_l$} 
+   	\STATE Perform $t_{l,\alpha}$ function evaluations in $x_C$ the center of $C$
+    \STATE $\widehat{f}(x_C) = \frac{1}{t_{l,\alpha}}\sum_{i=1}^{t_{l,\alpha}}Y_{C,i}$
+    \STATE $\widehat{M}_l = \max(\widehat{M}_l, \widehat{f}(x_C))$
+   \ENDFOR 
+   \FOR{each active cell $C \in \mathcal{A}_l$} 
+   \IF{$\Big\{\widehat{M}_l - \widehat{f}(x_C) \leq B_{l,\alpha}\Big\}$}
+   \STATE $\mathcal{A}_{l+1} =\mathcal{A}_{l+1} \cup 
+   \{C' \in G_{l+1} \cap C\}$ // \textit{keep all children $C'$ of $C$ active}
+   \ENDIF
+   \ENDFOR
+%   \STATE Split cells in $\mathcal{A}_{l+1}$ into $2^D$ cells of depth $l+1$
+    \STATE { Increase depth to $l = l+1$, and set $t = t+ |\mathcal{A}_{l}|\cdot t_{l,\alpha}$}
+%   \STATE $N_{l} = \#\mathcal{A}_{l}$ (number of active cells) {\color{blue} alex : Do we need to define this in the main text? Can't we just define this in proof?}
+%   \STATE $t \doteq t+N_{l}t_l$
+   \ENDWHILE
+   \STATE{$L = l-1 \quad \quad \quad \quad$// \textit{the final completed depth}}
+   \STATE Sample any $x \in \mathcal{A}_{L+1}$ until budget expires
+   \STATE {\bfseries Output:} $\mathcal{A}_{L+1}$ // \textit{return active set after final depth $L$}
+\end{algorithmic}
+\end{algorithm}
+
+The Subroutine takes as input parameter $\alpha$ the smoothness parameters, $n$ the maximum sampling budget, and $\delta$ a confidence parameter. In order to find the maxima of $f$, it refines a dyadic partition of the space, starting with $2^{d}$ hypercubes to sample from, and zooming in on regions that are close (in function value) to the optima. At depth $l$, the active cells in $\mathcal{A}_l$ are sampled $t_{l,\alpha} \doteq 0.5\log(1/\delta_l)b_{l,\alpha}^{-2}$ times, where $b_{l,\alpha} \doteq r_l^{\alpha}$ and $\delta_l \doteq \delta 2^{-l(d+1)}$. After collecting $t_{l,\alpha}$ noisy evaluations $(Y_{C,i})_{i \leq t_{l,\alpha}}$, it computes a simple average to estimate $f(x_C)$:
+$$
+\widehat{f}(x_C) = \frac{1}{t_{l,\alpha}}\sum_{i=1}^{t_{l,\alpha}}Y_{C,i}.
+$$
+Once all the cells at depth $l$ have been sampled, the Subroutine computes a current estimate of the maximum $\widehat{M}_l = \max_{C \in \mathcal A_l} \widehat{f}(x_C)$. Then, for each cell $C$ in the active set $\mathcal A_l$, it compares $\widehat{M}_l -\widehat{f}(x_C)$ with $B_{l,\alpha} = 2 \big(\sqrt{\frac{\log(1/\delta_l)}{2 t_{l,\alpha}}} +b_{l,\alpha}\big)$, where we set $t_{l,\alpha}$ such that the variance term is of the same magnitude as the bias term $b_{l,\alpha}$. If $\widehat{M}_l -\widehat{f}(x_C) \geq B_{l,\alpha}$, this cell is \textit{eliminated}, as the Subroutine rules it unlikely that there exists $x \in C$ such that $f(x) = M(f)$. On the other hand, if $\widehat{M}_l - \widehat{f}(x_C)$ is smaller than $B_{l,\alpha}$, then $C$ is kept active, and all its children $\{C': C \cap G_{l+1}\}$ are added to $\mathcal A_{l+1}$. This process is repeated until the budget is not sufficient to sample all the cells that are still active at depth $L+1$, and the Subroutine returns $\mathcal{A}_{L+1}$ the last active set, and the recommendation $x(n)$ can be any point chosen in $\mathcal{A}_{L+1}$.
+
+\subsection{Proof of Proposition~\ref{prop:non-adap}} \label{proof_non_adap}
+Let us write in this proof in order to simplify the notations
+$$t_{l} = t_{l,\alpha},~~~~~b_{l} = b_{l,\alpha},~~~~~B_l = B_{l,\alpha}~~~~\text{and}~~~~N_l = |\mathcal A_l|.$$
+
+\textbf{Step 1: A favorable event.}\\
+Consider a cell  $C$ of depth $l$. We define the event:
+$$
+\xi_{C,l} = \Big\{ |t_l^{-1}\sum_{i=1}^{t_l} Y_{C,i} - f(x_C)| \leq \sqrt{\frac{\log(1/\delta_l)}{2t_l}} \ \Big\},
+$$
+where the $(Y_{C,i})_{i\leq t_l}$ are samples collected in $C$ at point $x_C$ if $C$ if the algorithm samples in cell $C$. We remind that
+$$\widehat{f}(x_C) =\frac{1}{t_l}\sum_{i=1}^{t_l} Y_{C,i}.$$
+As $Y_{C,i} = f(x_C) + \epsilon_i$ where $\{\epsilon_i\}_{i \leq n}$ are zero-mean $1$-sub-Gaussian independent random variables, we know from Hoeffding's concentration inequality that $\mathbb{P}(\xi_{C,l}) \geq 1-2\delta_l$.\\ 
+
+We now consider 
+$$\xi = \Big\{\bigcap_{l\in \mathbb N^*, C \in G_l} \xi_{C,l}\Big\},$$
+the intersection of events such that for all depths $l$ and any cell $C\in G_l$, the previous event holds true. Note that at depth $l$ there are $2^{ld}$ such events. A simple union bound yields $\mathbb{P}(\xi) \geq 1 - \sum_l 2^{ld}\delta_{l} \geq  1 - 4\delta$ as we have set $\delta_{l} = \delta 2^{-l(d+1)}$.
+
+On the event $\xi$, for any $l \in \mathbb N^*$, as we have set $t_l = \frac{\log(1/\delta_l)}{2b_{l}^2}$, plugging this in the bound implies that for each cell $C \in G_l$ that has been sampled $t_l$ times we have: 
+\begin{equation}\label{eq:xi}
+|\widehat{f}(x_C) - f(x_C)| \leq b_{l}.
+\end{equation}
+
+Note that by Assumption~\ref{asuC}, $b_l$ is such that for any $x \in C$, where $C\in G_l$, we have:
+\begin{equation}\label{eq:b_l}
+|f(x)- f(x_C)| \leq \max\{M(f) - f(x_C), b_l\}.
+\end{equation}
+
+\textbf{Step 2: No mistakes.}\\
+For $l \in \mathbb N^*$, let us consider $C \in G_l$ such that $\exists x^* \in C$, $x^* \in \mathcal X(0)$ i.e. $f(x^*) = M(f)$. Let us assume that $C \in \mathcal{A}_l$. Then on $\xi$:
+\begin{eqnarray}\label{eq:min_Ml}
+\widehat{M}_l \geq \widehat{f}(x_C) & \geq & f(x_C) - b_l \nonumber \\ 
+& \geq & f(x^*) - 2b_l \nonumber \\
+& \geq & M(f) - 2 b_l
+\end{eqnarray}
+Moreover, we have:
+\begin{equation}\label{eq:max_Ml}
+\widehat{M}_l \leq M(f)+b_l
+\end{equation}
+Equation~\eqref{eq:max_Ml} yields:
+\begin{eqnarray*}
+\widehat{M}_l - \widehat{f}(x_C) & \leq &  M(f) + b_l - (M(f) - 2 b_l) \\
+& \leq & 3 b_l < 4 b_l = B_l
+\end{eqnarray*}
+This shows that on $\xi$ any cell $C \in \mathcal{A}_l$ that contains a global optimum $x^*$ is never eliminated by the algorithm at depth $l$, and all its children are added to $\mathcal{A}_{l+1}$. As at depth $l=1$, all cells are active, 
+by induction we have $\forall l \geq 1$:
+\begin{equation}\label{eq:active_opt}
+\{\mathcal X(0) \cap G_l\} \subset \mathcal{A}_l
+\end{equation}
+
+\textbf{Step 3: A maximum gap.}\\
+Now consider an active cell at depth $l$: $C \in \mathcal{A}_l$ such that all its children are added to $\mathcal{A}_{l+1}$. If this cell is kept active at depth $l+1$, then it is such that: $$\widehat{M}_l - \widehat{f}(x_C) \leq B_l = 4b_l.$$
+By Equations~\eqref{eq:min_Ml} and~\eqref{eq:xi}, we know that on $\xi$:
+$$
+\widehat{M}_l - \widehat{f}(x_C) \geq M(f) - 2b_l - (f(x_C) + b_l),
+$$
+which brings that all cells kept active are such that:
+\begin{equation*}
+M(f) - f(x_C) \leq 7 b_l
+\end{equation*}
+By Equation~\eqref{eq:b_l}, we know that $\forall x \in C: f(x_C) - f(x) \leq \max\{M(f) - f(x), b_l\} \leq 7 b_l$, where we upper bound using the previous equation. This rewrites:
+\begin{eqnarray*}
+M(f) - f(x) \leq 7 b_l + M(f) - f(x_C),
+\end{eqnarray*}
+which implies that for any $x$ in $C$ kept active at depth $l+1$:
+\begin{equation}\label{eq:max_gap}
+M(f) - f(x) \leq 14 b_l,
+\end{equation}
+which implies:
+\begin{equation}\label{eq:subset}
+\mathcal{A}_{l+1} \subset \mathcal X(14 b_l) 
+\end{equation}
+
+\textbf{Step 4: A bounded number of active cells.}\\
+By Assumption~\ref{asuT}, we know that $\mu(\mathcal X(14 b_l)) \leq B 14^\beta b_l^\beta$. As each cell of depth $l$ has an $L_\infty$-volume of $r_l^{d}$, this allows us to bound the number of remaining active cells $N_{l+1}$ on $\xi$ for $l\geq 1$:
+\begin{eqnarray}\label{eq:bd_N_l}
+N_{l+1} & \leq & B 14^\beta b_l^\beta r_{l+1}^{-d} \nonumber \\
+& \leq & 2^{\alpha \beta} B (14)^\beta  r_{l+1}^{\alpha\beta -d}
+\end{eqnarray}
+Define $B' = \max(1,B) (14)^\beta$, then $N_l \leq 2^d B'r_l^{\alpha\beta -d}$ for all $l \geq 1$.\\
+
+\textbf{Step 5: A minimum depth.}\\
+We first bound $L$ the maximal depth by above naively. Notice that $t_L$ itself has to be smaller than $n$, otherwise the budget is insufficient to sample a single active times $t_L$ times, and the algorithm stops. This yields $L \leq \frac{1}{2\alpha}\log_2(2n)$, which brings the following bound:
+\begin{equation}\label{eq:bound_delta_L}
+\log(1/\delta_L) = \log(2^{L(d+1)}/\delta) \leq \frac{d+1}{2\alpha}\log(\frac{2n}{\delta})
+\end{equation}
+As we sample each active cell at depth $l$ a number $t_l = \frac{\log(1/\delta_l)}{2 b_l^2}$ times, we can now upper bound the total number of samples that the algorithm needs to reach depth $L$:
+\begin{eqnarray*}
+\sum_{l=1}^L t_l N_l & \leq & 2^d B' \sum_{l=1}^L \frac{\log(1/\delta_l)}{2 r_l^{2\alpha}} r_l^{\alpha\beta-d}\\
+& \leq & \frac{1}{2}2^d B' \log(1/\delta_L) \sum_{l=1}^L r_l^{\alpha\beta-d - 2\alpha} \\
+& \leq & \frac{1}{2}2^d B' \log(1/\delta_L) \sum_{l=1}^L 2^{l(2\alpha+ d - \alpha\beta)} \\
+& \leq & \frac{1}{2} 2^d B' \log(1/\delta_L) \frac{2^{L(2\alpha + d - \alpha\beta)}}{2^{2\alpha + d - \alpha\beta} - 1} \\
+& \leq & 2^d B' \log(1/\delta_L) \frac{2^{L(2\alpha + d - \alpha\beta)}}{2\alpha + d - \alpha\beta},
+\end{eqnarray*}
+where we use $2^c - 1 \geq c/2$ for any $c \in \mathbb R^+$in the last line. Combined with Equation~\eqref{eq:bound_delta_L}, this yields:
+\begin{equation}\label{eq:bound_budget}
+\sum_{l=1}^L t_l N_l \leq 2^d B' (d+1) \log\left(\frac{2 n}{\delta}\right) \frac{2^{L(2\alpha + d - \alpha\beta)}}{2\alpha(2\alpha + d - \alpha\beta)}.
+\end{equation}
+This implies that for any $T \leq n$, after $T$ function evaluations, the following depth $L(T)$ is reached:
+\begin{equation}\label{eq:min_depth}
+L(T) \geq \frac{1}{2\alpha + d - \alpha\beta}\log_2\Big(\frac{2\alpha(2\alpha + d - \alpha\beta)T}{D\log(\frac{2 n}{\delta})}\Big),
+\end{equation}
+where $D = 2^d B' (d+1)$\\
+\textbf{Step 6: Conclusion.}\\
+Using Equation~\eqref{eq:min_depth} with $T = n$, we can now ready to bound the simple regret $r_n$ with high probability, as we have on $\xi$ by Equation~\eqref{eq:subset}
+\begin{equation}
+\mathcal{A}_{L+1} \subset \mathcal X(8b_L)
+\end{equation}
+with $$b_L \leq \Big(\frac{2\alpha(2\alpha + d - \alpha\beta)n}{D\log(\frac{2n}{\delta})}\Big)^{-\frac{\alpha}{2\alpha + d - \alpha\beta}}.$$
+
+This shows that by recommending any $x(n) \in \mathcal A_{L+1}$, we have: $M(f) - f(x(n)) \leq 8b_L$.\\
+% This shows, combined with Equation~\eqref{eq:active_opt} that the Subroutine is $(\delta, \Delta, n)$-correct, with 
+% $$\Delta = 8\Big(\frac{D \log(\frac{2n}{\delta})}{2\alpha(2\alpha + d - \alpha\beta)n}\Big)^{\frac{\alpha}{2\alpha + d - \alpha\beta}},$$
+% where $D =  2^d \max(1,B)(14)^\beta (d+1)$. \\
+
+\textbf{Step 7: Bound on the cumulative regret.}\\
+We can now bound with high-probability the \textit{pseudo-regret} up to time $T \leq n$: $R_T = TM(f) - \sum_{t=1}^T f(X_t)$. Define $\Delta_l = 8b_{l-1}$, and recall that $\forall x \in C$ such that $C \in \mathcal{A}_{l}$, we have $M(f) - f(x) \leq 8 b_{l-1}$. We can naively bound the regret by splitting the regret before the reaching depth $L(T)$ and beyond this depth:
+\begin{eqnarray*}
+R_T & = & TM(f) - \sum_{t=1}^T f(X_t)\\
+& \leq & 2^d (M(f) - m(f))t_1 + \sum_{l=2}^{L(T)} t_l N_l \Delta_l + T\Delta_{L(T)}\\
+& \leq & A + 2^d B' 28 \log(1/\delta_{L(T)}) \sum_{l=1}^{L(T)} 2^{l(\alpha + d - \alpha\beta)} + T \Delta_{L(T)}\\
+& \leq & A + 2^d B' 28 \log(1/\delta_{L(T)}) \frac{2^{L(T)(\alpha + d - \alpha\beta)}}{\alpha + d - \alpha\beta} + 8T \Big(\frac{D\log(\frac{2n}{\delta})}{2\alpha(2\alpha + d - \alpha\beta)T}\Big)^{\frac{\alpha}{2\alpha + d - \alpha\beta}}\\
+& \leq & A + 2^d B' 28\frac{(d+1)}{2\alpha(\alpha+d-\alpha\beta)}\log(\frac{2n}{\delta})\Big(\frac{2\alpha(2\alpha + d - \alpha\beta)T}{D \log(\frac{2n}{\delta})}\Big)^{\frac{\alpha+d-\alpha\beta}{2\alpha+d-\alpha\beta}}\\
+& & \quad \quad +14 \Big(\frac{D \log(\frac{n}{\delta})}{2\alpha(2\alpha + d - \alpha\beta)}\Big)^{\frac{\alpha}{2\alpha + d - \alpha\beta}}T^{\frac{\alpha+d-\alpha\beta}{2\alpha+d-\alpha\beta}}\\
+& \leq & A + 2^d B' 14(d+1)D \left(\frac{\log(\frac{2n}{\delta})}{2\alpha(\alpha + d -\alpha\beta)}\right)^{\frac{\alpha}{2\alpha+d-\alpha\beta}}T^{\frac{\alpha+d-\alpha\beta}{2\alpha+d-\alpha\beta}},
+% & \leq & A + \frac{2^d B' 14(d+1)D}{4\alpha^2(2\alpha+d-\alpha\beta)}\log^2(\frac{2n}{\delta})T^{\frac{\alpha+d-\alpha\beta}{2\alpha+d-\alpha\beta}},
+\end{eqnarray*}
+with $A \leq (M(f) - m(f))(d+1)2^{2\alpha+d}\log(2/\delta)$ and $m(f) = \inf_x f(x)$. Importantly, this holds on $\xi$ for all $T \leq n$.\\
+
+Setting $T = n$, we can also get a bound in expectation:
+$$
+\mathbb{E}(R_n) \leq A + 2^d B' 14(d+1)D \left(\frac{\log(\frac{2n}{\delta})}{2\alpha(\alpha + d -\alpha\beta)}\right)^{\frac{\alpha}{2\alpha+d-\alpha\beta}}n^{\frac{\alpha+d-\alpha\beta}{2\alpha+d-\alpha\beta}} + 4 (M(f)- m(f))n \delta,
+$$
+and setting $\delta = 1/\sqrt{n}$ yields the result. As we assumed that $f$ takes values in $[0,1]$, we can upper bound $M(f) - m(f) \leq 1$.
+
+\section{Proofs of Section~\ref{sec:adap}}
+\subsection{Proof of Theorem~\ref{thm:lb_sr}}\label{proof:sr}
+\begin{proof}
+Let $\alpha > 0$, $\beta \geq 0$ such that $\alpha\beta < d$. The case $\alpha\beta = d$ corresponds to the usual $\bigO{n^{-1/2}}$ bound, which can easily be obtained using classical techniques with two hypothesis. Define $K = \lceil{\Delta^{\frac{\alpha\beta - d}{\alpha}}\rceil}$, and $\Delta$ such that:
+$$
+\Delta = \sqrt{\frac{K}{n}},
+$$
+with $n$ large enough such that $K \geq \frac{16\exp(2)}{3}$. One can easily check that we have $\Delta = \bigO{n^{-\frac{\alpha}{2\alpha + d - \alpha\beta}}}$ and $K = \bigO{n^{\frac{d-\alpha\beta}{2\alpha + d - \alpha\beta}}}$ which grows with $n$.
+
+Consider the grid $G$ which partitions $[0,1]^d$ into $N = \lceil \Delta^{-d/\alpha} \rceil$ disjoint hypercubes, and let us index the cells arbitrarily (for example using Cantor's pairing argument in $d$ dimensions). In what follows, we will write
+$$\mathcal S = \bigcup_{k\leq K} H_k.$$
+
+%will consider the subset $(H_k)_{k\leq K}$ of $[0,1]^d$, that we denote $\mathcal{A}$, and denote $\mathcal{A}_0$ the subset such that $\mathcal{A}_0 \cap  \mathcal{A} = \emptyset$ and $\mathcal{A}_0 \cup  \mathcal{A} = [0,1]^d$.\\
+
+\noindent
+
+Fix $M \in [1/2,1]$. We define the function $\phi_{s}(x)$ for $0 \leq s \leq K$ and $x \in [0,1]^d$.
+\begin{equation*}
+\phi_{s}(x) = \begin{cases}
+\max\{M-\Delta,M-|x-x_i|_{\infty}^{\alpha}\}, &\text{~if~~~} x\in H_i, i=s,\\
+M -\Delta, &\text{~if~~~} x\in H_i, i \neq s\\
+\max\{0, M -\Delta - \text{dist}_{\infty}(x, \mathcal{S})^{\alpha}\}, &\text{~if~~~} x \in \mathcal{S}^C,
+\end{cases}
+\end{equation*}
+where $\text{dist}_\infty(x, \mathcal{S}) \doteq \inf\{|x-z|_\infty, z \in \mathcal S\}$. It is clear that for any $s \in \{0, ..., K\}$, $\phi_s \in \Sigma(1,\alpha)$. \\
+We will now show that Assumption~\ref{asuT} for some $B >0$ is satisfied for $\phi_s$, $\forall s \in \{0,..., K\}$. For any $0 <\epsilon < \Delta < 1$ and any $\phi_s$, we have:
+$$
+\mu(\mathcal X(\epsilon)) \leq \epsilon^{d/\alpha} \leq \epsilon^\beta,
+$$
+as we have $\alpha\beta \leq d$. Now considering $\epsilon = \Delta$:
+$$
+\mu(\mathcal X(\epsilon)) \leq K \Delta^{d/\alpha} \leq 2 \epsilon^{\beta},
+$$
+as we have set $K = \lceil{\Delta^{(\alpha\beta-d)/\alpha}\rceil} \leq 2 \Delta^{(\alpha\beta-d)/\alpha}$. Finally, we consider $\epsilon \in ]\Delta, 1/2] $, and we have:
+\begin{eqnarray*}
+\mu(\mathcal X(\epsilon)) & \leq & \mu(\mathcal X(\Delta)) + \mu(\{x: \Delta < M- \phi_s(x) \leq \epsilon \})\\
+& \leq & 2 \Delta^\beta + \epsilon^{d/\alpha}\\
+& \leq & 3 \epsilon^\beta.
+\end{eqnarray*}
+
+
+So we have by construction :
+\begin{itemize}
+\item For any $s \leq K$, $\phi_s \in \mathcal{P}(\alpha,\beta)$ with $\lambda = 1$ as the constant in Assumption~\ref{asuC}.
+\item for any $s,t \leq K$, and any $x \in \mathcal S^C$, $\phi_s(x) = \phi_t(x)$ (one cannot distinguish problem $i$ from problem $j$ in $\mathcal{S}^C$)
+\item for any $s \in \{1, ..., K\}$, the maximum of $\phi_s$ is attained only in $x_s$ with value $\phi_s(x_s) = M$. This shows that the value at the maximum for $\phi_s$ for $s \in \{1, ..., K\}$ is fixed and known to the learner.
+\item  $\forall x \not\in H_s$, $\phi_s(x) = \phi_0(x)$: one cannot distinguish problem $s$ from problem $0$ outside of a small neighborhood around $x_s$.
+\item  For any $1 \leq s \leq K$, $\forall x \not\in H_s, M - \phi_s(x) \geq \Delta$
+\end{itemize}
+
+
+We now define $\mathcal{H}_K$ the set of recommendation problems such that for any $s \in \{0,..,K\}$, the problem $s$ is characterized by the mean-pay off function $\phi_s$, with zero-mean Gaussian noise of variance $1$, such that the observations are, conditionally on $X_t=x$,  i.i.d.~with distribution $Y_t \sim \mathcal{N}(\phi_s(x), 1)$. Let us fix a strategy (algorithm) with two components: a (possibly randomized) \emph{sampling} mechanism, which characterizes the next sampling point $X_t$ based on the previous observations $\{(X_i,Y_i)\}_{i<t}$, and a (possibly randomized) \emph{recommendation} $x(n)$ based on all the collected samples $\{(X_i,Y_i)\}_{i \leq n}$, which the algorithm outputs at the end of the game incurring the simple regret $M(\phi_s) - \phi_s(x(n))$. We write $\mathbb P_s$, $\mathbb E_s$, for the probability and expectation under the problem $s$ (uniquely characterized by the function $\phi_s$), when the previously mentioned strategy is used.\\
+
+For a sample $\{(X_i,Y_i)\}_{i\leq n}$ collected under problem $0$ by the previously introduced algorithm, we consider the log-likelihood ratio $L_{n,s} \doteq L_{n,s}(\{(X_i,Y_i)\}_{i\leq n})$ for $s \in \{1, ..., K\}$:
+\begin{eqnarray}\label{eq:bound_L}
+L_{n,s} & = & \sum_{t=1}^n \log\left(\frac{\mathbb P_0(Y_t | X_t)}{\mathbb P_s(Y_t | X_t)}\right) = \sum_{t=1}^n \frac{1}{2}\left( (Y_t-\phi_s(X_t))^2 - (Y_t-\phi_0(X_t))^2 \right) \nonumber\\
+& = & \sum_{t=1}^n \frac{1}{2}(\phi_0(X_t)-\phi_s(X_t))(2 Y_t-\phi_0(X_t) - \phi_s(X_t)) \nonumber\\
+& = & \sum_{t=1}^n \frac{1}{2} (\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)+\phi_0(X_t)-2 Y_t) \nonumber\\
+& \leq & \sum_{t=1}^n \frac{1}{2} (\phi_s(X_t)-\phi_0(X_t))(2\phi_s(X_t)-2 Y_t) \nonumber\\
+& \leq & \sum_{t=1}^n  (\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t),
+\end{eqnarray}
+where we use: $0 \leq \phi_s(x) - \phi_0(x) \leq \Delta$ for all $x\in H_s$ in the fourth line.\\
+% where we use the fact that $\forall x \in H_s$, we have $0 \leq \phi_s(x) - \phi_0(x) \leq \Delta$ and $\forall x \not\in H_s$, $\phi_s(x) = \phi_0(x)$, and we define $T_s(n) = \sum_{t=1}^{n} \mathbf 1\{X_t \in H_s\}$ as the number of samples collected in the cell $H_s$, and $\{(X_i(s),Y_i(s))\}_{i \leq T_s(n)}$ is a subset of $\{(X_t,Y_t)\}_{t \leq n}$ such that for any $i \leq T_s(n)$, $X_i(s)$ is the $i$-th sampled location and $Y_i(s)$ is the $i$-th reward collected in cell $H_s$. By definition of $\phi_0$, we have $\phi_0(x) = M-\Delta$ for $x \in H_s$. By Wald's lemma with the stopping time $n$ (which obviously does not depend on the collected observations in the finite budget setting), as the observations $Y_i(s)$ in cell $H_s$ are i.i.d. conditionally on $((X_1, Y_1), ..., (X_{t-1}, Y_{t-1}), X_t)$ and distributed as $\mathcal N(M-\Delta, 1)$ under problem $0$, we get:
+We now consider $\mathbb E_0(L_{n,s})$:
+
+\begin{eqnarray*}
+\mathbb E_0(L_{n,s}) & \leq & \sum_{t=1}^n \mathbb E_0\left((\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t)\right)\\
+& \leq & \sum_{t=1}^n \mathbb E_0\Big(\mathbb E_0\big((\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t) \big| X_t\big)\Big)\\
+& \leq & \sum_{t=1}^n \mathbb E_0\Big((\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t) - \mathbb E_0\big(Y_t \big| X_t\big)\Big)\\
+& \leq & \sum_{t=1}^n \mathbb E_0\left((\phi_s(X_t)-\phi_0(X_t))^2\right)\\
+& \leq & \sum_{t=1}^n \mathbb E_0\left((\phi_s(X_t)-\phi_0(X_t))^2\big| X_t \in H_s\right)\mathbb P_0(X_t \in H_s)\\
+& \leq & \max_{x \in H_s}(\phi_s(x)-\phi_0(x))^2 \sum_{t=1}^n \mathbb P_0(X_t \in H_s)\\
+& \leq & \Delta^2 \sum_{t=1}^n \mathbb P_0(X_t \in H_s)\\
+& \leq & \Delta^2 \mathbb E_0(T_s(n))
+\end{eqnarray*}
+% \begin{eqnarray*}
+% \mathbb E_0(L_{n,s}) & \leq & \sum_{t=1}^n \mathbb E_0\left((\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t)\right)\\
+% & \leq & \sum_{t=1}^n \mathbb E_0\left((\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t) \big| X_t \in H_s\right) \mathbb P_0(X_t \in H_s)\\
+% & \leq & \sum_{t=1}^n \mathbb E_0\left(\mathbb E_0\big(\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t)\big| X_t\big) \big| X_t \in H_s\right) \mathbb P_0(X_t \in H_s)\\
+% & \leq & \sum_{t=1}^n \mathbb E_0\left((\phi_s(X_t)-\phi_0(X_t))^2\big| X_t \in H_s\right) \mathbb P_0(X_t \in H_s)\\
+% & \leq & \sum_{t=1}^n \max_{x \in H_s}(\phi_s(x)-\phi_0(x))^2 \mathbb P_0(X_t \in H_s)\\
+% & \leq & \Delta^2 \sum_{t=1}^n \mathbb P_0(X_t \in H_s)\\
+% & \leq & \Delta^2 \mathbb E_0(T_s(n))
+% \end{eqnarray*}
+where we use the fact that the function evaluations $Y_t$ are independent and identically distributed as $\mathcal N(\phi_0(X_t), 1)$ conditionally on $X_t$, and we denote $\mathbb E_0(T_s(n)) =\sum_{t=1}^n \mathbb P_0(X_t \in H_s)$ the expected number of samples collected in $H_s$ by the strategy under problem $0$.
+% \begin{eqnarray}
+% \mathbb E_0(L_{n,s}) & = & \mathbb E_0\left(\log\left(\frac{\mathbb P_0(X_1,Y_1,...,X_n,Y_n)}{\mathbb P_s(X_1,Y_1,...,X_n,Y_n)}\right)\right)\\
+% & = & \mathbb E_0\left(\log\left(\frac{\prod_{t=1}^n \mathbb P_0(Y_t|X_t)\mathbb P_0(X_t|X_1,Y_1,...,X_{t-1},Y_{t-1})}{\prod_{t=1}^n \mathbb P_s(Y_t|X_t)\mathbb P_s(X_t|X_1,Y_1,...,X_{t-1},Y_{t-1})}\right)\right)\\
+% & = & \mathbb E_0\left(\log\left(\prod_{t=1}^n\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\right)\\
+% & = & \mathbb E_0\left(\sum_{t=1}^n\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\right)\\
+% & = & \mathbb E_0\left(\sum_{t=1}^n \mathbf 1\{X_t \in H_s\} \log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\right)\\
+% & = & \mathbb E_0\left(\sum_{t=1}^n \mathbf 1\{X_t \in H_s\} \max_{x \in H_s} \mathbb E_0\left(\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\Big| X_t = x\right)\right)\\
+% & \leq & \mathbb E_0\left(\sum_{t=1}^n \mathbf 1\{X_t \in H_s\} \Delta^2 \right)\\
+% & \leq & \sum_{t=1}^n  \mathbb E_0\left( \mathbf 1\{X_t \in H_s\} \log\left(\frac{d_0(Y_t | X_t)}{d_s(Y_t | X_t)}\right) \Big| X_1, Y_1, ..., X_{t-1}, Y_{t-1} \right)\\
+% & \leq & \sum_{t=1}^n  \mathbb E_0\left( \mathbf 1\{X_t \in H_s\} \mathbb E_0\left(\log\left(\frac{d_0(Y_t | X_t)}{d_s(Y_t | X_t)}\right)\right) \Big| X_1, Y_1, ..., X_{t-1}, Y_{t-1} \right)\\
+% & \leq & \sum_{t=1}^n  \mathbb E_0\left( \mathbf 1\{X_t \in H_s\} \max_{x \in H_s} \mathbb E_0\left(\log\left(\frac{d_0(Y_t | x)}{d_s(Y_t | x)}\right)\right) \Big| X_1, Y_1, ..., X_{t-1}, Y_{t-1} \right)\\
+% & \leq & \sum_{t=1}^n  \mathbb E_0\left( \mathbf 1\{X_t \in H_s\} \Delta^2 \Big| X_1, Y_1, ..., X_{t-1}, Y_{t-1} \right)
+% \end{eqnarray}
+
+% \begin{eqnarray}
+% \mathbb E_0(L_{n,s}) & = & \mathbb E_0\left(\log\left(\frac{\mathbb P_0(X_1,Y_1,...,X_n,Y_n)}{\mathbb P_s(X_1,Y_1,...,X_n,Y_n)}\right)\right)\\
+% & = & \mathbb E_0\left(\log\left(\frac{\prod_{t=1}^n \mathbb P_0(Y_t|X_t)\mathbb P_0(X_t|X_1,Y_1,...,X_{t-1},Y_{t-1})}{\prod_{t=1}^n \mathbb P_s(Y_t|X_t)\mathbb P_s(X_t|X_1,Y_1,...,X_{t-1},Y_{t-1})}\right)\right)\\
+% & = & \sum_{t=1}^n  \mathbb E_0\left(\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\right)\\
+% & = & \sum_{t=1}^n  \Bigg[\mathbb E_0\left(\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\Big| X_t \in H_s\right)\mathbb P_0(X_t \in H_s) \\
+% & & \ + \ \mathbb E_0\left(\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\Big| X_t \not \in H_s\right)\mathbb P_0(X_t \not \in H_s) \Bigg]\\
+% & = & \sum_{t=1}^n  \mathbb E_0\left(\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\Big| X_t \in H_s\right)\mathbb P_0(X_t \in H_s) \\
+% & \leq & \sum_{t=1}^n  \max_{x \in [0,1]^d} \mathbb E_0\left(\log\left(\frac{\mathbb P_0(Y_t|X_t)}{\mathbb P_s(Y_t|X_t)}\right)\Big| X_t = x\right)\mathbb P_0(X_t \in H_s)\\
+% & \leq & \Delta^2 \sum_{t=1}^n \mathbb P_0(X_t \in H_s)\\
+% & \leq & \Delta^2 \mathbb E_0(T_s(n))
+% \end{eqnarray}
+
+% where $\mathbb E_0(T_s(n)) \sum_{t=1}^n \mathbb P(X_t \in H_s)$ is the expected number of samples in cell $H_s$ collected by the sampling strategy from time $t = 1$ to $n$ under problem $0$, and we have $\sum_{k=1}^K \mathbb E_0(T_k(n)) \leq n$.\\
+
+We now state the two main technical lemmas we will use.
+
+\begin{lem}\label{lem:1}
+For any event $\mathcal E \in \mathcal F_n = \sigma(X_1, Y_1, ..., X_{n}, Y_{n})$ we have:
+$$
+\mathbb E_0(L_{n,s} | \ \mathcal E) \geq \log \left( \frac{\mathbb P_0(\mathcal E)}{\mathbb P_s(\mathcal E)} \right).
+$$
+\end{lem}
+\begin{proof}
+Use the change of measure identity and conditional Jensen's inequality (see~\cite{kaufmann2016complexity}, proof of Lemma 19).
+\end{proof}
+
+\begin{lem}\label{lem:2}
+Let $\rho_0, \rho_1$ be two probability distributions supported on some set $\mathcal X$, with $\rho_1$ absolutely continuous with respect to $\rho_0$. Then for any measurable function $\tau : \mathcal X \rightarrow \{0, 1\}$, one has:
+$$
+\mathbb P_{X \sim \rho_0}(\tau(X) = 1) + \mathbb P_{X \sim \rho_1}(\tau(X) = 0) \geq \frac{1}{2} \exp\big(-\text{\emph{KL}}(\rho_0, \rho_1)\big).
+$$
+\end{lem}
+The proof can be found in~\cite{tsybakovintroduction} (Chapter 2, Theorem 2.2, Conclusion (iii)).\\
+
+We now consider a realization of both the samples $\{(X_i,Y_i)\}_{i\leq n}$ and the recommendation $x(n)$ output by the strategy. We write $g(x(n)) = \arg\min_{k \leq K} |x(n) - x_k|_{\infty}$, which simply maps the recommendation $x(n)$ to the closest $x_k$ (which correspond to the $K$ possible maxima for our set of problems) in infinity norm. We define $\rho_0, \rho_s$ as the distribution of $g(x(n))$x (here $\mathcal X$ in Lemma~\ref{lem:2} corresponds to $\{1,...,K\}$) under problems $0$ and $s$ respectively. By definition of the fixed budget setting, we have ${\sum_{k=1}^K \mathbb E_0(T_s(n)) \leq n}$, so for $K \geq 2$, there exists at least $K/2$ indices $s \in \{1,...,K\}$ such that $\mathbb E_0(T_s(n)) \leq \frac{2n}{K}$. Moreover, there also exists $0.75K$ indices $s \in \{1,...,K\}$ such that $\mathbb P_0(g(x(n)) = s) \leq \frac{4}{3K}$. The intersection of these two sets of indices cannot be empty, and we fix $i$ as one element of this intersection. Finally, we define the test function $\tau: k \rightarrow \mathbf 1\{k = i\}$. Under this choice of $\rho_0, \rho_1$ and $\tau$, the previous lemma rewrites to:
+$$
+\mathbb P_{0}(g(x(n)) = i) + \mathbb P_{i}(g(x(n)) \neq i) \geq \frac{1}{2} \exp\big(-\text{KL}(\rho_0, \rho_i)\big).
+$$
+We now use the tower rule (its countable - finite - version) and Lemma~\ref{lem:1}:
+\begin{eqnarray*}
+\mathbb E_0(L_{n,i}) & = & \sum_{k = 1}^K \mathbb E_0(L_{n,i} | g(x(n)) = k) \mathbb P_0(g(x(n) = k) \\ \nonumber
+& \geq & \sum_{k = 1}^K \log \left(\frac{\mathbb P_0(g(x(n) = k)}{\mathbb P_i(g(x(n) = k)}\right) \mathbb P_0(g(x(n) = k),
+\end{eqnarray*}
+and we remark that the quantity on right hand side of the last inequality is precisely $\text{KL}(\rho_0, \rho_i)$ for our choice of $\rho_0, \rho_i$. Combining this with our previous bound in Equation~\eqref{eq:bound_L}: ${\mathbb E_0(L_{n,i}) \leq \mathbb E(T_i(n))\Delta^2 \leq \frac{2n}{K}\Delta^2}$, with $\Delta = \sqrt{\frac{K}{n}}$, we get:
+$$
+\mathbb P_{i}(g(x(n)) \neq i) \geq \frac{1}{2}\exp(-2) - \frac{4}{3K}.
+$$
+with $K  \geq \frac{16\exp(2)}{3}$, this yields:
+$$
+\max_{s \in \{1, ..., K\}} \mathbb P_{s}(g(x(n)) \neq i) \geq \frac{1}{4}\exp(-2).
+$$
+Thus, with constant probability, it holds that $g(x(n)) \neq i$, and by definition of $g(x(n))$ we have $x(n) \not \in H_i$. The simple regret associated with recommending $x(n)$ can then be bounded by using the definition of $\phi_i$:
+$$M - \phi_i(x(n)) \geq \Delta.$$\\
+
+In the corresponding passive setting where the sampled locations $X_t$ are independent, identically distributed uniformly at random over $[0,1]^d$, we have instead for all $s$: $\mathbb E(T_s(n)) \leq \bigO{n \Delta^{d/\alpha}}$ and setting instead $\Delta = \bigO{n^{-\alpha/(2\alpha+d)}}$ we get the rate $\bigO{n^{-\alpha/(2\alpha+d)}}$. Here, $\beta$ plays no role in the rate, which shows that sampling actively is very beneficial as soon as $\beta > 0$.
+
+\end{proof}
+
+
+
+\subsection{Proof of Theorem~\ref{thm:adap_cumul}}
+\begin{proof}
+Let $\gamma > \alpha > 0$ the two smoothness parameters and $\beta \geq 0$ such that $\gamma\beta \leq d$. Define $K = \lceil{\Delta^{\frac{\alpha\beta - d}{\alpha}}\rceil} \geq 2$, and $\Delta$ such that:
+$$
+\Delta = \frac{K}{R_{\gamma,\beta}(n)},
+$$
+with $R_{\gamma,\beta}(n)$ such that $R_{\gamma,\beta}(n)^{(2\alpha+d-\alpha\beta)/(\alpha+d-\alpha\beta)} \leq \frac{n}{16}\exp(-2)$. Importantly, we will consider strategies such that for any problem in $\mathcal P(\gamma,\beta)$, their expected regret is smaller than $R_{\gamma,\beta}(n)$. Consider the grid $G$ which partitions $[0,1/2]^d$ into $N = \lceil \Delta^{-d/\alpha} \rceil$ disjoint hypercubes. We index the cells of $G$ as $(H_k)_{k\leq N}$ as in the proof of Theorem~\ref{thm:lb_sr}. We also define $H_0$ the hypercube $[1-\Delta^{1/\gamma},1] \times ... \times [1-\Delta^{1/\gamma},1]$.
+
+
+
+In what follows, we will write
+$$\mathcal S = \bigcup_{0 \leq k\leq K} H_k.$$
+
+%will consider the subset $(H_k)_{k\leq K}$ of $[0,1]^d$, that we denote $\mathcal{A}$, and denote $\mathcal{A}_0$ the subset such that $\mathcal{A}_0 \cap  \mathcal{A} = \emptyset$ and $\mathcal{A}_0 \cup  \mathcal{A} = [0,1]^d$.\\
+
+\noindent
+
+Fix $M \in [1/2,1]$. We define the function $\phi_{s}(x)$ for $0 \leq s \leq K$ and $x \in [0,1]^d$.
+\begin{equation*}
+\phi_{s}(x) = \begin{cases}
+\max\{M-\Delta, M - \Delta/2-|x-x_i|_{\infty}^{\gamma}\}, &\text{~if~~~} x\in H_0\\
+\max\{M-\Delta,M-|x-x_i|_{\infty}^{\alpha}\}, &\text{~if~~~} x\in H_i, i=s\\
+M -\Delta, &\text{~if~~~} x\in H_i, i \neq s\\
+\max\{0, M -\Delta - \text{dist}_{\infty}(x, \mathcal{S})^{\gamma}\}, &\text{~if~~~} x \in \mathcal{S}^C,
+\end{cases}
+\end{equation*}
+where $\text{dist}_\infty(x, \mathcal{S}) \doteq \inf\{|x-z|_\infty, z \in \mathcal S\}$. It is clear that for $s=0$, we have $\phi_0 \in \Sigma(1, \gamma)$. By the nestedness of the smoothness classes for any $1 \leq s \leq K$ we have $\phi_s \in \Sigma(1, \alpha)$ as $\alpha \leq \gamma$. \\
+We will now show that Assumption~\ref{asuT} for some $B >0$ is satisfied for $\phi_s$, $\forall s \leq K$. For any $0 <\epsilon < \Delta < 1$, we have:
+$$
+\mu(\mathcal X(\epsilon)) \leq \epsilon^{d/\gamma} \leq \epsilon^\beta,
+$$
+as we have $\gamma\beta \leq d$. Now considering $\epsilon = \Delta$:
+$$
+\mu(\mathcal X(\epsilon)) \leq K \Delta^{d/\alpha} + \Delta^{d/\gamma} \leq 2 \Delta^{\beta},
+$$
+as we have set $K = \lceil{\Delta^{(\alpha\beta-d)/\alpha}\rceil} \leq 2 \Delta^{(\alpha\beta-d)/\alpha}$. Finally, we consider $\epsilon \in ]\Delta, 1/2] $, and we have:
+\begin{eqnarray*}
+\mu(\Omega(\epsilon)) & \leq & \mu(\mathcal X(\Delta)) + \mu(\{x: \Delta < M- \phi_s(x) \leq \epsilon \})\\
+& \leq & 2 \Delta^\beta + \epsilon^{d/\gamma}\\
+& \leq & 3 \epsilon^\beta.
+\end{eqnarray*}
+
+So we have by construction :
+\begin{itemize}
+\item For $s = 0$, $\phi_0 \in \mathcal{P}(\gamma,\beta)$ and $M(\phi_0) = M - \Delta/2$ 
+\item For any $1 \leq s \leq K$, $\phi_s \in \mathcal{P}(\alpha,\beta)$. 
+\item for any $s,t \leq K$, and any $x \in \mathcal A^C$, $\phi_s(x) = \phi_t(x)$ (one cannot distinguish problem $i$ from problem $j$ in $\mathcal{S}^C$)
+\item for any $1 \leq s \leq K$, the maximum of $\phi_s$ is attained only in $x_s$ and we have $\phi_s(x_s) = M$. In particular, for any $s \neq 1$, we have $M(\phi_s) = M$.
+\item  $\forall x \not\in H_s$, $\phi_s(x) = \phi_0(x)$: one cannot distinguish problem $s$ from problem $0$ outside of a small neighborhood around $x_s$.
+\item  For any $s \leq K$, $\forall x \not\in H_s, M_s - \phi_s(x) \geq \Delta/2$
+\end{itemize}
+
+
+We now define $\mathcal{H}_K$ the set of recommendation problems such that for any $0 \leq s \leq K$, the problem $s$ is characterized by the mean-pay off function $\phi_s$, with zero-mean Gaussian noise of variance $1$, such that the observations are, conditionally on $X_t=x$,  i.i.d.~with distribution $Y_t \sim \mathcal{N}(\phi_s(x), 1)$. Let us fix a strategy (algorithm): it defines a (possibly randomized) \emph{sampling} mechanism, which characterizes the next sampling point $X_t$ based on the previous observations $\{(X_i,Y_i)\}_{i<t}$, for all $t \leq n$. We write $\mathbb P_s$, $\mathbb E_s$, for the probability and expectation under the problem $s$ (uniquely characterized by the function $\phi_s$), when the previously mentioned strategy is used. This strategy is such that for any problem in $\mathcal P(\gamma,\beta)$, we have $\mathbb E[R_n] \leq R_{\gamma,\beta}(n)$. This assumption will be used to encode the fact the strategy is nearly minimax optimal over the class $\mathcal P(\gamma, \beta)$, and that any such strategy is strictly suboptimal over the larger class $\mathcal P(\alpha, \beta)$.
+
+As in the proof of Theorem~\ref{thm:lb_sr}, for a sample $\{(X_i,Y_i)\}_{i\leq n}$ collected by the previously introduced algorithm under problem $1$, we consider the log-likelihood ratio $L_{n,s} \doteq L_{n,s}(\{(X_i,Y_i)\}_{i\leq n})$ for $1 < s \leq K$:
+\begin{eqnarray*}
+L_{n,s} & = & \sum_{t=1}^n \log\left(\frac{\mathbb P_0(Y_t | X_t)}{\mathbb P_s(Y_t | X_t)}\right) = \sum_{t=1}^n \frac{1}{2}\left( (Y_t-\phi_s(X_t))^2 - (Y_t-\phi_0(X_t))^2 \right)\\
+& = & \sum_{t=1}^n (\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t) - Y_t);\\
+% & \leq & \sum_{t=1}^n \mathbf 1\{X_t \in H_s\} (\phi_s(X_t)-\phi_0(X_t))(\phi_s(X_t)-Y_t)\\
+% %& \leq & \sum_{t=1}^{n} \mathbf 1\{X_t \in H_s\} (\phi_s(X_t)-\phi_1(X_t))(\phi_s(X_t)-Y_t)\\
+% %& \leq & \sum_{t=1}^{n} \mathbf 1\{X_t \in H_s\} \Delta \left(\phi_s(X_t)-Y_t\right)\\
+% & \leq & \sum_{t=1}^{n} \mathbf 1\{X_t \in H_s\} \Delta \left(M-Y_t\right)\\
+% & \leq & \sum_{i=1}^{T_s(n)} \Delta (M-Y_i(s)),
+\end{eqnarray*}
+which yields as in the proof of Theorem~\ref{thm:lb_sr}:
+
+\begin{eqnarray}\label{eq:pulls}
+\mathbb E_0(L_{n,s}) \leq \mathbb E_0(T_s(n)) \Delta^2,
+\end{eqnarray}
+where $\mathbb E_0(T_s(n))$ is the expected number of samples in cell $H_s$ collected by the sampling strategy under problem $0$ at the end of the game.\\
+By definition of $R_{\gamma,\beta}(n)$ which bounds the expected regret of the strategy, there exists a cell $H_m$ and an index $m$ such that: 
+$$\mathbb E_0(T_m(n)) \leq \frac{2R_{\gamma,\beta}(n)}{\Delta K},$$
+otherwise the strategy has an expected regret strictly greater than $R_{\gamma,\beta}(n)$. Combined with Equation~\eqref{eq:pulls}, this yields:
+\begin{eqnarray*}
+\mathbb E_0(L_{n,m}) \leq \frac{2R_{\gamma,\beta}(n)\Delta}{K} = 2,
+\end{eqnarray*}
+by definition of $\Delta = \frac{K}{R_{\gamma,\beta}(n)}$.\\
+
+Consider a realization of the samples $\{(X_i,Y_i)\}_{i\leq n}$. We define $\rho_0, \rho_m$ as the distribution of $T_m(n)$ (here $\mathcal X$ in Lemma~\ref{lem:2} corresponds to $\{0,...,n\}$) under problems $0$ and $m$ respectively. Finally, we define the test function $\tau: T \rightarrow \mathbf 1\{T \geq n/2\}$. Under this choice of $\rho_0, \rho_m$ and $\tau$, Lemma~\ref{lem:2} yields:
+$$
+\mathbb P_{0}(T_m(n) \geq n/2) + \mathbb P_{m}(T_m(n) < n/2) \geq \frac{1}{2} \exp\big(-\text{KL}(\rho_0, \rho_m)\big).
+$$
+By the tower rule and Lemma~\ref{lem:1}:
+\begin{eqnarray*}
+\mathbb E_0(L_{n,s}) & = & \sum_{k = 0}^n \mathbb E_0(L_{n,s} | T_m(n) =k ) \mathbb P_0(T_m(n) = k) \\
+& \geq & \sum_{k = 0}^n \log \left(\frac{\mathbb P_0(T_m(n)=k)}{\mathbb P_s(T_m(n) = k)}\right) \mathbb P_0(T_m(n) = k),
+\end{eqnarray*}
+which is precisely $\text{KL}(\rho_0, \rho_m)$ for our choice of $\rho_0, \rho_m$. As $\mathbb E_0(L_{n,s}) \leq 2$, we get:
+\begin{equation}\label{eq:pinsker}
+\mathbb P_{0}(T_m(n) \geq n/2) + \mathbb P_{m}(T_m(n) < n/2) \geq \frac{1}{2}\exp(-2).
+\end{equation}
+We now remark that $\mathbb P_{0}(T_m(n) \geq n/2)\leq \mathbb P_{0}(R_n \geq \frac{n\Delta}{4})$, which can be bounded by Markov's inequality:
+\begin{eqnarray}\label{eq:markov}
+\mathbb P_{0}(R_n \geq \frac{n\Delta}{4}) & \leq & \frac{4R_{\gamma,\beta}(n)}{n\Delta}\\ \nonumber
+& \leq & \frac{4R_{\gamma,\beta}(n)^{(2\alpha+d-\alpha\beta)/(\alpha+d-\alpha\beta)}}{n}\\ \nonumber
+& \leq & \frac{1}{4}\exp(-2),
+\end{eqnarray}
+as we have set $R_{\gamma,\beta}^{(2\alpha+d-\alpha\beta)/(\alpha+d-\alpha\beta)} \leq \frac{\exp(-2)n}{16}$. Intuitively, Equation~\eqref{eq:pinsker} tells us that the strategy suffers a regret of order $\bigO{n\Delta}$ with constant probability either under problem $0$ or problem $m$. In order to satisfy the bound $R_{\gamma,\beta}(n)$ on the regret of the strategy when it is facing problem $0$, the probability of suffering regret of order $\bigO{n\Delta}$ under problem $0$ cannot be too big (and in fact, for $\gamma > \alpha$, it vanishes), and thus, the strategy errs with constant probability under problem $m$. In other words, combining Equation~Equation~\eqref{eq:pinsker} and~\eqref{eq:markov}, we just showed that:
+$$
+\mathbb P_{m}(R_n > \frac{n\Delta}{4})  \geq \mathbb P_{m}(T_m(n) < n/2) \geq \frac{1}{4}\exp(-2),
+$$
+which implies directly, as $R_n$ is a non-negative random variable:
+$$
+\sup_{f \in \mathcal P(\alpha,\beta)} \mathbb E[R_n] \geq  \mathbb E_m[R_n] \geq \frac{n\Delta}{16}\exp(-2) = \frac{n}{16}\exp(-2)R_{\gamma,\beta}(n)^{-\alpha/(\alpha+d-\alpha\beta)}
+$$
+\end{proof}
+\section{Proofs of Section~\ref{sec:info}}
+\subsection{Proof of Theorem~\ref{thm:adap_f_star}}
+\begin{proof}
+Let $\alpha_i = i/\floor{\log(n)}^2$ for $i \in \{1,..., \floor{\log(n)}^3\}$. We write $\texttt{SR}(i)$ for the Subroutine $i$ run with parameter $\alpha_i$. We define $T_i(T)$ the number of samples allocated to the $\texttt{SR}(i)$ up to time $T$, and $\widehat{R}_T(i) = T_i(T)M(f) - \sum_{t=1}^{T_i(T)} Y_i(t)$ the regret incurred by $\texttt{SR}(i)$ after it has performed $T_i(T)$ function evaluations. We write the corresponding pseudo-regret $R_T(i) = T_i(T)M(f) - \sum_{t=1}^{T_i(T)} f(X_i(t))$, where $X_i(t)$ is the $t$-th sampling location chosen by $\texttt{SR}(i)$.\\
+
+We have $\mathbb E(Y_i(t)) = f(X_i(t))$, and claim that $\widehat{R}_T(i) - R_T(i) = \sum_{t=1}^{T_i(T)} \left(f(X_i(t)) - Y_i(t) \right)$ is a martingale with respect to the filtration $\mathcal F_T = \sigma(X_1, Y_1, ..., X_{T-1}, Y_{T-1}, X_T) $.\\
+By standard concentration arguments and a union bound, we have for all $i$ and all $T \leq n$ with probability at least $1-\delta$: 
+$$
+|\widehat{R}_T(i) - R_T(i)| \leq 2\sqrt{T_i(t)}\log(n\floor{\log(n)}^3/\delta).
+$$
+Fix $k$ arbitrarily and consider the regret $\widehat{R}_n(k)$ that $\texttt{SR}(k)$ has incurred up to time $n$. Now consider $j \neq k$. The last time $T$ that $\texttt{SR}(j)$ was chosen by the Meta-Strategy, we know that:
+\begin{eqnarray*}
+\widehat{R}_{T}(j) & \leq & \widehat{R}_{T}(k)\\
+& \leq & R_T(k) + 2\sqrt{T_k(T)}\log(n\floor{\log(n)}^3/\delta)\\
+& \leq & R_n(k) + 2\sqrt{n}\log(n\floor{\log(n)}^3/\delta),
+\end{eqnarray*}
+where we used the fact that the pseudo-regret is non-decreasing with $T$. Furthermore, we know that once $\texttt{SR}(j)$ is chosen for the last time, it performs $\sqrt{n}$ function evaluations. This brings $\widehat{R}_j(n) = \widehat{R}_{T+\sqrt{n}}(j) \leq \widehat{R}_T(j) + \sqrt{n}$, as $f(X)$ is in $[0,1]$ for all $X$, so the regret incurred between time $T$ and $T+\sqrt{n}$ is at most $\sqrt{n}$. If $j$ is never chosen by the Meta-Strategy after the initial exploration phase that allocates $\sqrt{n}$ samples, the same bound trivially holds.
+
+This allows us to bound for all $j \neq k$:
+$$
+\widehat{R}_n(j) \leq R_n(k) + 3\sqrt{n}\log(n\floor{\log(n)}^3/\delta)
+$$
+By definition of the regret, the regret of the Meta-Strategy can be decomposed as the regret incurred by each $\texttt{SR}(i)$ up to time $n$:
+\begin{eqnarray*}
+\widehat{R}_n & = & \sum_i \widehat{R}_n(i)\\
+& \leq & \floor{\log(n)}^3 \left(R_n(k) + 3\sqrt{n} \log(n\floor{\log(n)}^3/\delta)\right).
+\end{eqnarray*}
+We now consider $i^*$ such that: $\alpha - \frac{1}{\floor{\log^2(n)}} \leq \alpha_i^* \leq \alpha$. With probability at least $1-\delta$, we have by Proposition~\ref{prop:non-adap}:
+$$
+R_n(i^*) \leq D\log(n/\delta) n^{1-\alpha_{i^*}/(2\alpha_{i^*}+d-\alpha_{i^*}\beta)},
+$$
+where we use the fact that $T_{i^*}(n) \leq n$ in the fixed budget setting. We conclude by using Lemma~\ref{lem:approx_grid}, which shows that our discretization over the smoothness parameters does not worsen the rate.
+\end{proof}
+\begin{lem}\label{lem:approx_grid}
+ Let $\alpha > 0.5\sqrt{d/\log(n)}$ and consider $f \in \mathcal P(\alpha,\beta)$ and $\alpha_i$ such that: $\alpha - \floor{\log(n)}^{-2} \leq \alpha_i \leq \alpha$. Then Subroutine~\ref{alg:warmup} run with parameters $\alpha_i$, $n$, $\delta$ is such that with probability at least $1-\delta$, we have:
+$$
+R_n \leq C\log\left( \frac{n}{\delta} \right)^p n^{1-\alpha/(2\alpha + d - \alpha\beta)},
+$$
+where $p < 1$ and $C >0$ is a constant that does not depend on $n,\delta$.
+\end{lem}
+\begin{proof}
+By Proposition~\ref{prop:non-adap} we have with probability at least $1-\delta$:
+$$
+R_n \leq D\log\left( \frac{n}{\delta} \right)^p n^{1-\alpha_i/(2\alpha_i + d - \alpha_i\beta)}.
+$$
+By considering the exponent $\frac{\alpha_i}{2\alpha_i + d - \alpha_i\beta}$, we have:
+\begin{eqnarray*}
+-\frac{\alpha_i}{2\alpha_i + d - \alpha_i\beta} & \leq & -\frac{\alpha - \floor{\log(n)}^{-2}}{2\alpha + d - \alpha\beta + \beta\floor{\log(n)}^{-2}}\\
+& \leq & -\frac{\alpha}{2\alpha +d -\alpha\beta} + \frac{2\alpha+d}{\floor{\log(n)}^2(2\alpha +d -\alpha\beta)^2},
+\end{eqnarray*}
+for $\alpha \geq \frac{1}{\floor{\log(n)}}\sqrt{\frac{d}{2}}$ and we conclude by remarking that:
+$$
+n^{\frac{2\alpha+d}{\floor{\log(n)}^2(2\alpha +d -\alpha\beta)^2}} \leq \exp\left(\frac{\log(n)(2\alpha+d)}{\floor{\log(n)}^2(2\alpha +d -\alpha\beta)^2}\right),
+$$
+and thus for $\alpha \geq \frac{1}{2}\sqrt{\frac{d}{\log(n)}}$, this extra factor only worsens the rate by a constant.
+\end{proof}
+\subsection{Proof of Theorem~\ref{thm:adap_rate}}
+\begin{proof}
+The proof relies on the same notations and technical tools as in the proof of Theorem~\ref{thm:adap_f_star}. We assume that on the event $\xi$, we have for all $i$, $T \leq n$: 
+$$
+|\widehat{R}_T(i) - R_T(i)| \leq 2\sqrt{T_i(t)}\log(n\floor{\log(n)}^3/\delta).
+$$ 
+with $\mathbb P(\xi) \geq 1-\delta$.\\
+We denote $i^*$ the index of the Subroutine such that with probability at least $1-\delta$, we have for all $T \leq n$:
+$$
+TM(f) - \sum_{t=1}^T f(X_{i^*}(t)) \leq R^*(n,\delta).
+$$
+$R^*(n,\delta)$ is the maximum pseudo-regret for $\texttt{SR}(i^*)$ if it had been allocated the entire budget of $n$ of function evaluations. We denote the event where this holds $\xi'$.
+We first show that with probability $1-2\delta$, $\texttt{SR}(i^*)$ is never eliminated by the Meta-Strategy. Let $\mathcal A_N$ be the set of active Subroutines at the beginning of round $N$. Assume that $i^* \in \mathcal A_N$ at the beginning of round $N$. We consider $k = \arg\max_{i \in \mathcal A_N} \widehat S_T(i)$ where $\widehat S_T(i) = \sum_{t=1}^{T_i(T)} Y_i(t)$ and $S_T(i) = \sum_{t=1}^{T_i(T)} f(X_i(t))$. We know that on $\xi$, we have:
+\begin{eqnarray*}
+\sum_{t=1}^{T_k(T)} Y_k(t) & \leq & \sum_{t=1}^{T_k(T)} f(X_k(t)) + 2\sqrt{T_k(t)}\log(n\floor{\log(n)}^3/\delta)\\
+& \leq & T_k(T)M(f) + 2\sqrt{T_k(t)}\log(n\floor{\log(n)}^3/\delta),
+\end{eqnarray*}
+where we use $f(X_k(t)) \leq M(f)$ for any $X_k(t)$.\\
+We also have on $\xi \cap \xi'$:
+\begin{eqnarray*}
+\sum_{t=1}^{T_{i^*}(T)} Y_{i^*}(t) & \geq & \sum_{t=1}^T f(X_{i^*}(t)) - 2\sqrt{T_{i^*}(t)}\log(n\floor{\log(n)}^3/\delta)\\
+& \geq & T_{i^*}(T)M(f) - R^*(n,\delta) - 2\sqrt{T_{i^*}(t)}\log(n\floor{\log(n)}^3/\delta).
+\end{eqnarray*}
+For any $i \in \mathcal A_N$, $\texttt{SR}(i)$ has performed the same number of function evaluations $T_N \doteq N\sqrt{n}$ up to time $T$ at the end of round $N$. Therefore on $\xi \cap \xi'$ the following holds:
+$$
+\widehat S_T(k)- \widehat S_{i^*}(k) \leq R^*(n,\delta) + 4\sqrt{T_N}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right),
+$$
+and $i^* \in \mathcal A_{N+1}$. As $i^* \in \mathcal A_1$, by induction $i^*$ is never eliminated on $\xi \cap \xi'$.\\
+We now consider $i$ such that $\texttt{SR}(i)$ is eliminated at round $N+1$, that is: 
+$$
+\widehat S_T(k)- \widehat S_{i}(k) \geq R^*(n,\delta) + 4\sqrt{T_{N+1}}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right).
+$$
+On $\xi \cap \xi'$, we know that at round $N$ we had for $k = \arg\max_{i \in \mathcal A_N} \widehat S_T(i)$:
+\begin{eqnarray*}
+\widehat S_T(k) & \geq & \widehat S_T(i^*)\\
+& \geq & T_N M(f) - R^*(n,\delta) - 2\sqrt{T_N}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right),
+\end{eqnarray*}
+where we used the fact that $i^*$ is never eliminated on $\xi \cap \xi$. Since $\texttt{SR}(i)$ was eliminated at round $N+1$, it implies that at round $N$ we had:
+\begin{eqnarray*}
+\widehat S_{i}(k) & \geq & \widehat S_T(k) - R^*(n,\delta) - 4\sqrt{T_{N}}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right)\\
+& \geq & T_N M(f) - 2R^*(n,\delta) - 6\sqrt{T_{N}}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right),
+\end{eqnarray*}
+and on $\xi$ this yields immediately:
+$$
+T_N M(f) - \sum_{t=1}^{T_N}f(X_i(t)) \leq  2R^*(n,\delta) + 8\sqrt{T_{N}}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right).
+$$
+
+As $\texttt{SR}(i)$ is allocated another $\sqrt{n}$ samples before being eliminated at round $N+1$, we can therefore bound its regret on $\xi \cap \xi'$ before being eliminated:
+\begin{eqnarray*}
+T_{N+1} M(f) - \sum_{t=1}^{T_{N+1}}f(X_i(t)) & = & T_N M(f) - \sum_{t=1}^{T_N}f(X_i(t)) + \sqrt{n}M(f) - \sum_{T_N}^{T_N+\sqrt{n}}f(X_i(t))\\
+& \leq & 2R^*(n,\delta) + 8\sqrt{T_{N}}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right) + \sqrt{n}\\
+& \leq & 2R^*(n,\delta) + 8\sqrt{n}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right) + \sqrt{n}.
+\end{eqnarray*}
+Similarly, for $i$ such that $\texttt{SR}(i)$ is never eliminated, we have:
+\begin{eqnarray*}
+T_i(n) M(f) - \sum_{t=1}^{T_i(n)}f(X_i(t)) & \leq & 2R^*(n,\delta) + 8\sqrt{T_i(n)}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right)\\
+& \leq & 2R^*(n,\delta) + 8\sqrt{n}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right).
+\end{eqnarray*}
+Finally, we can decompose the pseudo-regret of the Meta-Strategy as the sum of the pseudo-regret of each $\texttt{SR}(i)$, which yields on $\xi \cap \xi'$:
+
+\begin{eqnarray*}
+R_n & = & \sum_i R_i(n)\\
+& \leq & |\mathcal A_1| \left(2R^*(n,\delta) + 8\sqrt{n}\log\left(\frac{n\floor{\log(n)}^3}{\delta}\right) + \sqrt{n}\right).
+\end{eqnarray*}
+By a union bound we have $\mathbb P(\xi \cap \xi') \geq 1-2\delta$, which concludes the proof.
+\end{proof}
+\end{document}

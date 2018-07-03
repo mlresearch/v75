@@ -1,0 +1,249 @@
+
+\newcommand{\fcomp}{f^{\circ}}
+\newcommand{\scD}{\mathcal{D}}
+\newcommand{\bb}{\boldsymbol{b}}
+\newcommand{\B}{\field{B}}
+
+\section{Extensions: Bandit Convex Optimization}\label{s:bco}
+%
+We now show that a similar reduction as the one in Section~\ref{s:wrapper} can be made to work in the more general Bandit Convex Optimization (BCO) framework. This learning setting is defined by a convex and compact domain $\Omega \subseteq \R^n$ and a sequence of loss functions $f_1, f_2, \ldots, f_T$, where each $f_t\,:\,\Omega \to [0,1]$ is convex over $\Omega$. In turn, we assume each function $f_t$ is the cumulated effect of $d$-many convex loss components $f_t^{(0)},\ldots, f_t^{(d-1)}$ with $f_t^{(s)}\,:\,\Omega \to [0,1]$ so that, for any $\bw \in \Omega$, 
+%
+\[
+f_t(\bw) = \sum_{s=0}^{d-1} f_t^{(s)}(\bw) \in [0,1]~.
+\]
+To be concrete, we shall view $f_t$'s components $f_t^{(s)}$ as constant fractions of $f_t$, so that
+\[
+f_t^{(s)}(\bw) = \alpha^{(s)}_{t} f_t(\bw)~, \qquad s = 0,\ldots, d-1~, \qquad t = 1,\ldots, T\,,
+\]
+for nonnegative constant coefficients $\alpha^{(s)}_{t}$ such that $\sum_{s=0}^{d-1}\alpha^{(s)}_{t} =1$ for $t = 1, \ldots, T$.
+
+Since we are working with oblivious adversaries, we assume that all losses $\{f_{t}\}_{t=1\dots T}$ and coefficients $\{\alpha^{(s)}_{t}\}_{t=1\dots T,s=0\dots d-1}$ are generated before the game starts. At each round $t= 1, 2, \ldots, T$, the learner picks $\tbw_t \in \Omega$ and suffers loss $f^{(0)}_t(\tbw_t) = \alpha^{(0)}_{t}f_t(\tbw_t)$ at time $t$, loss $f^{(1)}_{t}(\tbw_t) =  \alpha^{(1)}_{t} f_{t}(\tbw_t)$ at time $t+1$, $\ldots$, loss $f^{(d-1)}_t(\tbw_t) =  \alpha^{(d-1)}_{t}f_t(\tbw_t)$ at time $t+d-1$. However, what the algorithm really observes at time $t$ is the cumulated effect of present and past actions quantified by the composite loss
+\(
+\fcomp_t(\tbw_{t-d+1},\tbw_{t-d+2},\ldots, \tbw_t)
+\)
+with 
+\[
+\fcomp_t(\bw_{1},\bw_{2},\ldots, \bw_d)= \sum_{s=0}^{d-1} f_{t-s}^{(s)}(\bw_{d-s}) = \sum_{s=0}^{d-1} \alpha_{t-s}^{(s)}\,f_{t-s}(\bw_{d-s})~,
+\]
+where in the above $\alpha_t^{(s)} = 0$ for all $s$ if $t \leq 0$.
+The aim of the algorithm is to minimize its cumulative regret 
+\[
+R_T = \E\left[\sum_{t=1}^T f_t(\tbw_{t})\right] - \min_{\bw \in \Omega} \sum_{t=1}^T f_t(\bw)~.
+\] 
+As in previous sections, we build a wrapper around a base Bandit Convex Optimization algorithm (Base BCO) which operates in the standard BCO framework with non-composite losses with range in $[0,1]$. Base BCO maintains at each round $t$ a state variable $\bw_t$ which is randomly perturbed to obtain the actual play $\tbw_t \in \Omega$. The wrapper algorithm is described in Figure \ref{a:delayed-bco}.
+%
+%% ----------------------------------------------------------------------------
+\begin{algorithm2e}[t]
+\SetKwSty{textrm} \SetKwFor{For}{{\bf For}}{}{}
+\SetKwIF{If}{ElseIf}{Else}{if}{}{else if}{else}{}
+\SetKwFor{While}{while}{}{}
+\textbf{Input:} Base BCO algorithm $A$ with parameter $\eta \in (0,1]$.\\%, and meta-parameters for it $\xi$.\\
+\textbf{Initialize:}
+\begin{itemize}[topsep=0pt,parsep=0pt,itemsep=0pt]
+\item Play any $\bw_1 \in \Omega$;
+\item If $B_0 = 1$ then $t=0$ is an update round.
+\end{itemize}
+%
+\For{$t=1,2,\dots$:} { {
+\begin{enumerate}[topsep=0pt,parsep=0pt,itemsep=0pt]
+\item If $t-1$ was an update round, then play $\tbw_t$ by randomly perturbing state variable $\bw_t$ without updating $\bw_t$ (draw round, $\bw_{t+1} = \bw_t$);
+\item Else if an update round was in the interval $\{t-2d+1, \dots,t-2\}$ then play $\tbw_t = \tbw_{t-1}$ without updating $\bw_t$
+(stay round, $\bw_{t+1} = \bw_t$);
+\item Else play $\tbw_t = \tbw_{t-1}$ (stay round), and if $B_t=1$ then the stay round becomes an update round. In such a case:
+%
+\begin{itemize}[topsep=0pt,parsep=0pt,itemsep=0pt]
+\item Feed Base BCO $A(\eta)$ with average composite loss\\
+{\bf CG: not defined when $t< 2d-2$, to be fixed}
+%
+\[
+\avglossf_t = \frac{1}{2d}\sum_{\tau=t-d+1}^t \fcomp_\tau(\tbw_{\tau-d+1},\dots,\tbw_{\tau})
+\] 
+\item Use the update rule $\bw_t\rightarrow \bw_{t+1}$ of Base BCO to obtain the new state variable $\bw_{t+1}$. 
+%(the stay round becomes an update round).
+\end{itemize}
+\end{enumerate}
+%\vspace{-0.2in} 
+} } \caption{The Composite Loss Wrapper for BCO.}
+\label{a:delayed-bco}
+\end{algorithm2e}
+%% ----------------------------------------------------------------------------
+%
+The notion of stability of the Base BCO has now to refer also to the sequence of loss functions the algorithm is operating with.
+%
+\begin{definition}\label{d:stabilitybco}
+Let $A(\eta)$ be a Base BCO with learning rate $\eta$, and $\{\tbw_t\}_{t=1}^T$ be the sequence of plays produced by $A(\eta)$ during a run over $T$ rounds on the sequence of convex losses $\{f_t\}_{t=1}^T$. We say that $A(\eta)$ is $\xi$-{\em stable} w.r.t. $\{f_t\}_{t=1}^T$ if for any round $t$ we have that
+\[
+	\E\Big[f_{t+1}(\tbw_{t+1}) -f_{t+1}(\tbw_t)\Big] \leq \xi
+\] 
+% deterministically
+holds, where $\xi$ may depend on the input dimension $n$, the learning rate $\eta$, as well as on relevant properties of the loss functions $\{f_t\}_{t=1}^T$.
+\end{definition}
+%
+We call a Base BCO algorithm $A$ {\em nontrivial} w.r.t.\ the sequence of losses $\{f_t\}_{t=1}^T$ if, when applied to the standard nonmixed setting on $\{f_t\}_{t=1}^T$, $A$ has a regret bound $R_A(T,n,\eta)$ which is sublinear and concave in $T$ for any $n \geq 1$ and $\eta > 0$.
+%
+Theorem \ref{thm:convex} below rests on the assumption that the properties of the loss functions $\{f_t\}_{t=1\dots T}$ that make the Base BCO algorithm $A$ work are inherited by the average loss functions
+%
+\begin{align*}
+\avglossf_t(\bw) &= \frac{1}{2d}\sum_{\tau=t-d+1}^t \fcomp_\tau(\bw,\dots,\bw),\qquad {\mbox{for $t \geq 2d-2$}}
+\end{align*}
+%
+the wrapper feeds to $A$. For the sake of concreteness, let us simply focus on boundedness and Lipschitzness w.r.t. the Euclidean norm $||\cdot||$. 
+
+The following lemma lists the relevant properties of the functions $\avglossf_t$ as immediate consequences of the properties of the functions $f_t$.
+%
+\begin{proposition}\label{l:propcomposite}
+Let $f_1,\ldots, f_T\,:\,\Omega \subseteq \R^n \to [0,1]$ be a sequence of convex loss functions, and $\avglossf_{2d-2}, \ldots, \avglossf_T \,:\,\Omega \subseteq \R^n \rightarrow \R^+$ be the corresponding sequence of average composite losses. Then the following holds.
+\begin{enumerate}[topsep=0pt,parsep=0pt,itemsep=0pt]
+\item
+$
+\avglossf_{t}(\bw) \in [0,1]
+$ for all $\bw \in \Omega$~;
+\item If, for some constant $L \geq 0$, the loss functions $f_1,\ldots, f_T$ are $L$-Lipschitz on $\Omega$ w.r.t. $||\cdot||$, then so are $\avglossf_{2d-2},\ldots, \avglossf_T$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+Simply observe that 
+%
+\begin{align*}
+\avglossf_t(\bw) 
+&= \frac{1}{2d}\sum_{\tau=t-d+1}^t \sum_{s=0}^{d-1} \alpha_{\tau-s}^{(s)}f_{\tau-s}(\bw)\\
+&= \frac{1}{2d}
+    \left(
+    \sum_{\tau=t-2d+2}^{t-d} \sum_{s=t-d+1}^{\tau+d-1} \alpha_{\tau}^{(s-\tau)}f_{\tau}(\bw)
+    + 
+    \sum_{\tau=t-d+1}^{t} \sum_{s=\tau}^{\tau+d-1} \alpha_{\tau}^{(s-\tau)}f_{\tau}(\bw)
+    \right)\\
+&= \frac{1}{2d}
+    \left(
+    \sum_{\tau=t-2d+2}^{t-d} f_{\tau}(\bw) \left(\sum_{s=t-d+1}^{\tau+d-1} \alpha_{\tau}^{(s-\tau)}\right)
+    + 
+    \sum_{\tau=t-d+1}^{t} f_{\tau}(\bw)
+    \right)~. 
+\end{align*}
+%
+Now, since the first inner sum $\sum_{s=t-d+1}^{\tau+d-1} \alpha_{\tau}^{(s-\tau)}$ is upper bounded by $\sum_{s=0}^{d-1} \alpha_{\tau}^{(s)} = 1$, we
+see that $\avglossf_t(\bw)$ is indeed a linear combination of the form
+%
+%\begin{equation}\label{e:fcomposite}
+\[
+\avglossf_t(\bw) = \sum_{\tau=t-2d+2}^{t} b_{\tau} f_{\tau}(\bw)~,
+\]
+%\end{equation}
+%
+whose coefficients $b_{\tau}$ are nonnegative and sum to a quantity which is less than one. All the three claimed properties then immediately follow.
+%
+\end{proof}
+%
+The following theorem is the BCO counterpart to Theorem \ref{thm:delay-generic}.
+%
+\begin{theorem}\label{thm:convex}
+Let $A(\eta)$ be a $\xi$-stable and nontrivial Base BCO algorithm with learning rate $\eta$ and regret bound
+$R_A(T,n,\eta)$ when playing the standard (nonmixed) BCO game on a sequence of convex losses $\{f_t\}_{t=1}^T$ enjoying Properties $P$.
+If Properties $P$ are inherited by $\{\avglossf_t\}_{t=2d-2}^T$~, then Algorithm~\ref{a:delayed-bco} with input $A(\eta)$ achieves regret $R_T$ satifying
+\[
+R_T 
+\le 
+T\,\xi + 8(2d-1)R_A(T/2d,K,\eta)+\scO(d)~.
+  %  2T\eta + 4(2d-1)\left(\frac{\ln K}{\eta} + \frac{\eta}{4d}KT\right)~.
+\]
+\end{theorem}
+%
+\begin{proof}
+The proof is almost the same as the one of Theorem \ref{thm:delay-generic} (up to change of notation), with the additional care that has to be taken when dealing the inheritance of Properties $P$ from $\{f_t\}_{t=1}^T$ to $\{\avglossf_t\}_{t=2d-2}^T$.
+%
+In particular:
+\begin{itemize}
+\item If we define
+\[
+\Delta_t^{\bw} = \frac{1}{2d}\sum_{\tau=t-d+1}^t \bigl(\fcomp_\tau(\tbw_{\tau-d+1},\dots,\tbw_{\tau-d+1}) - \fcomp_\tau(\bw,\dots,\bw)\bigl),\qquad {\mbox{for $t \geq 2d-2$,}}
+\]
+we have, for any $\bw \in \Omega$,
+\[
+\E\left[\sum_{t \in \scU,\, t\geq 2d-2} \Delta_t^{\bw}  \right] \leq R_A(T/2d, n ,\eta)~,
+\]
+since the average loss function $\avglossf_t(\bw)$ enjoys the same properties as the ones that allow one to prove the regret bound $R_A(T, n ,\eta)$ for the Base BCO algorithm $A$.
+%
+\item Next,
+%
+\begin{align*}
+\E&\left[\sum_{t \in \scU,\,t\geq 2d-2} \Delta_t^{\bw} \right] \\
+  &\geq
+    \frac{q}{2}(1-q(2d-1))\left(\sum_{t=2d-2}^{T-d+1} \Bigl(\E\left[\fcomp_t(\tbw_{t-d+1},\dots,\tbw_{t-d+1})\right] - \fcomp_t(\bw,\dots,\bw)\Bigr) -2(d-1)\right)
+\end{align*}
+%
+is the counterpart to (\ref{e:updatenoupdate}), and is proved in exactly the same manner.
+%
+\item Then, from the notion of stability given in Definition \ref{d:stabilitybco}, we can write
+%
+\begin{align*}
+    \E&\Bigl[ \fcomp_t(\tbw_{t-d+1},\dots,\tbw_t) - \fcomp_t(\tbw_{t-d+1},\dots,\tbw_{t-d+1}) \Bigr]
+\\&=
+    \E\left[ \sum_{s=0}^{d-1} \Bigl( f_{t-s}^{(s)}(\tbw_{t-s}) - f_{t-s}^{(s)}(\tbw_{t-d+1})   \Bigr)\right]
+\\&=
+    \sum_{s=0}^{d-1}\alpha_{t-s}^{(s)}\,\E\left[ f_{t-s}(\tbw_{t-s}) - f_{t-s}(\tbw_{t-d+1})\right]
+\\&\leq
+\xi~,
+\end{align*}
+since there is at most one update of the underlying state variable $\bw_t$ (which in turn determines the distribution of the corresponding $\tbw_t$)
+during the rounds from $t-d+1$ to $t$, the coefficients $\alpha_{t-s}^{(s)}$ are bounded by $1$ for all $s$ and $t$, and Base BCO is assumed to be $\xi$-stable in 
+the sense of Definition \ref{d:stabilitybco}.
+%
+\item Finally
+{\bf CG: Stopped here, waiting for Nicolo' to finish up corresponding part of previous section}
+
+\end{itemize}
+Piecing together as in the proof of Theorem \ref{thm:delay-generic} proves the claim.
+\end{proof}
+%
+As an example, consider the Base BCO algorithm in \cite{fkm05} that works under the assumption of $L$-Lipschitzness w.r.t. $||\cdot||$. This algorithm is the first (and perhaps the simplest) algorithm proposed in the BCO literature. The algorithm takes in input a learning rate $\eta$, and a scaling parameter $\delta \in (0,1]$ (which will be set as a function of $\eta$), and maintains at each round $t$ the state variable $\bw_t \in \Omega$, of the form
+%
+\begin{equation}\label{e:fkm05}
+\bw_t = \argmin_{\bw\in \Omega}\ \Bigl|\Bigl|\bw+\eta\,\sum_{\tau = 1}^{t-1} {\hat g_{\tau}}\Bigl|\Bigl|^2~,
+\end{equation}
+%
+then computes a perturbed version $\tbw_t$ of $\bw_t$ as 
+\(
+\tbw_t = \bw_t + \delta s_t~,
+\)
+where $s_t$ is drawn uniformly at random from the surface of the Euclidean $n$-dimensional unit ball $\B^n$. Finally, the update $\bw_t \rightarrow \bw_{t+1}$ amounts to computing the next vector ${\hat g_{t}}$ in (\ref{e:fkm05}) as ${\hat g_{t}} = \frac{n}{\delta}\,f_t(\tbw_t)s_t$. It can be shown~\citep{fkm05} that  ${\hat g_{t}}$ is an unbiased estimate of the gradient at $\bw_t$ of the smoothed version ${\hat f_t}$ of $f_t$, defined as
+\(
+{\hat f_t}(\bw) = \E_{b\sim \B^n} [f(\bw+\delta\,b)]~,
+\)
+where $b$ is drawn uniformly at random from $\B^n$. 
+
+
+****
+
+The following stability lemma can be shown through standard arguments. For completeness, a proof sketch is given in the appendix.
+%
+\begin{lemma}\label{l:stabilityconvexscrible}
+Let $f_1,\ldots,f_T\,:\,\Omega \subseteq \R^n \rightarrow [0, 1]$ be a sequence of $\beta$-smooth convex losses w.r.t. $||\cdot||$, and let $\scD = \max_{\bw,\bw'\in \Omega} ||\bw-\bw'||$ be the diameter of $\Omega$. Then the Base BCO algorithm by \cite{st11} is $\xi$-stable, with $\xi = ...$. 
+\end{lemma}
+%
+\begin{proof}
+Let $F_t(\bw) = \eta\,\sum_{\tau = 1}^{t} \bw^\top{\hat g_{\tau}} + \Psi(\bw)$, so that $\bw_t = \argmin_{\bw\in\Omega} F_{t-1}(\bw)$.
+\end{proof}
+
+
+
+***
+
+
+
+Recall that if $f$ $\beta$
+
+
+
+
+
+
+***************
+
+to do:
+
+- mention/compare to \cite{ahm15}
+
+- mention recent effort by Joulani and icml 2017 paper by Ohad and student ?
+
+
+***************

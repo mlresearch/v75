@@ -1,0 +1,80 @@
+\newcommand{\fat}{s}
+\newcommand{\vc}{d}
+
+\subsection{General Densities}
+\label{sec:densities}
+
+For simplicity of presentation, we have formulated the above results in terms of probability mass functions $q$ on a discrete domain $X$.
+However, we note that all of the above results easily extend to general density functions on an abstract measurable space $X$, which 
+may be either discrete or uncountable.  Specifically, if we let $\mu_{0}$ denote an arbitrary reference measure on $X$, 
+then we may consider the family $Q$ to be a set of \emph{probability density functions} $q$ with respect to $\mu_{0}$: that is, 
+non-negative measurable functions such that $\int q {\rm d}\mu_{0} = 1$.  
+For the results above, we require that we have a way to (efficiently) generate iid samples having the distribution whose density is $q$.
+For the full-validity results, the only additional requirements are that we are able to (efficiently) test whether a given $x$ is in the support of $q$,
+and that we have access to $\text{Oracle}(\cdot,\cdot)$ defined with respect to the set $Q$.
+For the results on partial-validity, we require the ability to explicitly evaluate the function $q$ at any $x \in X$.
+The results then hold as stated, and the proofs remain unchanged (overloading notation to let $q_{x}$ denote the 
+value of the density $q$ at $x$, and $q(A) = \int_{A} q {\rm d}\mu_{0}$ the measure of $A$ 
+under the probability measure whose density is $q$).
+
+\subsection{Infinite Families of Distributions}
+\label{sec:infinite-families}
+
+%%% maybe no space to define VC-dim and fat-shattering dim, but we can at least give references for both.
+
+It is also possible to extend all of the above results to \emph{infinite} families $Q$, 
+expressing the sample complexity requirements in terms of the \emph{VC dimension} (\cite{VapnikC74}) of the supports $\vc = {\rm VCdim}(\{\Supp(q) : q \in Q\})$, 
+and the \emph{fat-shattering dimension} (\cite{AlonBCH97}) of the family of loss-composed densities $\fat(\epsilon) = {\rm fat}_{\epsilon}(\{ x \mapsto L(q_{x}) : q \in Q \})$.
+In this case, in the context of the full-validity results, 
+for simplicity we assume that in the evaluations of $\text{Oracle}(X_{P},X_{N})$ defined above, 
+there always \emph{exists} at least one minimizer $q \in Q$ of the empirical loss with respect to $X_{P}$ 
+such that $\Supp(q) \cap X_{N} = \emptyset$.\footnote{It is straightforward to remove this assumption by supposing 
+$\text{Oracle}(X_{P},X_{N})$ returns a $q$ that \emph{very-nearly} minimizes the empirical loss, and handling 
+this case requires only superficial modifications to the arguments.}
+We then have the following result.  For completeness, we include a full proof in the appendix.
+
+\begin{theorem}
+\label{thm:vc-full-validity}
+For a numerical constant $c \in (0,1]$, 
+the choice of parameters 
+\begin{eqnarray*}
+P=\Theta\left(\frac{\fat(c \ve_{1}/M) M^{2}}{\ve_1^2} \log \frac{M}{\ve_{1}} \right), & R = \Theta \left( \frac { M } {\eps_1} \right), &  T = \Theta\left(\frac{R \vc}{\ve_2} \log \frac{1}{\ve_{2}} \right)
+\end{eqnarray*}
+guarantees that Algorithm~\ref{alg:full-validity} outputs w.p. $3/4$ a distribution $\hat q$ with $\Loss(\hat q) \le \Loss(q^*) + \eps_1$ and $\Inv(\hat q) \le \eps_2$ 
+using $P$ samples from $p$ and $R T$ invalidity queries.
+  
+The algorithm runs in time polynomial in $M$, $\ve_1^{-1}$, $\ve_2^{-1}$, $\vc$, and $\fat_{\ve_{1}/256}$ assuming that queries to the optimization oracle 
+can be computed in polynomial time. Moreover, sampling from the resulting distribution $\hat q$ can also be performed in polynomial time.
+\end{theorem}
+
+For partial-validity, we can also extend to infinite $Q$, 
+though in this case via a more-cumbersome technique.
+Specifically, let us suppose the densities $q \in Q$ are bounded by $1$ (this can be replaced by any value by varying the sample size $n_2$).
+Then we consider running Algorithm~\ref{alg:partial-validity} as usual, 
+except replacing Step 4 with the step 
+\begin{equation*}
+D = {\rm Cover}_{\ve_{2}}( \{ q \in Q | \overline\Loss(q) \leq \ell \} ),
+\end{equation*} 
+where for any $R \subseteq Q$, ${\rm Cover}_{\ve_{2}}(R)$ denotes a minimal subset of $R$ such that 
+$\forall q \in R$, $\exists q^{\ve_{2}} \in {\rm Cover}_{\ve_{2}}(R)$ with $\int | q_{x} - q^{\ve_{2}}_{x} | \mu_{0}({\rm d}x) \leq \ve_{2}$:
+that is, an $\ve_{2}$-cover of $R$ under $L_{1}(\mu_{0})$.
+Let us refer to this modified algorithm as Algorithm~\ref{alg:partial-validity}$^{\prime}$.
+%Now denote by $\fat_{Q}(\epsilon) = {\rm fat}_{\epsilon}(Q)$.
+We have the following result. 
+
+\begin{theorem}
+\label{thm:vc-partial-validity}
+Suppose that the loss function $L$ is convex.
+For a numerical constant $c \in (0,1]$, 
+the choice of parameters
+\begin{eqnarray*}
+n_1 = \Theta\left(\frac{\fat(c\ve_{1}/M) M^{2}}{\ve_1^2} \log \!\left(\frac{M}{\ve_{1}}\right)  \right), & n_2 = \Theta\left(\frac {M^2 {\rm fat}_{c\ve_{2}}(Q)} {\ve_1^2 \ve_2^2} \log^{2} \!\left(\frac{M {\rm fat}_{c\ve_{2}}(Q)}{\ve_1 \ve_2}\right)\right)
+\end{eqnarray*}
+guarantees that Algorithm~\ref{alg:partial-validity}$^{\prime}$ (with parameters $\eps_{1}$, $\eps_{2}$, and $\alpha+\eps_{2}$) 
+outputs w.p. $3/4$ a distribution with 
+$\Loss(\hat q) \le \Loss(q^*) + \ve_1$ and $\Inv(\hat q) \le \alpha + 2\ve_2$ using $n_{1}$ samples from $p$ and 
+$\Theta\left(\frac {M^3 {\rm fat}_{c\ve_{2}}(Q)^{2}} {\ve_1^3 \ve_2^3} \log^{3} \!\left(\frac{M {\rm fat}_{c\ve_{2}}(Q)}{\ve_1 \ve_2}\right)\right)$ 
+invalidity queries.
+\end{theorem}
+
+% we'll assume, for simplicity, that there always is an empirical loss minimizer.  it just simplifies the arguments, but is pretty easy to extend to the general case by putting more \epsilon's all over the place.

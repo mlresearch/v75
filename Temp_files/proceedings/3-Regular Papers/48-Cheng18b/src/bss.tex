@@ -1,0 +1,288 @@
+% !TEX root = main.tex
+
+\section{Pre-Processing: Reweighting the Entries}
+\label{sec:bss}
+
+In this section, we present a nearly-linear time algorithm for Problem~\ref{prob:main}.
+As we discussed in Section~\ref{sec:laplacian}, Problem~\ref{prob:main} is equivalent to the problem of approximating the identity matrix (Problem~\ref{prob:identity}). We prove the following theorem for Problem~\ref{prob:identity}:
+
+\begin{theorem}[Our Preprocessing Algorithm]
+\label{thm:bss}
+Fix $0 \le \eps, \beta \le 1/10$, and a graph Laplacian $L \in \R^{n \times n}$.
+Given a set of $m$ vectors $\{v_i\}_{i=1}^m$, where each $v_i = L^{-1/2} b_i$ for some $b_i$ representing an edge (with only two non-zero entries, one $+1$ and one $-1$).
+Assume there exist weights $w_i \ge 0$ such that~\footnote{We assume $0<\beta\le\frac{1}{10}$ is given, because we can do a binary search by running our algorithm and see if it succeeds.
+It is worth mentioning that we never explicitly compute any $v_i = L^{-1/2} b_i$. %We will maintain a set of weights $\{\tilde w_i\}$ which will eventually satisfy the claim.
+See Appendix~\ref{app:bss} for more details.}
+\[
+\textstyle (1-\beta) I \preceq \sum_{i=1}^m w_i v_i v_i^\top \preceq (1+\beta) I.
+\]
+We can find a set of weights $\tilde w_i \ge 0$ in $\tilde O(m / \eps^{O(1)})$ time, such that with high probability,
+\[
+\textstyle (1-O(\beta)-\eps)I \preceq \sum_{i=1}^m \tilde w_i v_i v_i^\top \preceq I.
+\]
+\end{theorem}
+
+%In other words, we can solve the following class of SDP approximately in nearly linear time.
+%\begin{lp}
+%\mini{\normtwo{I - \sum_{i=1}^m w_i v_i v_i^\top}}
+%\st \con{w_i \ge 0}
+%\end{lp}
+We adapt techniques from recent developments on linear-sized graph sparsification~\citep{BatsonSS12, AllenLO15, LeeS17}.
+The main difference between our problem and the graph sparsification problem is the following: instead of assuming $\sum_i v_i v_i^\top = I$, we only know the \emph{existence} of an unknown set $S$ such that \mbox{$\sum_{i\in S} v_i v_i^\top = I$}.
+%In other words, the graph that we are trying to approximate (e.g., the complete bipartite graph) has spectral properties different from the input graph.
+This prevents us from using some of the well-known techniques in graph sparsification (e.g., sampling by effective resistance \cite{SpielmanS11, LeeS15}).
+%In other words, our goal is to find a set of weights $\{w_i\}_i$ so that $\sum_i w_i v_i v_i^\top$ is as close to $I$ as possible.
+For the same reason, any simple reweighting algorithms that are oblivious to whether a good set $S$ exists will not work.
+
+One of our main contributions is to identify that the framework of \cite{BatsonSS12} is not only limited to graph sparsification.
+The fact that the algorithm picks edges \emph{deterministically} makes it much more powerful,
+and the analysis only requires the \emph{existence} of a ``good'' edge to add in each iteration.
+%Roughly speaking, in \citep{BatsonSS12} a good edge exists by an averaging argument over the entire set, while in our setting we average over the unknown subset $S$.
+%Our approach in this section is most directly inspired by the recent work of~\cite{LeeS17}.
+On the technical level, our work departs from previous works in two important ways: (1) our algorithm works even when the hidden set $S$ has sum only \emph{approximately} equal to $I$; and (2) our analysis is considerably simpler, partly because we do not require the output weights to be sparse. % (i.e., only a small number of the output $\tilde w_i$'s are non-zero).
+
+%We follow the same algorithmic framework used by all previous algorithms.
+We first give an overview of the framework of~\cite{BatsonSS12}.
+We will maintain two barrier values $\ell < u$, and a weighted sum of the rank-one matrices $A = \sum_{i=1}^m w_i v_i v_i^\top$ such that $\ell I \prec A \prec u I$.
+The plan is to start with some constants $\ell < 0 < u$, $A = 0$, and gradually increase the weights $\{w_i\}_i$, $u$ and $\ell$, while making sure that $A$ stays between the two barriers $u I$ and $\ell I$.
+If we can increase $u$ and $\ell$ at roughly the same rate, the condition number of $A$ will become smaller.
+
+Our approach in this section is most directly inspired by the recent work of~\cite{LeeS17}.
+We use the following potential function proposed in \citep{LeeS17} to measure how far $A$ is from the barriers (both $uI$ and $\ell I$):
+%\begin{align*}
+%\Phi_{u,\ell}(A) & = \Phi_u(A) + \Phi_\ell(A), \text{ where} \\
+%\Phi_u(A) & = \tr \exp \left((u I - A)^{-1}\right), \\
+%\Phi_\ell(A) & = \tr \exp \left((A - \ell I)^{-1}\right).
+%\end{align*}
+\begin{align*}
+\Phi_{u,\ell}(A) & = \Phi_u(A) + \Phi_\ell(A), \\
+\text{ where } \Phi_u(A) & = \tr \exp \left((u I - A)^{-1}\right), \text{ and } \Phi_\ell(A) = \tr \exp \left((A - \ell I)^{-1}\right).
+\end{align*}
+If $A$ is far from $u I$ and $\ell I$, then all eigenvalues of $uI - A$ and $A - \ell I$ are large and $\Phi_{u,\ell}(A)$ is small.
+The potential function is going to guide us on how to increase the weights $w_i$ so that $A$ stays away from the barriers.
+% Intuitively, we want to expand $A$ in the direction that $(A - \ell I)$ is small, while at the same time avoid directions that $(u I - A)$ is small.
+The derivatives of the potential functions with respect to $A$ are
+%\begin{align*}
+%\nabla \Phi_u (A) & = \exp \left((u I - A)^{-1}\right) (u I - A)^{-2}, \\ %\text{ and} \\
+%\nabla \Phi_\ell (A) & = - \exp \left((A - \ell I)^{-1}\right) (A - \ell I)^{-2}.
+%\end{align*}
+\begin{align*}
+\nabla \Phi_u (A) & = \exp \left((u I - A)^{-1}\right) (u I - A)^{-2}, \text{ and } 
+\nabla \Phi_\ell (A) = - \exp \left((A - \ell I)^{-1}\right) (A - \ell I)^{-2}.
+\end{align*}
+
+For notational convenience, we define $C_{-} = \nabla \Phi_u (A)$, $C_{+} = -\nabla \Phi_\ell (A)$, and $C = C_+ - C_-$.
+Note that when $\ell I \prec A \prec u I$, both $C_+$ and $C_-$ are PSD matrices.
+The first order approximation of the potential function is
+$\Phi_{u,\ell}(A+\Delta)
+ \approx \Phi_{u,\ell}(A) + \nabla \Phi_{u}(A) \bullet \Delta + \nabla \Phi_{\ell}(A) \bullet \Delta 
+% = \Phi_{u,\ell}(A) + C_- \bullet \Delta - C_+ \bullet \Delta
+ = \Phi_{u,\ell}(A) - C \bullet \Delta$.
+%\begin{align*}
+%\Phi_{u,\ell}(A+\Delta)
+% & \approx \Phi_{u,\ell}(A) + \nabla \Phi_{u}(A) \bullet \Delta + \nabla \Phi_{\ell}(A) \bullet \Delta \\
+% & = \Phi_{u,\ell}(A) + C_- \bullet \Delta - C_+ \bullet \Delta
+% = \Phi_{u,\ell}(A) - C \bullet \Delta.
+%\end{align*}
+
+We want $\Phi_{u,\ell}(A+\Delta)$ to be small, which guarantees that $A+\Delta$ is far away from $\ell I$ and $u I$.
+Therefore, in each iteration, we seek a matrix $\Delta$ such that
+\begin{enumerate}
+\item[(1)] $\Delta$ is small enough for the first-order approximation of $\Phi_{u,\ell}(A+\Delta)$ to be accurate; and
+\item[(2)] $\Delta$ maximizes $C \bullet \Delta$, the reduction to (first-order approximation of) the potential function.
+\end{enumerate}
+
+Formally, let $\rho = (\lambda_{\min}\{u I - A, A - \ell I\})^2$.
+%As shown in~\citep{LeeS17}, 
+When $0 \preceq \Delta \preceq \eps \rho I$, the first-order approximation of $\Phi_{u,\ell}(A+\Delta)$  is accurate (see Lemma~\ref{lem:potential-FO} in Appendix~\ref{app:bss}).
+We are interested in the following SDP:
+\begin{lp}
+\label{eqn:sdp-oracle}
+\maxi {C \bullet X}
+\st \con{X \preceq \eps \rho I, \quad X = \sum_{i=1}^m x_i v_i v_i^\top \text{ (which implies $0 \preceq X$)},}
+\end{lp}
+
+%Ideally, we would like to have $X = \eps \rho I$ and $\delta_{u}=\delta_{\ell}=\eps\rho$, so that $A$ grows equally in each dimension.
+%The upper and lower barriers would increase at the same rate, and the potential function would remain unchanged: $\Phi_{u+\eps\rho,\ell+\eps\rho}(A+\eps\rho I) = \Phi_{u,\ell}(A)$.
+%When $X = \delta \rho I$, the objective value of the SDP is $C \bullet X = \delta \rho \tr(C)$.
+%While this is too good to be true, we will show that we can find an $X$ that is almost as good. % with $C \bullet X \approx C \bullet \eps\rho I = \eps\rho\tr(C)$.
+
+We give a full description of our algorithm in Algorithm~\ref{alg:ls17}.
+
+\begin{algorithm2e}
+%\begin{algorithm}
+  \caption{Find $A = \sum_i w_i v_i v_i^\top \approx I$.}
+  \label{alg:ls17}
+  \SetAlgoVlined
+  \SetKwInOut{Input}{Input}
+%  \SetKwInOut{Output}{Output}
+  \Input{$\{v_i\}_{i=1}^m$, $\eps \le 1/10$.}
+%  \Output{}
+  $j = 0$, $A_0 = 0$, $\ell_0 = -\frac{1}{4}$, $u_0 = \frac{1}{4}$\; 
+  \While{$u_j - \ell_j \le 1$}{
+   Let $\rho \in [1-\eps, 1] \cdot (\lambda_{\min}\{u_j I - A_j, A_j - \ell I_j\})^2$\;
+   Let $\Delta_j$ be an approximate solution to the SDP \eqref{eqn:sdp-oracle} with $C = -\left(\nabla \Phi_{u_j}(A_j)+\nabla \Phi_{\ell_j}(A_j)\right)$\;
+   $\delta_{u,j}=\frac{\eps\rho}{2} \cdot \frac{(1+\beta+5\eps)}{1-2\eps}$, $\delta_{\ell,j}=\frac{\eps\rho}{2}\cdot\frac{(1-\beta-5\eps)}{1+2\eps}$\;
+   $A_{j+1} = A_j + \Delta_j$, $u_{j+1} = u_j + \delta_{u,j}$, $\ell_{j+1} = \ell_j + \delta_{\ell,j}$; \, $j = j + 1$\;
+  }
+  \Return{$A_j / u_j$}\;
+%\end{algorithm}
+\end{algorithm2e}
+
+We will use the following lemmas (Lemmas~\ref{lem:sdp-sol}~and~\ref{lem:phi-no-increase}) to analyze Algorithm~\ref{alg:ls17} and prove Theorem~\ref{thm:bss}.
+Lemma~\ref{lem:sdp-sol} shows that the SDP in \eqref{eqn:sdp-oracle} admits a good solution, and we can solve it approximately in nearly-linear time.
+Lemma~\ref{lem:phi-no-increase} says that the potential function $\Phi_{u_j,\ell_j}(A_j)$ never increases, which guarantees that $A_j$ is far away from both $u_j I$ and $\ell_j I$ for all $j$.
+
+%It is worth noting that, since we only know the existence of a set of weights whose sum is \emph{approximately} $I$, we have to change the rate that we increase the lower and upper barriers to cope with this error (at rate $1 \pm O(\beta + \eps)$ rather than $1 \pm O(\eps)$).
+
+\begin{lemma}
+\label{lem:sdp-sol}
+Fix $0 < \beta,\eps \le 1/10$.
+%Let $\{v_i\}_{i=1}^m$ be the input vectors in Theorem~\ref{thm:main}.
+%, and a graph Laplacian $L \in \R^{n \times n}$.
+%Given a set of $m$ vectors $\{v_i = L^{-1/2} b_i\}_{i=1}^m$, assume there exist weights $w_i \ge 0$ such that
+%\[
+%(1-\beta) I \preceq \sum_{i=1}^m w_i v_i v_i^\top \preceq (1+\beta) I.
+%\]
+In any iteration $j$ of Algorithm~\ref{alg:ls17}, given $A_j = \sum_{i=1}^m w_i v_i v_i^\top$ (implicitly by the weights $\{w_i \ge 0\}_{i=1}^m$) and corresponding barrier values $\ell = \ell_j$ and $u = u_j$,
+\begin{enumerate}
+\item[(1)] We can compute $\rho \in [1-\eps, 1] \cdot (\lambda_{\min}\{u I - A, A - \ell I\})^2$ w.h.p. in time $\tilde O(m / \eps^{O(1)})$.
+\item[(2)] Let $C, C_{+}, C_{-}$ be defined as above. %$C_{-} = \nabla \Phi_u (A)$, $C_{+} = -\nabla \Phi_\ell (A)$, and $C = C_+ - C_-$.
+%The SDP in \eqref{eqn:sdp-oracle} admits a solution $X^*$ with
+%$
+%C \bullet X^* \ge \eps \rho \left(\frac{1-\beta}{1+\beta}\tr(C_+) - \tr(C_-)\right).
+%$
+%Moreover, we can compute a solution $X = \sum_{i=1}^m \tilde w_i v_i v_i^\top$ (represented by the weights $\tilde w$) in time $\tilde O(m / \eps^{O(1)})$ such that, with high probability,
+%Moreover, 
+We can compute a set of weights $\{x_i \ge 0\}_{i=1}^m$ in time $\tilde O(m / \eps^{O(1)})$, such that w.h.p. for $X = \sum_{i=1}^m x_i v_i v_i^\top$,
+\[
+C \bullet X \ge \frac{\eps \rho}{2} \left((1-\beta-\eps)\tr(C_+) - (1+\beta+\eps)\tr(C_-)\right).
+\]
+\end{enumerate} 
+
+\end{lemma}
+
+\begin{lemma}
+\label{lem:phi-no-increase}
+Fix $0 < \beta, \eps \le 1/10$.
+Let $A_{j+1} = A_j + \Delta_j$ denote the matrix in the $j$-th iteration of Algorithm~\ref{alg:ls17}.
+If $\Delta_j$ is an approximate solution to the SDP that satisfies Lemma~\ref{lem:sdp-sol}, then we have $\Phi_{u_{j+1},\ell_{j+1}}(A_{j+1}) \le \Phi_{u_j,\ell_j}(A_{j})$.
+\end{lemma}
+
+We defer the proofs of these two lemmas to Appendix~\ref{app:bss}. Now we are ready to prove Theorem~\ref{thm:bss}.
+
+\begin{proof}[Proof of Theorem~\ref{thm:bss}]
+First, we show that $(1-O(\beta+\eps)) I \preceq A_j / u_j \preceq I$.
+The condition number of $A_j$ is upper bounded by
+$
+\frac{u_j}{\ell_j} = \left(1-\frac{u_j-\ell_j}{u_j}\right)^{-1},
+$
+hence it suffices to show that $\frac{u_j-\ell_j}{u_j} = O(\beta + \eps)$.
+Since $u_j - \ell_j > 1$ when the algorithm terminates,
+\[
+\frac{u_j - \ell_j}{u_j} < \frac{2(u_j - \ell_j) - 1}{u_j - \tfrac{1}{4}} = 2 \frac{(u_j - u_0) - (\ell_j - \ell_0)}{u_j - u_0}
+  \le 2 \max_j\frac{\delta_{u,j} - \delta_{\ell,j}}{\delta_{u,j}} = O(\beta + \eps).
+\]
+
+
+Next, we analyze the running time of Algorithm~\ref{alg:ls17}.
+The initial value of the potential function is $\Phi_{u_0, \ell_0}(0) = 2 \tr \exp (I) = 2n$.
+By Lemma~\ref{lem:phi-no-increase} and a union bound over $j$, we have that with high probability, $\Phi_{u_j, \ell_j}(A_j) \le 2n$ for all $j \le O(\log n/\eps^2)$.
+To see that $A_j$ must be far away from the barriers, consider only the contribution of $\lambda_{\min}(u_j I - A_j )$ to the potential function:
+\[
+2n \ge \Phi_{u_j}(A_j) = \tr \exp\left((u_j I - A_j)^{-1}\right) \ge \exp \left(\lambda_{\min}(u_j I - A_j)^{-1} \right).
+\]
+It follows that $\lambda_{\min}(u_j I - A) = \Omega(\log^{-1} n)$, and similarly $\lambda_{\min}(A_j - \ell_j I) = \Omega(\log^{-1} n)$.
+Therefore, we know that $\rho \ge (1-\eps) (\lambda_{\min}\{u_j I - A_j, A_j - \ell I_j\})^2 = \Omega(\log^{-2} n)$, and $\delta_{u,j} - \delta_{\ell,j} = \Omega(\eps^2 \cdot \log^{-2} n)$ for all $j$.
+Since the algorithm starts with $u_0 > \ell_0$ and terminates when $u_j - \ell_j > 1$, the number of iterations is at most $1/(\min_j (\delta_{u,j} - \delta_{\ell,j})) = O\left(\eps^{-2} \log^2 n \right)$.
+
+It remains to show that each iteration takes nearly-linear time.
+We maintain the matrices $A_j$ and $\Delta_j$ implicitly by the corresponding sets of weights, and add their weights together to get $A_{j+1}$. % $A_{j+1} = A_j + \Delta_j$.
+The input and output of the SDP are also represented implicitly by the weights.
+By Lemma~\ref{lem:sdp-sol}, we can compute $\rho$ and find a near-optimal solution to the SDP in \eqref{eqn:sdp-oracle} in time $\tilde O(m / \eps^{O(1)})$.
+The overall running time is $\tilde O(\frac{\log^2 n}{\eps^2} \cdot \frac{m}{\eps^{O(1)}}) = \tilde O(m / \eps^{O(1)})$.
+\end{proof}
+
+
+%Difference compared to \cite{LeeS17}:
+%(1) The growth rate of $u$ and $\ell$ is different compared to \cite{LeeS17}, which is necessary because...
+%(2) No sparsity requirement so no need to do sampling, which allows us to remove the expectation in the analysis of potential functions.
+%(We simplify the analysis of \cite{LeeS17}.)
+
+%\subsection{From Graphs to Weight Matrices: Proof of Theorem~\ref{thm:main}}
+\subsection{From Graphs to Weight Matrices: Consequences of Spectral Similarity}
+\label{sec:lap-to-adj}
+In this section, %we prove our main result (Theorem~\ref{thm:main}).
+we show that the weights computed by Algorithm~\ref{alg:ls17} are useful for the semi-random matrix completion problem.
+More specifically, we prove the following corollary of Theorem~\ref{thm:bss}.
+Corollary~\ref{cor:preprocess} provides the spectral property that is crucial to our analysis of non-convex matrix-completion algorithms in Section~\ref{sec:matcomp}. % (see Lemma~\ref{lem:deterministc_main}).
+
+\begin{corollary}
+\label{cor:preprocess}
+Fix $\beta > 0$.
+Consider the matrix completion problem with ground truth $\Ms \in \R^{n_1 \times n_2}$.
+There exists $p = O\left(\frac{\log n}{n_1 \beta^2}\right)$ such that if every entry of $\Ms$ is observed with probability at least $p$,
+then w.h.p., we can compute a weight matrix $W \in \R^{n_1 \times n_2}$ in time $\tilde O(m / \beta^{O(1)})$, such that $W$ is supported on the observed entries, $\norminf{W} \le n_2$, $\normone{W} \le n_1$, and $\norm{W-J} = O(\beta \sqrt{n_1 n_2})$.
+\end{corollary}
+Recall that $J$ is the all ones matrix, $n = n_1 + n_2$, and we assume $n_1 \le n_2$.
+
+Corollary~\ref{cor:preprocess} follows from Lemma~\ref{lem:random-graph}, Theorem~\ref{thm:bss}, and Lemma~\ref{lem:Lclose-Aclose}.
+Lemma~\ref{lem:random-graph} provides concentration bounds for random matrices, which implies that when $p$ is large enough, the semi-random input contains a good subset of observations.
+We can then apply Theorem~\ref{thm:bss} to show that our preprocessing algorithm can recover a good set of weights (i.e., a weighted graph that is spectrally similar to the complete bipartite graph).
+Finally, Lemma~\ref{lem:Lclose-Aclose} shows that the closeness in the Laplacians of two graphs implies the closeness in their (normalized) adjacency matrices. %, which is a key property that we use in our analysis of non-convex matrix-completion algorithms in Section~\ref{sec:matcomp}. % (see Lemma~\ref{lem:deterministc_main}).
+
+\begin{lemma}
+\label{lem:random-graph}
+Let $G$ denote the $n_1 \times n_2$ complete bipartite graph.
+We write $n = n_1 + n_2$ for the number of vertices, and $m = n_1 n_2$ for the number of edges.
+Let $H$ denote a random graph generated by including each edge of $G$ independently with probability $p$.
+W.h.p, we can re-weight edges in $H$ so that the Laplacian matrix $L_H$ is $\eps$-spectrally similar with $L_G$, where $\eps = O\left(\sqrt{\frac{n \log n}{p m}}\right)$.
+\end{lemma}
+%For complete bipartite graphs, all edges have the same effective resistance. Therefore, uniform sampling among all the edges will produce a good spectral sparsifier %(see, e.g., \citep{RudelsonV07,SpielmanS11}). The lemma allows reweighting on $H$ because we sample with replacement and sum up the weights if an edge is chosen more than once.
+
+%Next, we show that the closeness in the Laplacian matrices of two graphs implies the closeness in their (normalized) adjacency matrices.
+
+\begin{lemma}
+\label{lem:Lclose-Aclose}
+Let $L = D - A$ and $\tilde L = \tilde{D} - \tilde{A}$ be two graph Laplacians, where $D$ is the degree matrix and $A$ is the adjacency matrix of the graph.
+If $(1-\eps) L \preceq \tilde L \preceq L$, then we have:% (i) $(1-\eps) D_{i,i} \le \tilde{D}_{i,i} \le D_{i,i}$, and (ii) $\norm{D^{-1/2}(\tilde{A} - A)D^{-1/2}} \le 3\eps$.
+\begin{enumerate}
+\item[(1)] $(1-\eps) D_{i,i} \le \tilde{D}_{i,i} \le D_{i,i}$.
+\item[(2)] $\norm{D^{-1/2}(\tilde{A} - A)D^{-1/2}} \le 3\eps$.
+\end{enumerate}
+\end{lemma}
+We defer the proofs of Lemmas~\ref{lem:random-graph}~and~\ref{lem:Lclose-Aclose} to Appendix~\ref{apx:lap-to-adj}, and first prove Corollary~\ref{cor:preprocess}.
+%\begin{proof}
+%For (1), the spectral similarity between $L$ and $\tilde L$ implies that $(1-\eps) x^\top L x \le x^\top \tilde{L} x \le x^\top L x$ for all $x \in \R^n$.
+%In particular, this holds for all standard basis vectors, so $(1-\eps) D_{i,i} \le \tilde{D}_{i,i} \le D_{i,i}$.
+%
+%For (2), we know that $0 \preceq L - \tilde{L} \preceq \eps L$ and similarly $0 \preceq D-\tilde{D} \preceq \eps D$, and therefore
+%\begin{align*}
+%\norm{D^{-1/2}(\tilde{A} - A)D^{-1/2}}
+%& = \norm{D^{-1/2}(\tilde{D} - D + L - \tilde{L})D^{-1/2}} \\
+%& \le \norm{D^{-1/2} (D - \tilde D) D^{-1/2}} + \norm{D^{-1/2} (L - \tilde L) D^{-1/2}} \\
+%& \le \eps \norm{I} + \eps \norm{D^{-1/2} L D^{-1/2}} \le 3\eps. %\tag*{\jmlrQED} %\qedhere
+%\end{align*}
+%The last step uses the fact that eigenvalues of a normalized Laplacian matrix $D^{-1/2} L D^{-1/2}$ are always between $0$ and $2$.
+%%\renewcommand{\jmlrQED}{}
+%\end{proof}
+
+\begin{proof}[Proof of Corollary~\ref{cor:preprocess}]
+Let $G$ denote the $n_1 \times n_2$ complete bipartite graph ($n_1 \le n_2$).
+Let $H$ be the graph corresponds to the entries revealed randomly, and let $H'$ denote the graph after the adversary added extra edges.
+By Lemma~\ref{lem:random-graph}, for $p = O\left(\frac{\log n}{n_1 \beta^2}\right)$, with high probability, there exists edge weights for $H$ such that $(1-\beta) L_G \preceq L_H \preceq (1+\beta) L_G$.
+% We assume this high probability event happens for the rest of the proof.
+
+Because the edges of $H'$ is a superset of the edges of $H$, there exist edge weights for $H'$ such that the same condition holds.
+Since the vectors $\{L_G^{-1/2} b_e\}_{e \in H'}$ satisfy the condition in Problem~\ref{prob:identity}, we can invoke Theorem~\ref{thm:bss} with $\eps = \beta$ to obtain a set of weights $\{\tilde w_e\}_{e \in H'}$ such that $(1-O(\beta))L_G \preceq \sum_{e \in H'} \tilde w_e b_e b_e^\top \preceq L_G$ in time $\tilde O(m / \beta^{O(1)})$, where $m$ is the number of edges in $H'$.
+
+Let $A$ denote the adjacency matrix of $G$, and let $A'$ denote the adjacency matrix of $H'$ with weights $\tilde w_e$.
+Since both $A'$ and $A_G$ include only edges in the complete bipartite graph, we can write
+\[
+A = \left(\begin{array}{cc} 0 & J \\ J^\top & 0 \end{array}\right), \qquad
+A' = \left(\begin{array}{cc} 0 & W \\ W^\top & 0 \end{array}\right), \qquad
+\]
+where $J$ is the all ones matrix and $W \in \R^{n_1 \times n_2}$ contains the edge weights $\tilde w_e$ ($W_{i,j} = \tilde w_e$ for every $(i,j) \in H'$, and $W_{i,j} = 0$ otherwise).
+By Lemma~\ref{lem:Lclose-Aclose}, the row sum of $W$ is at most $n_2$ for every row, and the column sum of $W$ is at most $n_1$ for every column.
+Again by Lemma~\ref{lem:Lclose-Aclose}, $\norm{D^{-1/2} (A' - A_{G}) D^{-1/2}} \le O(\beta)$, which implies that $\norm{W - J} = \norm{A - A'} = O(\beta \sqrt{n_1 n_2})$.
+\end{proof}

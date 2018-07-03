@@ -1,0 +1,69 @@
+\label{s:howtodiscretize}
+In this section we calculate integral representations of the solutions to the continuous-time process \eqref{e:exactlangevindiffusion} and the discrete-time process \eqref{e:discretelangevindiffusion}.
+\begin{lemma}\label{l:explicitform}
+The solution $(x_t,v_t)$ to the underdamped Langevin diffusion \eqref{e:exactlangevindiffusion} is
+\begin{align*}
+\numberthis \label{e:vdynamics}
+v_t &= v_0 e^{-\gamma t} - u \left(\int_0^t e^{-\gamma(t-s)} \nabla f(x_s) ds \right) + \sqrt{2\gamma u} \int_0^t e^{-\gamma (t-s)} dB_s\\
+x_t &= x_0 + \int_0^t v_s ds.
+\end{align*}
+The solution $(\tilde{x}_t,\tilde{v}_t)$ of the discrete underdamped Langevin diffusion \eqref{e:discretelangevindiffusion} is
+\begin{align*}
+\numberthis \label{e:vtildedynamics}
+\vt_t &= \vt_0 e^{-\gamma t} - u \left(\int_0^t e^{-\gamma(t-s)} \nabla f(\xt_0) ds \right) + \sqrt{2\gamma u} \int_0^t e^{-\gamma (t-s)} dB_s\\
+\xt_t &= \xt_0 + \int_0^t \vt_s ds.
+\end{align*}
+\end{lemma}
+\begin{Proof}%[Proof of Lemma \ref{l:explicitform}]
+It can be easily verified that the above expressions have the correct initial values $(x_0,v_0)$ and $(\xt_0,\vt_0)$. By taking derivatives, one also verifies that they satisfy the differential equations in \eqref{e:exactlangevindiffusion} and \eqref{e:discretelangevindiffusion}.
+\end{Proof}
+Next we calculate the moments of the Gaussian used in the updates of Algorithm \ref{ulmcmc}. These are obtained by integrating the expression for the discrete-time process presented in Lemma \ref{l:explicitform}.
+\begin{lemma}\label{l:gaussianexpressionforsamplingxtvt}
+Conditioned on $(\tilde{x}_0,\tilde{v}_0)$, the solution $(\xt_t,\vt_t)$ of \eqref{e:discretelangevindiffusion} with $\gamma=2$ and $u=1/L$ is a Gaussian with conditional mean,
+\begin{align*}
+\E{\vt_t } & = \vt_0 e^{-2 t} - \frac{1}{2L}(1-e^{-2 t}) \nabla f(\xt_0)\\
+\E{\xt_t } & = \xt_0 + \frac{1}{2}(1-e^{-2 t})\vt_0 - \frac{1}{2L} \left( t - \frac{1}{2}\left(1-e^{-2 t}\right) \right) \nabla f(\xt_0),
+\end{align*}
+and with conditional covariance,
+\begin{align*}
+\E{\left(\xt_t - \E{\xt_t}\right) \left(\xt_t - \E{\xt_t}\right)^{\top}  }&= \frac{1}{L } \left[t-\frac{1}{4}e^{-4t}-\frac{3}{4}+e^{-2t}\right] \cdot I_{d\times d}\\
+\E{\left(\vt_t - \E{\vt_t}\right) \left(\vt_t - \E{\vt_t}\right)^{\top} } &= \frac{1}{L}(1-e^{-4 t})\cdot I_{d\times d}\\
+\E{\left(\xt_t - \E{\xt_t}\right) \left(\vt_t - \E{\vt_t}\right)^{\top} }&= \frac{1}{2L} \left[1+e^{-4t}-2e^{-2t}\right] \cdot I_{d \times d}.
+\end{align*}
+\end{lemma}
+\begin{Proof}%[Proof of Lemma \ref{l:gaussianexpressionforsamplingxtvt}]
+It follows from the definition of Brownian motion that the distribution of $(\tilde{x}_t,\tilde{v}_t)$ is a $2d$-dimensional Gaussian distribution. We will compute its moments below, using the expression in Lemma \ref{l:explicitform} with $\gamma=2$ and $u=1/L$.
+
+
+Computation of the conditional means is straightforward, as we can simply ignore the zero-mean Brownian motion terms:
+\begin{align}
+\E{\vt_t } & = \vt_0 e^{-2 t} - \frac{1}{2L}(1-e^{-2 t}) \nabla f(\xt_0)\\
+\E{\xt_t } & = \xt_0 + \frac{1}{2}(1-e^{-2 t})\vt_0 - \frac{1}{2L} \left( t - \frac{1}{2}\left(1-e^{-2 t}\right) \right) \nabla f(\xt_0).
+\end{align}
+
+The conditional variance for $\vt_t$ only involves the Brownian motion term:
+\begin{align*}
+\E{\left(\vt_t - \E{\vt_t}\right) \left(\vt_t - \E{\vt_t}\right)^{\top} }=& \frac{4}{L}\E{\left(\int_0^t e^{-2 (t-s)} dB_s\right)\left(\int_0^t e^{-2(s-t)} dB_s\right)^{\top}}\\
+=& \frac{4}{L} \left(\int_0^t e^{-4(t-s)} ds \right) \cdot I_{d\times d}\\
+=& \frac{1}{L}(1-e^{-4 t})\cdot I_{d\times d}.
+\end{align*}
+The Brownian motion term for $\xt_t$ is given by
+\begin{align*}
+\sqrt{\frac{4}{L}} \int_0^t  \left( \int_0^r e^{-2 (r-s)} dB_s \right)dr
+=& \sqrt{\frac{4}{L}} \int_0^t e^{2s}\left( \int_s^t e^{-2r} dr \right) dB_s=& \sqrt{\frac{1}{L}} \int_0^t \left(1-e^{-2(t-s)} \right) dB_s.
+\end{align*}
+Here the second equality follows by Fubini's theorem. The conditional covariance  for $\tilde{x}_t$ now follows as 
+\begin{align*}
+\E{\left(\xt_t - \E{\xt_t}\right) \left(\xt_t - \E{\xt_t}\right)^{\top} }=& \frac{1}{L } \E{\left( \int_0^t \left(1- e^{-2(t-s)}  \right)dB_s\right)\left( \int_0^t \left(1-e^{-2(t-s)} \right)dB_s\right)^{\top}}\\
+=& \frac{1}{L } \left[ \int_0^t \left(1-e^{-2(t-s)}\right )^2 ds \right]\cdot I_{d \times d}\\
+=& \frac{1}{L } \left[t-\frac{1}{4}e^{-4t}-\frac{3}{4}+e^{-2t}\right] \cdot I_{d\times d}.
+\end{align*}
+Finally we compute the cross-covariance between $\tilde{x}_t$ and $\tilde{v}_t$,
+\begin{align*}
+\E{\left(\xt_t - \E{\xt_t}\right) \left(\vt_t - \E{\vt_t}\right)^{\top}}=& \frac{2}{L} \E{\left( \int_0^t\left(1-e^{-2 (t-s)} \right)dB_s\right)\left( \int_0^t e^{-2 (t-s)} dB_s\right)^{\top}}\\
+=& \frac{2}{L} \left[ \int_0^t(1-e^{-2 (t-s)})(e^{-2 (t-s)}) ds \right]\cdot I_{d \times d}\\
+=& \frac{1}{2L} \left[1+e^{-4t}-2e^{-2t}\right] \cdot I_{d \times d}.
+\end{align*}
+
+We thus have an explicitly defined Gaussian. Notice that we can sample from this distribution in time linear in $d$, since all $d$ coordinates are independent.
+\end{Proof}

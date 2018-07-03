@@ -1,0 +1,30 @@
+\section{Proof of Theorem \ref{thm:pth}}
+\label{sec:pthproof}
+Before proving the theorem, we first show a simple estimator that works for any loss function $\mathrm{loss}(\cdot)$ bounded in $[0,1]$ with $L$-Lipschitz property\footnote{We say $\mathrm{loss}(\cdot)$ has $L$-Lipschitz property if $\forall x_1,x_2\in[0,1],|\loss(x_1)-\loss(x_2)|\leq L|x_1-x_2|$.} using $O(\frac{L^2}{\epsilon^4}\cdot\log\frac{1}{\epsilon})$ queries on $N+O(\frac{1}{\epsilon^2})$ unlabeled examples. The estimator runs for $O(\frac{1}{\epsilon^2})$ iterations and in each $i$th iteration, the estimator samples a fresh unlabeled example $x$ and then queries the labels of $w=O(\frac{L^2}{\epsilon^2}\log\frac{1}{\epsilon})$ examples $x_1,x_2,\cdots,x_w$ sampled independently at random uniformly from the $k$ nearest neighbors of $x$ in $S$. The estimator for this iteration is $E_i=\mathrm{loss}(|\frac{1}{w}\sum\limits_{j=1}^wf(x_j)-f(x)|)$. The final output of the estimator is the average of all $E_i$'s for all iterations $i$.
+
+We prove Theorem \ref{thm:pth} by slightly modifying the above estimator's each iteration for $p$th-power loss. Instead of looking at the labels of $w$ examples, we only need to look at $p$ labels of $x_1,x_2,\cdots, x_p$, still sampled independently at random uniformly from the $k$ nearest neighbors of $x$ in $S$. In this case, $E_i$ is defined to be $\prod\limits_{j=1}^p|f(x_j)-f(x)|$. The final output of the estimator is still the average of $E_i$'s.
+%The proof of Theorem \ref{thm:pth} is based on the following lemma.
+%\begin{lemma}
+%\label{lm:pth}
+%Suppose the examples in the trainning set $T$ and the test point $x$ are sampled independently at random according to $\calD$. Suppose $x_1,x_2,\cdots,x_p$ are sampled independently at random uniformly from the $k$ nearest neighbors of $x$ in $T$. Suppose $e_i$ is defined to be $|f(x_i)-f(x)|$Then, $\mathbb E_{T,x}[\mathbb E_{x_1}[e_i]^p]=\mathbb E_{T,x,x_1,x_2,\cdots,x_p}[\prod\limits_{j=1}^pe_i]$.
+%\end{lemma}
+%\begin{proof}
+%\begin{equation}
+%\begin{split}
+%&\mathbb E_{T,x}[|\mathbb E_{x_1}[f(x_1)-f(x)]|^p]\\
+%=&\mathbb E_{T,x}[|(\mathbb E_{x_1}[f(x_1)-f(x)])^p|]\\
+%=&\mathbb E_{T,x}[|\underbrace{(\mathbb E_{x_1}[f(x_1)-f(x)])(\mathbb E_{x_1}[f(x_1)-f(x)])\cdots (\mathbb E_{x_1}[f(x_1)-f(x)])}_{p}|]\\
+%=&\mathbb E_{T,x}[|\prod\limits_{j=1}^p\mathbb E_{x_j}[f(x_j)-f(x)]|]\\
+%=&\mathbb E_{T,x}[|\mathbb E_{x_1,x_2,\cdots,x_p}[\prod\limits_{j=1}^p(f(x_j)-f(x))]|]\\
+%=&\mathbb E_{T,x}[\mathbb E_{x_1,x_2,\cdots,x_p}[\prod\limits_{j=1}^p|f(x_j)-f(x)|]]\\
+%=&\mathbb E_{T,x,x_1,x_2,\cdots,x_p}[\prod\limits_{j=1}^p|f(x_j)-f(x)|]
+%\end{split}
+%\end{equation}
+%\end{proof}
+\begin{proof}(of Theorem \ref{thm:pth})
+We use $e_j$ to denote $|f(x_j)-f(x)|$. To show the above estimator works, we first look at the value we want to estimate: $\mathbb E_{x}[(\err(x))^p]=\mathbb E_{x}[|\mathbb E_{x_1}[f(x_1)-f(x)]|^p]=\mathbb E_{x}[\mathbb E_{x_1}[|f(x_1)-f(x)|]^p]=\mathbb E_{x}[(\mathbb E_{x_1}[e_1])^p]$, where $x_1$ is sampled uniformly from the $k$ nearest neighbors of $x$ in $T$. Here, we can move the absolute value $|\cdot|$ inside because $f(x_1)-f(x)$ is either always non-negative (when $f(x)=0$) or always non-positive (when $f(x)=1$). Note that $x_1,x_2,\cdots,x_p$ are iid, so we know $\mathbb E_{x}[(\err(x))^p]=\mathbb E_{x}[ (\mathbb E_{x_1}[e_1])^p]=\mathbb E_{x}[\mathbb E_{x_1,x_2,\cdots,x_p}[e_1e_2\cdots e_p]]=\mathbb E_{x,x_1,x_2,\cdots,x_p}[\prod\limits_{j=1}^p|f(x_j)-f(x)|]$. According to the Chernoff Bound, the empirical mean of $\prod\limits_{j=1}^p|f(x_j)-f(x)|$ over $O(\frac 1{\epsilon^2})$ iid trials approximates the value $\mathbb E_{x}[(\err(x))^p]$ within additive error $\epsilon$ with probability at least $\frac 23$, which completes the proof.
+\end{proof}
+
+Theorem \ref{thm:pth} also holds naturally for Weighted Nearest Neighbor algorithms \citep{R66} with soft predictions, in which $\hat f(x)$ is a weighted average of $f(x')$ for all $x'\in S$ where the weights depend on the distances $\D(x',x)$, simply by sampling $x_1,x_2,\cdots,x_p$ iid from $S$ according to the weights. 
+
+%In Theorem \ref{thm:pthpowerlower} (Section \ref{subsec:lower}), we will show a matching lower bound for the $O(\frac{p}{\epsilon^2})$ query complexity.

@@ -1,0 +1,315 @@
+%!TEX root = main.tex
+\section{Streaming PCA} \label{sec:stream_pca_app}
+Given a sequence of i.i.d.~symmetric random matrices $H_n \in \rb^{d \times d}$ such that $\E H_n = H$, in the streaming $k$-PCA problem we hope to approximate the subspace of the top $k$ eigenvectors. Let us denote by $\{\lambda_i\}_{1\leq i\leq d}$ the eigenvalues of $H$ sorted in decreasing order. Sharp convergence rates and finite sample guarantees for streaming PCA (with $k=1$) were first obtained by \citet{jain2016streaming,shamir16b} using the randomized power method (with and without a positive eigengap $\lambda_1-\lambda_2$). When $\lambda_1>\lambda_2$,  \citet{jain2016streaming} showed
+with proper choice of learning rate $\eta_i \sim  {\tilde{O}} \left( \frac{1}{(\lambda_1-\lambda_2)i} \right)$,  an $\epsilon$-approximation to the top eigenvector $v_1$ of $H$ could be found in $ {\tilde{O}}(\frac{\lambda_1}{(\lambda_1-\lambda_2)^2} \frac{1}{\epsilon})$ iterations with constant probability. In the absence of an eigengap, \citet{shamir16b} showed a slow rate of convergence $ {\tilde{O}}(\lambda_1/\sqrt{n})$ for the objective function using a step-size choice of $O(1/\sqrt{n})$. \citet{AllenLi2017-streampca,shamir2016fast}\footnote{\citet{shamir2016fast} does not directly address the streaming setting but his result can be extended to the streaming setting, as remarked by \citet{AllenLi2017-streampca}.} later extended these results to the more general streaming $k$-PCA setting (with $k\geq1$).
+
+The aforementioned results are quite powerful---because they are \textit{global} convergence results. In particular, they hold for any random initialization and do not require an initialization very close to the optima. In contrast, our framework only provides local results.
+
+However, streaming $k$-PCA still provides an instructive and practically interesting application of our iterate-averaging framework. An important theme in the following analysis is to leverage to underlying Riemannian structure of the $k$-PCA problem as a Grassmann manifold.
+
+Throughout this section we will assume that the stream of matrices satisfies the bound $\norm{H_n} \leq 1$ a.s.
+
+\subsection{Grassmann Manifolds}
+
+\paragraph{Preliminaries:}
+We begin by first reviewing the geometry of the Grassmann manifold and proving several useful auxiliary lemmas. We denote the  Grassmann manifold $\G$, which is the set of the $k$-dimensional subspaces of a $d$-dimensional Euclidean space. Recalling the Stiefel manifold is the submanifold of the orthonormal matrices $\{ X\in\mathbb{R}^{d\times k}, X^\top X=I_k\}$), $\G$ can be viewed as the Riemannian quotient manifold of the Stiefel manifold where two matrices are identified as equivalent when their columns span the same subspace. Finally, $\G$ can also be identified with the set of rank $k$ projection matrices $\G=\{ X \in \mathbb{R}^{d\times d} \text{ s.t. } X^\top=X, X^2=X, \tr(X)=k \}$ \citep[see, e.g.,][for further details]{edelman1998geometry,absil2004riemannian}. We will use $\mathbf{X}$ to denote an element of $\G$, and $X$ a corresponding member of the equivalence class associated to $\mathbf{X}$, which belongs to the Stiefel manifold. Further, the tangent space at that point $\mathbf X$ is given by $T_{\mathbf X}\G= \{ Y\in \mathbb{R}^{d\times k}, Y^\top X=0 \}$. In the following we identify $\mathbf X$ and $X$ when it is clear from the context.
+
+For our present purposes, we consider the (second-order) retraction map
+\begin{equation}\label{eq:retraproj}
+R_X(V)=(X+V)[(X+V)^\top(X+V)]^{-1/2},
+\end{equation}
+
+which is projection-like mapping onto $\G$. Note we implicitly extend $R_X$ to all matrices in $\mathbb{R}^{d\times d}$, and do not consider it only defined on the tangent space $T_X\G$. For $V \in T_X\G$, we still have $R_X(V)=(X+V)[\idm_k+V^\top V]^{-1/2}$.  If $X^\top Y$ is invertible, then a short computation shows that $R_X^{-1}(Y)=(I-X^\top X X)Y(X^\top Y)^{-1}$ with $\Vert R_X^{-1}(Y)\Vert_F^2=\tr [( X^\top Y X Y^\top)^{-1}-I]$. As we argue next, $\Vert R_X^{-1}(Y)\Vert_F^2$ is in fact locally equivalent to the induced, Frobenius norm $d_F(X,Y)=2^{-1/2}\Vert X X^\top-Y Y^\top\Vert_F^2$.
+
+\paragraph{Measuring Distance on $\G$:}
+
+It will be useful to have several notions of distance defined on $\G$ between two representative elements $X$ and $Y$.
+Let $\theta_i$ for $i=1, \hdots, k$ denote the principal angles between the two subspaces spanned by the columns of $X$ and $Y$, i.e.
+$U \cos(\Theta) V^\top$ is the singular value decomposition (SVD) of $X^\top Y$, where $\Theta$ is the diagonal matrix of principal angles,
+and $\theta$ the $k$-vector formed by $\theta_i$. Our first distance of interest will be the arc length (or geodesic distance):
+\[
+  d_A(X, Y) = \norm{\theta}_2 = \norm{\Exp^{-1}_{X}(Y)}_2,
+\]
+while the second will be the projected, Frobenius norm:
+\[
+    d_F(X, Y) = \norm{\sin \theta}_2 = 2^{-1/2} \norm{X X^\top - Y Y^\top}_{F}.
+\]
+The distance $d_F(\cdot, \cdot)$ is induced by embedding $\G$ in Euclidean space $\rb^{d \times k}$ and inheriting the corresponding Frobenius norm. Lastly, we will also consider the pseudo-distance induced by the retraction $\Vert R^{-1}_{X}(Y)\Vert_F$. Conveniently, for small principal angles we can show these quantities are asymptotically equivalent,
+\begin{lemma}
+ \label{lem:distequiv}
+  Let $\theta$ denote the $k$-vector of principal angles between the subspaces spanned by $X$ and $Y$. If
+  $\norm{\theta}_{\infty} \leq \frac{\pi}{4}$ then:
+  \[
+   \frac{\pi}{2}  \Vert R^{-1}_{X}(Y)\Vert_F \geq \frac{\pi}{2}   d_{F}(X, Y) \geq  d_{A}(X, Y) \geq \frac{1}{\sqrt{2}}  \Vert R^{-1}_{X}(Y)\Vert_F. \]
+\end{lemma}
+\begin{proof}
+  In fact $d_{A}(X, Y) \geq d_{F}(X, Y)$ uniformly over $\theta$ which follows $\sin x \leq x$ for all $x$. Using the elementary inequality $|\frac{\sin x}{x}| \geq \frac{2}{\pi}$ for $x \in [-\pi/2, \pi/2]$ we immediately obtain that $d_{A}(X, Y) \leq \frac{\pi}{2} d_{F}(X, Y)$ if $\norm{\theta}_{\infty} \leq \pi/2$.
+A direct computation shows:
+\[
+\Vert R^{-1}_{X}(Y)\Vert^2_F = \tr[ (X^\top YY^\top X)^{-1}-I]=  \tr[ \cos(\Theta)^{-2}-I]=\tr[ (I-\sin^2(\Theta))^{-1}-I].
+\]
+Using that for $x\in(0,\frac{1}{\sqrt{2}})$, $\frac{1}{1-x}\geq 1+x$ and $\frac{1}{1-x}\leq 1+2x$, we obtain for $\Vert \theta \Vert_\infty<\pi/4$ that,
+\[
+d^2_{F}(X, Y)\leq \Vert R^{-1}_{X}(Y)\Vert^2_F \leq 2d^2_{F}(X, Y),\]
+concluding the argument.
+\end{proof}
+The local equivalence between these quantities will prove useful for relating various algorithms for the
+streaming $k$-PCA problem.
+
+\paragraph{Streaming $k$-PCA in $\G$:} Within the geometric framework we can cast the $k$-PCA problem as minimizing the Rayleigh quotient, $f(X) = -\frac{1}{2} \tr [X^\top H X]$, over $\G$ as
+\[\min _{X \in \G} -\frac{1}{2} \tr [X^\top H X].\]
+  \citet{edelman1998geometry} show the (Riemannian) gradient of $f$\footnote{Note that on embedded manifold the Riemannian gradient of a function is given by projection of its Euclidean gradient in the tangent space of the manifold at a point.} is given by
+  \[\nabla f (X)=-(I-X^\top X) H X.\]
+ Similarly, the Hessian operator is characterized by the property that if $\Delta\in T_X\G$, then
+\[\Hess f (X)[\Delta] =\Delta X^\top H X-(\idm -X X^\top)H\Delta.\]
+It is worth noting that $\nabla f (X) = 0$ for $X$ spanning any subspace or eigenvector of $H$, but that $\Hess f(X)$ is only positive-definite at the optimum $X_\star$.
+
+\subsection{Algorithms for streaming $k$-PCA} \label{sec:alg_stream}
+
+We now have enough background to describe several, well-known iterative  algorithms for the streaming $k$-PCA problem and elucidate their relationship to Riemannian SGD.
+
+\begin{description}
+\item[Randomized power method \citep{OjaKar85}:] corresponds to  SGD on the Rayleigh quotient (with step size $\gamma_n$) over Euclidean space followed by a projection,
+\[
+X_n = ( \idm_d + \gamma_n H_n ) X_{n-1}  \big[ X_{n-1}^\top ( \idm_d + \gamma_n H_n ) ^{2}X_{n-1}  \big]^{-1/2}.
+\]
+\item[Oja iteration \citep{Oja82}:]corresponds to a first-order expansion in $\gamma_n$ of the previous randomized power iteration,
+\[
+ X_n = X_{n-1}  + \gamma_n ( \idm - X_{n-1} X_{n-1}^\top) H_n  X_{n-1}.
+ \]
+\item[Yang iteration \citep{Yan95}:] corresponds to a symmetrization of the Oja iteration,
+\[
+X_{n} =  X_{n-1}  + \gamma_n (2 H_n - X_{n-1} X_{n-1}^\top H_n-  H_n X_{n-1} X_{n-1}^\top)  X_{n-1}.
+\]
+In the special case that $H_n=h_n h_n^\top$, the Yang iteration can also be related to the unconstrained stochastic optimization of the function $X\mapsto\E \Vert h_n- X X^\top h_n\Vert_F^2$.
+\item[(Stochastic) Gradient Descent over $\G$ \citep{bonnabel2013stochastic}:] corresponds to directly optimizing the Rayleigh quotient over $\G$ by equipping SGD with either the exponential map $\Exp$ or the aforementioned retraction $R$,
+\[
+X_n = R_{X_{n-1}}\big(\gamma_n(I-X_{n-1} X_{n-1}^{\top}) H_n X_{n-1}\big).
+\]
+\end{description}
+We are now in position to show that for the present problem Riemannian SGD, the randomized power method, and Oja's iteration
+are equivalent updates up to $O(\gamma_n^2)$ corrections. First note that the randomized power method (with the aforementioned choice of retraction $R$) can be written as:
+\begin{align}
+  R_{X}(\gamma_n H_nX), \label{eq:rand_power}
+\end{align}
+bearing close resemblance to the Riemannian SGD update,
+\begin{align}
+  R_{X}(\gamma_n(I-X X^{\top}) H_nX). \label{eq:rie_sgd}
+\end{align}
+The principal difference between \eq{rie_sgd} and \eq{rand_power} is that in the randomized power method, the Euclidean gradient is used instead of the Riemannian gradient. In the following Lemma we argue that both of the updates in \eq{rie_sgd} and \eq{rand_power} can be
+directly approximated by the Oja iteration, $X_{n+1}=X_n+\gamma_{n+1}(I-X_n X_n^{\top}) H_{n+1}X_n+O(\gamma_{n+1}^2)$ up to
+2nd-order terms and hence that $\Vert R_{X_\star}^{-1}(X_{n+1})) -R_{X_\star}^{-1}(R_{X_n}(\gamma_n\nabla f_{n+1}(X_n))))\Vert_F^2=O(\gamma_n^2)$. Therefore, a direct modification of Lemma \ref{lem:tangent_rec} shows that the
+iterates in \eq{rand_power} generated from the randomized power method may also be linearized in the tangent space.
+
+\begin{lemma} \label{lem:equiv_oja}
+  Alternatively, let $X_n = R_{X_{n-1}}(\gamma_n(I-X_{n-1} X_{n-1}^{\top}) H_n X_{n-1})$ denote the Riemannian SGD update (equipped with second-order retraction $R$) or $X_n = R_{X_{n-1}}(H_n X_{n-1})$, the randomized power update. Then both updates satisfy,
+  \[
+    X_{n}=X_n+\gamma_{n}(I-X_{n-1} X_{n-1}^{\top}) H_{n}X_{n-1}+O(\gamma_{n}^2),
+  \]
+  and hence are equivalent to the Oja update up to $O(\gamma_n^2)$ terms.
+\end{lemma}
+\begin{proof}
+The computation for both the randomized power method and the Riemannian SGD (equipped with the retraction $R$) are straightforward. For the randomized power method we have that,
+\BEAS
+ X_n & = &
+  ( \idm_d + \gamma_n H_n ) X_{n-1}  \big[ X_{n-1}^\top ( \idm_d + \gamma_n H_n ) ^{2}X_{n-1}  \big]^{-1/2} \\
+& = &
+ ( \idm_d + \gamma_n H_n ) X_{n-1}  \big[ \idm_d + 2 \gamma_n X_{n-1}^\top   H_n  X_{n-1} \big]^{-1/2} + O(\gamma_n^2) \\
+& = &  ( \idm_d + \gamma_n H_n ) X_{n-1}  \big[ \idm_d -  \gamma_n X_{n-1}^\top   H_n  X_{n-1}\big] + O(\gamma_n^2)\\
+& = & X_{n-1}+\gamma_n [\idm_d -X_{n-1}X_{n-1}^\top]  H_n X_{n-1}+ O(\gamma_n^2).
+\EEAS
+An identical computation shows the same result for the Riemannian SGD update,
+\begin{align}
+  X_n &  =
+  \big( \idm_d +  \gamma_n  [\idm_d -X_{n-1}X_{n-1}^\top] H_n \big) X_{n-1}  \big[ X_{n-1}^\top( \idm_d +  \gamma_n  [\idm_d -X_{n-1}X_{n-1}^\top] H_n )  ^{2}X_{n-1}  \big]^{-1/2} \notag \\
+& =  X_{n-1}+\gamma_n [\idm_d -X_{n-1}X_{n-1}^\top]  H_n X_{n-1}+ O(\gamma_n^2). \notag
+\end{align}
+\end{proof}
+Since these two algorithms are identical up to $O(\gamma_n^2)$ corrections we can directly show they will have the same linearization in $T_{X_{\star}} \M$.
+\begin{lemma} \label{lem:oja_linear}
+  Let, $\Delta_n=R_{X_\star}^{-1}(X_{n})$, where $X_n$ is obtained from one iteration of the randomized power method, $X_n=R_{X_n}(\gamma_n H_n X_n)$. Then $\Delta_n$ obeys,
+  \[
+    \Delta_n=\D_{n-1} -\gamma_n \Hess f(x_\star) \D_{n-1}+ \gamma_n (\eps_n+\xi_{n}+e_{n}) +O(\gamma_n^2).
+  \]
+\end{lemma}
+\begin{proof}
+ Let $\dot \Delta_n=R_{X_\star}^{-1}(Y_{n})$, where $Y_n$ is obtained from one iteration of Riemannian SGD (with the aforementioned second-order retraction $R$), $Y_n=R_{X_n}(\gamma_n \nabla f_n(X_n))$. From Lemma \ref{lem:tangent_rec_3} we have that $\dot \Delta_n$ may be linearized as
+\[
+ \dot\D_{n}=\D_{n-1} -\gamma_n \Hess f(x_\star) \D_{n-1}+ \gamma_n (\eps_n+\xi_{n}+e_{n})
+\]
+Defining $\square= X_{n-1}+\gamma_n [\idm_d -X_{n-1}X_{n-1}^\top]  H_n X_{n-1}$ for the Oja update, we can then show the randomized power method satisfies,
+\[
+R^{-1}_{X_\star}(X_n)= Y_n(X_\star^\top Y_n)^{-1}=[\square +O(\gamma_n^2)](X_\star^\top (\square +O(\gamma_n^2)))^{-1}=\square (X_\star^\top \square )^{-1}+O(\gamma_n^2)
+\]
+This allows us to directly bound the difference between $\dot\D_{n}$ and $\D_n$ using Lemma \ref{lem:equiv_oja},
+\[
+\Vert \dot \Delta_n- \Delta_n \Vert_F=
+\Vert R^{-1}_{X_\star}(X_n)-R^{-1}_{X_\star}(Y_n) \Vert_F =
+\Vert Y_n(X_\star^\top Y_n)^{-1}-X_n(X_\star^\top X_n) \Vert_F = O(\gamma_n^2).
+\]
+Hence the randomized power method iterate $X_n$ obeys the linearization,
+\[
+\Delta_n=\D_{n-1} -\gamma_n \Hess f(x_\star) \D_{n-1}+ \gamma_n (\eps_n+\xi_{n}+e_{n}) +O(\gamma_n^2),
+\]
+and falls within the scope of our framework.
+\end{proof}
+
+\subsection{Algorithms for Streaming Averaging}
+Just as there are several algorithms to compute the primal iterate $X_n$, their are several reasonable ways to compute the streaming average $\tilde X_n$. Our general framework directly considers $\tilde X_n=R_{\tilde X_{n-1}}[\frac{1}{n}R^{-1}_{\tilde X_{n-1}}(X_n)]$ which leads to the following update rule:
+\begin{equation}\label{eq:averageojaret}
+\tilde X_n=R_{\tilde X_{n-1}}\Big[\frac{1}{n}(\idm -\tilde X_{n-1}\tilde X_{n-1}^\top)X_n[\tilde X_{n-1}X_n]^{-1}\Big].
+\end{equation}
+As described in \mysec{com}, the streaming average is an approximation to a corresponding global Riemannian average (which is intractable to compute). Hence, it is reasonable to consider
+other global Riemannian averages that the streaming average approximates. For instance, the update rule in \eq{averageojaret} is naturally motivated by the global minimization of $X\mapsto\sum_{i=1}^n\Vert R^{-1}_X(X_i)\Vert^2$. Considering instead the distance $d_F$, and attempting to minimizing $X\mapsto\sum_{i=1}^n d^2_F(X,X_i)$, suggests a different averaging scheme. A short computation shows the aforementiond problem can be rewritten as the maximization of the function $2\tr [X^\top(\sum_{i=1}^n X_iX_i^\top)X]$ and is therefore precisely equivalent to the $k$-PCA problem.
+With this in mind, we can directly use the randomized power method to compute the streaming average of the iterates. This leads to the different update rule:
+\begin{equation}\label{eq:averageoja}
+\tilde X_n=R_{\tilde X_{n-1}}\Big[\frac{1}{n}X_nX_n^\top \tilde X_{n-1}\Big],
+\end{equation}
+which is exactly one step of randomized power method iteration to compute the first $k$ eigenvectors of the matrix $\frac{1}{n}\sum_{i=1}^nX_iX_i^\top$ with step size $\gamma_n=\frac{1}{n}$.
+
+Using similar computations to those in Lemma \ref{lem:equiv_oja} and \ref{lem:oja_linear}, it can be shown that these iterates are equivalent to those in \eq{averageojaret} since they have a similar linearzation in $T_{X_\star}\G$.
+\begin{lemma}\label{lem:average_oja}
+ Let $\tilde X_n=R_{\tilde X_{n-1}}\Big[\frac{1}{n}X_nX_n^\top \tilde X_{n-1}\Big]$ and $\tilde \D_n=R_{X_\star}^{-1}(\tilde X_n)$. Then $\tilde X_n$ obeys
+\[
+\tilde \D_n=\tilde \D_{n-1}+\frac{1}{n}\big[\tilde \D_{n-1}+ \D_{n} \big]+ \frac{1}{n}O\big( \Vert \D_{n-1}\Vert^2+\Vert \tilde\D_{n}\Vert^2 + \frac{1}{n^2}\big).
+\]
+\end{lemma}
+\begin{proof}
+Following a similar approach as in the proof of Lemma \ref{lem:tangent_rec} we can show that
+\[
+\tilde \D_n=\tilde \D_{n-1}+\frac{1}{n+1}[\idm-X_\star X_\star^\top]X_nX_n^\top \tilde X_{n-1}+O(\frac{1}{n^2}).
+\]
+Then a direct expansion shows that for all $\Delta = R^{-1}_{X_\star}(X)$,
+\[
+X=R_{X_\star}(\D)=(X_\star+\D)[\idm+\D^\top\D]^{-1/2}=X_\star+\D+O(\Vert\D\Vert^2),
+\]
+so we obtain (using $\Vert\D_n^\top \tilde\D_{n-1}\Vert=O(\Vert\D_n\Vert^2+\Vert \tilde \D_{n-1}\Vert^2)$) that
+\[
+[\idm-X_\star X_\star^\top]X_nX_n^\top \tilde X_{n-1}=\D_n+\tilde \D_{n-1}+O(\Vert\D_n\Vert^2+\Vert \tilde \D_{n-1}\Vert^2)).
+\]
+\end{proof}
+This manner of iterate averaging is interesting, not only due to its simplicity, but due to its close connection to the primal, randomized power method. In fact, this averaging method allows us
+to interpret the aforementioned, streaming, averaged PCA algorithm as a preconditioning method.
+
+Consider the case where we hope to compute the principal $k$-eigenspace of a poorly conditioned matrix $H$. The aforementioned streaming, averaged PCA algorithm can be interpreted as the composition of two stages. First, running $n$ steps of the randomized power method with step size $\gamma_n\propto1/\sqrt{n}$, to produce a well-conditioned matrix $\frac{1}{n}\sum_{i=1}^nX_iX_i^\top$, and then using the randomized power method with step size $1/n$ to compute the average of the points $X_i$ (which is efficient since the eigengap of $\frac{1}{n}\sum_{i=1}^nX_iX_i^\top$ is large). The intuition for this first step is formalized in the following remark,
+\begin{remark}
+  Assume the sequence of iterates $\{ X \}_{i=0}^{n}$ satisfies $d_F(X_i, X_\star) =  {O}(\sqrt{\gamma})$ for all $i=1, \dots, n$ then the eigengap of the averaged matrix $\tilde{X} = \frac{1}{n} \sum_{i=1}^{n} X_i X_i^\top$ satisfies $\tilde \lambda_{k}-\tilde \lambda_{k+1} \geq 1-kO(\sqrt{\gamma})$ (where we denote by $\{\tilde \lambda_i\}_{1\leq i\leq d}$ the eigenvalues of $\tilde X$ sorted in decreasing order).
+\end{remark}
+\begin{proof}
+  $X_i X_i^\top = X_\star X_\star^\top + \eta_i$ for $\eta_i$ satisfying $\norm{\eta_i}_{F} \leq O(\sqrt{\gamma})$ by the definition of the distance $d_{F}(\cdot, \cdot)$, so it follows that
+  $\tilde{X}_n = X_\star X_\star^{\top} + \eta$ for $\eta$ satisfying $\norm{\eta}_{F} \leq O(\sqrt{\gamma})$ using the triangle inequality.
+  Now using the Weyl inequalities \citep{horn1990matrix} we have that:
+  \[
+    \lambda_{k}(\tilde{X}_n - \eta + \eta) \geq \lambda_{k}(\tilde{X}_n - \eta) + \lambda_d(\eta),
+  \]
+  where we denote by $\lambda_k(M)$ the $k$-th largest eigenvalue of the matrix $M$. Moreover $\lambda_{k}(\tilde{X}_n - \eta)=1$ and $|\lambda_d(\eta)| \leq \norm{\eta}_F \leq O(\sqrt{\gamma})$ since the spectral norm is upper bounded by the Frobenius norm, so
+  $\lambda_{k}(\tilde{X}_n) \geq 1-O(\sqrt{\gamma})$.
+  Now, recall that each $X_i \in \G$, so $\Tr[\tilde{X}_n]= \frac{1}{n} \sum_{i=1}^{n} \Tr[X_i X_i^\top] = k$ due to the normalization constraint $X_i X_i^\top = \idm_{k}$.
+ Thus we must have that $\tilde \lambda_{k+1} \leq k O(\sqrt{\gamma})$ which implies $\tilde \lambda_k(\tilde{X}_n)-\tilde\lambda_{k+1}(\tilde{X}_n) = 1-kO(\sqrt{\gamma})$.
+\end{proof}
+For these reasons we prefer to use \eq{averageoja} rather than \eq{averageojaret} in our experiments and our presentation. It is worth noting that since these both iterations are equivalent up to $O(\gamma_n)$ corrections, they will (a) have the same theoretical guarantees in our framework and (b) perform similarly in practice.
+
+\subsection{Convergence Results}
+
+We are now ready to apply Theorem \ref{thm:oja_main} to the streaming $k$-PCA problem, with only the tedious task of verifying our various technical assumptions. Since we only seek to derive a local convergence result, we will once again use Assumption \ref{assump:manifold} which stipulates the iterates $X_n$ are restricted to $\X$ and that the map $X\mapsto\norm{R_{X_\star}^{-1}(X)}_F^2$ is strongly-convex. Here we will take the set $\X=\{Y : d_F(X_\star, Y)\leq \delta \}$, for $\delta>0$.  As previously noted, if the retraction $R$ was taken as the exponential map, the map $X\mapsto \norm{\Exp_{X_\star}^{-1}(X)}_F^2$ would always be retraction strongly convex locally in a ball around $y$ whose radius depends on the curvature, as explained by \citet{Afs11}. However,
+we can also verify, that even when $R$ is the aforementioned projection-like retraction it is locally retraction strongly convex,
+\begin{remark} \label{rmk:strongcvxpca}
+ Let $k=1$ and take $R$ as the second-order retraction defined in \eq{retraproj}. Then there exists a constant $\delta>0$ such that on the set
+ $\X = \{Y : \abs{X_\star^\top Y} \geq 1-\delta \}$, $X\mapsto \norm{R_{X_\star}^{-1}(X)}_F^2$ is retraction strongly convex.
+\end{remark}
+\begin{proof}
+ For notational convenience, let $\epsilon$ be defined so we consider $\mathcal{Y} = \{ Y : \abs{X_\star^\top Y} \geq 1-\epsilon \}$. It suffices to show that for $\norm{X_\star}_2=1$, all $Y$ such that $\norm{Y}_2=1$ and $\abs{X_\star^\top Y} \geq 1-\epsilon$, and all $V$ such that $\norm{V}_2=1$, the map $g(t) : t \mapsto \norm{R_{X_\star}^{-1}(R_{Y}(t V))}_F^2$ is convex in $t$. For $k=1$, using the previous formulas for the retraction and its inverse norm, we can explicitly compute the map as $g(t) = \frac{1+t^2}{(X_\star^\top(Y+tV))^2}-1$. We then have that $g''(t) = \frac{2 (3 (X_\star V)^2-2t (X_\star^\top v)(X_\star^\top y)+ (X_\star^\top y)^2)}{(t (X_\star^\top v) +(X_\star^\top y))^4}$. It suffices to show that $3 (X_\star^\top V)^2+ (X_\star^\top Y)^2 > 2t (X_\star^\top V)(X_\star^\top Y)$ for all $t$ such that $R_{Y}(t V) \in \mathcal{Y}$.
+ Since $V \in T_{Y}\M$ we must have that $V^\top Y = 0$ which implies that $(V^\top X_\star)^2 = (V^\top (Y-X_\star))^2 \leq 2-2Y^\top X_{\star} \leq 2 \epsilon$. Hence we have that $2\abs{(X_\star^\top V)(X_\star^\top Y)} \leq 4\epsilon$. On the otherhand,
+ we have that $3 (X_\star^\top V)^2+ (X_\star^\top Y)^2 > (X_\star^\top Y)^2 > (1-\epsilon)^2$. Thus the statement is satisfied for all $\abs{t} \leq \frac{(1-\epsilon)^2}{4\epsilon}$. Using the local equivalence of distances for PCA (Lemma \ref{lem:distequiv}), the conclusion holds for some constant $\delta>0$.
+\end{proof}
+A similar, but lengthier linear algebra computation, also shows the result for $k > 1$.
+
+Theorem \ref{thm:oja_main} requires several other assumptions (namely Assumptions \ref{assump:HessianLip} and \ref{assump:noiseLip}) which are (surprisingly) tedious to verify even in the simple case when $f$ is the quadratic Rayleigh quotient. However, we note Lemma \ref{lem:tangent_rec_2}, for the streaming $k$-PCA problem, can also be derived from first principles, circumventing the need to directly check these assumptions.
+\begin{remark} If $f$ is the Rayleigh quotient, the conclusion of Lemma \ref{lem:tangent_rec_2} follows (without having to directly verify Assumptions \ref{assump:HessianLip} and \ref{assump:noiseLip}), when the stream of matrices satisfies the almost sure bound $\Vert H_n\Vert\leq1$.
+\end{remark}
+\begin{proof}
+As in the proof of Lemma \ref{lem:average_oja}, we use
+\[
+X_n=R_{X_\star}(\D_n)=(X_\star+\D_n)[\idm+\D_n^\top\D_n]^{-1/2}=X_\star+\D_n+O(\Vert\D_n\Vert^2),
+\]
+to simplify $\nabla f_{n+1}(X_n)$. This yields
+\BEAS
+\nabla f_{n+1}(X_n)
+&=&(\idm-X_nX_n^\top)H_{n+1}X_n +O(\Vert\D_n\Vert^2)\\
+&=&(\idm-(X_\star +\D_n)(X_\star+\D_n)^\top)H_{n+1}(X_\star +\D_n)\\
+&=&(\idm-X_\star X_\star^\top)H_{n+1}X_\star+(\idm-X_\star X_\star^\top)H_{n+1}\D_n-\D_n X_\star^\top H_{n+1}X_\star\\
+&&+ X_\star \D_n^\top H_{n+1}X_\star+O(\Vert\D_n\Vert^2).
+\EEAS
+Upon projecting back into $T_{X_\ast}\M$, the term $ X_\star \D_n^\top H_nX_\star$ vanishes and we obtain,
+\BEAS
+(\idm-X_\star X_\star^\top)\nabla f_{n+1}(X_n)
+&=& \Hess f(X_\star)\D_n+\nabla f_{n+1}(X_\ast)+\xi_{n+1},
+\EEAS
+with $\xi_{n+1}=(\idm-X_\star X_\star^\top)H_{n+1}\D_n-\D_n X_\star^\top H_{n+1}X_\star$ satisfying $\E[\xi_{n+1}|\mathcal{F}_{n}]=0$ and $\E[\Vert\xi_{n+1}\Vert^2|\mathcal{F}_{n}]=O(\Vert \Delta_n\Vert^2)$ since $\E[\Vert H-H_{n+1}\Vert^2|\mathcal{F}_{n}]$ is bounded (recall that we assume $\norm{H_n} \leq 1$ a.s.).
+\end{proof}
+Using results from the work of \citet{AllenLi2017-streampca} and \citet{shamir2016fast} we can now argue under appropriate conditions that
+the randomized power method for the streaming $k$-PCA problem will converge in expectation to a neighborhood of $X_\star$.
+Namely,
+\begin{lemma}[\cite{AllenLi2017-streampca} and \cite{shamir2016fast}]
+ \label{lem:oja_converge}
+  Let $X_n$ denote the iterates of the randomized power method evolving as in \eq{rand_power}.
+  If Assumption \ref{assump:manifold} holds for $\X$ defined above with $\delta<1/4$ then,
+  \[
+    \E[d_{F}^2 (X_\star, X_n)] = O(\gamma_n^2).
+  \]
+\end{lemma}
+\begin{proof}
+  This a direct adaptation of Lemma 10 by \citet{shamir2016fast} as explained by \citet[][Section 3]{AllenLi2017-streampca}.
+\end{proof}
+Finally, we are able to present the proof of Theorem \ref{thm:oja_main}. Since the assumptions of Lemma \ref{lem:oja_converge} are satisfied by assumption, and we have asymptotic equivalence of distances from Lemma \ref{lem:distequiv}, Assumption \ref{assump:slowrate} is satisfied. Further, since Lemmas \ref{lem:oja_linear} and \ref{lem:average_oja} show the linearized process of the randomized power iterates is equivalent to that of Riemannian SGD up to $O(\gamma_n^2)$ corrections, distributional convergence immediately follows from these Lemmas and Theorem \ref{thm:main}. Lastly, we can compute the asymptotic variance.
+
+We first compute the inverse of the Hessian of $f$. Let us consider the following basis of $T_{X_\star}\G$, $\{v_i e_j^\top \}_{k<i\leq d;j\leq k}$, where we denote by $v_i$ the eigenvector of $H$ associated with the eigenvalue $\lambda_i$ and $e_j$ the $j$th standard basis vector.
+Indeed  $\{v_i e_j^\top \}_{k<i\leq d;j\leq k}$ is a linear independent set since   $\{v_i e_j^\top \}_{i\leq d;j\leq k}$ is a basis of $\mathbb R^{d,k}$. Moreover for $k<i\leq d$, $X_\star^\top v_i e_j^\top=0$ so $ v_i e_j^\top\in T_{X_\star}\G$. We conclude this set is a basis from a dimension count. We now compute the projection of the Hessian on this basis
+\BEAS
+\Hess f(X_\star)[v_ie_j^\top]&=& v_ie_j^\top X_\star^\top H X_\star - Hv_ie_j^\top\\
+&=&
+v_ie_j^\top \diag(\lambda_1,\dots, \lambda_k)-\lambda_i v_ie_j^\top\\
+&=&(\lambda_j-\lambda_i) v_ie_j^\top.
+\EEAS
+Therefore
+\[
+[\Hess f(X_\star)]^{-1}[v_ie_j^\top]= \frac{v_ie_j^\top}{\lambda_j-\lambda_i}.
+\]
+We now reparametrize $\tilde H_n= H^{-1/2} H_n H^{-1/2} $ such that $\E[\tilde H_n]= \idm$. Thus
+\BEAS
+\nabla f_n(X_\star)
+&=&  (\idm-X_\star X_\star ^\top)H_nX_\star \\
+&=&(\idm-X_\star X_\star ^\top)H^{1/2} \tilde H_nH^{1/2} X_\star\\
+&=&
+\sum_{i=k+1}^d \sqrt{\lambda_i} v_iv_i^\top  \tilde H_n\sum_{j=1}^k \sqrt{\lambda_j}v_j e_j^\top\\
+&=&
+\sum_{j=1}^k\sum_{i=k+1}^d\sqrt{\lambda_i \lambda_j} [v_i^\top \tilde H_n v_j] v_i  e_j^\top.
+\EEAS
+This yields
+\[
+[\Hess f(X_\star)]^{-1}\nabla f_n(X_\star) = \sum_{j=1}^k\sum_{i=k+1}^d\frac{\sqrt{\lambda_i \lambda_j}}{\lambda_j-\lambda_i}[v_i^\top \tilde H_n v_j]v_ie_j^\top.
+\]
+And the asymptotic covariance becomes,
+\begin{align}
+& [\Hess f(X_\star)]^{-1}\E[\nabla f_n(X_\star)\nabla f_n(X_\star)^\top] \Hess f(X_\star)]^{-1}= \notag \\
+& 
+\sum_{j'=1}^k\sum_{i'=k+1}^d \sum_{j=1}^k\sum_{i=k+1}^d\frac{\sqrt{\lambda_i \lambda_j} \cdot \sqrt{\lambda_{i'} \lambda_{j'}}}{(\lambda_{j}-\lambda_{i}) \cdot (\lambda_{j'}-\lambda_{i'})} \E \left[\left(v_i^\top \tilde H_n v_j\right) \left(v_{i'}^\top \tilde H_n v_{j'}\right)\right](v_i e_j^\top) \otimes (v_{i'} e_{j'}^\top). \notag
+\end{align}
+
+It is interesting to note that the tensor structure of $C_{ii'jj'}$ significantly simplifies if we have that $H_n = h_n h_n^\top$ for $h_n \sim \mathcal{N}(0, \Sigma)$ -- that $H_n$ is comprised of a rank-one stream of Gaussians. Recall we have $\tilde{H}_n = H^{-1/2} H_n H^{-1/2} = H^{-1/2} x_n x_n^\top H^{-1/2} = x'_n (x'_n)^\top$.
+So for a rank-one stream,
+\begin{align}
+  C_{ii'jj'} = \E \left[\left(v_i^\top \tilde H_n v_j\right) \left(v_{i'}^\top \tilde H_n v_{j'}\right)\right]  = \E \left[ \langle v_i, x'_n \rangle
+  \langle v_{i'}, x'_n \rangle \langle v_j, x'_n \rangle \langle v_{j'}, x'_n \rangle \right]. \notag
+\end{align}
+Since $x'_n \sim \mathcal{N}(0, I_d)$ and the law of a jointly multivariate normal random variable is invariant under an orthogonal rotation, the joint distribution of the vector
+$[\langle v_i, x'_n \rangle,
+\langle v_{i'}, x'_n \rangle, \langle v_j, x'_n \rangle, \langle v_{j'}, x'_n \rangle] \sim \mathcal{N}(0, I_4)$ for $i \neq i'$ and $j \neq j'$. So the only non-vanishing terms become,
+\begin{align}
+  C_{ii'jj'} = \delta_{ii'} \delta_{jj'}, \notag
+\end{align} and the asymptotic covariance reduces to,
+\begin{align}
+    C = \sum_{j=1}^k\sum_{i=k+1}^d\frac{{\lambda_i \lambda_j}}{(\lambda_j-\lambda_i)^2} (v_i e_j^\top) \otimes (v_{i} e_{j}^\top). \notag
+\end{align}
+
+This is precisely the same asymptotic variance given by \citet{reiss2016non} and matches the lower bound of \citet{CaiMaWu13} obtained for the (Gaussian) spiked covariance model. However, formally, our result requires the $H_n$ to be a.s. bounded.

@@ -1,0 +1,71 @@
+
+\begin{algorithm} [t]
+\begin{algorithmic}[1]
+\FOR{$t=1, \ldots, T$}
+			\STATE Define $x(l) = \Pi^\Phi_{K_l}(x_{t-1})$, increase $l$ from $l=f_t(v_t)$, until $\norm{\nabla \Phi(x(l)) - \nabla \Phi(x_{t-1})}_* = \eta \norm{\nabla f_t (x(l))}_*$. 
+			\label{projection-step-regret}
+			\STATE $x_t =  x(l)$.
+			\ENDFOR
+\end{algorithmic}
+\caption{(Dual) \ouralg}
+\label{alg: online-projection-regret}
+\end{algorithm}
+
+%We now move from competitive ratio to regret, specifically dynamic regret.  
+While the online algorithms community typically focuses on competitive ratio, regret is typically the focus of the online learning community. The difference in performance metrics leads to differences in the settings considered.  In the previous section, we studied locally polyhedral cost functions, while here we focus on cost functions that are continuously differentiable and have a minimizer $v_t$ in the interior of the feasible set $\mathcal{X}$.\footnote{Any convex function can be approximated by a convex functions with these properties, e.g., see \cite{nesterov2005}.% and \cite{wright1999}.
+}  
+
+Interestingly, it is has been shown that the change in metric from competitive ratio to regret has a fundamental impact on the type of algorithms that perform well. Concretely, it has been shown that no single algorithm can perform well across (static) regret and competitive ratio \citep{andrew2013}.  Consequently, it is not surprising that we find a different choice of balance in \ourack\ is needed to obtain the no-regret performance guarantees.  Specifically, in contrast to the results of the previous section, which focus on a form of balance in the primal setting, in this section we focus on balance in the dual setting, where we compare costs as measured in the dual norm, $\norm{x}_* = \max_{\norm{z} \le 1} \langle z, x \rangle$. 
+
+We show that choosing  $l$ to balance between the switching cost in the dual space and the size of the gradient leads to an online algorithm with small dynamic regret. It is worth emphasizing that, in contrast to the results of the previous section, we balance the switching cost against the marginal hitting cost $\norm{\nabla f_t(x_t)}_*$ instead of $f_t(x_t)$. A formal description of the instantiation of \ourack\ for regret is given in Algorithm \ref{alg: online-projection-regret}, which can be implemented efficiently via bisection (Lemma \ref{lem: continuity-ratio}).% implies that the right balance can be computed efficiently via bisection when implementing Step \ref{projection-step-regret}. Our main result in this section bounds the dynamic regret of Algorithm \ref{alg: online-projection-regret}. 
+
+\begin{theorem}
+Consider $\Phi$ that is an $m$-strongly convex function in $\norm{\cdot}$ with $\norm{\nabla \Phi(x)}_*$ bounded above by $G$ and $\nabla \Phi(0) = 0$. Then the $L$-constrained dynamic regret of Algorithm \ref{alg: online-projection-regret} is $\leq \frac{GL}{\eta}  + \frac{T\eta}{2m}.$
+\label{thm: online-projection-regret}
+\end{theorem} 
+
+While the result above does not depend on knowing the parameters of the instance, if we know the parameters $T$, $D$ and $L$ ahead of time then we can optimize the balance parameter $\eta$ as follows.
+
+\begin{corollary}\label{cor: online-projection-regret}
+When $\eta =\sqrt{\frac{2GLm}{T}}$,  Algorithm \ref{alg: online-projection-regret} has $L$-constrained dynamic regret $\leq \sqrt{\frac{2GLT}{m}}.$ 
+\end{corollary}
+
+One interesting aspect of this result is that it has a form similar to the dynamic regret bound on OGD in Theorem 2 of \cite{zinkevich2003}.  Both are independent of the dimension of the decision space $d$, assuming the diameter of the space is normalized to $1$. The key difference is that the bound in Corollary \ref{cor: online-projection-regret} is \emph{independent of the size of the gradients of the cost functions}, unlike in the case of OGD. This can be viewed as a significant benefit that results from the fact that \ourack\ steps in a direction normal to where it lands, rather than where it starts.  
+
+Finally, note that Theorem \ref{thm: online-projection-regret} and Corollary \ref{cor: online-projection-regret} additionally provide bounds on the static regret of \ourack, by setting $L=D$. In this case, Corollary \ref{cor: online-projection-regret} gives a bound of $O(\sqrt{T})$ which matches the lower bound  in the setting where there are no switching costs \citep{hazan2016}.
+
+%Note that we always have $L \leq DT$, since the offline can move at most $D$ each step. With this choice of $L$, the time-averaged dynamic regret is at most $\sqrt{\frac{2GD}{m}}$. Furthermore, when the offline optimal is static, i.e., $x_1^* = x_2^* = \ldots = x_T$, then $L = \norm{x^* - x_0} \le D$, hence the regret is upper bounded by $D\sqrt{2T}$. \gautam{does this imply the static regret is sublinear??} \niangjun{Yes, but remember we have one-step lookahead advantage here, that's why I don't want to directly compare with regret.} \gautam{Can you explain why it implies the static regret is sublinear? It seems to me this only holds if the dynamic optimal happens to be static, which is very rarely the case.}\niangjun{the definition of static regret is comparing against the optimal that is static}
+
+%Now let us end this section with a proof of Theorem \ref{thm: online-projection-regret}.
+
+%
+%
+%\begin{align*}
+%\norm{x_t - x_t^*}^2 &= \norm{ x_{t-1} - x_t^* - \eta \nabla_t}^2 \\
+%& = \norm{x_{t-1} - x_t^*}^2 - 2\eta \langle \nabla_t, x_{t-1} - x_t^* \rangle + \eta^2 \norm{\nabla_t}^2,
+%\end{align*}
+%rearranging, we have 
+%\begin{align}
+%\langle \nabla_t, x_{t-1} - x_t^* \rangle = \frac{1}{2\eta} (\norm{x_{t-1} - x_t^*}^2 - \norm{x_t - x_t^*}^2) + \frac{\eta}{2} \norm{\nabla_t}^2. 
+%\label{eqn: grad-ineq}
+%\end{align}
+%Substitute \eqref{eqn: grad-ineq} into \eqref{eqn: per-step-diff} and summing over $t$, we have 
+%\begin{align*}
+%\sum_{t=1}^T f_t(x_t) - f_t(x_t^*)  & \le  \frac{1}{2\eta} \sumt ( \norm{x_t - x_t^*}^2 - \norm{x_{t-1} - x_t^*}^2 ) - \frac{\eta}{2}\norm{\nabla_t}^2 \\
+%& \le \frac{1}{2\eta}  ( \norm{x_0}^2 - \norm{x_T}^2)  + \sumt  \frac{1}{\eta} \langle x_t^*, x_t - x_{t-1} \rangle - \frac{\eta}{2}\norm{\nabla_t}^2 \\
+%& \overset{(a)}{\le} \sumt   \frac{1}{\eta}\langle x_t, x_t^* - x_{t+1}^*\rangle - \frac{\eta}{2} \norm{\nabla_t}^2\\
+%& \overset{(b)}{\le}  \sumt \frac{1}{\eta} \norm{x_t}\norm{x_t^* - x_{t+1}^*} - \frac{\eta}{2} \norm{\nabla_t}^2\\
+%& \overset{(c)}{\le} \frac{ D L}{\eta} - \sumt \frac{\eta}{2}\norm{\nabla_t}^2,
+%\end{align*}
+%where $(a)$ is because $x_0 = 0$ and denoting $x_{t+1}^* = 0$, $(b)$ is due to Cauchy-Schwarz inequality, and $(c)$ is because of the assumption $\norm{x_t} \le D$ for all $x_t \in \mathcal{X}$ and the definition of $L$. 
+%
+%Therefore, the dynamic regret of Algorithm \ref{alg: online-projection-regret} can be upper bounded by:
+%\begin{align*}
+%&\sumt f_t(x_t) + \norm{x_t - x_{t-1}} -  ( f_t(x_t^*) + \norm{x_t - x_{t-1}}) \\
+%\le &L \left( \frac{D}{\eta} - 1\right) + \eta \sumt (  \norm{\nabla_t} - \frac{1}{2} \norm{\nabla_t}^2) \\
+% \le &L\left(\frac{D}{\eta} - 1 \right) + \frac{T\eta}{2} - \frac{\eta}{2} \sumt (\norm{\nabla_t} -1 )^2, 
+%\end{align*}
+%throwing away the negative terms completes the proof. 
+
+
+

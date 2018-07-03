@@ -1,0 +1,184 @@
+\section{Implications}\label{sec:implications}
+In this section we discuss the implications of interval regret
+guarantees on switching/dynamic regret, both of which are
+meaningful performance measures for non-stationary environments.
+
+%\subsection{Switching Regret}\label{subsec:switching}
+\paragraph{Switching Regret.} We begin with switching regret, which is pretty straightforward.
+One only needs to divide the entire time interval $[1,T]$ into several i.i.d. subintervals with length bounded by $L$,
+and then apply the interval regret guarantee on each of these subintervals since the best policy $\pi^\star_t$ remains the same on each of these subintervals
+(for \AdaEG and \AdaILTCB we can simply set the variation tolerance $v$ to be $0$).
+We take Exp4.S as an example and state the results below 
+(see Appendix~\ref{app:Exp4.S} for the proof),
+while similar results for other algorithms are summarized in Table~\ref{tab:results}.
+%but one can easily generalize the results to the other algorithms we have presented
+%with different conditions and regret rates (see Table~\ref{tab:results}).
+
+\begin{cor}\label{cor:Exp4.S} 
+Exp4.S with parameter $L$ ensures $\E\left[ \sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \right] \leq 
+\otil\left(\left(\frac{T}{\sqrt{L}} + S\sqrt{L}\right) \sqrt{K\ln N}\right)$ where $S = 1 + \sum_{t=2}^T \one\{\calD_t \neq \calD_{t-1}\}$.
+\end{cor}
+
+
+If $S$ is known, then setting $L = T/S$ gives a bound of $\otil(\sqrt{STK\ln N})$.
+Otherwise setting $L$ with different values leads to different bounds that are incomparable.
+For example, setting $L = T$ leads to $\otil(S\sqrt{TK\ln N})$ while setting 
+$L = \sqrt{T}$ leads to $\otil((T^\frac{3}{4} + ST^\frac{1}{4})\sqrt{K\ln N})$.
+No matter how $L$ is tuned, however,
+these bounds all become vacuous ($\Omega(T)$) when $S$ is large enough but still sublinear in $T$,
+an issue addressed later in Section~\ref{sec:bin}.
+
+%\subsection{Dynamic Regret}\label{subsec:dynamic}
+\paragraph{Dynamic Regret.}
+%All results with efficient algorithms presented so far require some
+%additional conditions to obtain meaningful bounds.  We now drop any of
+%these assumptions and move on to bounding dynamic regret in terms of
+We now move on to discuss dynamic regret in terms of the variation measures $\var$ or $\bvar$ (recall $\var = \sum_{t=2}^T \max_{\pi \in \Pi} |\calR_t(\pi) - \calR_{t-1}(\pi)|$ and $\bvar = \sum_{t=2}^T \TVD{\calD_t-\calD_{t-1}}$). %(recall their definitions in Section~\ref{sec:setup}).
+We first point out that previous
+works~\citep{BesbesGuZe15, ZhangYaJiZh17} have studied a reduction
+from dynamic regret to interval regret, restated below:
+
+\begin{lemma}\label{lem:dynamic2interval}
+Let $\{\calI_i = [s_i, t_i]\}_{i \in [n]}$ be time intervals that partition $[1,T]$. 
+We have 
+\[
+\sum_{t=1}^T \E_t\left[ r_t(\pi^\star_t(x_t)) - r_t(a_t) \right] \leq
+\sum_{i=1}^n \sum_{t\in\calI_i} \E_t\left[ \left(
+  r_t(\pi^\star_{s_i}(x_t)) - r_t(a_t) \right)\right] +
+2\sum_{i\in[n]} |\calI_i|\var_{\calI_i}.
+\]
+\end{lemma}
+
+We include the proof in Appendix~\ref{app:dynamic2interval} for
+completeness.  Partitioning $[1,T]$ into intervals with equal length $L'
+\leq L$, applying this lemma and Theorem~\ref{thm:Exp4.S},
+and using the fact $\sum_{i\in[n]} \var_{\calI_i} \leq \var$ directly
+lead to the following result for Exp4.S.
+
+\begin{cor}\label{thm:Exp4.S_dynamic}
+Exp4.S with parameter $L$ ensures that $\E\left[ \sum_{t=1}^T
+  r_t(\pi^\star_t(x_t)) - r_t(a_t) \right] \leq \otil\left(\min_{0\leq
+  L' \leq L} \left\{\frac{T}{L'}\sqrt{LK\ln N} + L'\var\right\} \right)$.
+\end{cor}
+
+Again, if $\var$ is known one can tune $L$
+optimally to get a bound $\otil(T^\frac{2}{3}(\Delta K\ln
+N)^\frac{1}{3} + \sqrt{TK\ln N})$, similar to the optimal
+dynamic regret in multi-armed bandits~\citep{BesbesGuZe14}.  When
+$\Delta$ is unknown, different values of $L$ give different and in
+general incomparable bounds.  For example, setting $L =
+T^\frac{2}{3}$ leads to $\otil(T^\frac{2}{3}\sqrt{\var}(K\ln
+N)^\frac{1}{4} +T^\frac{2}{3}\sqrt{K\ln N})$
+(with $L' = \min\{T^{2/3}, T^{2/3}(K\ln N)^{1/4}/\sqrt{\var}\}$ in this case),
+which is again vacuous for large $\var$.
+
+Similar arguments also provide a dynamic regret bound for \corral with \bistro in the transductive setting,
+as shown in Table~\ref{tab:results} (also see Corollary~\ref{cor:BISTRO+_dynamic} in Appendix~\ref{app:BISTRO+}).
+However, the exact same argument above does not apply to \AdaEG and \AdaILTCB
+directly since its interval regret guarantee requires $\var_\calI \leq
+v$.  
+It turns out, however, one can set $v$ to some carefully selected value and
+partition $[1,T]$ correspondingly so that every subinterval satisfies $|\calI| \leq L$
+and $\var_\calI \leq v$,
+to obtain the following results
+that hold in a completely adversarial setting.\footnote{The dependence on
+  $K\ln(N/\delta)$ in these results is slightly loose for conciseness and could be tightened.}
+  The proofs are included in Appendix~\ref{app:dynamic2interval}.
+
+\begin{cor}
+\label{cor:dynamic AdaEG}
+With probability at least $1 - \delta$, \AdaEG with parameter $L$, $\delta$ and
+$v = L^{-1/3}$ ensures that
+\[
+\sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \leq
+\otil\left(\left(  \frac{T}{L^{1/3}} + L^{1/3}\sqrt{\var T}
+\right)K\ln(N/\delta)\right).
+\]
+Specifically, if $\var$ is known, setting $L =
+\min\{(T/\var)^\frac{3}{4}, T\}$ gives
+$\otil((\var^\frac{1}{4}T^\frac{3}{4} +
+T^\frac{2}{3})K\ln(N/\delta))$; otherwise, setting $L = T^\frac{3}{4}$
+gives $\otil((\sqrt{\var}+1)T^\frac{3}{4} K\ln(N/\delta))$.
+\end{cor}
+
+%Again, with \AdaILTCB we obtain the following stronger result (in terms of $\bvar$) by the same argument.
+
+\begin{cor}
+\label{cor:dynamic AdaILTCB}
+With probability at least $1 - \delta$, \AdaILTCB with parameter $L$, $\delta$ and
+$v = L^{-\frac{1}{2}} $ ensures that
+\[
+\sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \leq
+\otil\left(\left(\frac{T}{\sqrt{L}} + \bvar L
+\right)K\ln(N/\delta)\right).
+\]
+If $\bvar$ is known, setting $L =
+\min\{(T/\bvar)^\frac{2}{3}, T\}$ gives
+$\otil((\bvar^\frac{1}{3} T^\frac{2}{3} +\sqrt{T})K\ln(N/\delta))$; otherwise, setting $L = T^\frac{2}{3}$
+gives $\otil((\bvar+1) T^\frac{2}{3} K\ln(N/\delta))$.
+\end{cor}
+
+One can see that again the result for \AdaILTCB is better than that of \AdaEG,
+and is in fact very close to that of the inefficient baseline Exp4.S,
+except that it is in terms of the slightly larger variation measure $\bvar$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%        Commented out the original version
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\iffalse
+It turns out, however, one can simply set $v= B(L)$ and
+partition $[1,T]$ in a more careful way to obtain the following result
+that holds in a complete adversarial setting.
+
+\begin{cor}
+With probability at least $1 - \delta$, \AdaEG with parameter $L$, $\delta$ and
+$v = B(L)$ ensures that
+\footnote{For simplicity, in this bound the dependence on the term
+  $K\ln(N\delta)$ is slightly loose and could be tightened.}
+\[
+\sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \leq
+\otil\left(\left(\frac{T}{L^\frac{1}{3}} + L\var_T
+\right)K\ln(N/\delta)\right).
+\]
+Specifically, if $\var_T$ is known, setting $L =
+\min\{(T/\var_T)^\frac{3}{4}, T\}$ gives
+$\otil((T^\frac{3}{4}\var_T^\frac{1}{4} +
+T^\frac{2}{3})K\ln(N/\delta))$; otherwise, setting $L = T^\frac{3}{4}$
+gives $\otil(T^\frac{3}{4}(\var_T+1) K\ln(N/\delta))$.
+\end{cor}
+
+\begin{proof}
+The proof of Theorem~\ref{thm:AdaEG2} shows that with probability at
+least $1 - \delta/2$, \AdaEG ensures that for any interval $\calI$
+such that $|\calI| \leq L$ and $\var_\calI \leq B(L)$, we have
+$\sum_{t \in \calI} \E_t[ r_t(\pi^\star_t(x_t)) - r_t(a_t)] \leq
+\otil\left(L^\frac{2}{3}\sqrt{K\ln(N/\delta)} +
+K\ln(N/\delta)\right)$.  We can thus first partition $[1, T]$ evenly
+into $T/L$ intervals, then within each interval, further partition it sequentially
+into several largest subintervals so that for each of them the variation is at
+most $B(L)$. Since the total variation is $\var_T$, it is clear that
+this results in at most $T/L + \var_T/B(L)$ subintervals, each of
+which satisfies the conditions of Theorem~\ref{thm:AdaEG2}. Applying
+Lemma~\ref{lem:dynamic2interval} and Hoeffding-Azuma inequality then
+lead to the claimed bound.
+\end{proof}
+
+
+
+\begin{cor}
+With probability at least $1 - \delta$, \AdaILTCB with parameter $L$, $\delta$ and
+$v = ?$ ensures that
+\[
+\sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \leq
+\otil\left(\right).
+\]
+\end{cor}
+
+\fi
+%It is not surprising that the dynamic regret of \AdaEG is again worse
+%than the one of Exp4.S.  It is not clear though whether (variants) of
+%\AdaILTCB could achieve similar results as Exp4.S.  It appears that
+%not only the variation of $\calR_t(\pi)$, but also the variation of
+%$\E_{x\sim \calD_t^\calX} [\frac{1}{Q(\pi(x)|x)}]$ matters in this
+%case.  We leave this problem as a future direction.
+

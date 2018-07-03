@@ -1,0 +1,843 @@
+\section{Planted Dense Subgraph and Biclustering}
+
+\label{s:pds}
+
+\subsection{Poisson Lifting and Lower Bounds for Low-Density PDS}\label{app:F.1}
+
+In this section, we introduce Poisson lifting to give a reduction from planted clique to $\textsc{PDS}(n, k, p, q)$ in the regime where $\frac{p}{q} \to c$ as $n \to \infty$ for some fixed $c > 1$ and $q = \tilde{\Theta}(n^{-\alpha})$ for some fixed $\alpha > 0$. Poisson lifting is a specific instance of $\textsc{Distributional-Lifting}$ with Poisson target distributions. The guarantees of Poisson lifting are captured in the following lemma.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{Poisson-Lifting}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, iterations $\ell$, parameters $\gamma, \epsilon \in (0, 1)$ and $c > 1$ with $3\epsilon^{-1} \le \log_c \gamma^{-1}$
+
+\vspace{2mm}
+
+Return the output of $\textsc{Distributional-Lifting}$ applied to $G$ with $\ell$ iterations and parameters:
+\begin{itemize}
+\item initial densities $p' = 1$ and $q' = \gamma$
+\item target families $P_{\lambda} = \text{Pois}(c\lambda)$ and $Q_{\lambda} = Q'_\lambda = \text{Pois}(\lambda)$
+\item rejection kernel $\textsc{rk}_{\text{P1}} = \textsc{rk}\left( 1 \to \text{Pois}(c\lambda_0), \gamma \to \text{Pois}(\lambda_0), \lceil 6 \log_{\gamma^{-1}} n \rceil \right)$ and $\lambda_0 = n^{-\epsilon}$
+\item cloning map $f_{\text{cl}}(x) = (x_1, x_2, x_3, x_4)$ computed as follows:
+\begin{enumerate}
+\item Generate $x$ numbers in $[4]$ uniformly at random
+\item Let $x_i$ be the number of $i$'s generated for each $i \in [4]$
+\end{enumerate}
+\item parameter map $g_{\text{cl}}(\lambda) = \lambda/4$
+\item threshold $t = 0$
+\end{itemize}
+\vspace{1mm}
+\end{algbox}
+\caption{Poisson lifting procedure in Lemma \ref{lem:6a}.}
+\label{fig:pois}
+\end{figure}
+
+\begin{lemma}[Poisson Lifting] \label{lem:6a}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large. Fix arbitrary constants $\epsilon \in (0, 1)$ and $c > 1$ and let $\lambda_0 = n^{-\epsilon}$. Suppose that $\gamma$ is a small enough constant satisfying that $\log_c \gamma^{-1} \ge 3\epsilon^{-1}$. Then $\phi = \textsc{Poisson-Lifting}$ is a randomized polynomial time computable map $\phi : \mG_n \to \mG_{2^\ell n}$ such that under both $H_0$ and $H_1$, it holds that
+$$\TV\left( \phi(\textsc{PC}(n, k, \gamma)), \textsc{PDS}\left(2^\ell n, 2^\ell k, p, q \right) \right) = O\left( n^{-\epsilon/2}\right)$$
+where $p = 1 - e^{4^{-\ell} c\lambda_0}$ and $q = 1 - e^{4^{-\ell} \lambda_0}$.
+\end{lemma}
+
+\begin{proof}
+Let $\textsc{Poisson-Lifting}$ be the algorithm $\textsc{Distributional-Lifting}$ applied with the parameters in Figure \ref{fig:pois}. Let $\lambda_{i + 1} = g_{\text{cl}}(\lambda_i) = \lambda_i/4$ for each $0 \le i \le \ell - 1$. Note that the cloning map $f_{\text{cl}}(x)$ can be computed in $O(1)$ operations. Furthermore, if $x \sim \text{Pois}(\lambda)$ then Poisson thinning implies that if $f_{\text{cl}}(x) = (x_1, x_2, x_3, x_4)$ then the $x_i$ are independent and satisfy that $x_i \sim \text{Pois}(\lambda/4)$. Therefore it follows that
+\begin{align*}
+f_{\text{cl}}(P_\lambda) = f_{\text{cl}}(\text{Pois}(c\lambda)) &\sim \text{Pois}(c\lambda/4)^{\otimes 4} = P_{g_{\text{cl}}(\lambda)}^{\otimes 4} \quad \text{and} \\ 
+f_{\text{cl}}(Q_\lambda) = f_{\text{cl}}(\text{Pois}(\lambda)) &\sim \text{Pois}(\lambda/4)^{\otimes 4} = Q_{g_{\text{cl}}(\lambda)}^{\otimes 4}
+\end{align*}
+Furthermore, note that $P_{\lambda} = \text{Pois}(c\lambda)$ and $Q_{\lambda} = Q'_\lambda = \text{Pois}(\lambda)$ can be sampled in $O(1)$ time. Note that the $\chi^2$ divergence between these distributions is
+\begin{align*}
+\chi^2\left( Q_{\lambda}, P_\lambda \right) &= -1 + \sum_{t = 0}^\infty \frac{\left( \frac{1}{t!} e^{-\lambda} \lambda^t \right)^2}{\frac{1}{t!} e^{-c\lambda} (c\lambda)^t} = -1 + \exp\left( c^{-1}(c-1)^2 \lambda \right) \cdot \sum_{t = 0}^\infty \frac{e^{-\lambda/c} (\lambda/c)^t}{t!} \\
+&= \exp\left( c^{-1}(c-1)^2 \lambda \right) - 1 \le 2c^{-1}(c-1)^2 \lambda
+\end{align*}
+as long as $c^{-1}(c-1)^2 \lambda \le 1$ since $e^x \le 1 + 2x$ for $x \in [0, 1]$. By Lemma \ref{lem:5a}, the rejection kernel $\textsc{rk}_{\text{P1}}$ can be computed in $O(\log n)$ time and satisfies that
+$$\TV\left(\textsc{rk}_{\text{P1}}(1), P_{\lambda_0} \right) = O(n^{-3}) \quad \text{and} \quad \TV\left(\textsc{rk}_{\text{P1}}(\text{Bern}(\gamma)), Q_{\lambda_0} \right) = O(n^{-3})$$
+Now note that $P_{\lambda_\ell} = \text{Pois}(4^{-\ell}c\lambda_0)$ and $Q_{\lambda_\ell} = \text{Pois}(4^{-\ell}\lambda_0)$ which implies that $p = \bP_{X \sim P_{\lambda_\ell}}[X > 0] = 1 - e^{4^{-\ell}c\lambda_0}$ and $q = \bP_{X \sim Q_{\lambda_\ell}}[X > 0] = 1 - e^{4^{-\ell}\lambda_0}$. Since $\textsc{PDS}(n, k, 1, \gamma)$ is the same problem as $\textsc{PC}(n, k, \gamma)$, applying Theorem \ref{lem:5cc} yields that under both $H_0$ and $H_1$, we have
+\begin{align*}
+&\TV\left( \phi(\textsc{PC}(n, k, \gamma)), \textsc{PDS}\left( 2^\ell n, 2^\ell k, p, q \right) \right) \\
+&\quad \quad \le \binom{n}{2} \cdot \max\left\{ \TV\left(\textsc{rk}_{\text{P1}}(1), P_{\lambda_0} \right), \TV\left(\textsc{rk}_{\text{P1}}(\text{Bern}(\gamma)), Q_{\lambda_0} \right) \right\} + \sum_{i = 1}^\ell \sqrt{\frac{\chi^2(Q_{\lambda_i}, P_{\lambda_i})}{2}} \\
+&\quad \quad \le \binom{n}{2} \cdot O(n^{-3}) + c^{-1/2} (c - 1) \sum_{i = 1}^\ell \sqrt{\lambda_i} \\
+&\quad \quad = O(n^{-1}) + c^{-1/2} (c - 1) n^{-\epsilon/2} \sum_{i = 1}^\ell 2^{-i} = O\left(n^{-1} + n^{-\epsilon/2}\right)
+\end{align*}
+which completes the proof of the lemma.
+\end{proof}
+
+We now use the reduction based on Poisson lifting analyzed above to prove hardness for the sparsest regime of PDS.
+
+\begin{theorem}
+Fix some $c > 1$. Let $\alpha \in [0, 2)$ and $\beta \in (0, 1)$ be such that $\beta < \frac{1}{2} + \frac{\alpha}{4}$. There is a sequence $\{ (N_n, K_n, p_n, q_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $q = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log q_n^{-1}}{\log N_n} = \alpha, \quad \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta \quad \text{and} \quad \lim_{n \to \infty} \frac{p_n}{q_n} = c$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{PDS}_D(N_n, K_n, p_n, q_n)$ is at least $1$ assuming the PC conjecture holds for each fixed density $p \le 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{PDS}_D(n, k, p, q)$ in the parameter regime $q = \tilde{\Theta}(n^{-\alpha})$, $\frac{p}{q} \to c$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \frac{\alpha}{4}$.
+\end{theorem}
+
+\begin{proof}
+If $\beta < \alpha$ then PDS in this regime is information-theoretically impossible. Thus we may assume that $\beta \ge \alpha$. Take $\epsilon > 0$ to be a small enough constant so that
+$$\beta + \epsilon(1 - \beta) < \frac{1}{2} + \frac{\alpha}{4}$$
+Now let $\gamma = \frac{2\beta - \alpha + \epsilon(1 - \beta)}{2 - \alpha}$. Rearranging the inequality above yields that $\gamma \in (0, 1/2)$. Now set
+$$\ell_n = \left\lceil \frac{(\alpha - \epsilon) \log_2 n}{2 - \alpha} \right\rceil, \quad \quad k_n = \lceil n^{\gamma} \rceil, \quad \quad N_n = 2^{\ell_n} n \quad \quad K_n = 2^{\ell_n} k_n,$$
+$$p_n = 1 - e^{4^{-\ell_n} cn^{-\epsilon}}, \quad \quad q_n = 1 - e^{4^{-\ell_n} n^{-\epsilon}}$$
+Take $p$ to be a small enough constant so that $p < \frac{1}{2} c^{-3\epsilon^{-1}}$. By Lemma \ref{lem:6a}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(n, k_n, p)$ to $\text{PDS}_D(N_n, K_n, p_n, q_n)$ with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+$$\lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \lim_{n \to \infty} \frac{\left\lceil \frac{(\alpha - \epsilon) \log_2 n}{2 - \alpha} \right\rceil \cdot \log 2 + \left( \frac{2\beta - \alpha + \epsilon(1 - \beta)}{2 - \alpha} \right) \log n}{\left\lceil \frac{(\alpha - \epsilon) \log_2 n}{2 - \alpha} \right\rceil\cdot \log 2 + \log n} = \frac{\frac{\alpha - \epsilon}{2 - \alpha} + \frac{2\beta - \alpha + \epsilon(1 - \beta)}{2 - \alpha}}{\frac{\alpha - \epsilon}{2 - \alpha} + 1} = \beta$$
+Note that as $n \to \infty$, it follows that since $4^{-\ell_n n^{-\epsilon}} \to 0$,
+$$q_n = 1 - e^{4^{-\ell_n} n^{-\epsilon}} \sim 4^{-\ell_n} n^{-\epsilon}$$
+Similarly $p_n \sim 4^{-\ell_n} c n^{-\epsilon}$ and thus $\frac{p_n}{q_n} \to c$. Note that
+$$\lim_{n \to \infty} \frac{\log q_n^{-1}}{\log N_n} = \lim_{n \to \infty} \frac{2\left\lceil \frac{(\alpha - \epsilon) \log_2 n}{2 - \alpha} \right\rceil \log 2 + \epsilon \log n}{\left\lceil \frac{(\alpha - \epsilon) \log_2 n}{2 - \alpha} \right\rceil\cdot \log 2 + \log n} = \frac{\frac{2(\alpha - \epsilon)}{2 - \alpha} + \epsilon}{\frac{\alpha - \epsilon}{2 - \alpha} + 1} = \alpha$$
+which completes the proof.
+\end{proof}
+
+In this section, we gave a planted clique lower bound for $\textsc{PDS}_D(n, k, p, q)$ with $\frac{p}{q} \to c$ as opposed to $p = cq$ exactly. We now will describe a simple reduction from $\textsc{PDS}_D(n, k, p, q)$ with $\frac{p}{q} \to c_1$ where $c_1 > c$ to $\textsc{PDS}_D(n, k, p_1, q_1)$ where $p_1 = cq_1$ and $q_1 = \Theta(q)$. Given an instance of $\textsc{PDS}_D(n, k, p, q)$, add in every non-edge independently with probability $\rho = \frac{p - cq}{c - 1 + p - cq}$ which is in $(0, 1)$ since $c_1 > c$ implies that $p > cq$ for large enough $n$. This yields an instance of $\textsc{PDS}_D$ with $p_1 = 1 - (1 - \rho)(1 - p) = p + \rho - \rho p$ and $q_1 = 1 - (1 - \rho)(1 - q) = q + \rho - \rho q$. The choice of $\rho$ implies that $p_1 = cq_1$ exactly and $\rho = \Theta(q)$ since $\frac{p}{q} \to c_1 > c$. Applying this reduction after $\textsc{Poisson-Lifting}$ yields that $\textsc{PDS}_D(n, k, cq, q)$ has the same planted clique lower bound as in the previous theorem.
+
+\subsection{Gaussian Lifting and Lower Bounds for High-Density PDS and BC}
+
+In parallel to the previous section, here we introduce Gaussian lifting to give a reduction from planted clique to the dense regime of $\textsc{PDS}(n, k, p, q)$ where $q = \Theta(1)$ and $p - q = \tilde{\Theta}(n^{-\alpha})$ for some fixed $\alpha > 0$.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{Gaussian-Lifting}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, iterations $\ell$
+
+\vspace{2mm}
+
+Return the output of $\textsc{Distributional-Lifting}$ applied to $G$ with $\ell$ iterations and parameters:
+\begin{itemize}
+\item initial densities $p' = 1$ and $q' = 1/2$
+\item target families $P_{\lambda} = N(\lambda, 1)$ and $Q_{\lambda} = Q'_\lambda = N(0, 1)$
+\item rejection kernel $\textsc{rk}_{\text{G}} = \textsc{rk}\left( 1 \to N(\lambda_0, 1), 1/2 \to N(0, 1), N \right)$ where $N = \lceil 6 \log_2 n \rceil$ and $\lambda_0 = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$
+\item cloning map $f_{\text{cl}}(x) = (x_1, x_2, x_3, x_4)$ computed as follows:
+\begin{enumerate}
+\item Generate $G_1, G_2, G_3 \sim_{\text{i.i.d.}} N(0, 1)$
+\item Compute $(x_1, x_2, x_3, x_4)$ as
+\begin{align*}
+x_1 &= \frac{1}{2} \left( x + G_1 + G_2 + G_3 \right) \\
+x_2 &= \frac{1}{2} \left( x - G_1 + G_2 - G_4 \right) \\
+x_3 &= \frac{1}{2} \left( x + G_1 - G_2 - G_3 \right) \\
+x_4 &= \frac{1}{2} \left( x - G_1 - G_2 + G_3 \right)
+\end{align*}
+\end{enumerate}
+\item parameter map $g_{\text{cl}}(\lambda) = \lambda/2$
+\item threshold $t = 0$
+\end{itemize}
+\vspace{1mm}
+\end{algbox}
+\caption{Gaussian lifting procedure in Lemma \ref{lem:6b}.}
+\label{fig:gaussian}
+\end{figure}
+
+The next lemma we prove is an analogue of Lemma \ref{lem:6a} for $\textsc{Gaussian-Lifting}$ and follows the same structure of verifying the preconditions for and applying Lemma \ref{lem:5cc}.
+
+\begin{lemma}[Gaussian Lifting] \label{lem:6b}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large and let
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+Then $\phi = \textsc{Gaussian-Lifting}$ is a randomized polynomial time computable map $\phi : \mG_n \to \mG_{2^\ell n}$ such that under both $H_0$ and $H_1$, it holds that
+$$\TV\left( \phi(\textsc{PC}(n, k, 1/2)), \textsc{PDS}\left(2^\ell n, 2^\ell k, \Phi\left(2^{-\ell}\mu\right), 1/2 \right) \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+\end{lemma}
+
+\begin{proof}
+Let $\textsc{Gaussian-Lifting}$ be the algorithm $\textsc{Distributional-Lifting}$ applied with the parameters in Figure \ref{fig:gaussian}. Let $\lambda_{i + 1} = g_{\text{cl}}(\lambda_i) = \lambda_i/2$ for each $0 \le i \le \ell - 1$. Note that the cloning map $f_{\text{cl}}(x)$ can be computed in $O(1)$ operations. Now suppose that $x \sim N(\lambda, 1)$. If $f_{\text{cl}}(x) = (x_1, x_2, x_3, x_4)$, then it follows that
+$$\left[ \begin{matrix} x_1 \\ x_2 \\ x_3 \\ x_4 \end{matrix} \right] = \frac{\lambda}{2} \left[ \begin{matrix} 1 \\ 1 \\ 1 \\ 1 \end{matrix} \right] + \frac{1}{2} \left[ \begin{array}{rrrr} 1 & 1 & 1 & 1 \\ 1 & -1 & 1 & -1 \\ 1 & 1 & -1 & -1 \\ 1 & -1 & -1 & 1 \end{array} \right] \cdot \left[ \begin{matrix} x - \lambda \\ G^1_{ij} \\ G^2_{ij} \\ G^3_{ij} \end{matrix} \right]$$
+Since $x - \mu, G^1_{ij}, G^2_{ij}$ and $G^3_{ij}$ are zero-mean and jointly Gaussian with covariance matrix $I_4$, it follows that the entries of $(x_1, x_2, x_3, x_4)$ are also jointly Gaussian. Furthermore, the coefficient matrix above is orthonormal, implying that the covariance matrix of $(x_1, x_2, x_3, x_4)$ remains $I_4$. Therefore it follows that $f_{\text{cl}}(N(\lambda, 1)) \sim N(\lambda/2, 1)^{\otimes 4}$. Applying this identity with $\lambda = 0$ yields that $f_{\text{cl}}(N(0, 1)) \sim N(0, 1)^{\otimes 4}$. Thus $f_{\text{cl}}$ is a valid cloning map for $P_\lambda$ and $Q_{\lambda}$ with parameter map $ g_{\text{cl}}(\lambda) = \lambda/2$.
+
+Observe that $P_{\lambda} = N(\lambda, 1)$ and $Q_{\lambda} = Q'_\lambda = N(0, 1)$ can be sampled in $O(1)$ time in the given computational model. Note that the $\chi^2$ divergence between these distributions is
+$$\chi^2\left( Q_\lambda, P_\lambda \right) = -1 + \int_{-\infty}^\infty \frac{\left( \frac{1}{\sqrt{2\pi}} e^{-x^2/2}\right)^2}{\frac{1}{\sqrt{2\pi}} e^{-(x-\lambda)^2/2}}dx = -1 + \frac{e^{2\lambda^2}}{\sqrt{2\pi}} \int_{-\infty}^\infty e^{-(x+\lambda)^2/2} dx = e^{2\lambda^2} - 1 \le 4 \lambda^2$$
+as long as $4\lambda^2 \le 1$ since $e^x \le 1 + 2x$ for $x \in [0, 1]$, which is the case for all $\lambda = \lambda_i$. By Lemma \ref{lem:5c}, the rejection kernel $\textsc{rk}_{\text{G}}$ can be computed in $\text{poly}(n)$ time and satisfies that
+$$\TV\left(\textsc{rk}_{\text{G}}(1), P_{\lambda_0} \right) = O(n^{-3}) \quad \text{and} \quad \TV\left(\textsc{rk}_{\text{G}}(\text{Bern}(1/2)), Q_{\lambda_0} \right) = O(n^{-3})$$
+Now note that $P_{\lambda_\ell} = N(2^{-\ell}\mu, 1)$ and $Q_{\lambda_\ell} = N(0, 1)$ which implies that $p = \bP_{X \sim P_{\lambda_\ell}}[X > 0] = \Phi\left(2^{-\ell}\mu\right)$ and $q = \bP_{X \sim Q_{\lambda_\ell}}[X > 0] = 1/2$. Since $\textsc{PDS}(n, k, 1, 1/2)$ is the same problem as $\textsc{PC}(n, k, 1/2)$, applying Theorem \ref{lem:5cc} yields that under both $H_0$ and $H_1$, we have
+\begin{align*}
+&\TV\left( \phi(\textsc{PC}(n, k, 1/2)), \textsc{PDS}\left( 2^\ell n, 2^\ell k, p, q \right) \right) \\
+&\quad \quad \le \binom{n}{2} \cdot \max\left\{ \TV\left(\textsc{rk}_{\text{G}}(1), P_{\lambda_0} \right), \TV\left(\textsc{rk}_{\text{G}}(\text{Bern}(1/2)), Q_{\lambda_0} \right) \right\} + \sum_{i = 1}^\ell \sqrt{\frac{\chi^2(Q_{\lambda_i}, P_{\lambda_i})}{2}} \\
+&\quad \quad \le \binom{n}{2} \cdot O(n^{-3}) + \sqrt{2} \cdot \sum_{i = 1}^\ell \lambda_i \\
+&\quad \quad = O(n^{-1}) + \mu \sqrt{2} \cdot \sum_{i = 1}^\ell 2^{-i} = O\left(n^{-1} + \frac{1}{\sqrt{\log n}} \right)
+\end{align*}
+which completes the proof of the lemma.
+\end{proof}
+
+We now use this $\textsc{Gaussian-Lifting}$ reduction to deduce hardness for the dense variant of planted dense subgraph, which has a slightly different computational boundary than the sparsest variant.
+
+\begin{theorem} \label{thm:gauss-hard}
+Let $\alpha \in [0, 2)$ and $\beta \in (0, 1)$ be such that $\beta < \frac{1}{2} + \frac{\alpha}{2}$. There is a sequence $\{ (N_n, K_n, p_n, q_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $q = \Theta(1)$, $p - q = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log (p_n - q_n)^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{PDS}_D(N_n, K_n, p_n, q_n)$ is at least $1$ assuming the PC conjecture holds with density $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{PDS}_D(n, k, p, q)$ in the parameter regime $q = \Theta(1)$, $p - q = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \frac{\alpha}{2}$.
+\end{theorem}
+
+\begin{proof}
+If $\beta < 2\alpha$ then PDS is information-theoretically impossible. Thus we may assume that $\beta \ge 2\alpha$. Let $\gamma = \frac{\beta - \alpha}{1 - \alpha}$ and note that $\gamma \in (0, 1/2)$. Now set
+$$\ell_n = \left\lceil \frac{\alpha \log_2 n}{1 - \alpha} \right\rceil, \quad \quad k_n = \lceil n^{\gamma} \rceil, \quad \quad N_n = 2^{\ell_n} n \quad \quad K_n = 2^{\ell_n} k_n,$$
+$$p_n = \Phi\left( 2^{-\ell_n} \cdot \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}} \right)$$
+By Lemma \ref{lem:6a}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(n, k_n, 1/2)$ to the detection problem $\text{PDS}_D(N_n, K_n, p_n, 1/2)$ with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+$$\lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \lim_{n \to \infty} \frac{\left\lceil \frac{\alpha \log_2 n}{1 - \alpha} \right\rceil \cdot \log 2 + \left( \frac{\beta - \alpha}{1 - \alpha} \right) \log n}{\left\lceil \frac{\alpha \log_2 n}{1 - \alpha} \right\rceil\cdot \log 2 + \log n} = \frac{\frac{\alpha}{1 - \alpha} + \frac{\beta - \alpha}{1 - \alpha}}{\frac{\alpha}{1 - \alpha} + 1} = \beta$$
+Let $\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$ and note that as $n \to \infty$, we have that
+$$\lim_{n \to \infty} \frac{\Phi\left( 2^{-\ell_n} \mu \right) - \frac{1}{2}}{2^{-\ell_n} \mu} = \lim_{\tau \to 0} \left( \frac{1}{\tau \sqrt{2\pi}} \int_0^\tau e^{-x^2/2} dx \right) = \frac{1}{\sqrt{2\pi}}$$
+Therefore $p_n - q_n \sim \frac{2^{-\ell_n} \mu}{\sqrt{2\pi}}$ as $n \to \infty$. This implies
+$$\lim_{n \to \infty} \frac{\log (p_n - q_n)^{-1}}{\log N_n} = \lim_{n \to \infty} \frac{2\left\lceil \frac{\alpha \log_2 n}{1 - \alpha} \right\rceil \cdot \log 2 - \log \mu}{\left\lceil \frac{\alpha \log_2 n}{1 - \alpha} \right\rceil\cdot \log 2 + \log n} = \frac{\frac{2\alpha}{1 - \alpha}}{\frac{\alpha}{1 - \alpha} + 1} = \alpha$$
+which completes the proof.
+\end{proof}
+
+Note that to prove this theorem, it was only necessary to map to instances with ambient density $q = 1/2$. We remark that it is possible to map from $q = 1/2$ to any constant $q$ by removing edges with a constant probability $\rho < 1$ or removing non-edges with probability $\rho$. Note that this still preserves the asymptotic regime $p - q = \tilde{\Theta}(n^{-\alpha})$. We now use $\textsc{Gaussian-Lifting}$ to give a reduction from planted clique to biclustering.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{BC-Reduction}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, iterations $\ell$
+\begin{enumerate}
+\item Set $W$ to be the output of $\textsc{Gaussian-Lifting}$ applied to $G$ with $\ell$ iterations without the thresholding in Step 4 of $\textsc{Distributional-Lifting}$
+\item Replace the diagonal entries with $W_{ii} \sim_{\text{i.i.d.}} N(0, 2)$
+\item Generate an antisymmetric $2^\ell n \times 2^\ell n$ matrix $A$ of with i.i.d. $N(0, 1)$ random variables below its main diagonal and set
+$$W \gets \frac{1}{\sqrt{2}} \left( W + A \right)$$
+\item Generate a permutation $\sigma$ of $[2^\ell n]$ uniformly at random and output $W^{\text{id}, \sigma}$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reduction to biclustering in Lemma \ref{lem:bc}.}
+\label{fig:bc}
+\end{figure}
+
+\begin{lemma} \label{lem:bc}
+Suppose that $n$ and $\ell$ are such that $\ell = O(\log n)$ and are sufficiently large and
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+Then there is a randomized polynomial time computable map $\phi = \textsc{BC-Reduction}$ with $\phi : \mG_n \to \mathbb{R}^{2^\ell n \times 2^\ell n}$ such that under $H_0$ and $H_1$, it holds that
+$$\TV\left( \phi(\textsc{PC}(n, k, 1/2)), \textsc{BC}\left(2^\ell n, 2^\ell k, 2^{-\ell - 1/2} \mu \right) \right) = O\left(\frac{1}{\sqrt{\log n}} \right)$$
+\end{lemma}
+
+\begin{proof}
+Let $\phi = \textsc{BC-Reduction}$ be as in Figure \ref{fig:bc}. Let $\phi_\ell'$ denote $\textsc{Gaussian-Lifting}$ applied to $G$ that outputs $W$ after $\ell$ iterations without the thresholding in Step 4 of $\textsc{Distributional-Lifting}$. Lemmas \ref{lem:5cc} and \ref{lem:6b} imply $\textsc{Gaussian-Lifting}$ ensures that
+$$\TV\left( \phi_\ell'(G(n, 1/2)), M_{2^{\ell} n}(N(0, 1)) \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+Now suppose that $W \sim M_{2^{\ell} n}(N(0, 1))$ and let $W' = \phi_{\text{2-3}}(W)$ denote the value of $W$ after applying Steps 2 and 3 in Figure \ref{fig:bc} to $W$. Note that the diagonal entries of $W$ are i.i.d. $N(0, 1)$ since the diagonal entries of $A$ are zero. If $i < j$, then it follows that
+$$W'_{ij} = \frac{1}{\sqrt{2}} \left( W_{ij} + G_{ij} \right) \quad \text{and} \quad W'_{ji} = \frac{1}{\sqrt{2}} \left( W_{ij} - G_{ij} \right)$$
+Since $W_{ij}$ and $G_{ij}$ are independent and distributed as $N(0, 1)$, it follows that $W'_{ij}$ and $W'_{ji}$ are jointly Gaussian and uncorrelated, which implies that they are independent. Furthermore, $W'_{ij}$ and $W'_{ji}$ are both in the $\sigma$-algebra $\sigma\{W_{ij}, G_{ij}\}$ and collection of $\sigma$-algebras $\sigma\{W_{ij}, G_{ij}\}$ with $i < j$ is independent. Thus it follows that both $W'$ and $(W')^{\text{id}, \sigma}$ are distributed as $N(0, 1)^{\otimes 2^\ell n \times 2^\ell n}$. It follows by the data processing inequality that
+$$\TV\left( \phi(G(n, 1/2)), N(0, 1)^{\otimes 2^\ell n \times 2^\ell n} \right) \le \TV\left( \phi'_{\ell}(G(n, 1/2)), \mL(W) \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+Now consider $G \sim G(n, k, 1/2)$ and note that $\textsc{Gaussian-Lifting}$ ensures that
+$$\TV\left( \phi_\ell'(G), M_{2^{\ell} n}(2^{\ell} k, N(2^{-\ell}\mu, 1), N(0, 1)) \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+Now let $W' \sim M_{2^{\ell} n}(S, N(2^{-\ell}\mu, 1), N(0, 1))$ where $S$ is a subset of $[2^\ell n]$ of size $2^\ell k$ and let $W$ be the matrix formed by applying Steps 1 and 2 above to $W'$ in place of $\phi_\ell'(G)$. By the same jointly Gaussian independence argument above, it follows that the entries of $W$ are independent and distributed as:
+\begin{itemize}
+\item $W_{ij} \sim N(2^{-\ell-1/2} \mu, 1)$ if $(i, j) \in S \times S$ and $i \neq j$; and
+\item $W_{ij} \sim N(0, 1)$ if $(i, j) \not \in S \times S$ or $i = j$.
+\end{itemize}
+Now consider the matrix $(W')^{\text{id}, \sigma}$ conditioned on the permutation $\sigma$. Its entries are independent and identically distributed to the corresponding entries of $2^{-\ell-1/2} \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n}$ where $T = \sigma(S)$ other than at the indices $(i, \sigma(i))$ for $i \in S$. Marginalizing to condition only on $\sigma(S) = T$ and coupling all entries with indices outside of $S \times T$ yields that
+\begin{align*}
+\TV\left( \mL((W')^{\text{id}, \sigma} | \sigma(S) = T), \right. &\left. \mL\left( 2^{-\ell-1/2} \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n} \right) \right) \\
+&= \TV\left( \mL\left( (W')^{\text{id}, \sigma}[S \times T] | \sigma(S) = T \right), N(2^{-\ell-1/2} \mu, 1)^{\otimes 2^\ell k \times 2^\ell k} \right) \\
+&\le \sqrt{\frac{1}{2} \cdot \chi^2\left( N(0, 1), N(2^{-\ell-1/2}\mu, 1) \right)} \\
+&\le 2^{-\ell} \mu \le  \frac{\log 2}{2^{\ell + 1} \sqrt{6 \log n + 2\log 2}} = O\left(\frac{1}{2^\ell\sqrt{\log n}} \right)
+\end{align*}
+by applying Lemma \ref{lem:4a} and the $\chi^2$ upper bound shown in Lemma \ref{lem:6b}. Note that Lemma \ref{lem:4a} applies because $(W')^{\text{id}, \sigma}[S \times T]$ conditioned only on $\sigma(S) = T$ is distributed as a $2^\ell k \times 2^\ell k$ matrix with i.i.d. entries $N(2^{-\ell-1/2} \mu, 1)$, other than its diagonal entries which are i.i.d. $N(0, 1)$, and with its columns randomly permuted. Letting $\sigma(S) = T$ be chosen uniformly at random over all ordered pairs of size $2^\ell k$ subsets of $[2^\ell n]$ yields by the triangle inequality that
+$$\TV\left( \mL((W')^{\text{id}, \sigma}), \int \mL\left( 2^{-\ell-1/2} \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n} \right) d\pi'(T) \right) = O\left(\frac{1}{2^\ell\sqrt{\log n}} \right)$$
+where $\pi'$ is the uniform distribution on all size $2^\ell k$ subsets of $[2^\ell n]$. Let $\pi(S, T)$ be the uniform distribution on all pairs of subsets of size $2^\ell k$ of $[2^\ell n]$. Taking $S$ to be also chosen uniformly at random yields by the data processing and triangle inequalities that
+\begin{align*}
+&\TV\left( \mL\left( \phi(G) \right), \int \mL\left(2^{-\ell-1/2} \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n} \right) d\pi(S, T) \right) \\
+&\quad \quad \quad \le \TV\left( \phi_\ell'(G), M_{2^{\ell} n}(2^{\ell} k, N(2^{-\ell}\mu, 1), N(0, 1)) \right) \\
+&\quad \quad \quad \quad \quad + \bE_S\left[\TV\left( \mL((W')^{\text{id}, \sigma}), \int \mL\left( 2^{-\ell-1/2} \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes 2^\ell n \times 2^\ell n} \right) d\pi'(T) \right) \right] \\
+&\quad \quad \quad = O\left(\frac{1}{\sqrt{\log n}} \right)
+\end{align*}
+which completes the proof of the lemma.
+\end{proof}
+
+Note that Lemma \ref{lem:bc} provides a randomized polynomial time map that exactly reduces from $\textsc{PC}_D(n, k, 1/2)$ to $\textsc{BC}_D(2^\ell n, 2^\ell k, 2^{-\ell-1/2} \mu)$. This reduction yields tight computational lower bounds for a simple vs. simple hypothesis testing variant of biclustering as stated in Theorem \ref{thm:bc}. This follows from setting $\ell_n, k_n, N_n$ and $K_n$ as in Theorem \ref{thm:gauss-hard} and $\mu_n = 2^{-\ell_n-1/2} \mu$, then applying an identical analysis as in Theorem \ref{thm:gauss-hard}. Note that when $\beta < \frac{1}{2}$, this choice sets $\ell_n = 0$ and deduces that $\textsc{BC}_D$ is hard when $\alpha > 0$.
+
+\begin{theorem} \label{thm:bc}
+Let $\alpha > 0$ and $\beta \in (0, 1)$ be such that $\beta < \frac{1}{2} + \frac{\alpha}{2}$. There is a sequence $\{ (N_n, K_n, \mu_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $\mu = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log \mu_n^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mathbb{R}^{N_n \times N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{BC}_D(N_n, K_n, \mu_n)$ is at least $1$ assuming the PC conjecture holds with density $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{BC}_D(n, k, \mu)$ in the parameter regime $\mu = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \frac{\alpha}{2}$ and $\alpha^* = 0$ when $\beta < \frac{1}{2}$.
+\end{theorem}
+
+We now deduce the computational barrier for the biclustering recovery problem from the PDS recovery conjecture. The obtained boundary of $\beta^* = \frac{1}{2} + \alpha$ is stronger than the detection boundary $\beta^* = \frac{1}{2} + \frac{\alpha}{2}$ in the previous theorem. First we will need the following lemma, which gives the necessary total variation guarantees for our reduction. We omit details that are identical to the proof of Lemma \ref{lem:bc}.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{BC-Recovery}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, density bias $\rho$
+\begin{enumerate}
+\item Let $\textsc{rk}_{G} = \textsc{rk}\left( \frac{1}{2} + \rho \to N(\mu, 1), \frac{1}{2} \to N(0, 1), N\right)$ where $\mu = \frac{\log (1 + 2\rho)}{2 \sqrt{6 \log n + 2\log 2}}$ and $N = \lceil 6 \log_{1 + 2 \rho} n \rceil$ and compute the symmetric matrix $W \in \mathbb{R}^{n \times n}$ with
+$$W_{ij} = \textsc{rk}_G\left( \mathbf{1}_{\{i, j \} \in E(G)} \right)$$
+for all $i \neq j$ and $W_{ii} \sim_{\text{i.i.d.}} N(0, 2)$
+\item Generate an antisymmetric matrix $A \in \mathbb{R}^{n \times n}$ of with i.i.d. $N(0, 1)$ random variables below its main diagonal and set
+$$W \gets \frac{1}{\sqrt{2}} \left( W + A \right)$$
+\item Generate a permutation $\sigma$ of $[n]$ uniformly at random and output $W^{\text{id}, \sigma}$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reduction to biclustering recovery in Lemma \ref{lem:bcrec}.}
+\label{fig:bcrec}
+\end{figure}
+
+\begin{lemma} \label{lem:bcrec}
+Suppose that $n, \mu$ and $\rho \ge n^{-1}$ are such that
+$$\mu = \frac{\log (1 + 2\rho)}{2 \sqrt{6 \log n + 2\log 2}}$$
+Then there is a randomized polynomial time computable map $\phi = \textsc{BC-Recovery}$ with $\phi : \mG_n \to \mathbb{R}^{n \times n}$ such that for any subset $S \subseteq [n]$ with $|S| = k$, it holds that
+$$\TV\left( \phi\left(G(n, 1/2 + \rho, 1/2, S)\right), \int \mL\left( \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(T) \right) = O\left(\frac{1}{\sqrt{\log n}} \right)$$
+where $\pi$ is the uniform distribution on subsets of $[n]$ of size $k$.
+\end{lemma}
+
+\begin{proof}
+Let $\phi = \textsc{BC-Recovery}$ be as in Figure \ref{fig:bcrec}. Applying Lemma \ref{lem:5c}, it holds that $\textsc{rk}_G$ can be computed in $\text{poly}(n)$ time and that
+$$\TV\left( \textsc{rk}_G(\text{Bern}(1/2 + \rho)), N(\mu, 1) \right) = O(n^{-3}) \quad \text{and} \quad \TV\left( \textsc{rk}_G(\text{Bern}(1/2)), N(0, 1) \right) = O(n^{-3})$$
+Let $W_1$ and $W_2$ be the values of $W$ after Steps 1 and 2, respectively, applied to an input graph $G \sim G(n, 1/2 + \rho, 1/2, S)$. Let $M$ be a sample from $M_n(S, N(\mu, 1), N(0, 1))$ with i.i.d. $N(0, 2)$ random variables on its diagonal. Coupling entries individually yields that
+\begin{align*}
+\TV\left( \mL(W_1), \mL(M) \right) &\le \binom{k}{2} \cdot \TV\left( \textsc{rk}_G(\text{Bern}(1/2 + \rho)), N(\mu, 1) \right) \\
+&\quad \quad + \left( \binom{n}{2} - \binom{k}{2} \right) \cdot \TV\left( \textsc{rk}_G(\text{Bern}(1/2)), N(0, 1) \right) \\
+&= \binom{n}{2} \cdot O(n^{-3}) = O(n^{-1})
+\end{align*}
+An identical argument as in Lemma \ref{lem:bc} now shows that $W_2$ is at total variation distance $O(n^{-1})$ from $\mu \cdot \mathbf{1}_S \mathbf{1}_S^\top + N(0, 1)^{\otimes n \times n}$ with all of its diagonal entries replaced with i.i.d. samples from $N(0, 1)$. The same permutation argument applying Lemma \ref{lem:4a} now yields that
+$$\TV\left( \mL((W'_2)^{\text{id}, \sigma}), \int \mL\left( \mu \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(T) \right) = O\left(\frac{1}{\sqrt{\log n}} \right)$$
+Applying the triangle and data processing inequalities as in the conclusion of Lemma \ref{lem:bc} completes the proof of the lemma.
+\end{proof}
+
+With this lemma, we now deduce the recovery barrier for biclustering from the PDS and PC conjectures. Note that the recovery barrier of $\beta^* = \frac{1}{2} + \alpha$ and detection barrier of $\beta^* = \frac{1}{2} + \frac{\alpha}{2}$ indicates that recovery is conjectured to be strictly harder than detection for the formulations we consider in the regime $\beta > \frac{1}{2}$.
+
+\begin{theorem} \label{thm:bcrec}
+Let $\alpha > 0$ and $\beta \in (0, 1)$. There is a sequence $\{ (N_n, K_n, \mu_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $\mu = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log \mu_n^{-1}}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item If $\beta \ge \frac{1}{2}$ and $\beta < \frac{1}{2} + \alpha$, then the following holds. Let $\epsilon > 0$ be fixed and let $M_n$ be an instance of $\textsc{BC}_R(N_n, K_n, \mu_n)$. There is no sequence of randomized polynomial-time computable functions $\phi_n : \mathbb{R}^{N_n \times N_n} \to \binom{[N_n]}{k}^2$ such that for all sufficiently large $n$ the probability that $\phi_n(M_n)$ is exactly the pair of latent row and column supports of $M_n$ is at least $\epsilon$, assuming the PDS recovery conjecture.
+\item If $\beta < \frac{1}{2}$ and $\alpha > 0$, then the following holds. There is no sequence of randomized polynomial-time computable functions $\phi_n : \mathbb{R}^{N_n \times N_n} \to \binom{[N_n]}{k}^2$ such that for all sufficiently large $n$ the probability that $\phi_n(M_n)$ is exactly the pair of latent row and column supports of $M_n$ is at least $\epsilon$, assuming the PC conjecture.
+\end{enumerate}
+Therefore, given the PDS recovery conjecture, the computational boundary for $\textsc{BC}_R(n, k, \mu)$ in the parameter regime $\mu = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \alpha$ when $\beta \ge \frac{1}{2}$ and $\alpha^* = 0$ when $\beta < \frac{1}{2}$.
+\end{theorem}
+
+\begin{proof}
+First we consider the case when $\beta \ge 1/2$ and $\beta < \frac{1}{2} + \alpha$. Now set
+$$k_n = \lceil n^{\beta} \rceil, \quad \quad \rho_n = n^{-\alpha}, \quad \quad N_n = n \quad \quad K_n = k_n, \quad \quad \mu_n = \frac{\log (1 + 2\rho_n)}{2 \sqrt{6 \log n + 2\log 2}}$$
+Assume for contradiction that there is a sequence of randomized polynomial-time computable functions $\phi_n$ as described above and let $\phi_n^r$ denote the restriction of $\phi_n$ to output latent row support only. Let $\varphi_n = \textsc{BC-Recovery}$ be the reduction in Lemma \ref{lem:bcrec}, let $G_n \sim G(n, S, 1/2 + \rho_n, 1/2)$ and let $M_n = \varphi_n(G_n)$ where $S$ is a $k_n$-subset of $[n]$. Let $\mL_{n, S, T} = \mL\left( \mu_n \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes n \times n} \right)$ and let $\mL_{n, S} = \int \mL_{n, S, T} d\pi(T)$ where $\pi$ is the uniform distribution over $k_n$-subsets of $[n]$ be the distribution of an instance of $\text{BC}_R(N_n, K_n, \mu_n)$ conditioned on the event that the row support of its planted submatrix is $S$. Now observe that
+$$\left| \bP_{M \sim \mL(M_n)} \left[ \phi_n^r(M) = S \right] - \bP_{M \sim \mL_{n, S}}\left[ \phi_n^r(M) = S\right]\right| \le \TV\left( \mL(M_n), \mL_{n, S} \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+because of Lemma \ref{lem:bcrec}. Now note that $\bP_{M \sim \mL_{n, S}}\left[\phi_n^r(M) = S \right] = \bE_{T \sim \pi} \bP_{M \sim \mL_{n, S, T}}\left[\phi_n^r(M) = S \right] \ge \epsilon$ for sufficiently large $n$ by assumption. Therefore it follows that
+$$\bP[\phi_n^r \circ \varphi_n(G_n) = S] \ge \epsilon - O\left( \frac{1}{\sqrt{\log n}} \right)$$
+which is at least $\epsilon/2$ for sufficiently large $n$. Now observe that
+$$\lim_{n \to \infty} \frac{\log k_n}{\log n} = \beta \quad \text{and} \quad \lim_{n \to \infty} \log_n \left( \frac{k_n^2 \rho_n^2}{\frac{1}{4} - \rho_n^2} \right) = 2\beta - 2\alpha < 1$$
+Since the sequence of functions $\phi_n^r \circ \varphi_n$ can be computed in randomized polynomial time, this contradicts the PDS recovery conjecture. Therefore no such sequence of functions $\phi_n$ exists for the parameter sequence $\{ (N_n, K_n, \mu_n) \}_{n \in \mathbb{N}}$ defined above. Now note that as $n \to \infty$,
+$$\mu_n = \frac{\log (1 + 2\rho_n)}{2 \sqrt{6 \log n + 2\log 2}} \sim \frac{\rho_n}{\sqrt{6 \log n}} = \frac{n^{-\alpha}}{\sqrt{6 \log n}}$$
+Therefore it follows that
+$$\lim_{n \to \infty} \frac{\log \mu_n^{-1}}{\log N_n} = \lim_{n \to \infty} \frac{\alpha \log n + \frac{1}{2} \log (6\log n)}{\log n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+This completes the proof in the case that $\beta \ge 1/2$. Now consider the case where $\beta < 1/2$. Set $\rho_n = 1/2$ and all other parameters as above. Let $G_n \sim G(n, k_n, S)$ and repeat the same argument as above to obtain that $\bP[\phi_n^r \circ \varphi_n(G_n) = S] \ge \epsilon - o(1)$. Now consider the algorithm $\phi'_n : \mG_n \to \{0, 1\}$ that computes $S' = \phi_n^r \circ \varphi_n(G_n)$ and checks if $S'$ is a clique, outputting a $1$ if it is and $0$ or $1$ uniformly at random otherwise. If $G_n \sim G(n, 1/2)$, then with probability $1 - o(1)$ the largest clique of $G_n$ is less than $(2 + \epsilon) \log_2 n$ for any fixed $\epsilon > 0$. It follows by the definition of $\phi_n$ that $|S'| = k_n = \Theta(n^{\beta}) = \omega(\log n)$ and thus with probability $1 - o(1)$, $\phi'_n$ outputs a random bit. Therefore $\bP_{G_n \sim G(n, 1/2)}[\phi'_n(G_n) = 1] = 1/2 + o(1)$. If $G_n \sim G(n, k, 1/2)$, then with probability at least $\epsilon - o(1)$, $S'$ is the support of the planted clique and $\phi_n'$ outputs a $1$. Otherwise, $\phi_n'$ outputs a random bit. Therefore $\bP_{G_n \sim G(n, k, 1/2)}[\phi'_n(G_n) = 0] = (1 - \epsilon)/2 + o(1)$. Therefore it follows that the Type I$+$II error of $\phi'_n$ is
+$$\bP_{G_n \sim G(n, 1/2)}[\phi'_n(G_n) = 1] + \bP_{G_n \sim G(n, k, 1/2)}[\phi'_n(G_n) = 0] = 1 - \frac{\epsilon}{2} + o(1)$$
+which contradicts the PC conjecture. This completes the proof of the theorem.
+\end{proof}
+
+Since the reduction $\textsc{BC-Recovery}$ exactly preserves the latent support $S$ of the instance of $\textsc{PDS}_R$ when mapping to $\textsc{BC}_R$, the same reduction shows hardness of partial recovery if the PDS conjecture is strengthened to hold for partial recovery. The same is true for weak recovery.
+
+\subsection{Lower Bounds for General PDS}
+
+In this section we give a reduction to the general regime of PDS where $q = \tilde{\Theta}(n^{-\alpha})$ and $p - q = \tilde{\Theta}(n^{-\beta})$ where $\beta > \alpha$. Note that in order to completely characterize PDS when $p - q = O(q)$, we also need the computational lower bound shown in Appendix~\ref{app:F.1} when $\alpha = \beta$. We now give this reduction, which applies $\textsc{Gaussian-Lifting}$ and $\textsc{Poisson-Lifting}$ in sequence.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{General-PDS-Reduction}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, iterations $\ell_1, \ell_2$
+\begin{enumerate}
+\item Let $H$ be the output of $\textsc{Gaussian-Lifting}$ applied to $G$ with $\ell_1$ iterations
+\item Update $H$ to be the output of $\textsc{Poisson-Lifting}$ applied to $H$ with $\ell_2$ iterations where the rejection kernel is replaced with
+$$\textsc{rk}_{\text{P2}} = \textsc{rk}\left(\frac{1}{2} + \rho \to \text{Pois}(c\lambda), \frac{1}{2} \to \text{Pois}(\lambda), N \right)$$
+where the rejection kernel has natural parameter $2^{\ell_1} n$ and satisfies $\lambda = (2^{\ell_1} n)^{-\epsilon}$, $N = \lceil 6 \rho^{-1} \log (2^{\ell_1}n) \rceil$, $\rho = \Phi(2^{-\ell_1} \mu) - 1/2$ and $c = \left( 2\Phi\left(2^{-\ell_1} \mu \right)\right)^{\epsilon/4}$
+\item Output $H$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reduction to the general regime of planted dense subgraph in Lemma \ref{lem:gpds}.}
+\label{fig:bc}
+\end{figure}
+
+\begin{lemma} \label{lem:gpds}
+Fix some arbitrary $\epsilon \in (0, 1)$. Suppose that $n$, $\ell_1$ and $\ell_2$ are such that $\ell_1, \ell_2 = O(\log n)$ and are sufficiently large. Let $\ell = \ell_1 + \ell_2$ and
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+Then there is a randomized polynomial time computable map $\phi = \textsc{General-PDS-Reduction}$ with $\phi : \mG_n \to \mG_{2^\ell n}$ such that under both $H_0$ and $H_1$, it holds that
+$$\TV\left( \phi(\textsc{PC}(n, k, 1/2)), \textsc{PDS}\left(2^\ell n, 2^\ell k, p_{\ell_1, \ell_2}, q_{\ell_1, \ell_2} \right) \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+where $p_{\ell_1, \ell_2}$ and $q_{\ell_1, \ell_2}$ are defined to be
+$$p_{\ell_1, \ell_2} = 1 - \exp\left( 4^{-\ell_2} \left(2^{\ell_1}n\right)^{-\epsilon} \cdot \left( 2 \Phi\left(2^{-\ell_1} \mu \right) \right)^{\epsilon/4} \right) \quad \text{and} \quad q_{\ell_1, \ell_2} = 1 - \exp\left( 4^{-\ell_2} \left(2^{\ell_1} n\right)^{-\epsilon} \right)$$
+\end{lemma}
+
+\begin{proof}
+Let $\phi = \textsc{General-PDS-Reduction}$ be as in Figure \ref{fig:bc}. Let $\phi_1(G)$ denote the map in Step 1 applying $\textsc{Gaussian-Lifting}$ for $\ell_1$ iterations and let $\phi_2(G)$ denote the map in Step 2 applying the modified version of $\textsc{Poisson-Lifting}$ for $\ell_2$ iterations. If $G \sim G(n, k, 1/2)$ then Lemma \ref{lem:6b} implies that
+$$\TV\left( \phi_1(G), G\left(2^{\ell_1} n, 2^{\ell_1} k, \Phi\left( 2^{-\ell_1} \mu \right), 1/2 \right) \right) = O\left(\frac{1}{\sqrt{\log n}} \right)$$
+For the values of $\lambda, \rho$ and $c$ in Step 2, we have that $c < 2^{1/4}$ and $\log_c (1 + 2\rho) = 4\epsilon^{-1} = O(1)$. Also observe that as $n \to \infty$,
+$$\rho = \Phi\left(2^{-\ell_1} \mu\right) - 1/2 \sim \frac{1}{\sqrt{2\pi}} \cdot 2^{-\ell_1} \mu = \Omega \left( \frac{1}{2^{\ell_1} \sqrt{\log n}} \right) = \omega \left( \frac{1}{2^{\ell_1} n} \right)$$
+Therefore the values $K = 1, \epsilon, \lambda, \rho, c$ and natural parameter $2^{\ell_1} n$ satisfy the preconditions to apply Lemma \ref{lem:5c}. It follows that
+\begin{align*}
+\TV\left(\textsc{rk}_{\text{P2}}(\text{Bern}(1/2 + \rho)), \text{Pois}(c\lambda) \right) &\le O\left(2^{-3\ell_1}n^{-3}\right), \quad \text{and} \\
+\TV\left(\textsc{rk}_{\text{P2}}(\text{Bern}(1/2)), \text{Pois}(\lambda) \right) &\le O\left(2^{-3\ell_1}n^{-3}\right)
+\end{align*}
+Now let $H'$ be a sample from $G\left(2^{\ell_1} n, 2^{\ell_1} k, \Phi\left( 2^{-\ell_1} \mu \right), 1/2 \right)$. The argument in Lemma \ref{lem:6a} applied with these total variation bounds yields that
+$$\TV\left( \phi_2(H'), G\left(2^\ell n, 2^\ell k, p_{\ell_1, \ell_2}, q_{\ell_1, \ell_2} \right) \right) = O\left(2^{-\ell_1 \epsilon/2} n^{-\epsilon/2} \right)$$
+Applying the triangle inequality and data processing inequality yields that
+\begin{align*}
+&\TV\left( \phi(G(n, k, 1/2)), G\left(2^\ell n, 2^\ell k, p_{\ell_1, \ell_2}, q_{\ell_1, \ell_2} \right) \right) \\
+&\quad \quad \quad \quad \quad \quad \le \TV\left( \phi_2 \circ \phi_1(G), \phi_2\left( H' \right) \right) + \TV\left( \phi_2(H'), G\left(2^\ell n, 2^\ell k, p_{\ell_1, \ell_2}, q_{\ell_1, \ell_2} \right) \right) \\
+&\quad \quad \quad \quad \quad \quad = O\left(\frac{1}{\sqrt{\log n}} + 2^{-\ell_1 \epsilon/2} n^{-\epsilon/2} \right) = O\left( \frac{1}{\sqrt{\log n}} \right)
+\end{align*}
+By the same argument, if $G \sim G(n, 1/2)$ then
+$$\TV\left( \phi(G(n, 1/2)), G\left(2^\ell n, q_{\ell_1, \ell_2} \right) \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+which completes the proof of the lemma.
+\end{proof}
+
+We now use this reduction combining $\textsc{Gaussian-Lifting}$ and $\textsc{Poisson-Lifting}$ to identify the computational barrier in the general PDS problem.
+
+\begin{theorem}
+Let $\alpha, \gamma \in [0, 2)$ and $\beta \in (0, 1)$ be such that $\gamma \ge \alpha$ and $\beta < \frac{1}{2} + \frac{\gamma}{2} - \frac{\alpha}{4}$. There is a sequence $\{ (N_n, K_n, p_n, q_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $p - q = \tilde{\Theta}(N^{-\gamma})$, $q = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log q_n^{-1}}{\log N_n} = \alpha, \quad \lim_{n \to \infty} \frac{\log (p_n - q_n)^{-1}}{\log N_n} = \gamma \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{PDS}_D(N_n, K_n, cq_n, q_n)$ is at least $1$ assuming the PC conjecture holds for $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{PDS}_D(n, k, p, q)$ in the parameter regime $p - q = \tilde{\Theta}(n^{-\gamma})$, $q = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ where $\gamma \ge \alpha$ is $\beta^* = \frac{1}{2} + \frac{\gamma}{2} - \frac{\alpha}{4}$.
+\end{theorem}
+
+\begin{proof}
+If $\beta < 2\gamma - \alpha$ then PDS in this regime is information-theoretically impossible. Thus we may assume that $1 > \beta \ge 2\gamma - \alpha$. Now let
+$$\eta =1 - ( 1- \beta) \cdot \frac{2 - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)}$$
+Note that the given condition on $\alpha, \beta$ and $\gamma$ rearranges to $\frac{1 - \beta}{2 - \alpha - 2(\gamma - \alpha)} > \frac{1}{4}$. Therefore taking $\epsilon > 0$ to be small enough ensures that $2 - \alpha - (2 - \epsilon)(\gamma - \alpha) > 0$, $\eta \in (0, 1/2)$ and $\alpha > \epsilon$. Now set
+$$\ell_n^1 = \left\lceil \frac{(\gamma - \alpha)(2 - \epsilon) \log_2 n}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} \right\rceil, \quad \quad \ell_n^2 = \left\lceil \frac{(\alpha - \epsilon)\log_2 n}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} \right\rceil,$$
+$$k_n = \lceil n^{\eta} \rceil, \quad \quad N_n = 2^{\ell^1_n + \ell_n^2} n, \quad \quad K_n = 2^{\ell_n^1 + \ell_n^2} k_n,$$
+$$p_n = 1 - \exp\left( 4^{-\ell^2_n} \left(2^{\ell^1_n}n\right)^{-\epsilon} \cdot \left( 2 \Phi\left(2^{-\ell^1_n} \mu \right) \right)^{\epsilon/4} \right), \quad \quad q_n = 1 - \exp\left( 4^{-\ell^2_n} \left(2^{\ell^1_n} n\right)^{-\epsilon} \right)$$
+where $\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$. By Lemma \ref{lem:gpds}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(n, k_n, 1/2)$ to $\text{PDS}_D(N_n, K_n, p_n, q_n)$ with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+\begin{align*}
+\lim_{n \to \infty} \frac{\log K_n}{\log N_n} &= \frac{\frac{(\gamma - \alpha)(2 - \epsilon)}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + \frac{\alpha - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + 1 - \frac{(1 - \beta)(2 - \epsilon)}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)}}{\frac{(\gamma - \alpha)(2 - \epsilon)}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + \frac{\alpha - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + 1} \\
+&= \frac{\frac{2 - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} - \frac{(1 - \beta)(2 - \epsilon)}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)}}{\frac{2 - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)}} = \beta
+\end{align*}
+Using the approximations in the proof of Theorem \ref{thm:gauss-hard}, we obtain as $n \to \infty$
+\begin{align*}
+q_n &\sim 4^{-\ell_n^2} \left( 2^{\ell^1_n} n \right)^{-\epsilon} \\
+p_n - q_n &\sim 4^{-\ell_n^2} \left( 2^{\ell^1_n} n \right)^{-\epsilon} \left[ \left( 2\Phi\left( 2^{-\ell_n^1} \mu \right) \right)^{\epsilon/4} - 1\right] \sim 4^{-\ell_n^2} \left( 2^{\ell^1_n} n \right)^{-\epsilon} \cdot \frac{\epsilon}{2 \sqrt{2\pi}} \cdot 2^{-\ell^1_n} \mu
+\end{align*}
+Now it follows that
+\begin{align*}
+\lim_{n \to \infty} \frac{\log q_n^{-1}}{\log N_n} &= \frac{2 \cdot \frac{\alpha - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + \epsilon \cdot \frac{(\gamma - \alpha)(2 - \epsilon)}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + \epsilon}{\frac{2 - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)}} = \alpha \\
+\lim_{n \to \infty} \frac{\log (p_n - q_n)^{-1}}{\log N_n} &= \frac{2 \cdot \frac{\alpha - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + (1 + \epsilon) \cdot \frac{(\gamma - \alpha)(2 - \epsilon)}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)} + \epsilon}{\frac{2 - \epsilon}{2 - \alpha - (2 - \epsilon) ( \gamma - \alpha)}} = \gamma
+\end{align*}
+which completes the proof.
+\end{proof}
+
+\section{Reflection Cloning and Subgraph Stochastic Block Model}
+
+\label{s:reflection}
+
+\subsection{Reflecting Cloning and Rank-1 Submatrix}
+
+Suppose that $n$ is even and fixed. Let $\mathcal{R}$ denote the linear operator on $\mathbb{R}^{n \times n}$ matrices that reflects a matrix horizontally about its vertical axis of symmetry. Let $\mathcal{F}$ denote the linear operator that multiplies each entry on the right half of a matrix by $-1$. The reflection cloning reduction is to iteratively update the matrix $W$ to
+$$W \gets \frac{1}{\sqrt{2}} \left( \mathcal{R} W^\sigma + \mathcal{F} W^\sigma \right)$$
+where $\sigma$ is chosen uniformly at random and then to update $W$ similarly with vertical analogues of $\mathcal{R}$ and $\mathcal{F}$. This achieves the same scaling of $\mu$ as $\textsc{Gaussian-Lifting}$ but does not increase $n$. This ends up tightly achieving the right parameter scaling to deduce the sharper hardness of $\textsc{ROS}_D$ and, indirectly, $\textsc{SPCA}_D$ over problems that admit sum-tests such as $\textsc{PIS}_D$, $\textsc{PDS}_D$, $\textsc{BC}_D$ and $\textsc{BSPCA}_D$. The parameter scaling in these problems is captured exactly by the cloning methods in the previous two sections. Note that even without Step 3, $\textsc{Reflection-Cloning}$ necessarily causes $r'$ and $c'$ to have negative entries and hence cannot show hardness of $\textsc{BC}_D$. We remark that all previous cloning methods are in some sense lossy, introducing independent sources of randomness at each entry of the input matrix. In contrast, the only randomness introduced in $\textsc{Reflection-Cloning}$ are random permutations of rows and columns, and ends up achieving a much sharper scaling in $\mu$.
+
+We remark that if $r, c \in \{-1, 0, 1\}$ then $r'$ and $c'$ have most of their entries in $\{-1, 0, 1\}$. However, those that are not are information-theoretically detectable. We note that if it were possible to reduce from $r, c \in \{-1, 0, 1\}$ to $r'$ and $c'$ with this property, then this would strengthen our hardness results for $\textsc{SSBM}_D, \textsc{SSW}_D, \textsc{ROS}_D$ and $\textsc{SPCA}_D$. Given a vector $v \in \mathbb{R}^n$ and permutation $\sigma$ of $[n]$, let $r^\sigma$ denote the vector formed by permuting the indices of $r$ according to $\sigma$.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{Reflection-Cloning}
+
+\vspace{2mm}
+
+\textit{Inputs}: Matrix $M \in \mathbb{R}^{n \times n}$ where $n$ is even, number of iterations $\ell$
+\begin{enumerate}
+\item Initialize $W \gets M$
+\item For $i = 0, 1, \dots, \ell - 1$ do:
+\begin{enumerate}
+\item[a.] Generate a permutation $\sigma$ of $[n]$ uniformly at random
+\item[a.] Let $W' \in \mathbb{R}^{n \times n}$ have entries
+\begin{align*}
+W'_{ij} &= \frac{1}{2} \left( W_{ij}^{\sigma, \sigma} + W_{(n+1-i)j}^{\sigma, \sigma} + W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} + W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} \right) \\
+W'_{(n+1-i)j} &= \frac{1}{2} \left( W_{ij}^{\sigma, \sigma} - W_{(n+1-i)j}^{\sigma, \sigma} + W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} - W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} \right) \\
+W'_{i(n+1-j)} &= \frac{1}{2} \left( W_{ij}^{\sigma, \sigma} + W_{(n+1-i)j}^{\sigma, \sigma} - W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} - W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} \right) \\
+W'_{(n+1-i)(n+1-j)} &= \frac{1}{2} \left( W_{ij}^{\sigma, \sigma} - W_{(n+1-i)j}^{\sigma, \sigma} - W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} + W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} \right)
+\end{align*}
+for each $1 \le i, j \le n/2$
+\item[b.] Set $W \gets W'$
+\end{enumerate}
+\item Output $W$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reflection cloning procedure in Lemma \ref{lem:refc}.}
+\end{figure}
+
+\begin{lemma}[Reflection Cloning] \label{lem:refc}
+Suppose $n$ is even and $\ell = O(\log n)$. There is a randomized polynomial-time computable map $\phi = \textsc{Reflection-Cloning}$ with $\phi : \mathbb{R}^{n \times n} \to \mathbb{R}^{n \times n}$ and
+\begin{enumerate}
+\item It holds that
+$$\phi\left(N(0, 1)^{\otimes n \times n}\right) \sim N(0, 1)^{\otimes n \times n}$$
+\item Consider any $\lambda > 0$ and any pair of vectors $r, c \in \mathbb{Z}^n$. Then there is a distribution $\pi$ over vectors $r', c' \in \mathbb{Z}^n$ with $\| r' \|_2^2 = 2^\ell \| r \|_2^2$ and $\| c' \|_2^2 = 2^\ell \| c \|_2^2$ such that
+$$\phi\left(\lambda \cdot r c^\top + N(0, 1)^{\otimes n \times n}\right) \sim \int \mL\left( \frac{\lambda}{2^\ell} \cdot r' c'^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(r', c')$$
+where it holds with probability at least $1 - 4\| r \|_0^{-1} - 4\| c \|_0^{-1}$ over $\pi$ that
+\begin{align*}
+2^\ell \| r \|_0 \ge \| r' \|_0 \ge 2^\ell \| r \|_0 \left( 1 - \max\left(\frac{2C\ell \cdot \log (2^\ell \| r \|_0)}{\| r \|_0}, \frac{2^\ell \| r \|_0}{n}\right) \right) \\ 
+2^\ell \| c \|_0 \ge \| c' \|_0 \ge 2^\ell \| c \|_0 \left( 1 - \max\left(\frac{2C\ell \cdot \log (2^\ell \| c \|_0)}{\| c \|_0}, \frac{2^\ell \| c \|_0}{n}\right) \right)
+\end{align*}
+for some constant $C$ if $\| r \|_0$ and $\| c \|_0$ are sufficiently large and at most $2^{-\ell-1} n$. Furthermore, if $r = c$ then $r' = c'$ holds almost surely.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Let $\phi(M)$ be implemented by the procedure $\textsc{Reflection-Cloning}(M, \ell)$ as in Figure 6. If $\ell = O(\log n)$, this algorithm runs in randomized polynomial time. Let $\phi_1(W)$ denote the map that takes the value $W$ prior to an iteration of Step 2 as its input and outputs the value of $W$ after this iteration.
+
+If $W \sim N(0, 1)^{\otimes n \times n}$, then it follows by a similar argument as in Lemma 7 that $\phi_1(W) \sim N(0, 1)^{\otimes n \times n}$. Specifically, for each $1 \le i, j \le n/2$ we have that
+$$\left[ \begin{matrix} W_{ij}' \\ W_{(n+1-i)j}' \\ W_{i(n+1-j)}' \\ W_{(n+1-i)(n+1-j)}' \end{matrix} \right] = \frac{1}{2} \left[ \begin{array}{rrrr} 1 & 1 & 1 & 1 \\ 1 & -1 & 1 & -1 \\ 1 & 1 & -1 & -1 \\ 1 & -1 & -1 & 1 \end{array} \right] \cdot \left[ \begin{matrix} W_{ij}^{\sigma, \sigma} \\ W_{(n+1-i)j}^{\sigma, \sigma} \\ W_{i(n+1-j)}^{\sigma, \sigma} \\ W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} \end{matrix} \right]$$
+where $\sigma$ is the random permutation generated in Step 2a. It holds that $W^{\sigma, \sigma} \sim N(0, 1)^{\otimes n \times n}$ and therefore that the vector of entries on the right hand side above is distributed as $N(0, 1)^{\otimes 4}$. Since the coefficient matrix is orthogonal, it follows that the vector on the left hand side is also distributed as $N(0, 1)^{\otimes 4}$. Since the $\sigma$-algebras $\sigma\{W_{ij}^{\sigma, \sigma}, W_{(n+1-i)j}^{\sigma, \sigma}, W_{i(n+1-j)}^{\sigma, \sigma}, W_{(n+1-i)(n+1-j)}^{\sigma, \sigma} \}$ are independent as $(i, j)$ ranges over $[n/2]^2$, it follows that $W' = \phi_1(W) \sim N(0, 1)^{\otimes n \times n}$. Iterating, it now follows that $\phi(N(0, 1)^{\otimes n \times n}) \sim N(0, 1)^{\otimes n \times n}$, establishing Property 1.
+
+Now consider the case when $W = \lambda \cdot r c^\top + U$ where $U \sim N(0, 1)^{\otimes n \times n}$. Note that $W'$ can be expressed in terms of $W^{\sigma, \sigma}$ as
+$$W' = \frac{1}{2} \left( A + B \right)^\top W^{\sigma, \sigma} \left( A + B \right)^\top = \frac{\lambda}{2} \left( A r^\sigma + B r^\sigma \right) \left( Ac^\sigma + Bc^\sigma \right)^\top + \frac{1}{2} \left( A + B \right)^\top U^{\sigma, \sigma} \left( A + B \right)$$
+where $B$ is the $n \times n$ matrix with ones on its anti-diagonal and zeros elsewhere, and $A$ is given by
+$$A = \left[ \begin{matrix} I_{n/2} & 0 \\ 0 & -I_{n/2} \end{matrix} \right]$$
+Note that $\frac{1}{2} \left( A + B \right)^\top U^{\sigma, \sigma} \left( A + B \right)$ is distributed as $\phi_1(U) \sim N(0, 1)^{\otimes n \times n}$. Since $A + B$ is symmetric and satisfies that $(A + B)^2 = 2 \cdot I_n$, we have that
+$$\| Ar^\sigma + Br^\sigma \|_2^2 = 2 \| r^\sigma \|_2^2 = 2\| r \|_2^2 \quad \text{and} \quad \| Ac^\sigma + Bc^\sigma \|_2^2 = 2 \| c^\sigma \|_2^2 = 2\| c \|_2^2$$
+Let $r_0 = r$ and $r_{i+1} = A r^{\sigma_i} + B r^{\sigma_i}$ where $\sigma_i$ is the permutation generated in the $i$th iteration of Step 2. It follows by induction that $r_\ell \in \mathbb{Z}^n$ and $\| r_\ell \|_2^2 = 2^\ell \| r \|_2^2$ hold almost surely. Analogously define $c_i$ for each $0 \le i \le \ell$ and note that
+$$\phi\left(\lambda \cdot r c^\top + N(0, 1)^{\otimes n \times n}\right) \sim \mL\left( \frac{\lambda}{2^\ell} \cdot r_\ell c_\ell^\top + N(0, 1)^{\otimes n \times n}\right)$$
+Furthermore note that if $r_0 = r = c = c_0$, then $r_i = c_i$ for all $i$ holds almost surely. Thus it suffices to show that the desired bounds on $\| r_\ell \|_0$ and $\| c_\ell \|_0$ hold with high probability in order to establish Property 2.
+
+Note that since $A + B$ has two nonzero entries per row and column, it follows that $2\| r_i \|_0 \ge \| r_{i+1} \|_0$ for all $i$. Now consider the set
+$$S_i = \left\{ \{j, n + 1 - j\} : j, n+1 - j \in \text{supp}\left(r_i^\sigma\right) \right\}$$
+Note that if $j \in \text{supp}\left(r_i^\sigma\right)$, then $j$ is only not in the support of $r_{i+1}$ if it is in some unordered pair in $S_i$. Also note that $(r_{i+1})_j + (r_{i+1})_{n+1 - j} = 2r^\sigma_j \neq 0$ if $j$ is in some unordered pair in $S_i$. Therefore at most one element per unordered pair of $S_i$ can be absent from the support of $r_{i+1}$. This implies that $2\| r_i \|_0 - \| r_{i+1} \|_0 \le |S_i|$ for each $i$. For each $1 \le j \le n/2$, let $X_j$ be the indicator for the event that $\{j, n+1 - j\} \in S_i$. Let $t = \| r_i \|_0$ and note that $|S_i| = X_1 + X_2 + \cdots + X_{n/2}$. For any subset $T \subseteq [n/2]$, it follows that if $|T| \le n/2$ then
+$$\bE\left[ \prod_{j \in T} X_j \right] = \frac{t(t-1)\cdots(t - 2|T| + 1)}{n(n-1)\cdots(n - 2|T| + 1)} \le \left( \frac{t}{n} \right)^{2|T|}$$
+and if $|T| > n/2$, then this expectation is zero. Let $Y \sim \text{Bin}(n/2, t^2/n^2)$ and note that the above inequality implies that $\bE[|S_i|^k] \le \bE[Y^k]$ for all $j \ge 0$. This implies that if $\theta \ge 0$, then
+$$\bE[\exp(\theta |S_i|)] \le \bE[\exp(\theta Y)] = \left( 1 + (e^\theta - 1) \cdot \frac{t^2}{n^2} \right)^{n/2} \le \exp\left( (e^\theta - 1) \cdot \frac{t^2}{2n} \right)$$
+A Chernoff bound now yields that
+$$\bP[|S_i| \ge k] \le \exp\left( (e^\theta - 1) \cdot \frac{t^2}{2n} - \theta k \right)$$
+Setting $k = t^2/n$ and $\theta = \ln 2$ yields that
+$$\bP\left[|S_i| \ge \frac{t^2}{n}\right] \le \left( \frac{e}{4} \right)^{\frac{t^2}{2n}} \le \frac{1}{t}$$
+if $t^2/2n \ge \log_{4/e} t$. If $t^2/2n < \log_{4/e} t$, setting $\theta = \ln 2$ and $k = \frac{1}{\ln 2} \left( \log_{4/e} t + \ln t \right) = C\log t$ yields
+$$\bP\left[|S_i| \ge C \log t \right] \le \exp\left( \frac{t^2}{2n} - (\ln 2) k \right) = \frac{1}{t}$$
+Therefore with probability at least $1 - 1/\| r_i \|_0$, it follows that $|S_i| < \max(C\log \| r_i \|_0, \| r_i \|_0^2/n)$. Note that this inequality implies that
+$$\| r_{i+1} \|_0 \ge 2\| r_i \|_0 - |S_i| \ge 2\| r_i \|_0 \left(1 - \max\left(\frac{C \log \| r_i \|_0}{\| r_i\|_0}, \frac{\| r_i \|_0}{n}\right) \right)$$
+We now will show by induction on $0 \le j \le \ell$ that as long as $\|r \|_0$ is sufficiently large, we have
+\begin{equation}
+\| r_j \|_0 \ge 2^j \| r \|_0 \left( 1 - \max\left(\frac{2Cj \cdot \log (2^j \| r \|_0)}{\| r \|_0}, \frac{2^j \| r \|_0}{n}\right) \right)
+\end{equation}
+holds with probability at least
+$$1 - \frac{4(1 - 2^{-j})}{\| r \|_0}$$
+The claim is vacuously true when $j = 0$. Now assume that this holds for a particular $j$. Now note that since $j \le \ell$ and $\| r \|_0$ is sufficiently large but at most $2^{-\ell - 1} n$, we have that
+$$\max\left(\frac{2Cj \cdot \log (2^j \| r \|_0)}{\| r \|_0}, \frac{2^j \| r \|_0}{n}\right) \le \frac{1}{2}$$
+Therefore $\| r_j \|_0 \ge 2^{j-1} \| r \|_0$. We now condition on the value of $\| r_j \|_0$ and the event (7.1) holds. Under this conditioning, it follows by the induction hypothesis that with probability at least $1 - 1/\| r_j \|_0 \ge 1 - 2^{1-j} \| r\|_0^{-1}$, we have that
+\begin{align*}
+\| r_{j+1} \|_0 &\ge 2^{j+1} \| r \|_0 \left( 1 - \max\left(\frac{2Cj \cdot \log (2^j \| r \|_0)}{\| r \|_0}, \frac{2^j \| r \|_0}{n}\right) \right) \left(1 - \max\left(\frac{C \log \| r_j \|_0}{\| r_j\|_0}, \frac{\| r_j \|_0}{n}\right) \right) \\
+&2^{j+1} \| r \|_0 \left( 1 - \max\left(\frac{2C(j+1) \cdot \log (2^{j+1} \| r \|_0)}{\| r \|_0}, \frac{2^{j+1} \| r \|_0}{n}\right) \right)
+\end{align*}
+since $2^{j-1} \| r \|_0 \le \| r_j \| \le 2^j \| r \|_0$. Marginalizing over $\| r_j \|_0$ and whether or not (7.1) holds yields that the above inequality holds with probability at least
+$$\left( 1 - \frac{4(1 - 2^{-j})}{\| r \|_0} \right) \left( 1 - \frac{2^{1-j}}{\| r \|_0^{-1}} \right) \ge 1 - \frac{4(1 - 2^{-j})}{\| r \|_0} - \frac{2^{1-j}}{\| r \|_0} = 1 - \frac{4(1 - 2^{-j-1})}{\| r \|_0}$$
+which completes the induction. Obtaining symmetric results for $c$ and taking $j = \ell$ completes the proof of the lemma.
+\end{proof}
+
+Combining this reflection cloning procedure with the reduction from planted clique to biclustering yields a reduction from planted clique to rank-1 submatrix.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{ROS-Reduction}
+
+\vspace{2mm}
+
+\textit{Inputs}: Graph $G \in \mG_n$, number of iterations $\ell$
+\begin{enumerate}
+\item Compute the output $W$ of $\textsc{BC-Reduction}$ applied to $G$ with zero iterations
+\item Return the output of $\textsc{Reflection-Cloning}$ applied to $W$ with $\ell$ iterations
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reduction to rank-1 submatrix in Lemma \ref{lem:ros}.}
+\label{fig:ros}
+\end{figure}
+
+\begin{lemma} \label{lem:ros}
+Suppose that $n$ is even and $2^{\ell} k < \frac{n}{\log k}$ where $n$ is sufficiently large. Let
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+There is a randomized polynomial time computable map $\phi = \textsc{ROS-Reduction}$ with $\phi : \mG_n \to \mathbb{R}^{n \times n}$ such that if $G$ is an instance of $\text{PC}(n, k, 1/2)$ then under $H_0$, it holds that
+$$\TV\left( \mL_{H_0}(\phi(G)), N(0, 1)^{\otimes n \times n} \right) = O\left( \frac{1}{\sqrt{\log n}} \right)$$
+and, under $H_1$, there is a prior $\pi$ on pairs of unit vectors in $\mathcal{V}_{n, 2^\ell k}$ such that
+$$\TV\left( \mL_{H_1}(\phi(G)), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot  uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(u, v) \right) = O\left( \frac{1}{\sqrt{\log n}} + k^{-1} \right)$$
+\end{lemma}
+
+\begin{proof}
+Let $\phi = \textsc{ROS-Reduction}$ be as in Figure \ref{fig:ros}. Let $\phi_1 : \mG_n \to \mathbb{R}^{n \times n}$ and $\phi_2 : \mathbb{R}^{n \times n} \to \mathbb{R}^{n \times n}$ denote the maps in Steps 1 and 2, respectively. By Lemma \ref{lem:bc}, it holds that
+\begin{align*}
+&\TV\left( \phi_1(G(n, 1/2)), N(0, 1)^{\otimes n \times n} \right) = O\left(\frac{1}{\sqrt{\log n}} \right) \\
+&\TV\left( \phi_1(G(n, k, 1/2)), \int \mL\left(\frac{\mu}{\sqrt{2}} \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes n \times n} \right) d\pi'(S, T) \right) = O\left(\frac{1}{\sqrt{\log n}} \right) 
+\end{align*}
+where $\pi'$ is the uniform distribution over pairs of $k$-subsets $S, T \subseteq [n]$. By Lemma \ref{lem:refc}, it holds that $\phi_2\left( N(0, 1)^{\otimes n \times n} \right) \sim N(0, 1)^{\otimes n \times n}$. By the data processing inequality, we have that
+\begin{align*}
+\TV\left( \mL_{H_0}(\phi(G)), N(0, 1)^{\otimes n \times n} \right) &= \TV\left( \phi_2 \circ \phi_1(G(n, 1/2)), \phi_2 \left( N(0, 1)^{\otimes n \times n} \right) \right) \\
+&\le \TV\left( \phi_1(G(n, 1/2)), N(0, 1)^{\otimes n \times n} \right) = O\left(\frac{1}{\sqrt{\log n}} \right)
+\end{align*}
+Let $M$ be a the matrix distributed as $\frac{\mu}{\sqrt{2}} \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes n \times n}$ where $S$ and $T$ are $k$-element subsets of $[n]$ chosen uniformly at random. It follows that the distribution of $\phi_2(M)$ conditioned on the sets $S$ and $T$ is given by
+$$\mL\left( \phi_2\left( M \right) | S, T \right) \sim \int \mL\left( \frac{\mu}{2^\ell \sqrt{2}} \cdot rc^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(r, c)$$
+where $\pi$ is the prior in Lemma \ref{lem:refc}. As shown in Lemma \ref{lem:refc}, it follows that each pair $(r, c)$ in the support of $\pi$ satisfies that $\| r \|_2^2 = 2^\ell \| \mathbf{1}_S \|_2^2 = 2^\ell k$ and $\| c \|_2^2 = 2^\ell \| \mathbf{1}_T \|_2^2 = 2^\ell k$ and that $\| r \|_0, \| c \|_0 \le 2^\ell k$. Now consider the prior $\pi_{S, T}$ which is $\pi$ conditioned on the event that the following inequalities hold
+$$\| r \|_0, \| c \|_0 \ge 2^\ell k \left( 1 - \max\left(\frac{2C\ell \cdot \log (2^\ell k)}{k}, \frac{2^\ell k}{n}\right) \right)$$
+As shown in Lemma \ref{lem:refc}, this event occurs with probability at least $1 - 8/k$. Since $2^{\ell} k < \frac{n}{\log k}$, it follows that if $u = \frac{1}{\sqrt{2^\ell k}} \cdot r$ and $v = \frac{1}{\sqrt{2^\ell k}} \cdot c$ then $\pi_{S, T}$ induces a prior over pairs $(u, v)$ in $\mathcal{V}_{n, 2^\ell k}$. This follows from the fact that $r, c \in \mathbb{Z}^n$ implies that $u$ and $v$ have nonzero entries with magnitudes at least $1/\sqrt{2^\ell k}$. Applying Lemma \ref{lem:5tv} yields that since $2^{-\ell} \mu \cdot r c^\top = \mu k \cdot uv^\top$,
+$$\TV\left( \mL\left( \phi_2\left( M \right) | S, T \right), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi_{S, T}(u, v)\right) \le \frac{8}{k}$$
+Let $\pi(u, v) = \bE_{S, T}[\pi_{S,T}(u, v)]$ be the prior formed by marginalizing over $S$ and $T$. Note that $\pi$ is also supported on pairs of unit vectors in $\mathcal{V}_{n, 2^\ell k}$. By the triangle inequality, it follows that
+\begin{align*}
+&\TV\left( \mL\left( \phi_2\left( M \right) \right), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(u, v) \right) \\
+&\quad \le \bE_{S, T} \left[ \TV\left( \mL\left( \phi_2\left( M \right) | S, T \right), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi_{S, T}(u, v)\right) \right] \le \frac{8}{k}
+\end{align*}
+By the triangle inequality and data processing inequality, we now have that
+\begin{align*}
+&\TV\left( \mL_{H_1}(\phi(G)), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot  uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(u, v) \right) \\
+&\quad \le \TV\left( \mL_{H_1}(\phi_2 \circ \phi_1(G)), \mL(\phi_2(M)) \right) \nonumber\\
+&\quad\quad+ \TV\left( \mL\left( \phi_2\left( M \right) \right), \int \mL\left( \frac{\mu k}{\sqrt{2}} \cdot uv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(u, v) \right) \\
+&\quad = O\left(\frac{1}{\sqrt{\log n}} \right) + \frac{8}{k} = O\left(\frac{1}{\sqrt{\log n}} + k^{-1} \right)
+\end{align*}
+since $M$ is a sample from the mixture $\int \mL\left(\frac{\mu}{\sqrt{2}} \cdot \mathbf{1}_S \mathbf{1}_T^\top + N(0, 1)^{\otimes n \times n} \right) d\pi'(S, T)$. This completes the proof of the lemma.
+\end{proof}
+
+This lemma provides a polynomial time map from an instance of $\textsc{PC}_D(n, k, 1/2)$ to $N(0, 1)^{\otimes n \times n}$ under $H_0$ and to a distribution in the composite hypothesis $H_1$ of $\textsc{ROS}_D(n, 2^\ell k, 2^{-1/2} \mu)$ under $H_1$. Now we deduce the hard regime of $\textsc{ROS}_D$ given the planted clique conjecture as in the next theorem. Here, we consider the asymptotic regime $\frac{\mu}{k} = \tilde{\Theta}(n^{-\alpha})$ to be consistent with Figure \ref{fig:diagrams}. The purpose of this parameterization is to focus on the factor $\frac{\mu}{k}$ required to normalize entries in the planted submatrix to have magnitude approximately $1$. This enables a valid comparison between the hardness of $\textsc{ROS}_D$ and $\textsc{BC}_D$.
+
+\begin{theorem} \label{thm:ros}
+Let $\alpha > 0$ and $\beta \in (0, 1)$ be such that $\beta < \frac{1}{2} + \alpha$. There is a sequence $\{ (N_n, K_n, \mu_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $\frac{\mu}{K} = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log (K_n \mu_n^{-1})}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{ROS}_D(N_n, K_n, \mu_n)$ is at least $1$ assuming the PC conjecture holds with density $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{ROS}_D(n, k, \mu)$ in the parameter regime $\frac{\mu}{k} = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \alpha$ and $\alpha^* = 0$ when $\beta < \frac{1}{2}$.
+\end{theorem}
+
+\begin{proof}
+If $\beta < 2\alpha$ then $\textsc{ROS}_D$ is information-theoretically impossible. Thus we may assume that $\beta \ge 2\alpha$. Let $\gamma = \beta - \alpha$ and note that $\gamma \in (0, 1/2)$. Now set
+$$\ell_n = \lceil \alpha \log_2 n \rceil, \quad \quad k_n = \lceil n^{\gamma} \rceil, \quad \quad N_n = 2n, \quad \quad K_n = 2^{\ell_n} k_n, \quad \quad \mu_n =\frac{\mu k_n}{\sqrt{2}}$$
+where $\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$. By Lemma \ref{lem:ros}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(2n, k_n, 1/2)$ to the detection problem $\text{ROS}_D(N_n, K_n, \mu_n)$ under $H_0$ and to a prior over $H_1$ with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+\begin{align*}
+\lim_{n \to \infty} \frac{\log (K_n \mu_n^{-1})}{\log N_n} &= \lim_{n \to \infty} \frac{\lceil \alpha \log_2 n \rceil \cdot \log 2 - \log (\mu/\sqrt{2})}{\log n + \log 2} = \alpha \\
+\lim_{n \to \infty} \frac{\log K_n}{\log N_n} &= \lim_{n \to \infty} \frac{\lceil \alpha \log_2 n \rceil \cdot \log 2 + \log k_n}{\log n + \log 2} = \alpha + (\beta - \alpha) = \beta
+\end{align*}
+which completes the proof.
+\end{proof}
+
+\subsection{Sparse Spiked Wigner Matrix}
+
+%NOTE: Intermediate to planted stochastic block model, also alternative model for sparse PCA that we completely characterize, does not subsume rank-1 submatrix reduction above as this reduction is lossy and requires polynomial separation, comment at the end of the paper on results that actually hold up to subpolynomial factors? Give precise reduction so can actually apply analysis as a blackbox for the planted stochastic block model. State that ensuring symmetry and getting diagonal entries correct is difficult as noted in Hajek-Wu-Xu.
+
+We now show a computational lower bound for sparse spiked Wigner matrix detection given the planted clique conjecture. As observed in Section 2, it suffices to reduce from planted clique to $\textsc{SROS}_D$. This is because if $M$ is an instance of $\textsc{SROS}_D(n, k, \mu)$, then $\frac{1}{\sqrt{2}} (M + M^\top)$ is an instance of $\textsc{SSW}_D(n, k, \mu/\sqrt{2})$. This transformation implies that any computational lower bound that applies to $\textsc{SROS}_D(n, k, \mu)$ also applies to $\textsc{SSW}_D(n, k, \mu/\sqrt{2})$. The rest of this section is devoted to giving a reduction to $\textsc{SROS}_D(n, k, \mu)$.
+
+Our reduction uses the symmetry preserving property of reflection cloning and yields the same computational barrier as for $\textsc{ROS}_D$. However, there are two subtle differences between this reduction and that in Lemma \ref{lem:ros}. In order to show hardness for $\textsc{SROS}_D$, it is important to preserve the symmetry of the planted sparse structure. This requires planting the hidden entries along the diagonal of the adjacency matrix of the input graph $G$, which we do by an averaging trick. However, this induces an arbitrarily small polynomial loss in the size of the spike, unlike in the reduction to $\textsc{ROS}_D$. Although this does not affect our main theorem statement for $\textsc{SROS}_D$, which only considers $\text{poly}(n)$ size factors, it yields a weaker lower bound than that in Theorem \ref{thm:ros} when examined up to sub-polynomial factors. This reduction to $\textsc{SROS}_D$ will also serve as the main sub-routine in our reduction to $\textsc{SSBM}_D$.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{SROS-Reduction}
+
+\vspace{2mm}
+
+\textit{Inputs}: Planted clique instance $G \in \mG_n$ with clique size $k$ where $n$ is even, iterations $\ell$
+\begin{enumerate}
+\item Let $\textsc{rk}_{\text{G}} = \textsc{rk}\left( 1 \to N(\mu, 1), 1/2 \to N(0, 1), N \right)$ where $N = \lceil 6 \log_2 n \rceil$ and $\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$ and form the symmetric matrix $W \in \mathbb{R}^{n \times n}$ with $W_{ii} = 0$ and for all $i < j$,
+$$W_{ij} = \textsc{rk}_G\left( \mathbf{1}_{\{i, j\} \in E(G)}\right)$$
+\item Sample an antisymmetric matrix $A \in \mathbb{R}^{n \times n}$ with i.i.d. $N(0, 1)$ entries below its main diagonal and sample two matrices $B, C \in \mathbb{R}^{n \times n}$ with i.i.d. $N(0, 1)$ off-diagonal and zero diagonal entries
+\item Form the matrix $M \in \mathbb{R}^{n \times n}$ with
+$$M_{ij} = \frac{k - 1}{2 \sqrt{n - 1}} \left( W_{ij} + A_{ij} + B_{ij} \cdot \sqrt{2} \right) + C_{ij} \cdot \sqrt{1 - \frac{(k-1)^2}{n - 1}}$$
+for all $i \neq j$ and
+$$M_{ii} = \frac{1}{2\sqrt{n - 1}} \sum_{j = 1}^n \left( W_{ij} + A_{ij} - B_{ij} \cdot \sqrt{2} \right)$$
+\item Update $M$ to be the output of $\textsc{Reflection-Cloning}$ applied with $\ell$ iterations to $M$
+\item Output $M^{\sigma, \sigma}$ where $\sigma$ is a permutation of $[n]$ chosen uniformly at random
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reduction to sparse spiked Wigner matrix in Lemma \ref{lem:ssw}.}
+\label{fig:ssw}
+\end{figure}
+
+\begin{lemma} \label{lem:ssw}
+Suppose that $n$ is even and $2^{\ell} k < \frac{n}{\log k}$ where $n$ is sufficiently large. Let
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+There is a randomized polynomial time computable map $\phi = \textsc{SROS-Reduction}$ with $\phi : \mG_n \to \mathbb{R}^{n \times n}$ such that if $G$ is an instance of $\text{PC}(n, k, 1/2)$ then under $H_0$, it holds that
+$$\TV\left( \mL_{H_0}(\phi(G)), N(0, 1)^{\otimes n \times n} \right) = O( n^{-1} )$$
+and, under $H_1$, there is a prior $\pi$ on unit vectors in $\mathcal{V}_{n, 2^\ell k}$ such that
+$$\TV\left( \mL_{H_1}(\phi(G)), \int \mL\left( \frac{\mu k(k-1)}{2\sqrt{(n-1)}} \cdot  vv^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(v) \right) = O\left( n^{-1} \right)$$
+\end{lemma}
+
+\begin{proof}
+Let $\phi = \textsc{SROS-Reduction}$ be as in Figure \ref{fig:ssw}. Applying the total variation bounds in Lemma \ref{lem:5c} and entry-wise coupling as in Lemma \ref{lem:bcrec} yields that
+$$\TV\left( \mL_{H_0}(W), M_n(N(0, 1)) \right) = O(n^{-1}) \ \ \text{and} \ \ \TV\left( \mL_{H_1}(W), M_n(k, N(\mu, 1), N(0, 1)) \right) = O(n^{-1})$$
+Let $W' \in \mathbb{R}^{n \times n}$ be such that $W' \sim M_n(N(0, 1))$ under $H_0$ and $W' \sim M_n(k, N(\mu, 1), N(0, 1))$ under $H_1$. Let $M'$ denote the matrix computed in Step 3 using the matrix $W'$ in place of $W$. We will first argue that under $H_0$, the variables $W'_{ij} + A_{ij} + B_{ij} \cdot \sqrt{2}$ and $W'_{ij} + A_{ij} - B_{ij} \cdot \sqrt{2}$ for all $i \neq j$ are independent. First note that the $\sigma$-algebras $\sigma\{ W'_{ij}, A_{ij}, B_{ij} \}$ for all $i < j$ are independent. Therefore it suffices to verify that the four variables $W'_{ij} + A_{ij} \pm B_{ij} \cdot \sqrt{2}$ and $W'_{ji} + A_{ji} \pm B_{ji} \cdot \sqrt{2}$ are independent. Observe that these four variables are jointly Gaussian and satisfy that
+$$\frac{1}{2} \cdot \left[ \begin{matrix} W'_{ij} + A_{ij} + B_{ij} \cdot \sqrt{2} \\ W'_{ij} + A_{ij} - B_{ij} \cdot \sqrt{2} \\ W'_{ji} + A_{ji} + B_{ji} \cdot \sqrt{2} \\ W'_{ji} + A_{ji} - B_{ji} \cdot \sqrt{2}\end{matrix} \right] = \frac{1}{2} \cdot \left[ \begin{matrix} 1 & 1 & \sqrt{2} & 0 \\ 1 & 1 & - \sqrt{2} & 0 \\ 1 & - 1 & 0 & \sqrt{2} \\ 1 & - 1 & 0 & -\sqrt{2} \end{matrix} \right] \cdot \left[ \begin{matrix} W'_{ij} \\ A_{ij} \\ B_{ij} \\ B_{ji} \end{matrix} \right]$$
+since $W'$ is symmetric and $A$ is antisymmetric. Observe that $W'_{ij}, A_{ij}, B_{ij}, B_{ji}$ are independent Gaussians and since the coefficient matrix above is orthogonal, it follows that the vector on the left hand side above is distributed as $N(0, 1)^{\otimes 4}$ and thus has independent entries. Since the $C$ has i.i.d. $N(0, 1)$ entries off of its diagonal and $W', A, B$ and $C$ all have zero diagonals, it follows that $\text{Var}(M'_{ij}) = 1$ for all $i, j \in [n]$. Since the entries of $M'$ are independent and each entry is Gaussian with variance $1$, it follows that $M' \sim N(0, 1)^{\otimes n \times n}$.
+
+Now suppose that $H_1$ holds and let $S \subseteq [n]$ be indices of the rows and columns containing the planted $N(\mu, 1)$ entries of $W'$. It now follows that $W'_{ij} = \mu + W''_{ij}$ if $i \neq j$ and $i, j \in S$ and $W'_{ij} = W''_{ij}$ where $W'' \sim M_n(N(0, 1))$. Now note that if $i \neq j$, we have that conditioned on $S$,
+\begin{align*}
+M'_{ij} &= \frac{(k-1)\mu}{2 \sqrt{n - 1}} \cdot \mathbf{1}_{\{i, j \in S\}}+ \frac{k-1}{2 \sqrt{n - 1}} \left( W''_{ij} + A_{ij} + B_{ij} \cdot \sqrt{2} \right) + C_{ij} \cdot \sqrt{1 - \frac{(k-1)^2}{n - 1}} \\
+&\sim \frac{(k-1)\mu}{2 \sqrt{n - 1}} \cdot \mathbf{1}_{\{i, j \in S\}} + N(0, 1)
+\end{align*}
+by applying the previous argument to $W''$. Furthermore $M'_{ii}$ has diagonal entries
+\begin{align*}
+M'_{ij} &= \frac{(k-1)\mu}{2 \sqrt{n - 1}} \cdot \mathbf{1}_{\{i, j \in S\}}+ \frac{1}{2\sqrt{n - 1}} \sum_{j = 1}^n \left( W''_{ij} + A_{ij} - B_{ij} \cdot \sqrt{2} \right) \\
+&\sim \frac{(k-1)\mu}{2 \sqrt{n - 1}} \cdot \mathbf{1}_{\{i \in S\}} + N(0, 1)
+\end{align*}
+conditioned on $S$. Therefore $M' | S\sim \frac{(k-1)\mu}{2\sqrt{n - 1}} \cdot \mathbf{1}_S \mathbf{1}_S^\top + N(0, 1)^{\otimes n \times n}$. Now by the data processing inequality, we now have that under $H_0$,
+$$\TV\left( \mL_{H_0}(M), N(0, 1)^{\otimes n \times n} \right) \le \TV\left( \mL_{H_0}(W), M_n(N(0, 1)) \right) = O(n^{-1})$$
+By the data processing and triangle inequalities, we have that
+\begin{align*}
+&\TV\left( \mL_{H_1}(M), \int \mL\left( \frac{(k-1)\mu}{2\sqrt{(n-1)}} \cdot  \mathbf{1}_S \mathbf{1}_S^\top + N(0, 1)^{\otimes n \times n} \right) d\pi'(S) \right) \\
+&\quad \quad \le \bE_S \TV\left( \mL_{H_1}(M), \frac{(k-1)\mu}{2\sqrt{(n-1)}} \cdot  \mathbf{1}_S \mathbf{1}_S^\top + N(0, 1)^{\otimes n \times n} \right) = O(n^{-1})
+\end{align*}
+where $\pi'$ is the uniform distribution on $k$-subsets of $[n]$. Now applying the same argument as in the proof of Lemma \ref{lem:ros} and the fact that $\textsc{Reflection-Cloning}$ preserves the fact that the rank-1 mean submatrix is symmetric as shown in Lemma \ref{lem:refc}, proves the lemma.
+\end{proof}
+
+We now use this lemma to deduce the computational barriers for $\textsc{SROS}_D$ and $\textsc{SSW}_D$. Although the barrier matches Theorem \ref{thm:ros}, the parameter settings needed to achieve it are slightly different due to the polynomial factor loss in the reduction in Lemma \ref{lem:ssw}.
+
+\begin{theorem} \label{thm:ssw}
+Let $\alpha > 0$ and $\beta \in (0, 1)$ be such that $\beta < \frac{1}{2} + \alpha$. There is a sequence $\{ (N_n, K_n, \mu_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $\frac{\mu}{K} = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log (K_n \mu_n^{-1})}{\log N_n} = \alpha \quad \text{and} \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{SROS}_D(N_n, K_n, \mu_n)$ and $\textsc{SSW}_D(N_n, K_n, \mu_n/\sqrt{2})$ is at least $1$ assuming the PC conjecture holds with density $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundaries for $\textsc{SROS}_D(n, k, \mu)$ and $\textsc{SSW}_D(n, k, \mu)$ in the parameter regime $\frac{\mu}{k} = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \alpha$ and $\alpha^* = 0$ when $\beta < \frac{1}{2}$.
+\end{theorem}
+
+\begin{proof}
+When $2 \alpha > \beta$, it holds that $\textsc{SROS}_D$ is information-theoretically impossible. Therefore we may assume that $2\alpha \le \beta$ and in particular that $\alpha < \frac{1}{2}$. Now suppose that $\beta < \frac{1}{2} + \alpha$. First consider the case when $\beta \ge \frac{1}{2}$ and let $\epsilon = \frac{1}{2} \left( \alpha + \frac{1}{2} - \beta \right) \in \left( 0, \frac{1}{2} \right)$. Now set
+$$\ell_n = \left\lceil \left( \beta - \frac{1}{2} + \epsilon \right) \log_2 n \right\rceil, \quad k_n = \left\lceil n^{\frac{1}{2} - \epsilon} \right\rceil,  \quad N_n = 2n,  \quad K_n = 2^{\ell_n} k_n,  \quad \mu_n =\frac{\mu k_n(k_n-1)}{2\sqrt{n - 1}}$$
+where $\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$. By Lemma \ref{lem:ssw}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(2n, k_n, 1/2)$ to the detection problem $\text{SROS}_D(N_n, K_n, \mu_n)$ under $H_0$ and to a prior over $H_1$ with total variation converging to zero as $n \to \infty$. This map with Lemma \ref{lem:3a} now implies that property 2 above holds. We now verify property 1. Note that
+\begin{align*}
+\lim_{n \to \infty} \frac{\log (K_n \mu_n^{-1})}{\log N_n} &= \lim_{n \to \infty} \frac{\left\lceil \left( \beta - \frac{1}{2} + \epsilon \right) \log_2 n \right\rceil \cdot \log 2 - \log(k_n - 1) - \log (\mu/2) + \frac{1}{2} \log(n - 1)}{\log n + \log 2} \\
+&=  (\beta - \frac{1}{2} + \epsilon) - \left( \frac{1}{2} - \epsilon \right) + \frac{1}{2} = \alpha \\
+\lim_{n \to \infty} \frac{\log K_n}{\log N_n} &= \lim_{n \to \infty} \frac{\left\lceil \left( \beta - \frac{1}{2} + \epsilon \right) \log_2 n \right\rceil \cdot \log 2 + \log k_n}{\log n + \log 2} = \left( \beta - \frac{1}{2} + \epsilon \right) + \frac{1}{2} - \epsilon = \beta
+\end{align*}
+Now consider the case when $\beta < \frac{1}{2}$ and $\alpha > 0$. In this case, set $\ell_n = 0$, $k_n = \left\lceil n^{\frac{1}{2} - \epsilon} \right\rceil$, $K_n = k_n$ and
+$$N_n = 2\left\lceil n^{\frac{1}{\beta} \left( \frac{1}{2} - \epsilon \right)}\right\rceil \quad \text{and} \quad \mu_n =\frac{\mu' k_n(k_n-1)}{2\sqrt{n - 1}}$$
+where $\epsilon = \min \left( \frac{\alpha}{2(\alpha + \beta)}, \frac{1}{2} - \beta \right)$ and
+$$\mu' = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}} \cdot n^{\epsilon - \frac{\alpha}{\beta} \left( \frac{1}{2} - \epsilon \right)}$$
+Note that $\epsilon \le \frac{\alpha}{2(\alpha + \beta)}$ implies that $\epsilon - \frac{\alpha}{\beta} \left( \frac{1}{2} - \epsilon \right) \le 0$. By Lemma \ref{lem:ssw}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(2n, k_n, 1/2)$ to the detection problem $\text{SROS}_D(2n, K_n, \mu_n)$ under $H_0$ and to a prior over $H_1$ with total variation converging to zero as $n \to \infty$. Now consider the map that pads the resulting instance with i.i.d. $N(0, 1)$ random variables until it is $N_n \times N_n$. Note that since $\epsilon \le \frac{1}{2} - \beta$, we have that $N_n \ge 2n$. By the data processing and triangle inequalities, it follows that this map takes $\text{PC}_D(2n, k_n, 1/2)$ to $\text{SSW}_D(N_n, K_n, \mu_n)$ with total variation converging to zero as $n \to \infty$. This implies that property 2 above holds and we now verify property 1. Note
+\begin{align*}
+\lim_{n \to \infty} \frac{\log (K_n \mu_n^{-1})}{\log N_n} &= \lim_{n \to \infty} \frac{\log 2 + \frac{1}{2} \log(n - 1) - \log(k_n - 1) - \log \mu'}{\log 2 + \frac{1}{\beta} \left( \frac{1}{2} - \epsilon \right) \log n} \\
+&= \frac{\frac{1}{2} - \left( \frac{1}{2} - \epsilon \right) - \left( \epsilon - \frac{\alpha}{\beta} \left( \frac{1}{2} - \epsilon \right) \right)}{\frac{1}{\beta} \left( \frac{1}{2} - \epsilon \right)} = \alpha \\
+\lim_{n \to \infty} \frac{\log K_n}{\log N_n} &= \lim_{n \to \infty} \frac{\left(\frac{1}{2} - \epsilon \right) \log n}{\log 2 + \frac{1}{\beta} \left( \frac{1}{2} - \epsilon \right) \log n} = \beta
+\end{align*}
+which completes the proof of the theorem.
+\end{proof}
+
+\subsection{Subgraph Stochastic Block Model}
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} \textsc{SSBM-Reduction}
+
+\vspace{2mm}
+
+\textit{Inputs}: Planted clique instance $G \in \mG_n$ with clique size $k$ where $n$ is even, iterations $\ell$
+\begin{enumerate}
+\item Compute the output $M$ of $\textsc{SROS-Reduction}$ applied to $G$ with $\ell$ iterations
+\item Sample $n$ i.i.d. Rademacher random variables $x_1, x_2, \dots, x_n$ and update each entry of $M$ to be $M_{ij} \gets x_i x_j M_{ij}$
+\item Output the graph $H$ where $\{i, j\} \in E(H)$ if and only if $M_{ij} > 0$ for each $i < j$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Reduction to the subgraph stochastic block model in Lemma \ref{lem:ssbm}.}
+\end{figure}
+
+In this section, we show tight hardness for the subgraph stochastic block using the reflection cloning reduction from planted clique to $\textsc{SROS}_D$. This captures the sharper hardness of detection in the subgraph stochastic block model over planted dense subgraph and the lack of a sum test. Note that here total variation distance under $H_1$ refers to the total variation distance to some prior over the distributions in $H_1$.
+
+\begin{lemma} \label{lem:ssbm}
+Suppose that $n$ is even and $\delta \in (0, 1/2)$ is such that $(2^{\ell}k)^{1 + 2\delta} = O(n)$ and $k = \Omega\left(n^\delta\right)$. Let $\mu > 0$ be such that
+$$\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$$
+There is a polynomial time map $\phi = \textsc{SSBM-Reduction}$ with $\phi : \mG_n \to \mG_n$ such that for some mixture $\mL_{\textsc{SSBM}}$ of distributions in $G_B\left(n, 2^\ell k, 1/2, \rho \right)$, it holds that
+$$\TV\left( \phi(G(n, 1/2)), G(n, 1/2) \right) = O\left(n^{-1} \right) \quad \text{and} \quad \TV\left( \phi(G(n, k, 1/2)), \mL_{\text{SSBM}}\right) = O\left( k^{-1} \right)$$
+where $\rho$ is given by
+$$\rho = \Phi\left( \frac{\mu(k - 1)}{2^{\ell + 1}\sqrt{n- 1}} \right) - \frac{1}{2}$$
+\end{lemma}
+
+\begin{proof}
+Given a vector $v \in \mathbb{Z}^n$ and $\beta > 0$, let $M(\beta, v) \in \mathbb{R}^{n \times n}$ be distributed as $\beta \cdot vv^\top + N(0, 1)^{\otimes n \times n}$. Let $S \subseteq [n]$ and $P \in [0, 1]^{|S| \times |S|}$ be a symmetric matrix with zero diagonal entries and rows and columns indexed by vertices in $S$. Let $G\left(n, S, P, q\right)$ be the distribution on graphs $G$ generated as follows:
+\begin{enumerate}
+\item if $i \neq j$ and $i, j \in S$ then the edge $\{i, j\} \in E(G)$ independently with probability $P_{ij}$; and
+\item all other edges of $G$ are included independently with probability $q$.
+\end{enumerate}
+Now let $\tau : \mathbb{R}^{n \times n} \to \mG_n$ be the map sending a matrix $M$ to the graph $G$ such that
+$$E(G) = \left\{ \{i, j \} : M_{ij} > 0 \text{ and } i < j \right\}$$
+In other words, $G$ is the graph formed by thresholding the entries of $M$ below its main diagonal at zero. Suppose that $v \in \mathbb{Z}^n$ is $k$-sparse and $S = \text{supp}(v)$. Since the entries of $M(\beta, v)$ are independent, it follows that
+$$\tau\left(M(\beta, v)\right) \sim G(n, S, P, q) \quad \text{where} \quad P_{ij} = \Phi\left( \beta \cdot v_i v_j \right) \text{ for each } i, j \in S$$
+Now let $S = A \cup B$ where $A = A(v) = \{ i \in S : v_i > 0 \}$ and $B = B(v) = \{ i \in S : v_i < 0 \}$. Note that since $v \in \mathbb{Z}^n$, it follows that if $i, j \in A$ or $i, j \in B$ then $v_i v_j \ge 1$ and thus $P_{ij} = \Phi\left( \beta \cdot v_i v_j \right) \ge \Phi(\beta)$. Furthermore if $(i, j) \in A \times B$ or $(i, j) \in B \times A$ then $v_i v_j \le - 1$ and $P_{ij} = \Phi\left( \beta \cdot v_i v_j \right) \le 1 - \Phi(\beta)$. Now note that if $\sigma$ is a permutation of $[n]$ chosen uniformly at random then
+$$\mL\left( \tau\left(M(\beta, v)\right)^{\sigma} \right) = \mL\left( \tau\left(M(\beta, v)^{\sigma, \sigma}\right) \right) \in G_B\left(n, k, 1/2, \Phi(\beta) - 1/2 \right)$$
+if it also holds that $\frac{k}{2} - k^{1 - \delta} \le |A|, |B| \le \frac{k}{2} + k^{1 - \delta}$.
+
+Let $\phi_1 = \textsc{SROS-Reduction}$ and let $W \sim N(0, 1)^{\otimes n \times n}$. As shown in Lemma \ref{lem:ssw},
+$$\TV\left( \phi_1(G(n,1/2)), \mL(W) \right) = O( n^{-1} )$$
+Now observe that since $N(0, 1)$ is symmetric and since the entries of $W$ are independent, the distribution of $W$ is invariant to flipping the signs of any subset of the entries of $W$. Therefore $xx^\top \circ W \sim N(0, 1)$ where $\circ$ denotes the entry-wise or Schur product on $\mathbb{R}^{n \times n}$ and $x \in \{-1, 1\}^n$ is chosen uniformly at random. Therefore the data processing inequality implies that
+\begin{align*}
+\TV\left( \mL\left( xx^\top \circ \phi_1(G(n,1/2)) \right), \mL(W) \right) &= \TV\left( \mL\left( xx^\top \circ \phi_1(G(n,1/2)) \right), \mL\left( xx^\top \circ W\right) \right) \\
+&\le \TV\left( \phi_1(G(n,1/2)), \mL(W) \right) = O( n^{-1} )
+\end{align*}
+Now note that $\phi(G(n, 1/2))$ is distributed as $\tau\left( xx^\top \circ \phi_1(G(n,1/2)) \right)$ and that $\tau\left(N(0, 1)^{\otimes n \times n}\right)$ is distributed as $G(n, 1/2)$. It follows by the data processing inequality that
+$$\TV\left( \phi(G(n, 1/2)), G(n, 1/2) \right) = \TV\left( \mL\left( \tau\left( xx^\top \circ \phi_1(G(n,1/2)) \right)\right), \mL(\tau(W)) \right) = O(n^{-1})$$
+Repeating the analysis in Lemmas \ref{lem:ros} and \ref{lem:ssw} without converting the prior in Lemma \ref{lem:refc} to be over unit vectors yields that there is a prior $\pi$ on vectors in $u \in \mathbb{Z}^n$ such that
+$$\TV\left( \phi_1(G(n, k, 1/2)), \int \mL\left( \frac{\mu (k-1)}{2^{\ell + 1}\sqrt{n-1}} \cdot  uu^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(u) \right) = O\left( n^{-1} \right)$$
+and such that with probability at least $1 - 8k^{-1}$ it holds that
+$$2^\ell k \ge \| u \|_0 \ge 2^{\ell} k \left( 1 - \max \left( \frac{2C \ell \cdot \log(2^\ell k)}{k}, \frac{2^\ell k}{n} \right) \right) = 2^{\ell} k - O\left( 2^\ell (\log n)^2 + (2^\ell k)^{1-2\delta} \right)$$
+where $C > 0$ is the constant in Lemma \ref{lem:refc}. Now let $\pi'$ be the prior $\pi$ conditioned on the inequality above. It follows by Lemma \ref{lem:5tv} that $\TV( \pi, \pi') \le 8k^{-1}$. Now let $\beta = \frac{\mu (k-1)}{2^{\ell + 1}\sqrt{n-1}}$ and let the matrix $M'$ be distributed as
+$$M' \sim \int \mL\left( \beta \cdot  uu^\top + N(0, 1)^{\otimes n \times n} \right) d\pi(u)$$
+As above, let $x \in \{-1, 1\}^n$ be chosen uniformly at random. The same argument above shows that
+$$\mL\left( xx^\top \circ M' \Big| x \circ u = v \right) = \mL\left( \beta \cdot vv^\top + N(0, 1)^{\otimes n \times n}\right) = \mL(M(\beta, v))$$
+As shown above, this implies that 
+$$\mL\left( \tau\left(xx^\top \circ M'\right) \Big| x \circ u = v \right) \in G_B\left(n, 2^\ell k, 1/2, \Phi(\beta) - 1/2 \right)$$
+as long as $2^{\ell - 1}k - (2^\ell k)^{1 - \delta} \le |A(v)|, |B(v)| \le 2^{\ell - 1}k + (2^\ell k)^{1 - \delta}$. Let $\pi''(x, u)$ be the product distribution of $\mL(x)$ and $\pi'$ conditioned on the event that these inequalities hold for $v = x \circ u$. Now note that conditioning on $u$ yields that $|A(x \circ u)| + |B(x \circ u)| = \| u \|_0$ and $|A(x \circ u)|$ is distributed as $\text{Bin}(\| u\|_0, 1/2)$. By Hoeffding's inequality, we have that conditioned on $u$,
+$$\bP\left[ \left| |A(x \circ u)| - \frac{1}{2} \| u \|_0 \right| > \sqrt{\| u \|_0 \log k} \right] \le \frac{2}{k^2}$$
+Note that if this inequality holds for $ |A(x \circ u)|$, then it also holds for $|B(x \circ u)|$ since these sum to $\| u \|_0$. Therefore with probability at least $1 - 2k^{-2}$, it holds that
+\begin{align*}
+\left| |A(x \circ u)| - 2^{\ell - 1} k \right| &\le \left| |A(x \circ u)| - \frac{1}{2} \| u \|_0 \right| + O\left( 2^\ell (\log n)^2 + (2^\ell k)^{1-2\delta} \right) \\
+&= O\left( \sqrt{2^\ell k \log k} + 2^\ell (\log n)^2 + (2^\ell k)^{1-2\delta} \right) \le (2^{\ell} k)^{1 - \delta}
+\end{align*}
+for sufficiently large $k$ and the same inequalities hold for $|B(x \circ u)|$. This verifies that the desired inequalities on $|A(x \circ u)|$ and $|B(x \circ u)|$ hold with probability at least $1 - 2k^{-2}$ over $\mL(x) \otimes \pi(u)$. Applying Lemma \ref{lem:5tv} therefore yields that $\TV\left( \mL(x) \times \pi'(u), \pi''(x, u) \right) \le 2k^{-2}$. The data processing and triangle inequalities then imply that
+\begin{align*}
+\TV\left( \mL(x) \otimes \pi(u), \pi''(x, u) \right) &\le \TV\left( \mL(x) \otimes \pi(u), \mL(x) \otimes \pi'(u) \right) + \TV\left( \mL(x) \otimes \pi'(u), \pi''(x, u) \right) \\
+&\le \TV( \pi, \pi') + 2k^{-2} = O(k^{-1})
+\end{align*}
+Now observe that
+\begin{align*}
+&\TV\left( \phi(G(n, k, 1/2), \int \mL\left( \tau\left(xx^\top \circ M'\right) \Big| x, u \right) d\pi''(x, u) \right) \\
+&\quad \quad \le \TV\left( \mL\left( \tau\left( xx^\top \circ \phi_1(G(n, k, 1/2) \right) \right), \int \mL\left( \tau\left(xx^\top \circ M'\right) \Big| x, u \right) d\mL(x) d\pi(u) \right) \\
+&\quad \quad   + \TV\left( \int \mL\left( \tau\left(xx^\top \circ M'\right) \Big| x, u \right) d\mL(x) d\pi(u), \int \mL\left( \tau\left(xx^\top \circ M'\right) \Big| x, u \right) d\pi''(x, u) \right) \\
+&\quad \quad \le \TV\left( \phi_1(G(n, k, 1/2) , \mL(M') \right) + \TV\left( \mL(x) \otimes \pi(u), \pi''(x, u) \right) \\
+&\quad \quad = O(n^{-1}) + O(k^{-1}) = O(k^{-1})
+\end{align*}
+By the definition of $\pi''$, the distribution
+$$\mL_{\textsc{SSBM}} = \int \mL\left( \tau\left(xx^\top \circ M'\right) \Big| x, u \right) d\pi''(x, u)$$
+is a mixture of distributions in $G_B\left(n, 2^\ell k, 1/2, \Phi(\beta) - 1/2 \right)$, completing the proof of the lemma.
+\end{proof}
+
+Applying this reduction and setting parameters similarly to Theorem \ref{thm:ssw} yields the following computational lower bound for the subgraph stochastic block model.
+
+\begin{theorem} \label{thm:SSBMguar}
+Let $\alpha \in [0, 2)$ and $\beta \in (\delta, 1 - 3\delta)$ be such that $\beta < \frac{1}{2} + \alpha$. There is a sequence $\{ (N_n, K_n, q_n, \rho_n) \}_{n \in \mathbb{N}}$ of parameters such that:
+\begin{enumerate}
+\item The parameters are in the regime $q = \Theta(1)$, $\rho = \tilde{\Theta}(N^{-\alpha})$ and $K = \tilde{\Theta}(N^\beta)$ or equivalently,
+$$\lim_{n \to \infty} \frac{\log \rho_n^{-1}}{\log N_n} = \alpha, \quad \quad \lim_{n \to \infty} \frac{\log K_n}{\log N_n} = \beta \quad \text{and} \quad \lim_{n \to \infty} q_n = q$$
+\item For any sequence of randomized polynomial-time tests $\phi_n : \mG_{N_n} \to \{0, 1\}$, the asymptotic Type I$+$II error of $\phi_n$ on the problems $\textsc{SSBM}_D(N_n, K_n, q_n, \rho_n)$ is at least $1$ assuming the PC conjecture holds with density $p = 1/2$.
+\end{enumerate}
+Therefore the computational boundary for $\textsc{SSBM}_D(n, k, q, \rho)$ in the parameter regime $q = \Theta(1)$, $\rho = \tilde{\Theta}(n^{-\alpha})$ and $k = \tilde{\Theta}(n^\beta)$ is $\beta^* = \frac{1}{2} + \alpha$.
+\end{theorem}
+
+\begin{proof}
+When $2 \alpha > \beta$, it holds that $\textsc{SSBM}_D$ is information-theoretically impossible. Therefore we may assume that $2\alpha \le \beta$ and in particular that $\alpha < \frac{1}{2}$. Now suppose that $\beta < \frac{1}{2} + \alpha$. We consider the cases $\beta \ge \frac{1}{2}$ and $\beta < \frac{1}{2}$ and $q \le \frac{1}{2}$ and $q > \frac{1}{2}$, separately. First consider the case when $\beta \ge \frac{1}{2}$ and $q \le \frac{1}{2}$. Let $\epsilon = \frac{1}{2} \left( \alpha + \frac{1}{2} - \beta \right) \in \left( 0, \frac{1}{2} \right)$ and set parameters similarly to Theorem \ref{thm:ssw} with
+$$\ell_n = \left\lceil \left( \beta - \frac{1}{2} + \epsilon \right) \log_2 n \right\rceil, \quad \quad k_n = \left\lceil n^{\frac{1}{2} - \epsilon} \right\rceil, \quad \quad N_n = 2n, \quad \quad K_n = 2^{\ell_n} k_n, \quad \quad q_n = q$$
+$$\rho_n = 2q \cdot \Phi\left( \frac{\mu(k_n - 1)}{2^{\ell_n + 1}\sqrt{n- 1}} \right) - q$$
+where $\mu = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}}$. By Lemma \ref{lem:ssbm}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(2n, k_n, 1/2)$ to the detection problem $\text{SSBM}_D(N_n, K_n, 1/2, (2q)^{-1} \rho_n)$ under $H_0$ and to a prior over $H_1$ with total variation converging to zero as $n \to \infty$. Now consider the algorithm that post-processes the resulting graph by keeping each edge independently with probability $2q$. This maps any instance of $\text{SSBM}_D(N_n, K_n, 1/2, (2q)^{-1} \rho_n)$ exactly to an instance of $\text{SSBM}_D(N_n, K_n, q, \rho_n)$. Therefore the data processing inequality implies that these two steps together yield a reduction that combined with Lemma \ref{lem:3a} implies property 2 holds. Now observe that as $n \to \infty$,
+$$\rho_n = 2q \cdot \Phi\left( \frac{\mu(k_n - 1)}{2^{\ell_n + 1}\sqrt{n- 1}} \right) - q \sim 2q \cdot \frac{1}{\sqrt{2\pi}} \cdot \frac{\mu(k_n - 1)}{2^{\ell_n + 1}\sqrt{n- 1}}$$
+The same limit computations as in Theorem \ref{thm:ssw} show that property 1 above holds. If $q > 1/2$, then instead set
+$$\rho_n = 2(1 - q) \cdot \Phi\left( \frac{\mu(k_n - 1)}{2^{\ell_n + 1}\sqrt{n- 1}} \right) - (1 - q)$$
+and post-process the graph resulting from the reduction in Lemma \ref{lem:ssbm} by adding each absent edge with probability $2q - 1$. By a similar argument, the resulting reduction shows properties 1 and 2.
+
+Now consider the case when $\beta < \frac{1}{2}$, $\alpha > 0$ and $q \le \frac{1}{2}$. Set $\ell_n = 0$, $k_n = \left\lceil n^{\frac{1}{2} - \epsilon} \right\rceil$, $K_n = k_n$ and
+$$N_n = 2\left\lceil n^{\frac{1}{\beta} \left( \frac{1}{2} - \epsilon \right)}\right\rceil \quad \text{and} \quad \rho_n = 2q \cdot \Phi\left( \frac{\mu'(k - 1)}{2\sqrt{n- 1}} \right) - q$$
+where $\epsilon = \min \left( \frac{\alpha}{2(\alpha + \beta)}, \frac{1}{2} - \beta \right)$ and $\mu' = \frac{\log 2}{2 \sqrt{6 \log n + 2\log 2}} \cdot n^{\epsilon - \frac{\alpha}{\beta} \left( \frac{1}{2} - \epsilon \right)}$ as in the proof of Theorem \ref{thm:ssw}. Note that since $\epsilon \le \frac{1}{2} - \beta$, it follows that $N_n \ge 2n$. By Lemma \ref{lem:ssbm}, there is a randomized polynomial time algorithm mapping $\text{PC}_D(2n, k_n, 1/2)$ to $\text{SSBM}_D(2n, K_n, 1/2, (2q)^{-1} \rho_n)$ under $H_0$ and to a prior over $H_1$ with total variation converging to zero as $n \to \infty$. Now consider the map that post-processes the graph by:
+\begin{enumerate}
+\item keeping each edge independently with probability $2q$;
+\item adding $N_n - 2n$ vertices to the resulting graph and includes each edge incident to these new vertices independently with probability $q$; and
+\item randomly permuting the vertices of the resulting $N_n$-vertex graph.
+\end{enumerate}
+Note that this maps any instance of $\text{SSBM}_D(2n, K_n, 1/2, (2q)^{-1} \rho_n)$ exactly to an instance of $\text{SSBM}_D(N_n, K_n, q, \rho_n)$. Thus the data processing inequality implies that this post-processing together with the reduction of Lemma \ref{lem:ssbm} yields a reduction showing property 2. The same limit computations as in Theorem \ref{thm:ssw} show that property 1 above holds. The same adaptation as in the case $\beta \ge \frac{1}{2}$ also handles $q < \frac{1}{2}$. This completes the proof of the theorem.
+\end{proof}

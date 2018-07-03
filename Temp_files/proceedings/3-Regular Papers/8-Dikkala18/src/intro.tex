@@ -1,0 +1,219 @@
+We formulate theories about the laws that govern physical phenomena by making observations and testing them against our hypotheses. A common scenario is when our observations can be reasonably modeled as i.i.d.~samples from a distribution that we are trying to understand. This is the setting tackled by most classical work in Statistics. Of course, having access to i.i.d.~samples from a distribution is rare and quite commonly an approximation of reality. We typically only have access to approximate samples from a stationary distribution, sampled by a stochastic process whose description is unknown to us. For instance, the stochastic process might be a Markov chain whose transition matrix/kernel is unknown to us and which can only be observed for some finite time horizon. In fact, to the best of our knowledge, the underlying Markov chain may not even be rapidly mixing, so there is no guarantee that we will ever see samples that are approximately distributed according to the stationary distribution.
+
+These issues are exacerbated in high-dimensional settings, e.g.~when observing the configurations of a deck of cards where the state space consists of $52!$ permutations, or a weather system, where it may also be completely impractical to work with the high-dimensional stationary distribution itself. 
+%Moreover, there are several ways to sample a stationary distribution, so it may be more important to know how it comes to be sampled. 
+{Moreover, several different processes may generate the same stationary distribution.} 
+For all  these considerations, it may be both more interesting and more practical to understand the ``mechanics'' of the process that generates our observations, namely the transition matrix/kernel of the Markov chain whose evolution we get to observe.
+
+Motivated by these considerations, in this paper we initiate the study of testing identity of Markov chains, and as a first step we focus on the case of finite and symmetric\footnote{
+We also get a few observations for general asymmetric case that may be used as a foundation for future studies.} Markov Chains. In 
+our setting, we are given access to a {\em single} trajectory $X_0, X_1,\ldots,X_t,\ldots$ of some {\em unknown} symmetric Markov chain ${\cal M}$ over some finite state space $[n]$, and we want 
+to test the identity of ${\cal M}$ to some {\em given} symmetric Markov chain ${\cal M}'$ over the same state space. Importantly, we do not get to control the distribution of the starting state 
+$X_0$, and we can only observe a single trajectory of ${\cal M}$, i.e. {\em we cannot restart the Markov chain}. Such situations are plenty in nature. For instance, consider Markov models used to study the weather of a city, population growth of a species, the exchange rate of currencies, or the price of a stock where one cannot control the evolution of the chain and moreover cannot ask for restarts of the chain. What could we hope to achieve in such a situation?\\
+
+\noindent If there is any difference in the transition matrices of $\cal M$ and $\cal M'$, one would think that we would {\em ultimately} be able to identify it by observing a sufficiently long trajectory. However, whether we can identify the difference or not depends on the connectivity properties of the chain. We can certainly identify the difference ({\em ultimately}) if the transition matrices of the two chains differ at a state that belongs to the essential communicating class (see Definition~\ref{def:comm-class}) of $\cal M$ where $X_0$ lies. However, it is, in general, not always necessary that one be able to observe such a difference. For instance, consider the following simple example. \\
+
+\noindent \textbf{The Two Communicating Classes Example:} Suppose that $\cal M$ is a chain on states $\{1,2,\ldots,7\}$ whose transition matrix is the random walk matrix on a graph that is the disjoint union of a square on nodes $\{1,\ldots,4\}$ and a triangle on nodes $\{5,6,7\}$, while $\cal M'$'s transition matrix is the random walk matrix on a graph that is the disjoint union of a clique on nodes $\{1,\ldots,4\}$ and a triangle on nodes $\{5,6,7\}$. If our observed trajectory of $\cal M$ lies in the strong connected component defined by states $\{1,\ldots,4\}$ (which forms an essential communicating class), we will easily identify its difference to $\cal M'$. On the other hand, if our observed trajectory of $\cal M$ lies in the essential communicating class defined by states $\{5,6,7\}$, we will not be able to identify that we are not observing a trajectory of $\cal M'$, no matter how long the trajectory is.\\
+
+
+%Start axiomatically by saying that the behavior of the two chains is captured by tv of words, then seay that it is not scale invariant and then give the spectral.
+
+
+For some notion of difference, $\dist{\cal M}{\cal M'}$, between Markov chains, we would like to quantify {\em how long} a trajectory $X_0,\ldots,X_{\ell}$ from an {\em unknown} chain, $\cal M$, we need to observe to be able to distinguish, with probability at least $1-\delta$:
+\begin{align}
+{\cal M}={\cal M}'~~\text{versus}~~\dist{\cal M}{\cal M'}>\epsilon, \label{eq:gof MC testing}
+\end{align}
+for some given parameters $\delta \in (0,1)$ and $\epsilon>0$. Let us call this problem {\em single-sample goodness-of-fit (or identity) testing for Markov chains}. We will study it taking $\delta=1/3$, with the understanding that this probability can be boosted to any small constant at the cost of a $O(\log (1/\delta))$-multiplicative factor in the length $\ell$ of the observed trajectory.
+
+What notion of difference between Markov chains is the right one to use to study the afore-described goodness-of-fit testing problem? Here are some desiderata for such a notion of difference:
+%
+%One of our contributions is to identify a meaningful measure of difference in Section~\ref{sec:prelim}. What are the desiderata for such a measure? 
+%
+\begin{enumerate}
+\item First, as our simple example above illustrates, under a worst-case starting state $X_0$, we may not be able to identify that ${\cal M} \neq {\cal M}'$ from a single trajectory. So, we would like to identify a notion of difference that takes a value $\dist{\cal M}{\cal M'}= 0$, whenever chains $\cal M$ and $\cal M'$ are indistinguishable from a single trajectory starting at a worst-case starting state.\footnote{The worst-case starting state assumption is a choice also made when defining mixing time. It is also worth noting that in this scenario, since the chains are reducible they will not converge to the stationary distribution and hence the mixing time is infinite.} Obviously, if the chains are irreducible, this constraint is immaterial.
+
+\label{distance property 1}
+
+\item Whenever $\cal M$ and $\cal M'$ {\em are} distinguishable from a single trajectory, whose starting state we do not get to control, i.e.~from any starting state, we would like that our difference measure quantifies {\em how different} the chains are. 
+%and that it can be used to quantify the number of steps that we need to observe from ${\cal M}$'s trajectory, under a worst-case starting state $X_0$, to tell that ${\cal M} \neq {\cal M}'$. 
+Clearly, our notion of difference could not just be a combinatorial property of the connectivity of the state space of $\cal M$ and $\cal M'$, since the combinatorial structure won't reflect the magnitude of the differences in the chains. 
+%transitions that may be hard to identify. Rather it should be a probabilistic or spectral property of the transition matrices that can be related to our observations. 
+\label{distance property 2}
+\end{enumerate}
+One of our main contributions is to identify a meaningful measure of difference between Markov Chains capturing the above properties.
+
+\vspace{-5pt}\paragraph{A Difference Measure Between Markov Chains.}
+%
+%In early work in Information Theory, Kazakos~\cite{Kazakos78} proposes to study similarity between Markov Chains using the Bhattacharyya coefficient: Let $\word{\cal M}{t} \eqdef X_0 X_1 \cdots X_t$ and $\word{\cal M'}{t} \eqdef Y_0 Y_1 \cdots Y_t$ be two trajectories (a.ka.~{\em words}) sampled from two chains $\cal M$ and $\cal M'$ starting at some state $X_0=s_0=Y_0$. The Bhattacharyaa coefficient 
+%
+%Let us discuss this:
+%\nick{
+%\paragraph{Distance between trajectories.} 
+%
+Total Variation (TV) is a standard distance between distributions used in the property/distribution testing literature. One reason for this is that it captures precisely our ability to distinguish
+two distributions $p$ and $q$ by observing a single sample from one of them.\footnote{Formally, consider a guessing game where $p$ or $q$ is chosen uniformly at random (or by an adversary), then one sample is generated from the chosen distribution, and we must guess which one it is. The optimal error for this guessing game is precisely $0.5\cdot(1-\dtv{p}{q})$.} 
+Similarly, given two product measures $p^{\otimes \ell}$ and $q^{\otimes \ell}$, outputting a vector of $\ell$ i.i.d.~samples drawn from $p$ and $q$ respectively, our ability to distinguish between them using a single sample is captured by $\dtv{p^{\otimes \ell}}{q^{\otimes \ell}}$. Unfortunately, it is analytically difficult to relate $\dtv{p^{\otimes \ell}}{q^{\otimes \ell}}$ to $\dtv{p}{q}$ to study how our distinguishing ability improves with $\ell$. For this reason, other distances are often employed when studying high-dimensional distributions. One such distance which will be of interest to us is the Hellinger distance $\hellinger{p^{\otimes \ell}}{q^{\otimes \ell}}$.\footnote{Indeed, it enjoys the precise recurrence relation $1-\hellingersq{p^{\otimes \ell}}{q^{\otimes \ell}}=\left[1-\hellingersq{p}{q}\right]^{\ell}$. Moreover, there is a tight relationship between TV and Hellinger distances, see~\eqref{eq:tv hellinger relation}, so one can derive upper and a lower bound on $\dtv{p^{\otimes \ell}}{q^{\otimes \ell}}$ based on $\hellinger{p^{\otimes \ell}}{q^{\otimes \ell}}$. See Section~\ref{sec:prelim}.}
+Generalizing from product measures to Markov Chains, a natural notion of difference between two chains $\cal M$ and $\cal M'$ is the total variation distance, $\dtv{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$, 
+between $\ell$-step trajectories (a.k.a.~{\em words}) $\word{\cal M}{\ell} \eqdef X_0 X_1 \cdots X_{\ell}$ and $\word{\cal M'}{\ell} \eqdef Y_0 Y_1 \cdots Y_{\ell}$ sampled from the two chains starting at some state $X_0=s_0=Y_0$. 
+%Thus we first need to understand the behavior of $\dtv{\word{\cal M}{t}}{\word{\cal M'}{t}}$. 
+But due to the analytical difficulties presented by the TV distance for high-dimensional distributions we look towards the Hellinger distance as noted above. The usage of Hellinger square distance for capturing the difference between two high-dimensional distributions, for instance as was proposed in the early work of \cite{Kazakos78} and the more recent work of \cite{DaskalakisP17} \footnote{For more discussion on this, see the related work section.}, is well known. Hence, we study the Hellinger distance $\hellinger{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$ between two trajectories, which satisfies a precise recurrence formula stated as Lemma~\ref{lemma:kazakos lemma} in Section~\ref{sec:distance}. The relation between Hellinger and TV distances allows us to provide upper and lower bounds on the latter in terms of the former.
+\vspace{-5pt}\paragraph{A Scale-Free Measure of Difference Between Markov Chains.} Both the distance measures $\dtv{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$ and $\hellinger{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$ depend on (1): the length $\ell$ of the trajectory and (2): the starting state $s_0$. We would like, instead, a parameter-free and scale-free notion of difference between Markov Chains satisfying the above desiderata. A popular way of tackling such a parameter dependency in Markov Chain literature is to study the inverse dependency of the length $\ell$ of a trajectory required to achieve a certain threshold value for some quantity, e.g.~mixing time is defined as the minimum number of steps $\ell$ needed so that the distribution of the $\ell$-th state of a trajectory starting at any state $s_0$ is no more than $1/4$ away
+from the stationary distribution. Similarly, in our case, we propose to analyze the minimum number of steps $\ell$ required so that $\hellinger{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$ is at least some constant (we choose $0.5$):\footnote{Note that a trajectory of this length also satisfies $\dtv{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}} \ge 0.25$.} 
+\begin{align}
+\min_{\ell>0} \quad \ell: \quad\quad \forall s_0\in[n]\quad\quad \hellinger{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}~|~X_0=Y_0=s_0}\ge \delta. \label{eq:smallest_t_for_tv}
+\end{align}
+\noindent The above definition assumes a worst-case starting state $s_0$ which reflects our desiderata stated above that we do not get to control the starting state and we cannot restart the chain. Moreover, it is the choice made in the definition of mixing time. In Section~\ref{sec:distance} we show a tight relationship between the above definition and an appropriate ``average-case'' version. 
+%
+%The reasons for that is that (i) our recurrence relation from Section~\ref{sec:distance} on $t,s_0,\delta$ is quite similar to the matrix equations for the mixing time, which is defined in the worst-case for any starting state (ii) we want to have $O(\log (1/\delta))$ scaling behavior of $\ell$, which is obviously achieved for the definition with the worst-case choice of $s_0$.
+%
+%In this work we mostly\footnote{
+%In Section~\ref{.} 
+
+
+
+%A natural notion of difference between two chains $\cal M$ and $\cal M'$ is the total variation distance %, $\dtv{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$,
+ %between the trajectories (a.k.a.~{\em words})  $\word{\cal M}{t} \eqdef X_0 X_1 \cdots X_t$ and $\word{\cal M'}{t} \eqdef Y_0 Y_1 \cdots Y_t$ sampled from the two chains in some $t$ steps and starting at some state $X_0=s_0=Y_0$. Indeed, this distance captures how different our $t$-step observations from the two chains are. As the starting state $s_0$ is out of our control, we should rather use the 
+%\begin{align}
+%\min_{s_0} \dtv{\word{\cal M}{t}}{\word{\cal M'}{t}~|~X_0=Y_0=s_0}. \label{eq:worst word tv}
+%\end{align}
+%In particular, taking the min makes sure that Property~\ref{distance property 1} above is satisfied.
+
+%While there is sometimes a natural $t$ to use in~\eqref{eq:worst word tv} as we will see in Section~\ref{sec:shuffle}, where we analyze card shuffles, it is mostly unclear how to set $t$. 
+%Setting $t$ to infinity will make the above quantity take $0/1$ values, which is un-informative about {\em how different} the two chains are. Setting $t$ too small would only capture differences 
+%in the proximity of the starting state $s_0$. Hence, setting~$t$ to some reasonably large but finite value makes more sense, but how to choose it?
+
+%To avoid the conundrum, 
+\medskip Clearly, the answer to~\eqref{eq:smallest_t_for_tv} depends on the 
+%
+%\nick{In this work,}
+%we propose a notion of difference between Markov chains $\cal M$ and $\cal M'$, which captures the 
+{\em scaling behavior}, as $\ell \rightarrow \infty$, of the following quantity:
+\begin{align}
+\delta(\ell)\eqdef\min_{s_0} \hellinger{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}~|~X_0=Y_0=s_0}. \label{eq:worst word tv}
+\end{align}
+Interestingly, as we discuss in Section~\ref{sec:prelim}, this scaling behavior is tightly captured by 
+%spectral properties of 
+the following matrix:
+$$\srprod{P}{Q}\eqdef\left[\sqrt{P_{ij}\cdot Q_{ij}}~ \right]_{ij\in[n\times n]},$$
+where $P$ and $Q$ are the transition matrices of the two chains, i.e. $P_{ij}$ and $Q_{ij}$ denote the probabilities of transitioning from state $i$ to state $j$ in the two chains. In 
+Lemma~\ref{lemma:kazakos lemma}, we state a recursive decomposition that allows us to exactly express the square Hellinger similarity, 
+$1-\hellingersq{\word{\cal M}{\ell}}{\word{\cal M'}{\ell}}$ of $\ell$-length words sampled from the two chains in terms of the $\ell$-th power of the above matrix, and the distribution of the 
+starting states $X_0$ and $Y_0$ in the two words. 
+%(Given the relationship between Hellinger and total variation distance (see Eq.~\eqref{eq:tv hellinger relation}), the $\ell$-th power of 
+%$\srprod{P}{Q}$ also captures the total variation distance between words sampled from the two chains.) 
+
+%To identify a word-length independent measure of difference between the two chains, we argue that the scaling behavior of the Hellinger distance/total variation distance is captured by the 
+%largest eigenvalue $\lambda_1=\rho(\srprod{P}{Q})$ of matrix $\srprod{P}{Q}$. We show that always $\lambda_1 \le 1$ (Claim~\ref{cl:eigval_less_than_one}), and that $\lambda_1=1$ if and only if 
+%the two chains have an identical connected component (Claim~\ref{cl:eigval_less_than_one}), hence we would be unable to identify the difference between the two chains from a single trajectory 
+%and a worst-case starting state, as per our discussion above. 
+To identify a word-length independent measure of difference between the two chains based on~\eqref{eq:smallest_t_for_tv}, we employ a spectral approach.
+%, which has been proved to be quite useful for studying mixing times and 
+%specifically relating it to the second largest eigenvalue of MC. 
+We show that the scaling behavior (w.r.t. $\ell$) of the Hellinger square distance between $\word{\cal M}{\ell}$ and $\word{\cal M'}{\ell}$ is captured by the largest eigenvalue $\lambda_1=\rho(\srprod{P}{Q})$ of matrix $\srprod{P}{Q}$. We show that always $\lambda_1 \le 1$ (Claim~\ref{cl:eigval_less_than_one}), and 
+that $\lambda_1=1$ if and only if the two chains have an identical essential communicating class (Claim~\ref{cl:eigval_less_than_one}), in which case we would be unable to identify the difference between the two 
+chains from a single trajectory which starts at a state in the essential communicating class which is identical in the two chains (see the two communicating classes example above). These statements hold even for asymmetric chains.
+For 
+%As is usual for spectral methods, our approach is especially powerful for 
+\emph{symmetric} Markov chains,
+%. In this case 
+$\ell$ in~\eqref{eq:smallest_t_for_tv} 
+is almost proportional to $\frac{1}{\eps}$ ($\ell=\wTheta{\frac{1}{\eps}}$ up to a $\log n$ factor, see Claim~\ref{cl:symm_spectrum}) where $\eps=1-\rho(\srprod{P}{Q})$.\footnote{
+	For non symmetric Markov chains, one can show that the slowest (with respect to the choice of the starting state) that the square Hellinger similarity
+	(defined as $1-\hellingersqname$) of the two chains 
+	can drop as a function of the length $\ell$ is $\lambda_1^\ell$, up to factors that do not depend on $\ell$; this follows from~\eqref{eq:hellinger_square_algebraic} 
+	and~\eqref{eq:largest_eigenvalue}. That is, the slowest that the square Hellinger distance of the two chains can increase is $1-O(\lambda_1^\ell)$. However, the dependency on the
+	starting state is more significant than in the symmetric case, and the dependency in the worst-case may be not as smooth as for the symmetric ${\cal M}$ and ${\cal M'}$. (See Figure~\ref{fig:examples} for examples of irregular behavior of certain non-symmetric MC.)
+}.
+The latter estimation on $\ell$ also holds for the case when initial state in $P$ and $Q$ is chosen uniformly at random.
+
+%To identify a word-length independent measure of difference between the two chains, we argue that the scaling behavior of the Hellinger distance/total variation distance is captured by the 
+%largest eigenvalue $\lambda_1=\rho(\srprod{P}{Q})$ of matrix $\srprod{P}{Q}$. We show that always $\lambda_1 \le 1$ (Claim~\ref{cl:eigval_less_than_one}), and that $\lambda_1=1$ if and only if 
+%the two chains have an identical connected component (Claim~\ref{cl:eigval_less_than_one}), hence we would be unable to identify the difference between the two chains from a single trajectory 
+%and a worst-case starting state, as per our discussion above. Furthermore, the slowest (with respect to the choice of the starting state) that the square Hellinger similarity of the two chains 
+%can drop as a function of the length $\ell$ is $\lambda_1^\ell$, up to factors that do not depend on $\ell$; this follows from~\eqref{eq:hellinger_square_algebraic} and~\eqref{eq:largest_
+%eigenvalue}. That is, the slowest that the square Hellinger distance of the two chains can increase is $1-O(\lambda_1^\ell)$.
+Given these properties, we propose the use of 
+ %is tightly related to total variation distance, and total variation distance is tightly related to the number of samples needed to distinguish a trajectory sampled from the two chains, we thus propose the use of 
+$$\dist{\cal M}{\cal M'} = 1-\rho(\srprod{P}{Q})$$ as a scale-free and meaningful  measure of difference between Markov chains. 
+%As per our discussion, this notion of distance satisfies Desiderata~\ref{distance property 1} and~\ref{distance property 2} outlined above. 
+%For symmetric Markov chains, our notion of difference is even more tightly related to the scaling behavior of trajectories sampled from the two chains even for a starting state sampled from the 
+%stationary distribution, as per Claim~\ref{cl:symm_spectrum}.
+Figure~\ref{fig:examples} illustrates how $\dist{\cal M}{\cal M'}$ behaves for different pairs of Markov chains $\cal M$ and $\cal M'$.
+
+
+
+
+\paragraph{Our Results.} Using our proposed measure of difference between Markov chains we provide algorithms for  goodness-of-fit testing of Markov chains, namely Problem~\eqref{eq:gof MC testing},
+%
+%, targeting two interesting regimes. The first targets applications where the state space is polynomial in the representation of the target Markov chain $\cal M'$. The second targets settings where the state space is exponential in the representation of the target chain, but the chain has sparsity and structure. Importantly, this is applicable to testing card shuffles. Our results in the two settings are the following. 
+%
+%In Section~\ref{sec:symmetric}, we study Problem~\eqref{eq:gof MC testing} 
+where $\dist{\cal M}{\cal M'}=1-\rho(\srprod{P}{Q})$, where $P$ and $Q$ are the transition matrices of  chains $\cal M$ and $\cal M'$. We study this problem when $\cal M$ and $\cal M'$ are 
+both {\em symmetric}, and provide  upper and lower bounds for the minimum length $\ell$ of a trajectory from the unknown chain $\cal M$ that is needed to determine the correct answer with 
+probability at least $2/3$. In particular, Theorems~\ref{th:symmetric_ub} and~\ref{thm:symm-lower-bound} combined show that the length of the required trajectory from $\cal M$ to answer 
+Problem~\eqref{eq:gof MC testing} is $n/\eps$, where $n$ is the size of the state space, up to logarithmic factors and an additive term that does not depend on $\eps$ or $\cal M$. Our 
+upper bound is established via an information-efficient reduction from single-sample identity testing for Markov chains with $n$ states to the classical problem of identity 
+testing of distributions over $O(n^2)$ elements, from i.i.d.~samples. 
+A naive attempt to obtain such a reduction is to look at every $\mixt{\cal M'}$-th step of the trajectory of $\cal M$, where 
+$\mixt{\cal M'}$ is the mixing time of chain $\cal M'$, pretending that these transitions are i.i.d.~samples 
+from the distribution $\{\frac{1}{n} P_{ij}\}_{ij \in [n^2]}$. 
+This incurs an unnecessary blow-up of a factor of $\mixt{\cal M'}$ in the required length of the observed trajectory and 
+also requires some additional work of checking the mixing time of the the unknown Markov chain $\cal M'$. 
+On the other hand, we cannot simply wait while we collect a predetermined small number of samples per every row of the transition matrix and treat them as i.i.d. samples.
+Indeed, the fact that certain states are visited can create dependencies among transitions from the other states\footnote{\label{fn:dependency-example} Consider for
+example a symmetric Markov chain $\cal M$ with two cliques of size $\frac{n}{2}$ connected by a single edge $A-B$ (the transition probability of the edge is $\frac{2}{n}$).
+The expected cover time of $\cal M$ is $\Theta(n^2)$, however we can get lucky and finish the pass over all states early in, say, $n\sqrt{n}$ steps (then it is also
+likely that every state was visited $\Omega(\sqrt{n})$ times). In this case, we know that the bridge $A-B$ was necessarily used, which is actually unlikely event if we 
+make $2\sqrt{n}$ i.i.d. transition from each of $A$ and $B$ states.}. 
+%This both incurs an unnecessary blow-up of a factor of $\mixt{\cal M'}$ in the required length of the observed trajectory, and is not clear how to analyze 
+%rigorously due to the dependencies between samples and the fact that the mixing time of $\cal M$ is unknown. 
+We show how to avoid these issues via a more subtle approach, which also exchanges the mutliplicative dependence 
+on the mixing time of $\cal M'$ with an additive term that is nearly-linear in the hitting time of $\cal M'$.
+
+%In Section~\ref{sec:shuffle}, we take on the challenge of testing Markov chains whose nominal state-space is exponentially large in their representation, such as shuffles. Often, shuffles have symmetries that allow studying their transitions in a state space of manageable size. For example, the random choices that the riffle shuffle makes in the course of one step do not depend on the permutation of the cards at the beginning of the step, and can be described succinctly.
+ %%if $o_t$ and $o_{t+1}$ are two consecutive orderings of the deck after one riffle shuffle, then composing $o_t \circ \pi$ and $o_{t+1} \circ \pi$ with any permutation $\pi$ preserves the information about
+%Moreover, viewed appropriately the transitions out of any state are typically sparse. In the riffle shuffle, starting from any permutation there are $n+1$ places to cut the deck. And, starting from a cut, every little step of the riffle has two options (whether to drop a card from the left or the right stack). So breaking down one step of the riffle shuffle into a sequence of simple steps makes the transitions very sparse. 
+%
+%In Definition~\ref{def:sparse} we provide a model of {\em sparse} Markov chains, capturing succinct representations of Markov chains resulting from ``breaking up into trivial steps and projecting into a smaller state space'' of Markov chains with exponentially large state-spaces such as different variants of the riffle shuffle and other shuffles~\cite{BayerDiaconis}. Roughly speaking a sparse Markov chain in our model performs transitions according to a sequence of transition matrices $P_1,\ldots,P_n$, over and over again, ad infinitum. We discuss how this model captures the essential mechanics of the riffle shuffle after Definition~\ref{def:sparse}.
+%
+%Keeping the riffle shuffle as our running application, we develop tools that allow us to perform goodness-of-fit testing of sparse Markov chains according to our model. What difference measure between chains should we use? Given two sparse chains $P=(P_i)_{i \in [n]}$ and $Q=(Q_i)_{i \in [n]}$, conforming to our model, we could still define our difference measure between them using spectral properties of matrix $\srprod{P_1}{Q_1} \cdots \srprod{P_t}{Q_t}\cdots\srprod{P_n}{Q_n}$. However, we find it more natural in this case to use as difference measure the total variation distance between words sampled in one round of sampling transitions from the sequence of matrices $P_1,\ldots, P_n$ and $Q_1, \ldots, Q_n$.\footnote{We argue, in Section~\ref{sec:shuffle}, that the spectral and total variation distance approaches to define difference in this model are tightly related, as they are in the symmetric case.} This total variation distance captures the divergence of the two chains in one iteration through their transitions matrices; in our running application to riffle shuffle, they correspond to the divergence of two riffle shuffles of different parameters in one iteration of the shuffle. With this notion of difference we provide efficient testers, and sample complexity lower bounds; see Theorems~\ref{th:main_shuffling} and~\ref{thm:sparse-lower-bound}. Our upper bounds imply, in particular, that we can test goodness-of-fit of a given riffle shuffle model, such as the Gilbert-Shannon-Reeds model, against all competing riffle shuffle models at distance $\ge \epsilon$, from $O(n^{3/2}/\epsilon^2)$ shuffles. Our tester, applying to testing any sparse Markov chain model, is based on a modified and pruned $\chi^2$-style statistic, inspired by~\cite{AcharyaDK15}, which tracks the number of times a particular transition between two states occured in the observed trajectory of the Markov chain.
+
+
+
+
+\paragraph{Related Work.}
+\label{sec:related}
+\input{related}
+
+\paragraph{Organization}
+We start in Section~\ref{sec:prelim} with a description of the notational conventions we use and provide all necessary formal details for our difference measure in Section~\ref{sec:distance}. 
+In Section~\ref{sec:symmetric}, we study the problem of testing identity of symmetric Markov chains and present our tester. We give a sample complexity lower bound for this problem in Section~\ref{sec:symmetric_lb}. 
+
+%In Section~\ref{sec:shuffle}, we study the identity testing question on riffle shuffles. We present our formulation of this question as a problem of testing identity for sparse Markov chains and present upper and lower bounds for this problem. Finally, in Section~\ref{sec:open}, we conclude with some open questions from the framework introduced in this paper. 
+
+%we do not get to control the starting state of the observed trajectory of the unknown chain, ${\cal M}$, we can only hope to identify that it is different to ${\cal M}'$ if its observed trajectory will
+
+%What we want to quantify is the {\em number of observations} that are needed to distinguish between ${\cal M} = {\cal M'}$ or not, and by ``number of observations'' we mean the {\em length} of the observed trajectory that is required to tell between these two cases. We would like to quantify the required length in terms of some notion of difference, $\dist{\cal M}{\cal M'}$, between Markov chains. Based on our discussion so far, our notion of difference should satisfy the following properties:
+%\begin{enumerate}
+%\item If ${\cal M}$ and ${\cal M}'$ have identical transitions in some connected component of their state-space, then we should take $\dist{\cal M}{\cal M'}=0$, even if ${\cal M}$ and ${\cal M}'$ are different outside of this connected component. The reason is that, if the observed trajectory of ${\cal M}$ lies in this connected component, then we cannot possibly identify that the chains are not identical, no matter how long a trajectory we observe. Hence, our distance notion should express that ${\cal M}$ and ${\cal M}'$ cannot be distinguished for a worst-case starting state. \label{def of dist: property 1}
+
+%\item If the distribution of words produced starting from state $X_0$ under ${\cal M}$ and ${\cal M}'$ are different, 
+%
+%, starting at any state, ${\cal M}$ and ${\cal M}'$ produce sequences that are guaranteed to be infinitely often different.
+%
+%have identical transitions in some connected component of their state-space, then we should take $\dist{\cal M}{\cal M'}=0$, even if ${\cal M}$ and ${\cal M}'$ are different outside of this connected component. The reason is that, if the observed trajectory of ${\cal M}$ lies in this connected component, then we cannot identify that the chains are not identical.
+ %
+%\end{enumerate}
+
+
+
+%We would like to propose a meaningful measure of difference, $\dist{\cal M}{\cal M'}$, between two Markov chains $\cal M$ and $\cal M'$ that both captures {\em how different} the Markov chains are, and can be used to quantify the number of observations that are needed to test whether an observed trajectory comes from a target Markov chain ${\cal M}'$ or some chain ${\cal M}$ that satisfies $\dist{\cal M}{\cal M'}>\epsilon$, for some parameter $\epsilon>0$. 
+%
+ %In terms of this measure, we quantify the number of observations required to distinguish between:
+%$${\cal M}={\cal M'}~~\text{vs}~~\dist{\cal M}{\cal M'}>\epsilon,$$
+%from a given Markov chain ${\cal M}'$ and a single trajectory from an unknown Markov chain ${\cal M}$. By ``number of observations'' we mean the {\em length} of the observed trajectory.
+
+%We develop our notion of distance, $\dist{\cal M}{\cal M'}$, between Markov chains in Section~\ref{}. Motivated by the above discussion, our distance satisfies the following properties:
+%\begin{enumerate}
+%\item 
+%\end{enumerate}

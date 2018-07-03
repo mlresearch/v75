@@ -1,0 +1,166 @@
+% !TEX root = paper.tex
+
+\subsection{Generic Implementation}
+In this section we assume that $\cY=\brk*{-B, B}$ for $B>0$ for simplicity. The only assumption we make on the form of $\burk$ is Lipschitzness and boundedness.
+
+\begin{assumption}
+The are constants $K_t$ and $H_t$ such that the mapping
+\[
+\yh\mapsto{}\burk\Big(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y_t))\Big)
+\]
+is $K_t$-Lipschitz and bounded in magnitude by $H_t$ for any $y_t\in\cY$, $x_t\in\cX$, and $\zeta_{t-1}$ of the form $\zeta_{t}=\sum_{s=1}^{t}\suff(x_s, \pred_s, \partial(\pred_s, y_s))$.
+\end{assumption}
+
+Consider the following strategy:
+\begin{itemize}
+\item Fix precision $\veps_{1}>0$ and set $N=\ceil*{2B/\veps_{1}}$.
+\item Define control points $z_{i} = \min\crl*{-B + \veps_{1}\cdot{}i, B}$ for $0\leq{}i\leq{}N$.
+\item Let $\widehat{\mu}_{t}$ be a solution to the convex program
+\begin{equation}
+\label{eq:burkholder_approx}
+\min_{\mu\in\Delta_{N}}\sup_{y\in\cY}\sum_{i=1}^{N}\mu_{i}\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y))\Big)
+\end{equation}
+up to additive precision $\veps_{2}$.
+\item Sample $\pred_{t}\sim{}\wh{\mu}_{t}$.
+\end{itemize}
+
+\begin{proposition}
+\label{prop:burkholder_efficient}
+Given a Burkholder function $\burk$, the strategy above guarantees
+\[
+\En\brk*{\sum_{t=1}^n \loss(\pred_t,y_t)} - \phi(x_1,y_1,\ldots,x_n,y_n) \leq{} \veps_{1}\sum_{t=1}^{n}K_t + \veps_{2}n.
+\]
+That is, the regret inequality \pref{eq:def_phi_regret} is obtained up to additive slack controlled by $\veps_{1}$ and $\veps_{2}$.
+\end{proposition}
+Before proving the theorem, let us discuss the computational prospects of implementing this strategy. First, suppose $K_t=K$ and $H_{t}=H\;\forall{}t\leq{}n$. To obtain the regret inequality up to constant error it suffices to take $\veps_{1}=1/Kn$ and $\veps_{2}=1/n$. In this case, we have $N=O(BKn)$. 
+
+Now we must approximately solve \pref{eq:burkholder_approx}, which is a standard finite-dimensional convex non-smooth optimization problem. There are many possible solvers; we will choose Mirror Descent (e.g. \citep{nemirovskii1983problem,nesterov1998introductory,ben2001lectures}) for simplicity. Let $G(\mu)=\sup_{y\in\cY}\sum_{i=1}^{N}\mu_{i}\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y))\Big)$. Our constraint set is $\ls_1$-bounded, and the boundedness assumption on $\burk$ implies that $G$ is $H$-Lipschitz with respect to the $\ls_{\infty}$ norm. In this case, Mirror Descent with the entropic regularizer (a.k.a. multiplicative weights) guarantees an $\veps$-approximate minimizer for $G(\mu)$ after $O\prn*{H\log(N)/\veps^{2}}$ update steps, each of which requires one evaluation of the subgradient of this function.
+
+Evaluating the subgradient of $G(\mu)$ requires computing a supremum over $y\in\cY$. If $\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y))\Big)$ is convex with respect to $y$, then the supremum is obtained in $\crl*{\pm{}B}$ and so can be checked in time $O(N)$. In this case, since each Mirror Descent update takes time $O(N)$, the total complexity of the algorithm is $O(BHKn^{3}\log(BKn))$.
+
+If the supremum over $y\in\cY$ does not have a closed form, we can compute an approximate subgradient by taking a grid over the range $\brk*{-B,B}$ with spacing $\veps'$ and computing the $\argmax$ over this grid by brute force. If a $O(\veps)$-precision solution to the convex program is required, then it suffices to set $\veps'=\veps/K$ and use the approximate subgradients in the Mirror Descent scheme above. The approximate subgradient computation time is $O(KN/\veps)$ in this case, since we evaluate $\sum_{i=1}^{N}\mu_{i}\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y))\Big)$ once per candiate $y$. The final time complexity is then $O(BHK^2n^{4}\log(BKn))$.
+
+Lastly, we remark that if we replace Mirror Descent with Mirror Prox for saddle points \citep{nemirovski2004prox}, the dependence on $n$ in running time for the two cases above can be improved to $O(n^{2})$ and $O(n^{3})$ respectively.
+
+The runtime can improved further if a regret bound of order $O(\sqrt{n})$ is sufficient, as this requires less precision.
+
+\begin{proof}[\pfref{prop:burkholder_efficient}]
+
+To begin, observe that since $\wh{\mu}_{t}$ is an approximate solution to \pref{eq:burkholder_approx}, it holds that
+\[
+\sup_{y\in\cY}\sum_{i=1}^{N}\wh{\mu}_{i}\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y_t))\Big)
+\leq{}
+\inf_{\mu\in\Delta_{N}}\sup_{y\in\cY}\sum_{i=1}^{N}\mu_{i}\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y_t))\Big)
++ \veps_{2}.
+\]
+The remainder of the proof will show that the right-hand-side above can be bounded as
+\begin{align*}
+&\inf_{\mu\in\Delta_{N}}\sup_{y\in\cY}\sum_{i=1}^{N}\mu_{i}\burk\Big(\zeta_{t-1} + \suff(x_t,z_{i},\partial \loss(z_{i},y_t))\Big) \\
+&\leq{} \inf_{q\in\Delta_{\cY}}\sup_{y\in\cY}\En_{\yh\sim{}q}\burk\Big(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y))\Big)
++ K_{t}\veps_{1} \\
+&\leq{} \burk(\zeta_{t-1})
++ K_{t}\veps_{1},
+\end{align*}
+where the second inequality follows from property \propthree{} of $\burk$ and was shown in the proof of \pref{lem:universal_algo}.
+
+The first inequality can be seen as follows. Let $q\in\Delta_{\cY}$ and $y\in\cY$ be fixed. Let $F(z)\ldef{}\burk(\zeta_{t-1}, \suff(x_t, z, \partial\ls(z, y)))$. Since $q$ is a Borel probability measure and $F$ is continuous and bounded, $F$ is integrable with respect to $q$:
+\[
+\En_{\yh\sim{}q}\burk(\zeta_{t-1}, \suff(x_t, \yh, \partial\ls(\yh, y))) = \int_{\brk*{-B, B}}F(z)dq(z).
+\]
+Define $\cI_{1}=\brk*{z_0, z_1}$ and $\cI_{i}=(z_{i-1}, z_i]$ for $2\leq{}N$. Then $\crl*{\cI_i}$ form a partition of $\brk*{-B,B}$ and the integral can be approximated as
+\begin{align*}
+\int_{\brk*{-B, B}}F(z)dq(z) &= \sum_{i=1}^{N}\int_{\cI_{i}}F(z)dq(z) \\
+&\geq{} \sum_{i=1}^{N}\int_{\cI_{i}}F(z_i)dq(z) - \sum_{i=1}^{N}\int_{\cI_{i}}\abs*{F(z_i)-F(z)}dq(z) \\
+&= \sum_{i=1}^{N}q(\cI_i)F(z_i) - \sum_{i=1}^{N}\int_{\cI_{i}}\abs*{F(z_i)-F(z)}dq(z)\\
+&\geq{} \sum_{i=1}^{N}q(\cI_i)F(z_i) - \sum_{i=1}^{N}\int_{\cI_{i}}K_{t}\veps_1dq(z)\\
+&= \sum_{i=1}^{N}q(\cI_i)F(z_i) - K_{t}\veps_1\sum_{i=1}^{N}q(\cI_i) \\
+&= \sum_{i=1}^{N}q(\cI_i)F(z_i) - K_{t}\veps_1.
+\end{align*}
+Since this holds for any $q\in\Delta_{\cY}$ and $y\in\cY$, we have
+\begin{align*}
+&\inf_{q\in\Delta_{\cY}}\sup_{y\in\cY}\En_{\yh\sim{}q}\burk\Big(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y))\Big) \\
+&\geq{} \inf_{q\in\Delta_{\cY}}\sup_{y\in\cY}\sum_{i=1}^{n}q(\cI_i)\burk\Big(\zeta_{t-1} + \suff(x_t,z_i,\partial \loss(z_i,y))\Big) - K_t\veps_1 \\
+&= \inf_{\mu\in\Delta_{N}}\sup_{y\in\cY}\sum_{i=1}^{n}\mu_i\burk\Big(\zeta_{t-1} + \suff(x_t,z_i,\partial \loss(z_i,y))\Big) - K_t\veps_1.
+\end{align*}
+
+\end{proof}
+
+\subsection{Faster Implementation under Specific Structure}
+
+In the remainder of this section of the appendix we show how to implement the Burkholder algorithm for certain special cases that enable admit especially simple strategies.
+
+\begin{lemma}
+  \label{lem:det_strat2}
+  Suppose that the map
+  \[
+    \pred \mapsto \burk(\tau + \suff((x,\yh) , \partial(\pred, y)))
+  \]
+  is convex for all $y$. Then the strategy
+\begin{align}
+	\label{eq:det_strat2}
+  \pred_{t}=\argmin_{\pred\in\cY}\sup_{y\in\cY} ~\burk\left(\sum_{j=1}^{t-1} \zeta_{t-1} + \suff(x_t,\yh,\partial \loss(\pred,y))\right)
+\end{align}
+achieves the value of the game in \pref{lem:universal_algo}.
+\end{lemma}
+\begin{proof}[\pfref{lem:det_strat2}]
+  This follows by reduction to the general case:
+  \begin{align*}
+	  \inf_{\pred\in\cY}\sup_{y\in\cY} \burk\left(\zeta_{t-1} + \suff(x_t,\pred,\partial \loss(\pred,y))\right)
+    &= \inf_{q\in\Delta_{\cY}}\sup_{y\in\cY} \burk\left(\zeta_{t-1} + \suff(x_t,\En_{\pred\sim{}q}\brk*{\pred},\partial \loss(\En_{\pred\sim{}q}\brk*{\pred},y))\right) \\
+    &\leq \inf_{q\in\Delta_{\cY}}\sup_{y\in\cY} \En_{\yh\sim{}q}\burk\left(\zeta_{t-1} + \suff(x_t,\yh,\partial \loss(\yh,y))\right).
+  \end{align*}
+  The strategy in \pref{eq:det_strat2} is the minimax strategy for second expression above. The final expression is precisely the value of the Burkholder algorithm, which is controlled when $\burk$ is a Burkholder function via \pref{lem:universal_algo}.
+\end{proof}
+  
+  \begin{lemma}
+  \label{lem:det_strat3}
+  Suppose that $\cY=\brk*{-B, B}$ for some $B>0$. Further suppose that we can write 
+  \[
+	\burk(\tau + \suff((x,\yh) , \dl)) = \yh\cdot\dl + F(\tau, x, \dl),
+  \]
+  where $\dl\mapsto{}F(\tau, x, \dl)$ is convex for all $\tau,x$.
+Then the prediction strategy
+  \begin{align}
+	\label{eq:det_strat3}
+  \pred_{t}= \mathrm{proj}_{\brk*{-B,B}}\prn*{-\frac{1}{L}\En_{\sigma\in\pmo}\brk*{
+  \sigma{}F(\zeta_{t-1}, x_{t}, L\sigma)
+  }},
+  \end{align}
+achieves the value of the game in \pref{lem:universal_algo}.
+\end{lemma}
+
+\begin{proof}[\pfref{lem:det_strat3}]
+Let $\wt{y}_t$ denote the unprojected version of $\pred_t$:
+\[
+  \wt{y}_{t}= - \frac{1}{L}\En_{\sigma\in\pmo}\brk*{
+  \sigma{}F(\zeta_{t-1}, x_{t}, L\sigma)
+  }.
+\]
+We prove the lemma by inducting backwards. Let $t\in\brk*{n}$ be fixed. We first claim that
+\begin{align*}
+\sup_{y\in\cY} \burk\left(\zeta_{t-1} + \suff(x_t,\pred_t,\partial \loss(\pred_t,y))\right)
+& = 
+\sup_{y\in\cY}\brk*{\pred_t\cdot\partial \loss(\pred_t,y) + F(\zeta_{t-1}, x_t, \partial \loss(\pred_t,y))} \\ 
+& \leq 
+\sup_{y\in\cY}\brk*{\predt_t\cdot\partial \loss(\pred_t,y) + F(\zeta_{t-1}, x_t, \partial \loss(\pred_t,y))}.
+\end{align*}
+This holds by the assumption that $\argmin_{\yh\in\bbR}\ls(\yh, y)$ is obtained in $\brk*{-B, B}$ for any $y$. The assumption implies that for any $y$, $\partial\ls(\yh, y)\geq{}0$ for $\pred\geq{}B$ and $\partial\ls(\yh, y)\leq{}0$ for $\pred\leq{}-B$. If $\yh_{t}\neq{}\predt_t$, then either $\yh_{t}=B$ and $\predt_{t}>B$, so that $\partial\ls(\yh_{t}, y)\yh_{t}\leq{}\partial\ls(\yh_{t}, y)\predt_{t}$, or similarly $\yh_{t}=-B$ and $\predt_{t}<-B$, which also implies $\partial\ls(\yh_{t}, y)\yh_{t}\leq{}\partial\ls(\yh_{t}, y)\predt_{t}$.
+
+Now, by the convexity assumption of the lemma, it holds that
+\begin{align*}
+\sup_{y\in\cY}\brk*{\predt_t\cdot\partial \loss(\pred_t,y) + F(\zeta_{t-1}, x_t, \partial \loss(\pred_t,y))}
+&\leq{} \sup_{\delta\in\brk*{-L, L}}\brk*{\predt_t\cdot\delta + F(\zeta_{t-1}, x_t, \delta)} \\
+&= \max_{\sigma\in\pmo}\brk*{\predt_t\cdot{}L\sigma + F(\zeta_{t-1}, x_t, L\sigma)}.
+\end{align*}
+
+The choice of $\predt_t$ guarantees that $\predt_t\cdot{}L\cdot(1) + F(\zeta_{t-1}, x_t, L\cdot(1)) = \predt_t\cdot{}L\cdot{}(-1) + F(\zeta_{t-1}, x_t, L\cdot(-1))$; this can be seen by rearranging this equality and solving for $\predt_t$. This means that we can take $\sigma=1$ to obtain the maximum in the expression above. Substituting in the value of $\predt_{t}$ then yields
+\[
+\max_{\sigma\in\pmo}\brk*{\predt_t\cdot{}L\sigma + F(\zeta_{t-1}, x_t, L\sigma)}
+=\predt_t\cdot{}L\cdot(1) + F(\zeta_{t-1}, x_t, L\cdot(1)) = \En_{\sigma\in\pmo}\brk*{F(\zeta_{t-1}, x_t, \sigma{}L)}.
+\]
+Finally, we use property \propthreep{} of $\burk$ and the explicit form for $\burk$ assumed in the lemma statement to proceed back to time $t-1$:
+\begin{align*}
+\En_{\sigma\in\pmo}\brk*{F(\zeta_{t-1}, x_{t}, \sigma{}L)} &= \En_{\sigma\in\pmo}\brk*{\yh_{t}\sigma{}L+F(\zeta_{t-1}, x_{t}, \sigma{}L)} \\
+&= \En_{\sigma\in\pmo}\burk(\zeta_{t-1} + \suff((x_t,\yh_t) , \sigma{}L)) \\ &\leq{} \burk(\zeta_{t-1}).
+\end{align*}
+\end{proof}

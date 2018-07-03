@@ -1,0 +1,263 @@
+%!TEX root = paper.tex
+
+\subsection{Pseudocode and Proofs from \pref{sec:online_boosting}}
+\label{app:online_boosting}
+
+\begin{algorithm}[h!]
+\caption{AdaBoost.OLM++}
+\label{alg:boosting_multiclass}
+\begin{algorithmic}[1]
+\Procedure{AdaBoost.OLM++}{weak learners $\wl^{1}, \ldots, \wl^{N}$}
+\State{For all $i\in[N]$, set $v_{1}^{i}\gets{} 1$, initialize weak learner $\wl_{1}^{i}$, and initialize logistic learner $\logistic_{1}^{i}$
+with $\cW = \crl*{ (\alpha{}I_{K\times{}K}, I_{K\times{}K}) \in \bbR^{K\times{}2K}\mid{} \alpha\in\brk*{-2,2}}$ and $\mu = 1/n$.}
+\For{$t=1,\ldots,n$}
+\State{Receive instance $x_{t}$.}
+\State{$s_{t}^{0} \gets{} 0\in\bbR^{K}$.}
+\For{$i=1,\ldots,N$}
+\State{Compute cost matrix $C_{t}^{i}$ from $s_{t}^{i-1}$ using \pref{eq:boosting_cost_matrix}.}
+\State{$l_{t}^{i}\gets{}\wl_{t}^{i}.\predict(x_{t}, C_{t}^{i})$.}
+\State{$\wt{x}_{t}^{i}\gets{}(e_{l_{t}^{i}}, s_{t}^{i-1})\in\bbR^{2K}$.}
+\State{$s_{t}^{i}\gets{}\logistic_{t}^{i}.\predict(\wt{x}_t^{i})$.}
+\State{$\yh_{t}^{i}\gets{}\argmax_{k}s_{t}^{i}(k)$.}
+\EndFor
+\State{Sample $i_{t}$ with $\Pr(i_{t}=i)\propto{}v_{t}^{i}$. \label{line:sample}}
+\State{Predict $\yh_{t}=\yh_{t}^{i_t}$ and receive true class $y_{t}\in\brk*{K}$.}
+\For{$i=1,\ldots,N$}
+\State{$\wl_{t+1}^{i}\gets{}\wl_{t}^{i}.\update(x_t, C_{t}^{i}, y_t)$.}
+\State{$\logistic_{t+1}^{i}\gets{}\logistic_{t}^{i}.\update(\wt{x}_{t}^{i}, \mb{1}_{y_t})$.}
+\State{$v_{t+1}^{i}\gets{}v_{t}^{i}\cdot\exp\prn*{-\ind\crl*{\yh_{t}^{i}\neq{}y_t}}$.\label{line:multiplicative_weights}}
+\EndFor
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{proof}[\pfref{thm:multiclass_boosting}] 
+Denote the number of mistakes of the $i$-th expert (which is the combination of the first $i$ weak learners) by
+\[
+M_{i} = \sum_{t=1}^{n}\ind\crl*{\yh_{t}^{i}\neq{}y_t}=\sum_{t=1}^{n}\ind\crl*{\argmax_{k}s_{t}^{i}(k)\neq{}y_t},
+\]
+with the convention that $M_{0}=n$. The weights $v_{t}^{i}$ simply implement the multiplicative weights strategy, and so \pref{lem:multiplicative_weights_conc}, which gives a concentration bound based on Freedman's inequality implies that with probability at least $1-\delta$,\footnote{%
+Note that previous online boosting works \citep{beygelzimer2015optimal,jung2017onlinemulticlass} use a simpler Hoeffding bound at this stage, which picks up an extra $\sqrt{n}$ term. For their results this is not a dominant term, but in our case it can spoil the improvement given by improper logistic regression, and so we use Freedman's inequality to remove it.
+}
+\begin{equation}
+\label{eq:multiplicative_weights_bound}
+\sum_{t=1}^{n}\ind\crl*{\yh_{t}\neq{}y_t} \leq{} 4\min_{i}M_{i} + 2\log(N/\delta).
+\end{equation}
+
+Note that if $k^{\star}\ldef\argmax_{k}s_{t}^{i-1}(k)\neq{}y_t$, then $\mb{\sigma}(s_{t}^{i-1})_{k^{\star}}\geq{}\mb{\sigma}(s_{t}^{i-1})_{y_t}$ and $\mb{\sigma}(s_{t}^{i-1})\in\Delta_{K}$ imply $\mb{\sigma}(s_{t}^{i-1})_{y_t}\leq{}1/2$, which then implies $\sum_{k\neq{}y_t}\mb{\sigma}(s_{t}^{i-1})_{k}\geq{}1/2$ and finally
+\begin{equation}
+\label{eq:cost_matrix_mistakes}
+-\sum_{t=1}^{n}\hC_{t}^{i}(y_t, y_t) = \sum_{t=1}^n\sum_{k\neq{}y_t}\mb{\sigma}(s_{t}^{i-1})_{k} \geq{} \frac{M_{i-1}}{2}.
+\end{equation}
+This also holds for $i=1$ because $s_{t}^{0}=0$ and $-C_{t}^{1}(y_t, y_t)=(K-1)/K\geq{}1/2$.
+
+We now examine the regret guarantee provided by each logistic regression instance. For each $i\in\brk{N}$ we have
+\begin{equation*}
+\sum_{t=1}^{n}\ls(s_{t}^{i},y_t) - \inf_{W\in\cW}\sum_{t=1}^{n}\ls(W\wt{x}^{i}_t,y_t) \leq{} O\prn*{\log\prn*{n\log(nK)}}
+\end{equation*}
+This follows from \pref{thm:multiclass_logistic_regret} using $L = 1$, $D_\cW = 1$, $B=3$ for $\ls_{1}$ norm, $\nrm*{y_t}_{1}=1$, $\mu=1/n$, and $\nrm*{\wt{x}_{t}^{i}}_{\infty} \leq \log(nK)$,
+where the last fact is implied by the second statement of \pref{thm:multiclass_logistic_regret}: $\nrm*{s_{t}^{i}}_{\infty}\leq{}\log(K/\mu) = \log(nK)$ and thus $\nrm*{\wt{x}_{t}^{i}}_{\infty} = \nrm*{(e_{l_{t}^{i}}, s_{t}^{i-1})}_{\infty} \leq{} \log(nK)$. 
+Now define the difference between the total loss of the $i$-th and $(i-1)$-th expert to be
+\[
+\Delta_{i} = \sum_{t=1}^{n}\ls(s_{t}^{i}, y_t) - \ls(s_{t}^{i-1}, y_t).
+\]
+Since $\inf_{W\in\cW}\sum_{t=1}^{n}\ls(W\wt{x}^{i}_t,y_t) = \inf_{\alpha\in\brk*{-2,2}}\sum_{t=1}^{n}\ls(\alpha{}e_{l_{t}^{i}} + s_{t}^{i-1},y_t)$, the regret bound above implies
+\[
+\Delta_{i} \leq{} \inf_{\alpha\in\brk*{-2,2}}\brk*{\sum_{t=1}^{n}\ls(\alpha{}e_{l_{t}^{i}} + s_{t}^{i-1},y_t) - \ls(s_{t}^{i-1}, y_t)} + O\prn*{\log\prn*{n\log(nK)}}.
+\]
+By \pref{lem:logistic_ub} each term in the sum above satisfies
+\[
+\ls(\alpha{}e_{l_{t}^{i}} + s_{t}^{i-1},y_t) - \ls(s_{t}^{i-1}, y_t)
+\leq{} \left\{
+\begin{array}{ll}
+(e^{\alpha}-1)\mb{\sigma}(s_{t}^{i-1})_{l_{t}^{i}} = (e^{\alpha}-1)\hC_{t}^{i}(y_t, l_{t}^{i}),\quad &l_{t}^{i} \neq{}y_t,\\
+(e^{-\alpha}-1)(1-\mb{\sigma}(s_{t}^{i-1})_{y_t}) = -(e^{-\alpha}-1)\hC_{t}^{i}(y_t, y_t),\quad{} &l_{t}^{i} =y_t.
+\end{array}
+\right.
+\]
+With notation $w^{i}=-\sum_{t=1}^{n}\hC_{t}^{i}(y_t, y_t)$, $c_{+}^{i}=-\frac{1}{w^i}\sum_{t:l_{t}^{i}=y_t}\hC_{t}^{i}(y_t, y_t)$, and $c_{-}^{i}=\frac{1}{w^i}\sum_{t:l_{t}^{i}\neq{}y_t}\hC_{t}^{i}(y_t, l_t^{i})$, we rewrite 
+\[
+\inf_{\alpha\in\brk*{-2,2}}\brk*{\sum_{t=1}^{n}\ls(\alpha{}e_{l_{t}^{i}} + s_{t}^{i-1},y_t) - \ls(s_{t}^{i-1}, y_t)} 
+= w^{i}\cdot\inf_{\alpha\in\brk*{-2,2}}\brk*{(e^{\alpha}-1)c_{-}^{i} + (e^{-\alpha}-1)c_{+}^{i}}.
+\]
+One can verify that $w^{i}>0$,  $c_{-}^{i}, c_{+}^{i}\geq{}0$, $c_{+}^{i}-c_{-}^{i}=\gamma_{i}\in\brk*{-1,1}$ and $c_{+}^{i} + c_{-}^{i}\leq{}1$. 
+By \pref{lem:logistic_inf}, it follows that
+\[
+w^{i}\cdot\inf_{\alpha\in\brk*{-2,2}}\brk*{(e^{-\alpha}-1)c_{-}^{i} + (e^{\alpha}-1)c_{+}^{i}}
+\leq{} -\frac{w^{i}\gamma_{i}^{2}}{2}.
+\]
+
+Summing $\Delta_{i}$ over $i\in [N]$, we have
+\begin{equation}
+\label{eq:delta_sum}
+\sum_{t=1}^{n}\ls(s_{t}^{N}, y_t) - \sum_{t=1}^{n}\ls(s_{t}^{0}, y_t)  = \sum_{i=1}^{N}\Delta_i
+\leq{} -\frac{1}{2}\sum_{i=1}^{N}w^{i}\gamma_{i}^{2} + O(N\log(n\log(nK))).
+\end{equation}
+We lower bound the left hand side as
+\[
+\sum_{t=1}^{n}\ls(s_{t}^{N}, y_t) - \sum_{t=1}^{n}\ls(s_{t}^{0}, y_t)
+\geq{} - \sum_{t=1}^{n}\ls(s_{t}^{0}, y_t) = -n\log(K),
+\]
+where the inequality uses non-negativity of the logistic loss and the equality is a direct calculation from $s_{t}^{0}=0$.
+Next we upper bound the right-hand side of \pref{eq:delta_sum}. Since $w^{i}=-\sum_{t=1}^{n}\hC_{t}^{i}(y_t, y_t)$, Eq.~\pref{eq:cost_matrix_mistakes} implies
+\begin{align*}
+-\frac{1}{2}\sum_{i=1}^{N}w^{i}\gamma_{i}^{2} 
+\leq  -\frac{1}{4}\sum_{i=1}^{N}M_{i-1}\gamma_{i}^{2} 
+\leq{} -\min_{i\in\brk*{N}}M_{i-1}\cdot\frac{1}{4}\sum_{i=1}^{N}\gamma_{i}^{2} 
+\leq{} -\min_{i\in\brk*{N}}M_{i}\cdot\frac{1}{4}\sum_{i=1}^{N}\gamma_{i}^{2}.
+\end{align*}
+
+Combining our upper and lower bounds on $\sum_{i=1}^{N}\Delta_{i}$ now gives
+\begin{equation}
+\label{eq:multiclass_boosting_combined}
+-n\log(K) \leq{} -\frac{1}{2}\sum_{i=1}^{N}w^{i}\gamma_{i}^{2} + O(N\log(n\log(K)))\leq{} -\min_{i\in\brk*{N}}M_{i}\cdot\frac{1}{4}\sum_{i=1}^{N}\gamma_{i}^{2} + O(N\log(n\log(nK))).
+\end{equation}
+Rearranging, we have
+\[
+\min_{i\in\brk*{N}}M_{i} \leq{} O\prn*{\frac{n\log(K)}{\sum_{i=1}^{N}\gamma_{i}^{2}}} + O\prn*{\frac{N\log(n\log(nK))}{\sum_{i=1}^{N}\gamma_{i}^{2}}}.
+\]
+Returning to \pref{eq:multiplicative_weights_bound}, this implies that with probability at least $1-\delta$,
+\[
+\sum_{t=1}^{n}\ind\crl*{\yh_{t}\neq{}y_t} \leq{} O\prn*{\frac{n\log(K)}{\sum_{i=1}^{N}\gamma_{i}^{2}}} + O\prn*{\frac{N\log(n\log(nK))}{\sum_{i=1}^{N}\gamma_{i}^{2}}} + 2\log(N/\delta),
+\]
+which finishes the proof.
+\end{proof}
+
+\begin{proof}[\pfref{prop:weak_learning_edge}]
+By the definition of the cost matrices, the weak learning condition
+\[
+\sum_{t=1}^{n}C_{t}^{i}(y_t, l_{t}^{i}) \leq{} \sum_{t=1}^{n}\En_{k\sim{}u_{\gamma, y_t}}\brk*{C_{t}^{i}(y_t, k)} + S
+\]
+implies
+\[
+\sum_{t=1}^{n}\hC_{t}^{i}(y_t, l_{t}^{i}) \leq{} \sum_{t=1}^{n}\En_{k\sim{}u_{\gamma, y_t}}\brk*{\hC_{t}^{i}(y_t, k)} + KS
+\]
+Expanding the definitions of $u_{\gamma, y_t}$ and $\hC_{t}^{i}$, we have
+\[
+\En_{k\sim{}u_{\gamma, y_t}}\brk*{\hC_{t}^{i}(y_t, k)} = \prn*{\frac{1-\gamma}{K}}\prn*{(\mb{\sigma}(s_{t}^{i-1})_{y_t}-1) + \sum_{k\neq{}y_t}\mb{\sigma}(s_{t}^{i-1})_{k}} + \gamma{}(\mb{\sigma}(s_{t}^{i-1})_{y_t}-1) = \gamma{}\hC_{t}^{i}(y_t, y_t).
+\]
+So we have
+\[
+\sum_{t=1}^{n}\hC_{t}^{i}(y_t, l_{t}^{i}) \leq{} \gamma\sum_{t=1}^{n}\hC_{t}^{i}(y_t, y_t) + KS, 
+\]
+or, since $\hC_{t}^{i}(y_t, y_t)<0$,
+\[
+\gamma_{i} \geq{} \gamma - \frac{KS}{w^{i}},
+\]
+where $w^{i}=-\sum_{t=1}^{n}C_{t}^{i}(y_t, y_t)$ as in the proof of \pref{thm:multiclass_boosting}. 
+Since $a \geq b - c$ implies $a^2 \geq b^2 - 2bc$ for non-negative $a, b$ and $c$, 
+we further have $\gamma_{i}^{2}\geq{}\gamma^{2}-2\frac{\gamma{}KS}{w^{i}}$.
+
+Returning to the inequality~\pref{eq:multiclass_boosting_combined}, the bound we just proved implies
+\begin{align*}
+-n\log(K) &\leq{} -\frac{1}{2}\sum_{i=1}^{N}w^{i}\gamma^{2} + \gamma{}KSN + O(N\log(n\log(nK))) \\
+&\leq{} -\frac{\gamma^2}{4}\sum_{i=1}^{N}M_{i-1}+ \gamma{}KSN + O(N\log(n\log(nK)))  \tag{by \pref{eq:cost_matrix_mistakes}}\\
+&\leq{} -\min_{i\in\brk*{N}}M_{i} \cdot \frac{\gamma^{2}N}{4} + \gamma{}KSN + O(N\log(n\log(nK))).
+\end{align*}
+From here we proceed as in the proof of \pref{thm:multiclass_boosting} to get the result.
+\end{proof}
+
+\begin{lemma}[Freedman's Inequality \citep{beygelzimer2011contextual}]
+\label{lem:freedman}
+Let $(Z_t)_{t\leq{}n}$ be a real-valued martingale difference sequence adapted to a filtration $(\cJ_t)_{t\leq{}n}$ with $\abs{Z_t}\leq{}R$ almost surely. For any $\eta\in[0, 1/R]$, with probability at least $1-\delta$,
+\begin{equation}
+\label{eq:freedman}
+\sum_{t=1}^{n}Z_t \leq{} \eta(e-2)\sum_{t=1}^{n}\En\brk*{Z_t^{2} \mid{} \cJ_t} + \frac{\log(1/\delta)}{\eta}
+\end{equation}
+for all $\eta\in\brk*{0, 1/R}$.
+\end{lemma}
+\begin{lemma}
+\label{lem:multiplicative_weights_conc}
+With probability at least $1-\delta$, the predictions $(\yh_t)_{t\leq{}n}$ generated by \pref{alg:boosting_multiclass} satisfy
+\[
+\sum_{t=1}^{n}\ind\crl*{\yh_{t}\neq{}y_t} \leq{} 4\min_{i}\sum_{t=1}^{n}\ind\crl*{\yh_{t}^{i}\neq{}y_t} + 2\log(N/\delta).
+\]
+\end{lemma}
+\begin{proof}
+Define a filtration $(\cJ_{t})_{t\leq{}n}$ via 
+\[
+\cJ_{t}=\sigma((x_1, (l_{1}^i)_{i\leq{}N}, y_1, i_1),\ldots,(x_{t-1}, (l_{t-1}^i)_{i\leq{}N}, y_{t-1}, i_{t-1}), x_t, (l_{t}^i)_{i\leq{}N}).
+\]
+
+Since Line~\ref*{line:multiplicative_weights} of \pref{alg:boosting_multiclass} implements the multiplicative weights strategy with learning rate $1$, the standard analysis (e.g. \cite{PLG}) implies that the conditional expectations under this strategy enjoy a regret bound of
+\[
+\sum_{t=1}^{n}\En\brk*{\ind\crl*{\yh_{t}\neq{}y_t}\mid{}\cJ_{t}} \leq{} 2\min_{i}\sum_{t=1}^{n}\ind\crl*{\yh_{t}^{i}\neq{}y_t} + \log(N).
+\]
+Let $Z_{t}=\ind\crl*{\yh_{t}\neq{}y_t}-\En\brk*{\ind\crl*{\yh_{t}\neq{}y_t}\mid{}\cJ_{t}}$. \pref{lem:freedman} applied with $\eta=1$ shows that with probability at least $1-\delta$, 
+\[
+\sum_{t=1}^{n}Z_t \leq{} \sum_{t=1}^{n}\En\brk*{Z_t^{2} \mid{} \cJ_t} + \log(1/\delta).
+\]
+Since variance is bounded by second moment, we have
+\[
+\sum_{t=1}^{n}\En\brk*{Z_t^{2} \mid{} \cJ_t} \leq{} \sum_{t=1}^{n}\En\brk*{(\ind\crl*{\yh_{t}\neq{}y_t})^{2} \mid{} \cJ_t}
+= \sum_{t=1}^{n}\En\brk*{\ind\crl*{\yh_{t}\neq{}y_t} \mid{} \cJ_t}.
+\]
+Rearranging, we have proved that with probability $1-\delta$,
+\[
+\sum_{t=1}^{n}\ind\crl*{\yh_{t}\neq{}y_t} \leq{}  2\sum_{t=1}^{n}\En\brk*{\ind\crl*{\yh_{t}\neq{}y_t} \mid{} \cJ_t} + \log(1/\delta) \leq{} 
+4\min_{i}\sum_{t=1}^{n}\ind\crl*{\yh_{t}^{i}\neq{}y_t} + 2\log(N/\delta).
+\]
+\end{proof}
+
+\begin{lemma}\label{lem:logistic_ub}
+The multiclass logistic loss satisfies for any $z \in \bbR^K$ and $y\in [K]$,
+\[
+\ls(z + \alpha{}e_{l}, y) - \ls(z,y)
+\leq{} \left\{
+\begin{array}{ll}
+(e^{\alpha}-1)\mb{\sigma}(z)_{l},\quad &l \neq{}y,\\
+(e^{-\alpha}-1)(1-\mb{\sigma}(z)_{y}),\quad{} &l=y.
+\end{array}
+\right.
+\]
+\end{lemma}
+\begin{proof}
+When $l\neq{}y$ we have
+\begin{align*}
+\ls(z + \alpha{}e_{l}, y) - \ls(z,y) &= \log\prn*{
+\frac{1+\sum_{k\neq{}y, l}e^{z_k - z_y} + e^{z_l + \alpha - z_y} }
+{1+\sum_{k\neq{}y}e^{z_k - z_y}}
+} \\
+&= \log\prn*{
+1 + (e^{\alpha}-1)\frac{e^{z_l-z_y}}{1+\sum_{k\neq{}y}e^{z_k-z_y}}
+} \\
+&= \log\prn*{
+1 + (e^{\alpha}-1)\mb{\sigma}(z)_{l}
+} \\
+&\leq{} (e^{\alpha}-1)\mb{\sigma}(z)_{l} \tag{$\log(1+x)\leq{}x$}.
+\end{align*}
+
+When $l=y$ we have
+\begin{align*}
+\ls(z + \alpha{}e_{l}, y) - \ls(z,y) &= \log\prn*{
+\frac{1+e^{-\alpha}\sum_{k\neq{}y}e^{z_k - z_y}}
+{1+\sum_{k\neq{}y}e^{z_k - z_y}}
+} \\
+&= \log\prn*{
+1+(e^{-\alpha}-1)\frac{\sum_{k\neq{}y}e^{z_k - z_y}}{1 + \sum_{k\neq{}y}e^{z_k - z_y}}
+} \\
+&= \log\prn*{
+1 + (e^{-\alpha}-1)\sum_{k\neq{}y}\mb{\sigma}(z)_{k}
+} \\
+&= \log\prn*{
+1 + (e^{-\alpha}-1)(1-\mb{\sigma}(z)_{y})
+} \\
+&\leq{} (e^{-\alpha}-1)(1-\mb{\sigma}(z)_{y}). \tag{$\log(1+x)\leq{}x$}
+\end{align*}
+\end{proof}
+
+\begin{lemma}[\cite{jung2017onlinemulticlass}]
+\label{lem:logistic_inf}
+For any $A,B\geq{}0$ with $A-B\in\brk*{-1, +1}$ and $A+B\leq{}1$,
+\[
+\inf_{\alpha\in\brk*{-2,2}}\brk*{A(e^{\alpha}-1) + B(e^{-\alpha}-1)} \leq{} -\frac{(A-B)^{2}}{2}.
+\]
+\end{lemma}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

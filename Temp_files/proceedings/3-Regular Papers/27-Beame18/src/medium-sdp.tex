@@ -1,0 +1,172 @@
+% !TEX root = stoc-paper.tex
+\newcommand{\realm}{N}
+\section{An SDP Relaxation for Norm Amplification on the Positive Orthant}
+\label{c-sec:sdp}
+
+For a matrix $M\in \mathbb{C}^{A\times X}$, 
+$\displaystyle\tau_M(\delta)=\sup_{\substack{\mathbb{P}\in \Delta_X\\ \|\mathbb{P}\|_2\le 1/|X|^{1-\delta/2}}} \log_{|A|} (\|M\cdot \mathbb{P}\|_2)$.\\[+1ex]
+That is, $\tau_M(\delta)=\frac12 \log_{|A|} OPT_{M,\delta}$ where $OPT_{M,\delta}$ is the
+optimum of the following quadratic program:
+\begin{equation}
+\begin{aligned}\label{c-original}
+\text{Maximize}  &\quad \|M\cdot \mathbb{P}\|_2^2=\langle M\cdot \mathbb{P},M\cdot \mathbb{P}\rangle,& \\
+\text{subject to:}&\quad \sum_{i\in X} \mathbb{P}_i=1,&\\
+&\quad \sum_{i\in X} \mathbb{P}_i^2\le |X|^{\delta-1},&\\
+&\quad \mathbb{P}_i\geq 0 &\quad \text{for all }i\in X.
+\end{aligned}
+\end{equation}
+Instead of attempting to solve \eqref{c-original}, presumably a difficult
+quadratic program, we consider the following semidefinite program (SDP):
+\begin{equation} \label{c-SDP-relaxation}
+\begin{aligned}
+\text{Maximize}&\quad \langle M^{*} M,U\rangle\cdot |X|^2/|A| &\\
+\text{subject to:} &&\\
+[V]&\quad U\succeq 0,&\\
+[w]&\quad \sum_{i,j\in X} U_{ij}=1,  &\\
+[z]&\quad \sum_{i\in X} U_{ii}\le |X|^{\delta-1},&\\
+&\quad U_{ij}\in \mathbb{R},U_{ij}\geq 0 &\quad\text{for all } i,j\in X.
+\end{aligned}
+\end{equation}
+Recall that $M^{*}$ is the conjugate transpose of $M$.
+Note that for any $\mathbb{P}\in \Delta_X$ achieving the optimum value
+of \eqref{c-original} the positive semidefinite matrix
+$U=\mathbb{P}\cdot \mathbb{P}^T$ 
+has the same value in \eqref{c-SDP-relaxation} (where the $|X|^2/|A|$ factor
+accounts for the difference in scaling factors based on the dimensions for the
+two expectation inner products), and hence \eqref{c-SDP-relaxation}
+is an SDP relaxation of \eqref{c-original}.
+
+But this is not a standard SDP,
+since $M$ is over $\mathbb{C}$ and $M^{*}M$ might contain complex entries.
+In order to apply techniques on real matrices,
+we define $\realm:X\times X\rightarrow \mathbb{R}$ as $\realm(x,x')=Re(M^{*}M(x,x'))$,
+that is,
+$\realm$ is the real part of $M^{*}M$.
+Then we obtain a (real) definite program that is identical to \eqref{c-SDP-relaxation}, except that $M^* M$ is replaced by $\realm$ and the condition $U_{ij}\in \mathbb{R}$ is superfluous.
+%\begin{equation} \label{c-SDP-relaxation-real}
+%\begin{aligned}
+%\text{Maximize}&\quad \langle \realm,U\rangle\cdot |X|^2/|A| &\\
+%\text{subject to:} &&\\
+%[V]&\quad U\succeq 0,&\\
+%[w]&\quad \sum_{i,j\in X} U_{ij}=1,  &\\
+%[z]&\quad \sum_{i\in X} U_{ii}\le |X|^{\delta-1},&\\
+%&\quad U_{ij}\geq 0 &\quad\text{for all } i,j\in X.
+%\end{aligned}
+%\end{equation} 
+%
+The key observation is that \eqref{c-SDP-relaxation} and this real program (not shown) have the same optimal value.
+This is because for any $U\in \mathbb{R}^{X\times X}$,\\
+\centerline{$\displaystyle |X|^2\langle M^{*} M,U\rangle=\sum_{i,j}(M^{*}M)_{ij}\cdot U_{ij}=\sum_{ij}Re((M^{*}M)_{ij})\cdot U_{ij}+i\cdot\sum_{x,x'}Im((M^{*}M)_{ij})\cdot U_{ij}$}
+Since $M^{*}M$ is a Hermitian matrix,
+we have $(M^{*}M)_{ij}=\overline{(M^{*}M)_{ji}}$.
+But $U$ is real symmetric,
+so we have $\sum_{i,j}Im((M^{*}M)_{ij})\cdot U_{ij}=0$,
+namely
+\[
+|X|^2\langle M^{*} M,U\rangle=\sum_{i,j}Re((M^{*}M)_{ij})\cdot U_{ij}=|X|^2\langle \realm,U\rangle
+\]
+and we only need to consider the real parts.
+
+In order to upper bound the value of \eqref{c-SDP-relaxation},
+we consider the dual program to this real SDP which can be written as:
+%\begin{equation} \label{c-dual-SDP}
+%\begin{aligned}
+%\text{Minimize}  &\quad w+z\cdot |X|^{\delta-1} &\\
+%\text{subject to:}&&\\
+%[U]&\quad V\succeq 0,&\\
+%[U_{ii}] &\quad w+z\geq V_{ii}+\realm_{ii}/|A|,&\quad\text{for all }i\in X\\
+%[U_{ij}] &\quad w\geq V_{ij}+\realm_{ij}/|A|,&\quad\text{for all }i\ne j \in X\\
+%&\quad z\ge 0
+%\end{aligned}
+%\end{equation}
+%or equivalently,
+\begin{equation} \label{c-dual-SDP1}
+\begin{aligned}
+\text{Minimize}  &\quad w+z\cdot |X|^{\delta}\cdot |X|^{-1} &\\
+\text{subject to:}&\quad V\succeq 0,&\\
+&\quad z I + w J\geq V+ \realm/|A|,\\
+&\quad z\ge 0.
+\end{aligned}
+\end{equation}
+where $I$ is the identity matrix and $J$ is the all 1's matrix over $X\times X$.
+
+Any dual solution of \eqref{c-dual-SDP1} yields an upper bound on the optimum
+of \eqref{c-SDP-relaxation} and hence $OPT_{M,\delta}$ and $\tau_M(\delta)$.
+%In order to balance the two terms of the objective function,
+%for $\delta<1$ we can afford a large $z$ to obtain a smaller $w$.
+To simplify the complexity of analysis we restrict ourselves to considering
+semidefinite matrices $V$ that are suitably chosen Laplacian matrices.
+For any set $S$ in $X\times X$ and any $\alpha:S\rightarrow \mathbb{R}_+$
+the Laplacian matrix associated with $S$ and $\alpha$
+is defined by $L_{(S,\alpha)}:=\sum_{(i,j)\in S}\alpha(i,j) L_{ij}$ where
+$L_{ij}=(e_i-e_j)(e_i-e_j)^T$ for the standard basis $\{e_i\}_{i\in X}$ .
+Intuitively, in the dual SDP \eqref{c-dual-SDP1}, by adding matrix $V=L_{S,\alpha}$ for
+suitable $S$ and $\alpha$ depending on $M$ we can shift weight from the
+off-diagonal
+entries of $N$ to the diagonal where they can be covered by the
+$z+w$ entries on the diagonal rather than being covered by the $w$ values in
+the off-diagonal entries.  This will be advantageous for us since the
+objective function has much smaller coefficient for $z$ which helps cover
+the diagonal entries than coefficient for $w$, which is all that covers the
+off-diagonal entries.
+
+\begin{defn}\label{d-W}
+Suppose that $N\in \mathbb{R}^{X\times X}$ is a symmetric matrix.
+For $\kappa\in \mathbb{R}_+$, define\\
+\centerline{$\displaystyle W_\kappa(N)=\max_{i\in X} \sum_{j\in X:\ N_{i,j}> \kappa} (N_{i,j}-\kappa)$.}
+\end{defn}
+
+
+The following lemma is the basis for our bounds on $\tau_M(\delta)$.
+
+\begin{lemma}
+\label{c-SDP-lemma}
+Let $\kappa\in \mathbb{R}_+$.  Then
+%\begin{equation*}
+$OPT_{M,\delta}\le (\kappa+W_\kappa(\realm)\cdot |X|^{\delta-1})/|A|$.
+%\end{equation*}
+\end{lemma}
+
+\begin{sloppypar}
+\begin{proof}
+For each off-diagonal entry of $\realm$ with $\realm(i,j)>\kappa$,
+include matrix $L_{ij}$ with coefficient $(\realm(i,j)-\kappa)/|A|$ in the sum for
+the Laplacian $V$.
+By construction, the matrix $V+\realm/|A|$ has off-diagonal entries
+at most $\kappa/|A|$ and diagonal entries at most
+$(\kappa+W_\kappa(\realm))/|A|$.  The solution to \eqref{c-dual-SDP1}
+with $w=\kappa/|A|$ and $z=W_\kappa(\realm)/|A|$ is therefore feasible,
+which yields the bound as required.
+\end{proof}
+\end{sloppypar}
+
+
+It may not be easy to bound $W_\kappa(N)$ directly,
+since the real part of $M^{*}M$ may not have good structure. 
+Fortunately,
+we have the following measure:
+\begin{defn}
+Let $M\in \mathbb{C}^{A\times X}$ be a complex matrix.
+For $\kappa\in \mathbb{R}_+$, define\\
+\centerline{$\displaystyle\tilde W_\kappa(M)=\max_{i\in X} \sum_{j\in X:\ |(M^{*}M)_{i,j}|> \kappa} (|(M^{*}M)_{i,j}|-\kappa)$.}
+\end{defn}
+
+\begin{proposition}
+Let $\kappa\in \mathbb{R}_+$.  Then
+$W_\kappa(\realm)\leq \tilde W_\kappa(M)$ 
+\end{proposition}
+\begin{proof}
+Whenever $N_{i,j}> \kappa$,
+we have $|(M^{*}M)_{i,j}|\geq N_{i,j}> \kappa$.
+Moreover,
+this gives $|(M^{*}M)_{i,j}|-\kappa\geq N_{i,j}-\kappa$.
+Then the statement follows the two definitions.
+\end{proof}
+
+
+For specific matrices $M$, we obtain the required bounds on
+$\tau_M(\delta)<0$ for some $0<\delta<1$ by showing that we can
+set $\kappa=|A|^\gamma$ for some $\gamma<1$ and obtain that
+$W_\kappa(N)$ or $\tilde W_\kappa(M)$ is at most
+$\kappa\cdot |X|^{\gamma'}$ for some $\gamma'<1$.
+

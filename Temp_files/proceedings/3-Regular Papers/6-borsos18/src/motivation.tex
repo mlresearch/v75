@@ -1,0 +1,181 @@
+% !TEX root = onlinevarinancebandits.tex
+
+\section{Motivation and Problem Definition} \label{sec:Motivation}
+% \paragraph{Notation:} We use $[n] :=\{1,\ldots,n\}$. By $\Delta$ we denote the simplex over the index set $[n]$ where $n$ will be 
+% clear from the context.
+%\paragraph{Motivation.} 
+Typical sequential solvers for ERM usually require a fresh unbiased estimate $\tilde{L}_t$  of the loss ${L}_t$ at each round, which is obtained by repeatedly sampling from the dataset.
+The template of Figure~\ref{fig:ERM_Sequential} captures a rich family of such solvers such as SGD, SAGA \citep{defazio2014saga}, SVRG \citep{johnson2013accelerating}, and online $k$-Means \citep{bottou1995convergence}.
+
+ 
+ 
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[h]
+\begin{framed}
+\centering{ \textbf{Sequential Optimization Procedure for ERM}\\}
+ \flushleft
+ \textbf{Input}: Dataset $\D = \{x_1,\ldots,x_n\}$ \\
+  \textbf{Initialize}: $w_1 \in \W$ \\
+   \textbf{for} $t=1,\ldots, T$ \textbf{do} \\
+   \quad {Draw samples from $\D$  using $p_t\in\Delta$ to generate $\tilde{L}_t(\cdot)$,  an unbiased estimate for $L(\cdot)$.} \\
+    \quad {Update solution:} $w_{t+1} \gets \A( w_t, \tilde{L}_t(\cdot)$). \\
+   \textbf{end for} \\
+\end{framed}
+\caption{ Template of a sequential  procedure for minimizing the ERM objective.
+At each round, we devise a fresh unbiased estimate $\tilde{L}_t(\cdot)$ of the empirical loss, then we update the solution based on the previous solution $w_t$ and $\tilde{L}_t(\cdot)$.}
+\label{fig:ERM_Sequential}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+ A natural way to devise the unbiased estimates $\tilde{L}_t$ is to sample $i_t \in \{ 1, \dots, n\}$ uniformly at random and return $\tilde{L}_t(w) = \ell(x_{i_t},w)$. Indeed, uniform sampling is the common practice when applying SGD, SAGA, SVRG and online $k$-Means. Nevertheless, \emph{any distribution} $p$ in the probability simplex $\Delta$ induces an unbiased estimate.
+ Concretely, sampling an index $i \sim p$  induces the estimate
+%and considering the weighted loss with respect to the chosen $x_i$:
+%We can devise an unbiased estimate of the loss function by sampling an index $i$ from a distribution $p$ over $\{1, 2, \dots, n \}$ and considering the weighted loss with respect to the chosen $x_i$:
+  \begin{equation}
+  \tilde{L}(w) := \frac{1}{n \cdot p(i)} \cdot  \ell (x_i, w)
+\end{equation}
+and it is immediate to show that $\mathbb{E}_{x_i\sim p}[\tilde{L}(w)]=L(w)$.
+This work is concerned with efficient ways of choosing a ``good'' sequence of sampling distributions $\{p_1(\cdot),\ldots, p_T(\cdot)\}$.
+
+It is well known that the performance of typical solvers (e.g.  SGD/SAGA/SVRG) improves as the variance of the estimates $\tilde{L}_t(w_t)$ is becoming smaller.
+Thus, a natural criterion for measuring the performance of a sampling distribution $p$ is the variance of the induced estimate
+\begin{equation*}
+\text{Var}_p(\tilde{L}(w)) = \frac{1}{n^2} \sum_{i=1}^n \frac{\ell^2 (x_i, w)}{p(i)} - L^2(w).
+\end{equation*}
+Denoting $\ell_t(i):=\ell (x_i, w_t)$ and noting that the second term is independent of $p$, we may now cast the task of sequentially choosing the sampling distributions as the  online optimization problem shown in Figure \ref{fig:Protocal_bandit}.
+\begin{figure}[h]
+\begin{framed}
+\centering{ \textbf{Online Variance Reduction Protocol}\\}
+ \flushleft
+ \textbf{Input}: Dataset $\D = \{x_1,\ldots,x_n\}$ \\
+   \textbf{for} $t=1,\ldots, T$ \textbf{do} \\
+   \quad{ Player chooses $p_t\in \Delta$.\\
+   \quad{ Adversary chooses $\ell_t \in \reals^n$, which induces a cost function $f_t(p):=  \ \sum_{i=1}^n \frac{\ell_t^2(i)}{p(i)}.$} \\
+   \quad{ Player draws a sample $I_t\sim p_t$.} }\\
+   \quad{ Player incurs a cost $\frac{1}{n^2}f_t(p_t)$, and receives  $\ell_t(I_t)$ as (bandit) feedback.} \\
+      \textbf{end for} \\
+\end{framed}
+\caption{Online variance reduction protocol with bandit feedback}
+\vspace{-0.2cm}
+\label{fig:Protocal_bandit}
+\end{figure}
+In the above protocol, we treat the sequential solver as an adversary that chooses a sequence of loss vectors $\{ \ell_t\}_{t\in[T]}\subset \reals^n$, where $t\in[T]$ denotes $t \in \{ 1, \dots, T\}$. Each loss vector is a function of $w_t$, the solution chosen by the solver in the corresponding round (note that we abstract out this dependence of $\ell_t$ in $w_t$).
+The cost\footnote{We use the term ``cost function'' to refer to $f$ in order to distinguish it from the loss $\ell$.} $\frac{1}{n^2}f_t(p_t)$ that the player incurs at  round $t$ is the second moment of the  loss estimate, which is induced by  the distribution chosen by the player at round $t$.
+
+Next, we define the regret, which is our performance measure for the player,
+\begin{equation*}
+\regret_T =  \frac{1}{n^2}\left(\sum_{t=1}^Tf_t(p_t) - \min_{p\in \Delta}\sum_{t=1}^T f_t(p) \right).
+\end{equation*}
+Our goal is to devise a no-regret algorithm such that $\lim_{T \rightarrow \infty} \regret_T / T = 0$, which in turn guarantees that we  recover asymptotically the best fixed sampling distribution. 
+In the bandit feedback setting, the player aims to minimize its expected regret $\expval {\regret_T}$, 
+where the expectation is taken with respect to the randomized choices of the player and the adversary. Note that we  allow the choices of the adversary to depend on the past choices of the player. 
+
+
+There are few noteworthy comments regarding the above setup. First, it is immediate to verify that the cost functions $f_1, \dots,  f_T$ are convex in $\Delta$, therefore this is an online convex optimization problem. 
+Secondly, the cost functions are unbounded in $\Delta$, which poses a challenge in ensuring no-regret.
+%one of the biggest challenges in ensuring no-regret in this setting is the fact that $f_1, \dots f_T$ are unbounded.
+Finally, notice that the player  receives a \emph{bandit feedback}, i.e., he is allowed to inspect the losses only at the coordinate $I_t$
+ chosen at time $t$. To the best of our knowledge, this is the first natural setting
+ where, as we will show, it is possible to provide no regret guarantees despite bandit feedback and unbounded costs.
+
+
+
+
+
+
+% We are interested in the variance of the estimator $\text{Var}(\tilde{L}(w)) = \frac{1}{n^2} \sum_{i=1}^n \frac{\ell (x_i, w)^2}{p(i)} - L^2(w)$.
+%Consider a sequential procedure with $T$ rounds that provides $w_t$ in each round in an adversarial manner. Denoting $\ell_t(i):=\ell (x_i, w_t)$,  we find that sampling according to $p(i)\propto \ell_t(i)$ in each round produces zero variance. As a consequence, it is only sensible to compete against the best \emph{fixed} distribution in hindsight over $T$ rounds. Thus we can formulate our setting as an online optimization problem, where our goal is to minimize the following regret:
+%\begin{equation} \label{eq:regret}
+%\regret_T:=\frac{1}{n^2}\left( \sum_{t=1}^T \sum_{i=1}^n \frac{\ell_t^2(i)}{p_t(i)} - \min_{p \in \Delta}  \sum_{t=1}^T \sum_{i=1}^n \frac{\ell_t^2(i)}{p(i)} \right)
+%\end{equation}
+%where $\Delta$ denotes the probability simplex. The squared bias terms cancel since they are not affected by the choice of $p$.  Our goal is to devise a no-regret algorithm such that $\lim_{T \rightarrow \infty} \regret_T / T = 0$, which in turn guarantees that we recover asymptotically the best fixed sampling distribution for reducing the variance. Our formulation is different from the classical multi-bandit setting, since there is no single best arm in hindsight.
+
+Throughout this work, we assume that the losses are bounded, $l^2_t(i) \leq L$ for all  $i \in [n]$ and \linebreak $t \in [T]$.
+Note that our analysis may be extended to the case where the bounds are  instance-dependent, i.e., $l^2_t(i) \leq L_i$ for all  $i \in [n]$ and $t \in [T]$. In practice, it can be beneficial to take into account the different $L_i$'s, as we demonstrate in our experiments.
+
+
+%Next, we discuss the meaningfulness of using online variance reduction algorithms in solving ERM problems.
+
+% \textbf{Notation:} we  denote $\ell_{1:t}^2:= \sum_{\tau=1}^t \ell_\tau^2$; we also use $[T]:=\{1,\ldots,T\}$, and the simplex by $\Delta$.
+
+
+\subsection{Is Regret  a Meaningful Performance Measure?} \label{sec:Why}
+Let us focus on the family of ERM solvers  depicted in Figure~\ref{fig:ERM_Sequential}.
+As  discussed above, devising loss estimates such that $\tilde{L}_t(w_t)$ has low variance is beneficial for such solvers --- in case of SGD, this is due to strong connection between the cumulative variance of gradients and the quality of optimization that we discuss in more detail in Appendix \ref{appendix:cumulvariance}.
+Translating this observation into the online variance reduction setting  suggests a  natural performance measure:
+rather than competing with the best \emph{fixed} distribution in hindsight, we would like to compete against the \emph{sequence} of best distributions per-round  $\left\{p^*_t\gets \argmin\sumin {\ell_t^2(i)}/{p(i)} \right\}_{t\in[T]}$.
+%$\sumtt \min_{p\in\Delta}\sumin {\ell_t^2(i)}/{p(i)}$. 
+This  optimal sequence ensures \emph{zero}  variance  in every round, and is therefore the ideal baseline to compete against.
+This also raises the question whether regret guarantees, which  compare against  the best \emph{fixed} distribution in hindsight, are at all meaningful in this context. Note that regret minimization is meaningful in stochastic optimization, when we assume that the losses are generated i.i.d. from some fixed distribution \citep{cesa2004generalization}. Yet, this  certainly does not apply in our  case since  losses are non-stationary and  non-oblivious.
+
+Unfortunately, ensuring guarantees compared to the sequence of best distributions per-round seems generally hard.
+However, as we show next, regret  is still a meaningful measure for sequential ERM solvers.
+Concretely, recall that our ultimate goal is to minimize the ERM objective. Thus, we are only interested in ERM solvers that actually converge to a (hopefully good) solution for the ERM problem. More formally, let us define $\ell_*(i)$ as follows,
+\begin{equation*}
+ \ell_{*}(i):=\lim _{t\rightarrow \infty}\ell_t(i),
+\end{equation*}
+where we recall that $\ell_t(i) :=\ell(x_i,w_t)$, and assume the above  limit to exist for every $i\in[n]$.
+We will also denote $L_*:= \frac{1}{n}\sumin  \ell_{*}(i)$.
+Moreover, let us assume that the asymptotic solution is better on average than any of the sequential solutions in the following sense,
+\begin{equation*}
+\frac{1}{T}\sum_{t=1}^T L(w_t) \geq L_*~,\quad \forall T\geq 1
+\end{equation*}
+where $L(w_t) := \frac{1}{n}\sumin \ell(x_i,w_t)$.
+This assumption naturally holds when the ERM solver converges to the optimal solution for the problem, which applies for SGD in the convex case.
+%denote by $w^*\in \W$ an optimal solution to the ERM, i.e., $L(w^*)= \min_{w\in\W}L(w)$, and  also denote $\ell_*(i) := \ell_i(x_i,w^*)$.
+%If the ERM solver converges asymptotically to the optimal solution then it make sense to assume the following  to hold,
+%$$
+%\lim _{t\rightarrow \infty}\ell_t(i) =   \ell_{*}(i)~.
+%$$
+%where we recall that $\ell_t(i) :=\ell(x_i,w_t)$.
+The next lemma shows that under these mild assumptions,  competing against the best \emph{fixed}  distribution in hindsight is not  far from competing against the ideal baseline.% best \emph{sequence} of optimal distributions per-round,
+\begin{lemma} \label{lem:MeaningfulRegret}
+Consider the online variance reduction setting, and for any $i\in[n]$ denote \linebreak
+$V_T(i)=\sumtt(\ell_t(i)-\ell_*(i))^2$. Assuming that the losses, $l_t(i)$, are non-negative for all $i \in [n]$, $t\in[T]$, 
+ the following holds for any $T\geq 1$,
+\begin{align*}
+\frac{1}{n^2}\min_{p\in\Delta}\sumtt f_t(p) \leq 
+\frac{1}{n^2}\sumtt \min_{p\in\Delta} f_t(p)
+~+~
+2\sqrt{T}L_* \cdot \frac{1}{n}\sumin  \sqrt{{V_T(i)}} + \left(\frac{1}{n}\sumin  \sqrt{{V_T(i)}} \right)^2~.
+\end{align*}
+\end{lemma}
+Thus, the above lemma connects  the convergence rate of the ERM solver to  the benefit that we get by regret minimization. It shows that the benefit is larger if the ERM solver converges faster.
+As an example, let us assume that $|\ell_t(i)-\ell_*(i)| \leq \O(1/\sqrt{t})$, which loosely speaking holds for  SGD.
+This assumption implies $V_T(i)\leq \O(\log(T))$, hence by Lemma~\ref{lem:MeaningfulRegret} the regret guarantees translate into guarantees with respect to the ideal baseline, with an additional cost of $\tO(\sqrt{T})$.
+
+
+%\begin{itemize}
+%\item What we would ideally like to do is to output estimates with a close to zero variance, which is equivalent to second moment =square of first moment. This is equivalent to competing with sequence of best = hypothesis in each round rather than best fixed 
+%hypothesis in hindsight. Also, this raises the question whether regret minimization is meaningful in this context.
+%
+%\item What we show here that if the black box ERM solver ensures convergence than regret minimization is meaningful.
+%Concretely, assume that the ERM solver is ensured to converge to a good hypothesis (approximate minimizer of the ERM objective). Then in this case the guarantee that we get from a regret minimization procedure is the following,
+%$$
+%dsvsd
+%$$
+%where , is a measure of ....
+%Interestingly, such bound naturally apply to SGD [cite, Shamir], and SVRG. 
+%Note that the bounds still hold as long as the ERM solver converges to some solution, which need not be the global minimizer of Eq~.1.
+%\end{itemize}
+%
+%
+%
+%\kl{ELABORATE}
+% Assume that the adversary provides $l_t(i)$'s such that they are slowly changing and converging to $\ell_*(i)$. Denoting $V_T(i)=\sumtt(\ell_t(i)-\ell_*(i))^2$, we have for all $i \in [n]$
+%\begin{equation} \label{eq:intro-regret-variance}
+%\frac{1}{T} \sumtt \ell^2_t(i) = \frac{1}{T} \sumtt (\ell_*(i) +(\ell_t(i) - \ell_*(i)))^2 \leq \left(\ell_*(i) +\sqrt{\frac{V_T(i)}{T}}\right)^2,
+%\end{equation}
+%\kl{why does the inequality holds?}
+%where we have used the fact that $\sumtt (\ell_t(i) - \ell_*(i)) \leq \sqrt{T \cdot V_T(i)}$. In the proof of Lemma \ref{lemma:ub-b} we will derive the cost incurred by the optimal sampling distribution in hindsight. Relying on this fact, we get:
+%\begin{equation*}
+%\frac{1}{T} \min_{p \in \Delta} \sumtt f_t(p) = \frac{1}{n^2 \cdot T } \left( \sumin \sqrt{\sumtt \ell^2_t(i)} \right)^2 = \left( \frac{1}{n} \sumin \sqrt{\frac{1}{T} \sumtt \ell^2_t(i)} \right)^2.
+%\end{equation*}
+%Applying the inequality in Equation \eqref{eq:intro-regret-variance}, we conclude that
+%\begin{equation*}
+%\frac{1}{T} \min_{p \in \Delta} \sumtt f_t(p) \leq \left( \frac{1}{n} \sumin \ell_*(i) + \frac{1}{n} \sumin \sqrt{\frac{V_T(i)}{T}}\right)^2.
+%\end{equation*}
+%For example, by assuming a slow change on $\ell_t(i)$ of the form $|\ell_t(i) - \ell_*(i)|\leq \sqrt{\frac{L}{t}}$, we have $V_T(i) \leq L \log T$, which implies that as $T \rightarrow \infty$, no regret ensures that we recover the term $\left( \frac{1}{n} \sumin \ell_*(i)\right)^2$.
+

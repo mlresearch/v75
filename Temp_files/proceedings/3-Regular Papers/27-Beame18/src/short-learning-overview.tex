@@ -1,0 +1,174 @@
+\section{Branching programs for learning}
+
+In order to be able to solve the learning problem given concept class $X$, 
+sample space of inputs
+$A$ and labelling function $\fun$ on $A\times X$ exactly we require that the
+learning function $\fun$ have the property that for all $x\ne x'\in X$ there exists
+an $a\in A$ such that $\fun(a,x)\ne \fun(a,x')$.
+%Throughout this paper we use the notation that $n=\log_2 |X|$ and
+%$m=\log_2 |A|$.
+%For example, for parity learning, $\fun(a,x)=a\cdot x\bmod 2$.
+Note that the set $\coltset{0,1,\ldots,\cp-1}$ of labels allows us to model
+any learning situation in which $\cp$ different labels are possible.
+
+Following \cite{DBLP:conf/focs/Raz16}, the time and space of a
+learner are modelled
+simultaneously by expressing the learner's computation as a layered
+branching program: a finite rooted directed acyclic multigraph with every
+non-sink
+node having outdegree $r|A|$, with one outedge for each $(a,b)$ with $a\in A$
+and $b\in \coltset{0,1,\ldots, \cp-1}$ that leads to a node in the next layer.   
+Each sink node $v$ is labelled by some $x'\in X$ which is the learner's guess
+of the value of the concept $x$. (In the case of prediction we allow the
+sink label to be an arbitrary function from $A$ to $\coltset{0,1,\ldots,\cp-1}$
+denoting the best prediction of the algorithm for each $a\in A$.)
+
+The space $S$ used by the learning branching program is the $\log_2$ of the
+maximum number of nodes in any layer and the time $T$ is the length of the
+longest path from the root to a sink.
+
+\begin{sloppypar}
+The samples given to the learner $(a^{(1)},b^{(1)}),(a^{(2)},b^{(2)}),\ldots$
+based on uniformly randomly chosen $a^{(1)},a^{(2)},\ldots \in A$ and a concept
+$x\in X$
+determines a (randomly chosen) {\em computation} path in the branching program.
+When we consider computation paths we include the concept $x$ in their
+description.
+The (expected) success probability of the learner is the probability for a
+uniformly random concept $x\in X$ that a random computation path given concept $x$
+reaches a sink node $v$ with label $x'=x$ (or with sufficiently good predictions
+on randomly chosen $a\in A$).  
+\end{sloppypar}
+
+\paragraph{Progress towards identification}
+
+Following \cite{DBLP:conf/colt/MoshkovitzM17} and \cite{DBLP:conf/focs/Raz17}
+we measure progress towards identifying $x\in X$ using
+the ``expectation 2-norm'' over the uniform distribution:
+For any set $S$, and $f:S\rightarrow \mathbb{R}$, define 
+$\|f\|_2=\left(\mathbb{E}_{s\in_R S} f^2(s)\right)^{1/2}=(\sum_{s\in S} f^2(s)/|S|)^{1/2}$.
+Define $\Delta_X$ to be the space of probability distributions on $X$.
+Consider the two extremes for the expectation 2-norm of elements of $\Delta_X$:
+If $\mathbb{P}$ is the uniform distribution on $X$,
+then $\|\mathbb{P}\|_2 = |X|^{-1}$.  This distribution represents the learner's knowledge
+of the concept $x$ at the start of the branching program.
+On the other hand if $\mathbb{P}$ is point distribution on any $x'$, then
+$\|\mathbb{P}\|_2=|X|^{-1/2}$.
+
+For each node $v$ in the branching program, there is an induced probability
+distribution on $X$, $\mathbb{P}'_{x|v}$ which represents the distribution on
+$X$ conditioned on the fact that the computation path passes through $v$.  
+It represents the learner's knowledge of $x$ at the time that the computation
+path has reached $v$.
+Intuitively, the learner has made significant progress towards identifying the
+concept $x$ if $\|\mathbb{P}'_{x|v}\|_2$ is much larger than $|X|^{-1}$, say
+$\|\mathbb{P}'_{x|v}\|_2\ge |X|^{\delta/2}\cdot |X|^{-1}=|X|^{-(1-\delta/2)}$.
+
+The general idea will be to argue that for any fixed node $v$ in the branching
+program that is at a layer $t$ that is $|A|^{o(1)}$,
+the probability over a randomly chosen computation path that $v$ is the first
+node on the path for which the learner has made significant progress is
+$|X|^{-\Omega(\logr)}$.  Since by assumption of correctness the learner makes
+significant progress with at least $|X|^{-\varepsilon}$ probability, there
+must be at least $|X|^{\Omega(\logr)}$
+such nodes and hence the space must be $\Omega(\log|X|\logr)$.
+
+Given that we want to consider the first vertex on a computation path at which
+significant progress has been made, it is natural to truncate a computation
+path at $v$ if significant progress has been already been made at $v$ (and then
+one should not count any path through $v$ towards the progress at some
+subsequent node $w$).  Following~\cite{DBLP:conf/focs/Raz17}, for
+technical reasons we will also
+truncate the computation path in other circumstances: if the concept $x$ has 
+too high probability at $v$, or if the next edge is labelled by a pair $(a,b)$ 
+for which the value on input $a$ of random concepts whose computation path reaches
+$v$ is significantly biased away from the uniform distribution on
+$\coltset{0,1\ldots,\cp-1}$.
+
+Like~\cite{DBLP:conf/focs/Raz17}, we use an analytic approach to
+understanding the progress and the bias. 
+In~\cite{DBLP:conf/focs/Raz17}, only binary
+feedback is possible and progress is analyzed in terms of the matrix properties
+of a learning matrix $M$ given by $M(a,x)=(-1)^{\fun(a,x)}$, which is viewed
+as the learning problem specification.  This form is particularly
+convenient since it allows one to represent the predictability of outcomes
+under a distribution $\mathbb{P}$ on $X$ in terms of a matrix vector product.
+That is, $(M\cdot \mathbb{P})(a)=\E_{x\sim \mathbb{P}}[(-1)^{\fun(a,x)}]$
+is the expected bias of a concept distributed according to $\mathbb{P}$ on input
+$a$.
+
+It would be natural to try to extend this analytic approach for
+$\cp>2$ by replacing
+$(-1)^{\fun(a,x)}$ by $\omega^{\fun(a,x)}$ where $\omega=e^{2\pi i/\cp}$ is a
+primitive $\cp$-th root of unity.   However, for $\cp>3$, simply
+having $\E_{x\in_R X}[\omega^{f(x)}]$ small does not imply that $f$ is close to
+uniformly distributed on $\coltset{0,1,\ldots,r-1}$.
+Nonetheless, by setting $g_k=\Pr_{x\in_R X}[f(x)=k]$ we can apply the following
+proposition, which is a standard method using exponential sums,
+to show that bounding $|\E_{x\in_R X}[\omega^{j\cdot f(x)}]|$
+for all $j\in \coltset{1,\ldots,\cp-1}$ is sufficient to show that $f$ is close to
+uniformly distributed. 
+
+\begin{proposition}
+\label{prop:technical-norm-bias}
+Suppose that $\sum_{k=0}^{\cp-1} g_k=1$ and
+define $g(z)=\sum_{k=0}^{\cp-1} g_k z^k$.
+If $|g(\omega^j)|< \epsilon$ for all $j\in \coltset{1,\ldots,\cp-1}$ then for all
+$k\in \coltset{0,1,\ldots,r-1}$,  $|g_k-\frac{1}\cp|\le \epsilon$.
+\end{proposition}
+
+Therefore, instead of the single $\pm$ matrix $M$ given by
+$M(a,x)=(-1)^{\fun(a,x)}$, we will analyze the learning problem given by $\fun$
+using $\cp-1$ different\footnote{In Proposition~\ref{prop:technical-norm-bias}
+one can observe that $|g(\omega^j)|=|g(\omega^{r-j})|$ so
+$\lceil(\cp-1)/2\rceil$ matrices suffice, but we find it convenient to
+argue using all $\cp-1$ matrices; however, this does imply that 
+a single matrix suffices when $\cp=3$.}
+complex matrices $\mj\in \mathbb{C}^{A\times X}$
+for $j\in \coltset{1,\ldots, \cp-1}$
+given by $\mj(a,x)=\omega^{j\cdot \fun(a,x)}$.  
+We now define the
+probability distributions and truncation process for computation paths
+inductively as follows:
+
+
+\begin{defn}
+\label{defn:truncation}
+We define probability distributions $\mathbb{P}_{x|v}\in \Delta_X$ and the
+$(\delta,\alpha,\gamma)$-truncation of the computation paths inductively as
+follows:
+\begin{itemize}
+\setlength\itemsep{0.1ex}
+\item If $v$ is the root, then $\mathbb{P}_{x|v}$ is the uniform distribution on
+$X$.
+\item (Significant Progress) If $\|\mathbb{P}_{x|v}\|_2\ge |X|^{-(1-\delta/2)}$ then
+truncate all computation paths at $v$.  We call vertex $v$ \emph{significant}
+in this case.
+\item (High Probability) Truncate the computation paths at $v$ for all concepts
+$x'$ for which  $\mathbb{P}_{x|v}(x')\ge |X|^{-\alpha}$.  Let $\High(v)$ be the
+set of such concepts.
+\item (High Bias) Truncate any computation path at $v$ if it follows an
+outedge $e$ of $v$ with label $(a,b)$ for which $|(\mj\cdot \mathbb{P}_{x|v})(a)|\ge |A|^{-\gamma}$ for some $j\in \coltset{1,\ldots,\cp-1}$.
+That is, we truncate the paths at $v$ if the label outcome for
+the next sample for $a\in A$ is too predictable given the knowledge that
+the path was not truncated previously and arrived at $v$.  
+\item If $v$ is not the root then define $\mathbb{P}_{x|v}$ to be the 
+conditional probability distribution on $x$ over all computation paths that
+have not previously been truncated and arrive at $v$.
+\end{itemize}
+For an edge $e=(v,w)$ of the branching program, we also define a probability
+distribution $\mathbb{P}_{x|e}\in \Delta_X$, which is the conditional
+probability distribution on $X$ induced by the truncated computation paths
+that pass through edge $e$.
+\end{defn}
+
+With this definition, it is no longer immediate from the assumption of
+correctness that the truncated path reaches a significant node with
+at least $|A|^{-\varepsilon}$ probability.  However, we will see that a single
+assumption about the
+matrices $\mj$ will be sufficient to prove both that this holds and that 
+the probability is $|X|^{-\logr}$ that the path reaches any specific node
+$v$ at which significant progress has been made.
+
+
+

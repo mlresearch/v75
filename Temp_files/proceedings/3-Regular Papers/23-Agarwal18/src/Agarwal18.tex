@@ -1,0 +1,509 @@
+\documentclass[final,12pt]{colt2018} % Anonymized submission
+% \documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Lower Bounds for Higher-Order Convex Optimization]{Lower Bounds for Higher-Order Convex Optimization}
+\usepackage{times}
+\usepackage{amssymb,amsfonts}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{makecell}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ %Two authors with the same address
+  \coltauthor{\Name{Naman Agarwal} \Email{namana@cs.princeton.edu}\\
+  \addr Department of Computer Science, Princeton University, Princeton, NJ \\
+   \Name{Elad Hazan} \Email{ehazan@cs.princeton.edu}\\
+   \addr Department of Computer Science, Princeton University, Princeton, NJ\\
+   \addr Google Brain}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+\include{defs}
+
+%%% Paper specific Macros
+
+\def\smooth#1{#1_{\delta,\Gamma}}
+\def\deltat{\delta_t}
+\def\hardf{f^{\dagger}}
+\def\tf{\tilde{f}}
+\def\smallq{\frac{1}{20T^{1.5}}}
+\def\alg{\mathrm{ALG}}
+
+
+\newcommand{\naedit}[1]{{\color{red}#1}}
+
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+State-of-the-art methods in mathematical optimization employ higher-order derivative information. We explore the limitations of higher-order optimization and prove that even for convex optimization, a polynomial dependence on the approximation guarantee and higher-order smoothness parameters is necessary. This refutes the hope that higher-order smoothness and higher-order derivatives can lead to dimension free polynomial time algorithms for convex optimization. As a special case, we show Nesterov's accelerated cubic regularization method and higher-order methods to be nearly tight. 
+\end{abstract}
+
+\begin{keywords}
+Convex Optimization, Second-Order Optimization, Higher-Order Optimization, Newton's method, Lower Bounds.
+\end{keywords}
+
+\section{Introduction}
+%This paper explores whether linearly-converging \footnote{methods for which the dependence on the additive error $\epsilon$ is logarithmic} convex optimization methods  necessarily require polynomial dependence on dimension. 
+
+Linearly-converging\footnote{methods for which the dependence on the additive error $\epsilon$ is logarithmic}  convex optimization algorithms  fall into two categories.   The first are methods whose iteration complexity scales with the dimension. This includes the ellipsoid \citep{khachiyan1980polynomial,grotschel2012geometric}, cutting plane \citep{vaidya1989new,lee2015faster} and random-walk \citep{bertsimas2004solving,kalai2006simulated,lovasz2006fast} based methods. They solve convex optimization in the general membership oracle model. 
+
+The other category of linearly-converging algorithms is iterative derivative-based methods. These achieve fast dimension-free iteration rates for certain types of convex functions, namely those that are strongly convex and smooth. Indeed gradient descent and further extensions have therefore been extremely successful for optimization especially in machine learning.
+
+More recently state-of-the-art optimization for machine learning has shifted from gradient based methods, namely stochastic gradient descent and its derivatives  \citep{adagrad,svrg}, to methods that are based on higher moments.  Notably, the fastest theoretical running times for both convex \citep{LiSSA2016,xu2016sub,bollapragada2016exact} and non-convex \citep{Agarwal:2017:FAL:3055399.3055464,CarmonAGD} optimization are attained by algorithms that either explicitly or implicitly exploit second-order information and third-order smoothness. 
+
+Of particular interest is Newton's method, due to recent efficient implementations that run in near-linear time in the input representation. The hope was that Newton's method or higher-order methods can achieve logarithmic in error iteration complexity which is independent of the dimensionality, which is  extremely high for many large-scale applications, and without requiring strong convexity.  %Table \ref{table:main} gives existing optimization algorithms and their iteration complexity below: currently all poly-time methods require either dimension dependence or condition number (which requires strong convexity) dependence on the number of iterations. 
+
+
+
+
+
+
+\begin{table}[h]
+
+\label{table:main}
+\begin{center}
+\begin{tabular}{ |c|c|c|c|c|} 
+ 
+ \hline
+ \textbf{Method} & \thead{\textbf{Dim.} \\ \textbf{Free}} & \textbf{Order} & \textbf{Assumptions} & \textbf{Upper Bound}\\
+ \hline   % \\ Cutting plane \cite{lee2015faster} 
+ \makecell{Ellipsoid \\ \citep{grotschel2012geometric} \\ \citep{vaidya1989new} \\ Random Walks \\ \citep{kalai2006simulated}  \\ Interior Point \\ \citep{nesterov1994interior}\\\citep{abernethy2015faster} }  & No & NA & None & $poly\left(d, \log(1/\epsilon)\right)$\\
+ \hline
+  \multirow{2}{*}{Gradient Descent} & \multirow{2}{*}{Yes} & \multirow{2}{*}{k=1} & Bounded $L_2$ & $O\left(\left(\frac{L_2}{\epsilon}\right)^{1/2}\right)$ \\
+\hhline{~~~--} \citep{NesterovBook} & & & $\lambda_{\min} > 0$  & $O\left(\left(\frac{L_2}{\lambda_{\min}}\right)^{1/2}  \log(\frac{1}{\epsilon})\right)$  \\
+\hline
+\multirow{2}{*}{Newton's method } & \multirow{2}{*}{Yes} & \multirow{2}{*}{k=2} & Bounded $L_3$ & $O\left(\left(\frac{L_3}{\epsilon}\right)^{2/7}\right)$ \\
+\hhline{~~~--} \citep{monteiro2013accelerated} & & & $\lambda_{\min} > 0$  & $\tilde{O}\left(\left(\frac{L_3}{\lambda_{\min}}\right)^{\frac{2}{7}}+ \log\log(\frac{1}{\epsilon})\right)$  \\ 
+ \hline
+ \makecell{Higher-Order \\ \citep{baeshigherorder}} & Yes & $k > 2$ & Bounded $L_k$ & $O\left(\left(\frac{L_{k+1}}{\epsilon}\right)^{1/(k+1)}\right)$ \\ 
+ \hline
+\end{tabular}
+\end{center}
+\caption{Table summarizing known results for convex optimization. }
+\end{table}
+
+
+
+Table \ref{table:main} surveys the known algorithms for convex optimization and their iteration complexity.  Polynomial time algorithms admit {\it linear convergence}, i.e. $O(\log \frac{1}{\eps})$, and invariably depend on the dimension. Dimension free polynomial-time algorithms require both an upper bound on the smoothness and a lower bound on the strong convexity.  
+
+The main question we set to answer is {\bf whether there exists linearly-converging iterative algorithms for (high-order) smooth functions that are not strongly convex?}
+
+In this paper we show that unfortunately, these hopes cannot be attained without stronger assumptions on the underlying optimization problem. In particular Theorem \ref{thm:mainthminit} shows that even if the functions are $k^{th}$-order smooth, for arbitrarily large $k$, and the iterative algorithm uses $k^{th}$-order derivative information, the answer is negative. To the best of our knowledge, our results are the first lower bound for $k^{th}$-order optimization for $k \geq 2$ that include higher-order smoothness.\footnote{After the writing of the first manuscript we were made aware of the work by \cite{shamir2017oracle} which provides lower bounds for these settings as well.}
+
+\subsection{Statement of Result}
+
+We consider the problem of $k^{th}$-order optimization. We model a $k^{th}$-order algorithm as follows. Given a $k$-times differentiable function $f: \reals^d \rightarrow \reals$, at every iteration $i$, the algorithms outputs a point $x_i$ and receives as input the tuple $[ f(x_i), \nabla f(x_i), \nabla^2 f(x_i) \ldots \nabla^k f(x_i)]$, i.e. the value of the function and its $k$ derivatives at $x_i$.\footnote{An iteration is equivalent to an oracle call to $k^{th}$-order derivatives in this model.} The goal of the algorithm is to output a point $x_T$ such that 
+\[ f(x_T) - \min_{x \in \reals^d} f(x) \leq \epsilon. \]
+
+For the $k^{th}$-order derivatives to be informative, one needs to bound their rate of change, or equivalently the Lipschitz constant of its derivative. This is called $k^{th}$-order smoothness, and we denote it by $L_{k+1}$. In particular we assume that
+$$ \| \nabla^k f(x) - \nabla^k f(y) \| \leq L_{k+1} \| x-y \|,$$
+where $\|\cdot\|$ is defined as the induced operator norm with respect to the Euclidean norm. Our main theorem shows the limitation of $k^{th}$-order iterative optimization algorithms: 
+
+\begin{theorem}
+\label{thm:mainthminit}
+For every number $L_{k+1}$ and $k^{th}$-order algorithm $\alg$ (deterministic or randomized), there exists a number $\epsilon_0(L_{k+1})$ such that for all $\epsilon \leq \epsilon_0(L_{k+1})$, there exists a $k$-differentiable convex function $f:B_d \rightarrow \reals$ with $k^{th}$-order smoothness coefficient $L_{k+1}$ such that $\alg$ cannot output a point $x_T$ such that
+\[f(x_T) \leq \min_{x \in B_d} f(x) + \epsilon,\]
+ in number of iterations $T$ fewer than
+\[ c_k\left(\frac{L_{k+1}}{\epsilon}\right)^{\Omega(1/k) },\]
+where $c_k$ is a constant depending on $k$ and $B_d$ is defined to be the unit ball in $d$ dimensions.
+\end{theorem}
+
+The above lower bound is known to be tight up to constants in the exponent:  for $k > 2$,~\cite{baeshigherorder} proves an upper bound of $O\left( \left(\frac{L_{k+1}}{\epsilon} \right)^{\frac{1}{k+1}}\right)$. %In comparison Theorem \ref{thm:mainthminit} proves a lower bound of $\Omega\left(\left(\frac{L_{k+1}}{\epsilon}\right)^{2/(5k + 1)}\right)$. 
+
+
+Although the bound is stated for constrained optimization over the unit ball, it can be extended to an unconstrained setting via the addition of an appropriate scaled multiple of $\|x\|^2$. We leave this adaptation for a full version of this paper. Further as is common with lower bounds the underlying dimension $d$ is assumed to be large enough and differs for the deterministic vs randomized version. Theorems~\ref{thm:mainthm} and~\ref{thm:mainthmrandomized} make the dependence precise.
+
+%\paragraph{Comparison to existing bounds. } 
+Table \ref{table:main2} surveys the known lower bounds for derivative based optimization. For the case of $k=2$, the most efficient methods known are the cubic regularization technique proposed by~\cite{nesterov2008cubic} and an accelerated hybrid proximal extra-gradient method proposed by~\cite{monteiro2013accelerated}. The best known upper bound in this setting is $O\left(\frac{L_3}{\epsilon}\right)^{2/7}$~\citep{monteiro2013accelerated}. We show a lower bound of $\Omega\left(\left( \frac{L_3}{\epsilon}\right)^{2/11}\right)$ (c.f. Theorem \ref{thm:mainthmprecise}) demonstrating that the upper bound is nearly tight.
+\begin{table}
+  \begin{center}
+  \begin{tabular}{ |c|c|}
+  \hline
+  Oracle & Lower bound \\
+  \hline
+  First-Order Oracle & $\Omega\left( \left(\frac{L_2}{\epsilon}\right)^{1/2} \right)$  \citep{Nemirovsky1978}\\
+  \hline
+  Second-Order Oracle & $\Omega\left( \left(\frac{L_3}{\epsilon}\right)^{2/11} \right)$ (This paper  - c.f. Theorem \ref{thm:mainthmprecise}) \\
+  \hline
+  $k^{th}$-Order Oracle & $\Omega\left( \left(\frac{L_{k+1}}{\epsilon}\right)^{2/(5k + 1)} \right)$ (This paper - c.f. Theorem \ref{thm:mainthmprecise}) \\
+  \hline
+  \end{tabular}
+  \caption{Lower bounds for higher order oracles}
+  \label{table:main2}
+  \end{center}
+
+\end{table}
+
+
+% We further conjecture that our bounds can be improved in the following manner. 
+% \begin{conjecture}
+% \label{remark:conjecture}
+%   We conjecture that the lower bound via the construction in  Thoerem \ref{thm:mainthminit} can be improved to \[O\left(\left(\frac{L_{k+1}}{\epsilon}\right)^{2/(3k+1)}\right)\]
+% \end{conjecture}
+% Examining the conjecture above we believe that the exponent over $T$ in Equation \eqref{eqn:condlk} (c.f. Theorem \ref{thm:mainthm}) can be improved from $2.5$ to $1.5$ which will imply the above conjecture. Note that the conjecture would make the result tight with respect to known upper bound results for $k=1,2$. However this still leaves a gap in the known upper bound vs the conjectured lower bound for $k > 2$. In this setting we belive that the bound $O\left( \left(\frac{L_{k+1}}{\epsilon_k} \right)^{\frac{1}{k+1}}\right)$ \cite{baeshigherorder} is in fact not tight and can be improved. 
+
+%  Moreover we further show nearly tight lower bounds for general $k$ order optimization which come close to matching the best known upper bounds established by \cite{baeshigherorder}. Table \ref{table:main} summarizes known results for higher-order convex optimization and where our new lower bounds fit. 
+
+
+
+
+% \begin{tikzpicture}
+% \begin{axis}
+% \addplot+ [fill] {x^2+2} \closedcycle;
+% \end{axis}
+% \end{tikzpicture}
+
+% \begin{tikzpicture}
+% \begin{axis}
+% \addplot+ [name path=A,domain=0:5, fill, style=
+% {pattern color=gray!50,
+% pattern=north east lines}] {x^2} \closedcycle;
+% \end{axis}
+% \end{tikzpicture}
+
+
+
+
+ 
+
+
+\subsection{Related work.}
+The literature on convex optimization is too vast to survey; the reader is referred to \cite{boyd,NesterovBook}. 
+
+Lower bounds for convex optimization were studied extensively in the seminal work of \cite{Nemirovsky1978}. In particular, tight first-order optimization lower bounds were established assuming first-order smoothness.(Also see \cite{NesterovBook} for a concise presentation of the lower bound). In a recent work, \cite{arjevanisecondorder} presented a lower bound when given access to second-order derivatives. However a key component (as remarked by the authors themselves) missing from the bound established by \cite{arjevanisecondorder} was that the constructed function was not third-order smooth. Indeed the lower bound established by \cite{arjevanisecondorder} can  be overcome when the function is third-order smooth (ref. \cite{nesterov2008cubic}). The upper bounds for higher-order oracles (assuming appropriate smoothness) was established by \cite{baeshigherorder}. 
+
+Higher order smoothness has been leveraged recently in the context of non-convex optimization \citep{Agarwal:2017:FAL:3055399.3055464,CarmonAGD,allen2017natasha}. In a surprising new discovery, \cite{carmon2017convex} show that assuming higher-order smoothness the bounds for first-order optimization can be improved without having explicit access to higher-order oracles. This is a property observed in our lower bound too. Indeed as shown in the proof the higher order derivatives at the points queried by the algorithm are always 0. For further details regarding first-order lower bounds for various different settings we refer the reader to \cite{agarwal2009information,woodworth2016tight,arjevanisecondorder,arjevani2015lower} and the references therein. The work of \cite{guzman2015lower} studies a different kind of smoothing namely inf-convolution to obtain first-order smoothness in arbitrary norms, however it does not provide guarantees with higher-order smoothness.
+
+In parallel and independently, Arjevani et al. \cite{shamir2017oracle} also obtain lower bounds for deterministic higher-order optimization.  In comparison, their lower bound is stronger in terms of the exponent than the ones proved in this paper, and matches the upper bound for $k=2$.  However, our construction and proof are simple (based on the well known technique of ball smoothing) and our bounds hold for randomized algorithms as well, as opposed to their deterministic lower bounds. 
+
+\subsection{Overview of Techniques}
+
+Our lower bound is inspired by the lower bound presented in \cite{ClarksonHW2012}. In particular we construct the function as a piece-wise linear convex function defined by $f(x) = \max_i \{ a_i^Tx \}$ with carefully constructed vectors $a_i$ and restricting the domain to be the unit ball. The key idea here is that querying a point reveals information about at most one hyperplane. The optimal point however can be shown to require information about all the hyperplanes.
+
+Unfortunately the above function is not differentiable. We now smooth the function by the ball smoothing operator (defined in Definition \ref{def:smoothingoperator}) which averages the function in a small Euclidean ball around a point. We show (c.f. Corollary \ref{cor:maincor}) that iterative application of the smoothing operator ensures $k$-differentiability as well as boundedness of the $k^{th}$-order derivative.
+
+Two key issues arise due to smoothing described above. Firstly although the smoothing operator leaves the function unchanged around regions far away from the intersection of the hyperplanes, it is not the case for points lying near the intersection. Indeed querying a point near the intersection of the hyperplanes can potentially lead to leak of information about multiple hyperplanes at once. To avoid this, we carefully shift the linear hyperplanes making them affine and then arguing that this shifting indeed forces sufficient gap between the points queried by the algorithm and the intersections leaving sufficient room for smoothing. 
+
+Secondly such a smoothing is well known to introduce a dependence on the dimension $d$ in the smoothness coefficients. Our key insight here is that for the class of functions being considered for the lower bound (c.f. Definition \ref{defn:gammainvariance}) smoothing can be achieved without a dependence on the dimension(c.f. Theorem \ref{thm:smoothingmain}). This is essential to achieving dimension free lower bounds and we believe this characterization can be of intrinsic interest.
+
+\subsection{Organization of the paper}
+
+We begin by providing requisite notation and definitions for the smoothing operator and proving the relevant lemmas regarding smoothing in Section \ref{sec:prelimssmooth}. Section \ref{sec:mainthmstatement} provides a quantitative statement of our main theorem. In Section \ref{sec:construction} we provide the construction of our hard function. In Section \ref{sec:deterministic} we state and prove our main theorem (Theorem \ref{thm:mainthm}) showing the lower bound against deterministic algorithms. We also prove Theorem \ref{thm:mainthminit} based on Theorem \ref{thm:mainthm} in this Section. In Section \ref{sec:randomized} we state and prove Theorem \ref{thm:mainthmrandomized}, showing the lower bound against randomized algorithms.
+
+\section{Preliminaries}
+\label{sec:prelimssmooth}
+\subsection{Notation}
+
+We use $B_d$ to refer to the $d$-dimensional $\ell_2$ unit ball. We suppress the $d$ from the notation when it is clear from the context. Let $\Gamma$ be an $r$-dimensional linear subspace of $\reals^d$. We denote by $M_{\Gamma}$, an $r \times d$ matrix which contains an orthonormal basis of $\Gamma$ as rows. Let $\Gamma^{\perp}$ denote the orthogonal complement of $\Gamma$. Given a vector $v$ and a subspace $\Gamma$, let $v \perp \Gamma$ denote the perpendicular component of $v$ w.r.t $\Gamma$. We now define the notion of a $\Gamma$-invariant function. 
+
+\begin{definition}[$\Gamma$-invariance]
+\label{defn:gammainvariance}
+Let $\Gamma$ be an $r$ dimensional linear subspace of $\reals^d$. A function $f:\reals^d \rightarrow \reals$ is said to be $\Gamma$-invariant if for all $x \in \reals^d$ and $y$ belonging to the subspace $\Gamma^{\perp}$, i.e. $M_{\Gamma} y = 0$, we have that
+    \[ f(x) = f(x + y)\]
+   Equivalently there exists a function $g:\reals^r \rightarrow \reals$ such that for all $x$, $f(x) = g(M_{\Gamma} x)$.
+\end{definition}
+\noindent A function $f: \reals^d \rightarrow \reals$ is defined to be $c$-Lipschitz with respect to a norm $\|\cdot\|$ if it satisfies
+\[ f(x) - f(y) \leq c\|x-y\| \] 
+ Lipschitzness for the rest of the paper will be measured in the $\ell_2$ norm. 
+\subsection{Smoothing}
+In this section we define the smoothing operator and derive the requisite properties.
+\begin{definition}[Smoothing operator]
+\label{def:smoothingoperator}
+Given an $r$-dimensional subspace $\Gamma \in \reals^d$ and a parameter $\delta > 0$, define the operator $S_{\delta,\Gamma}:(\reals^d \rightarrow \reals) \rightarrow (\reals^d \rightarrow \reals)$ (referred henceforth as the smoothing operator) as 
+  \[ S_{\delta, \Gamma}f(x) \defeq \mathbb{E}_{v \in \Gamma, \|v\| \leq 1}[ f(x + \delta v)],\]
+  where the expectation is over sampling a unit vector from the subspace $\Gamma$ uniformly randomly. 
+  
+
+  As a shorthand we define $f_{\delta, \Gamma} \defeq S_{\delta, \Gamma}f$. Further for any $t \in \mathbb{N}$ define $S_{\delta,\Gamma}^t f \defeq S_{\delta,\Gamma}(... S_{\delta,\Gamma}( f )) $ i.e. the smoothing operator applied on $f$ iteratively $t$ times.
+\end{definition}
+When $\Gamma = \reals^d$ we suppress the notation from $f_{\delta, \Gamma}$ to $f_{\delta}$. Following is the main lemma we prove regarding the smoothing operator. 
+\begin{lemma}
+  \label{thm:smoothingmain}
+  Let $\Gamma $ be an $r$-dimensional linear subspace of $\reals^d$ and $f : \reals^d \rightarrow \reals$ be $\Gamma$-invariant and $G$-Lipschitz. Let $\smooth{f} \defeq S_{\delta, \Gamma} f$ be the smoothing of $f$. Then we have the following properties.
+  \begin{enumerate}
+    \item $\smooth{f}$ is differentiable and also $G$-Lipschitz and $\Gamma$-invariant.
+    \item $\nabla \smooth{f}$ is $\frac{rG}{\delta}$-Lipschitz.
+    \item $\forall \;x: |f_{\delta,\Gamma}(x) - f(x)| \leq \delta G$.
+  \end{enumerate}
+  \end{lemma}
+
+Following is a corollary of the above lemma. 
+\begin{corollary}
+\label{cor:maincor}
+  Given a $G$-Lipschitz continuous function $f$ and an $r$-dimensional subspace $\Gamma$ such that $f$ is $\Gamma$-invariant, we have that the function $S_{\delta,\Gamma}^k f$ is $k$-times differentiable $\forall\;k$. Moreover we have that for any $x,y$
+  \[ \forall i \in [k] \;\; \| \nabla^{i} S_{\delta,\Gamma}^k f(x) - \nabla^{i} S_{\delta,\Gamma}^k f(y)\| \leq \left(\frac{r}{\delta} \right)^iG\|x-y\|,\] 
+  \[| S_{\delta,\Gamma}^k f(x) - f(x)| \leq G\delta k.\]
+\end{corollary}
+The proofs of Lemma \ref{thm:smoothingmain} and Corollary \ref{cor:maincor} are included in the appendix.
+
+\section{Main Theorem Statement}
+\label{sec:mainthmstatement}
+The main result we prove in the paper is given by the following theorem. The theorem is a restatement of Theorem \ref{thm:mainthminit}. 
+
+\begin{theorem}
+\label{thm:mainthmprecise}
+For every number $L_{k+1}$ and $k^{th}$-order algorithm $\alg$ (deterministic or randomized), there exists an $\epsilon_0(L_{k+1})$ such that for all $\epsilon \leq \epsilon_0(L_{k+1})$, there exists a $k$-differentiable convex function $f \in B_d \rightarrow \reals$ with $k^{th}$-order smoothness coefficient $L_{k+1}$ such that $\alg$ cannot output a point $x_T$ such that
+\[f(x_T) \leq \min_{x \in B_d} f(x) + \epsilon,\]
+ in number of iterations $T$ fewer than
+\[ c_k\left(\frac{L_{k+1}}{\epsilon}\right)^{\frac{2}{5k + 1} }.\]
+where $c_k$ is a constant depending on $k$.
+\end{theorem}
+The rest of the paper is dedicated to the proof of the above theorem. 
+
+
+\section{Construction of the hard function}
+
+\label{sec:construction}
+
+In this section we describe the construction of our hard function $\hardf$. Our construction is inspired by the information-theoretic hard instance based on zero-sum games proposed by \cite{ClarksonHW2012}. The construction of the function will be characterized by a sequence of vectors $X^{1 \rightarrow r} = \{x_1 \ldots x_r\}$, $x_i \in B_d$ and parameters $k,\gamma, \delta, m$. We assume $d > m \geq r$. To make the dependence explicit we denote the hard function as  \[\hardf(X^{1 \rightarrow r},\gamma,k,\delta, m):B_d \rightarrow \reals.\]
+
+For brevity in the rest of the section we suppress $X^{1 \rightarrow r}, \gamma, k, \delta, m$ from the notation, however all the quantities defined in the section depend on them. To define $\hardf$ we will define auxiliary vectors $\{a_1 \ldots a_r\}$ and auxiliary functions $f,\tilde{f}$. 
+
+Given a sequence of vectors $\{x_1, x_2, \ldots x_r\}, x_i \in B_d$, let $X_i$ for $i \leq r$ be defined as the subspace spanned by the vectors $\{x_1 \ldots x_{i}\}$. Further inductively define vectors $\{a_1 \ldots a_r\}$ as follows.
+
+\noindent If $x_i \notin X_{i-1}$, define  
+\[a_i \defeq \frac{\hat{a}_i}{\| \hat{a}_i\|}\text{ where } \hat{a}_i \defeq x_i \perp X_{i-1}.\]
+If indeed $x_i \in X_i$, then $a_i$ is defined to be an arbitrary unit vector in the orthogonal component $X_{i-1}^{\perp}$. Further define an auxiliary function 
+\[f(x) \defeq \max_{i \in [r]} f_i(x) \text{ where } f_i(x) \defeq a_i^T x.\]
+Given the parameter $\gamma$, now define the following functions 
+\[ \tilde{f}(x) \defeq \max_{i \in [r]} \tilde{f}_i(x) \text{ where } \tilde{f}_i(x) \defeq f_i(x) + \left(1 - \frac{i}{m} \right)\gamma \defeq a_i^T x + \left(1 - \frac{i}{m} \right)\gamma.\]
+With these definitions in place we can now define the hard function parametrized by $k, \delta$. Let $A_r$ be the subspace spanned by $\{a_1 \ldots a_r\}$
+\begin{equation}
+  \label{eqn:hardfdef}
+  \hardf(X^{1 \rightarrow r}, k, \gamma, \delta, m) \defeq S^k_{\delta, A_r} \;\tilde{f}(X^{1 \rightarrow r}, \gamma, m),
+\end{equation}
+i.e. $\hardf$ is constructed by smoothing $\tilde{f}$ $k$-times with respect to the parameters $\delta, A_r$. We now collect some important observations regarding the function $\hardf$. 
+
+\begin{observation}
+  $\hardf$ is convex and continuous. Moreover it is 1-Lipschitz and is invariant with the respect to the $r$-dimensional subspace $A_r$.
+\end{observation}
+
+Note that $\tilde{f}$ is a $\max$ of linear functions and hence convex. Since smoothing preserves convexity we have that $\hardf$ is convex. 1-Lipschitzness follows by noting that by definition $\|a_i\| = 1$ and it can be seen that $\tilde{f}$ is $A_r$-invariant and therefore by Theorem \ref{thm:smoothingmain} we get that $\hardf$ is $A_r$-invariant. 
+
+
+\begin{observation}
+  $\hardf$ is $k$-differentiable with the Lipschitz constants $L_{i+1} \leq \left(\frac{r}{\delta}\right)^i$ for all $i \leq k$.
+\end{observation}
+\noindent Above is a direct consequence of Corollary \ref{cor:maincor} and the fact that $\tilde{f}$ is 1-Lipschitz and invariant with respect to the $r$-dimensional subspace $A_r$. 
+Corollary \ref{cor:maincor} also implies that 
+\begin{equation}
+  \label{eqn:errorbound}
+  \forall x \;\;|\hardf(x) - \tf(x)| \leq k\delta. 
+\end{equation}
+Setting $\hat{x} \defeq -\sum_{i=1}^{r} \frac{a_i}{\sqrt{r}}$, we get that $f(\hat{x}) = \frac{-1}{\sqrt{r}}$. Therefore the following inequality follows from Equation \eqref{eqn:errorbound} and by noting that $\|f(x) - \tf(x)\|_{\infty} \leq \gamma$ 
+
+\begin{equation}
+\label{eqn:funcminbound}
+\min_{x \in B_d} \hardf(x) \leq \hardf(\hat{x}) \leq \frac{-1}{\sqrt{r}} + \gamma + k\delta
+\end{equation}
+% Further noting that $f(x) \in [-1,1] \;\;\;\forall x \in B_d$ which implies that $\tf(x) \in [-1, 1+\gamma]$ we get that 
+% \begin{equation}
+% \label{eqn:funcmaxbound}
+% \hardf(x) \in [-1, 1 + \gamma] \;\;\;\;\forall x \in B_d
+% \end{equation}
+% It is also easy to note that
+% \begin{equation}
+% \label{eqn:funcmaxlowerbound}
+%   \max_{x \in B_d} \hardf(x) \geq 1 + \gamma - k \delta
+% \end{equation}
+The following lemma provides a characterization of the derivatives of $\hardf$ at the points $x_i$. 
+
+\begin{lemma}
+\label{lemma:derivatives}
+  Given a sequence of vectors $\{x_1 \ldots x_r\}$ and parameters $\delta, \gamma, r, m$, let $\{g_1 \ldots g_r\}$ be a sequence of functions defined as
+    \[ \forall\;i\;\;g_i \defeq \hardf(X^{1 \rightarrow i}, k,\gamma, \delta, m).\] 
+  If the parameters are such that $2k\delta \leq \frac{\gamma}{m}$ then we have that 
+  \[ \forall\;i\in[r] \;\forall j \in [k]  \;\; g_i(x_i) = g_r(x_i), \; \nabla^j g_i(x_i) = \nabla^j g_r(x_i).\]
+
+\end{lemma}
+
+\begin{proof}
+  
+
+We will first note the following about the smoothing operator $S^k_{\delta}$. At any point $x$, all the $k$ derivatives and the function value of $S^k_{\delta} f$ for any function $f$ depend only on the value of the function $f$ in a ball of radius at most $k \delta$ around the point $x$. Consider the function $g_r$ and $g_i$ for any $i \in [r]$. Note that by definition of the functions $g_i$, for any $x$ such that \[
+\argmax_{j \in [r]} \;\;a_j^Tx + \left(1 - \frac{j}{m}\right)\gamma \leq i\]
+we have that $g_i(x) = g_r(x)$. Therefore to prove the lemma it is sufficient to show that
+\[ \forall \;i, x \in \|x - x_i\| \leq k\delta\;\;\;\; \argmax_{j \in [r]} \;\;a_j^Tx + \left(1 - \frac{j}{m}\right)\gamma \leq i.\]
+Let us first note the following facts. By construction we have that $\forall j > i, a_j^Tx_i = 0$. This immediately implies that  
+\begin{equation}
+\max_{j > i} \;\; a_j^Tx_i + \left(1 - \frac{j}{m}\right)\gamma =\left(1 - \frac{i+1}{m} \right) \gamma.
+\end{equation}
+Further using the fact that $\|a_j\| \leq 1$, $\forall j \in [r]$ we have that 
+\begin{equation}
+\forall x \;\;\text{s.t.}\;\;\|x - x_i\| \leq k\delta \;\;\text{we have}\;\; \max_{j > i} \;\; a_j^Tx + \left(1 - \frac{j}{m}\right)\gamma \leq\left(1 - \frac{i+1}{m} \right) \gamma + k\delta.
+\end{equation}
+Further note that by construction $a_i^Tx_i \geq 0$ which implies $a_i^Tx + \left(1 - \frac{i}{m}\right)\gamma \geq \left(1 - \frac{i}{m} \right)\gamma$. Again using the fact that $\|a_j\| \leq 1$, $\forall j \in [r]$ we have that 
+\begin{equation}
+\label{eqn:templabel1}
+\forall x \;\;\text{s.t.}\;\;\|x - x_i\| \leq k\delta \;\;\text{we have}\;\; \max_{j \leq i} \;\; a_j^Tx + \left(1 - \frac{j}{m}\right) \geq \left(1 - \frac{i}{m} \right) \gamma - k\delta.
+\end{equation}
+The above equations in particular imply that as long as $2k\delta < \frac{\gamma}{m}$ , we have that  
+\begin{equation}
+\forall x \;\;\text{s.t.}\;\;\|x - x_i\| \leq k\delta \;\; \argmax_{j \in [r]} a_j^Tx + \left(1 - \frac{j}{m}\right) \leq i 
+\end{equation}
+which as we argued before is sufficient to prove the lemma.
+\end{proof}
+
+
+
+\section{Main Theorem and Proof}
+\label{sec:deterministic}
+The following theorem (Theorem \ref{thm:mainthm}) proves the existence of the required hard function. Theorem \ref{thm:mainthmprecise} for the deterministic case is a simple derivation which we provide after the theorem statement.  
+
+\begin{theorem}
+\label{thm:mainthm}
+  For any integer $k$, any $T > 5k$, and $d > T$ and any $k^{th}$-order deterministic algorithm, there exists a convex function $\hardf: B_d \rightarrow \reals$ for every $d > T$, such that for $T$ steps of the algorithm every point $y \in B_d$ queried by the algorithm is such that 
+  \[\hardf(y) \geq \min_{x \in B_d}\hardf(x) + \frac{1}{2\sqrt{T}}.\] 
+  Moreover the function is guaranteed to be $k$-differentiable with Lipschitz constants $L_{i+1}$ bounded as 
+  \begin{equation}
+  \label{eqn:condlk}
+    \forall \;i \leq k \;\; L_{i+1} \leq (10k)^iT^{2.5i}.
+  \end{equation}
+
+\end{theorem}
+We first prove Theorem \ref{thm:mainthmprecise} in the deterministic case using Theorem \ref{thm:mainthm}. 
+\begin{proof}[Proof of Theorem \ref{thm:mainthmprecise} Deterministic case]
+Given an algorithm $\alg$ and numbers $L_{k+1},k$ define $\epsilon_0(L_{k+1},k) \defeq L_{k+1}/(10k)^k$. For any $\epsilon \leq \epsilon_0$ pick a number $\mathcal{T}$ such that
+\[\epsilon = \frac{L_{k+1}}{2(10k)^k\mathcal{T}^{(2.5k + 0.5)}}.\]
+Let $\hardf$ be the function constructed in Theorem \ref{thm:mainthm} for parameters $k, \mathcal{T}, \alg$ and define the hard function $h:B_d \rightarrow \reals$
+\[ h(x) \defeq \frac{L_{k+1}}{(10k)^k\mathcal{T}^{2.5k}}\hardf(x).\]
+Note that by the guarantee in Equation \eqref{eqn:condlk} we get that $h(x)$ is $k^{th}$-order smooth with coefficient at most $L_{k+1}$. Note that since this is a scaling of the original hard function $\hardf$ the lower bound applies directly and therefore $\alg$ cannot achieve accuracy 
+\[ \frac{L_{k+1}}{2(10k)^k\mathcal{T}^{2.5k}\sqrt{\mathcal{T}}} \defeq \epsilon,\]
+in less than $\mathcal{T} = c_{k}\left(\frac{L_{k+1}}{\epsilon}\right)^{\frac{2}{5k+1}}$ iterations where $c_k$ is a constant only depending on $k$. This finishes the proof of the theorem.  
+\end{proof}
+We now provide the proof of Theorem \ref{thm:mainthm}.
+\begin{proof}[Proof of Theorem \ref{thm:mainthm}]
+
+Define the following parameters $\gamma \defeq \frac{1}{3\sqrt{T}}$ and $\delta_T \defeq \frac{\gamma}{3kT}$.
+
+Consider a deterministic algorithm $\alg$. Since $\alg$ is deterministic let the first point played by the algorithm be fixed to be $x_1$. We now define a series of functions $\hardf_i$ inductively for all $i = \{1, \ldots T\}$ as follows
+\begin{equation}
+  \label{eqn:Xdefn}
+  X^{1 \rightarrow i} \defeq \{x_1 \ldots x_i\} \quad\quad\quad \hardf_i \defeq \hardf(X^{1 \rightarrow i}, \gamma, k, \delta_T, T)
+\end{equation}
+\begin{equation}
+  \label{eqn:inductinpidefn}
+  Inp^x_i \defeq \{ \hardf_i(x_i), \nabla \hardf_i(x_i) \ldots \nabla^k \hardf_i(x_i)\} \quad\quad\quad x_{i+1} \defeq \alg(Inp^x_1, \ldots Inp^x_i)
+\end{equation}
+The above definitions \textit{simulate} the deterministic algorithm $\alg$ with respect to changing functions $\hardf_i$. $Inp_{i}^x$ is the input the algorithm will receive if it queried point $x_i$ and the function was $\hardf_i$. $x_{i+1}$ is the next point the algorithm $\alg$ will query on round $i+1$ given the inputs $\{Inp_1^x \ldots Inp_i^x\}$ over the previous rounds. Note that thus far these quantities are tools defined for analysis. Since $\alg$ is deterministic these quantities are all deterministic and well defined. We will now prove that the function $\hardf_T$ defined in the series above satisfies the properties required by the Theorem \ref{thm:mainthm}. 
+\\
+\\
+% \noindent \textbf{Boundedness} Firstly note that Equation \eqref{eqn:funcmaxbound} and Equation \eqref{eqn:funcmaxlowerbound} immediately gives us that 
+% \[\forall i \in [T]\;\;\forall x \in B_d \;\; \hardf_i(x) \in [-1/1 + \gamma - k\delta_T,1] \in [-1,1] \]
+\noindent \textbf{Bounded Lipschitz Constants} Using Corollary \ref{cor:maincor}, the fact that $\hardf$ has Lipschitz constant bounded by 1 and that $\hardf_T$ is invariant with respect to a $T$ dimensional subspace, we get that the function $\hardf_T$ has higher order Lipschitz constants bounded above as
+\[ \forall i \leq k \;\;\; L_{i+1} \leq \left(\frac{T}{\delta_T}\right)^i \leq \left(10kT^{2.5}\right)^i.\] 
+\noindent \textbf{Suboptimality}
+
+Let $\{y_0 \ldots y_T\}$ be the points queried by the algorithm $\alg$ when executed on $\hardf_T$. We need to show that 
+\begin{equation}
+  \label{eqn:suboptimalitygoal}
+  \forall i \in [1 \ldots T] \qquad \hardf_T(y_i) \geq \min_{x \in B_d} \hardf_T(x) + \frac{1}{2\sqrt{T}}.
+\end{equation}
+Equation \ref{eqn:suboptimalitygoal} follows as a direct consequence of the following two claims. 
+
+\begin{claim}
+\label{claim:consistency}
+  We have that for all $i \in [1,T]$, $y_i = x_i$ where $x_i$ is defined by Equation \eqref{eqn:inductinpidefn}.
+\end{claim}
+
+\begin{claim}
+\label{claim:xsuboptimality}
+We have that
+\[  \forall i \in [1 \ldots T] \qquad \hardf_T(x_i) \geq \min_{x \in B_d} \hardf_T(x) + \frac{1}{2\sqrt{T}}.\]
+\end{claim} 
+
+To remind the reader, $x_i$ (Equation \eqref{eqn:inductinpidefn}) are variables which were defined by simulating the algorithm on a changing function where as $y_i$ are the points played by the algorithm $\alg$ when run on $\hardf_T$. Claim \ref{claim:consistency} shows that even though $\hardf_T$ was constructed using $x_i$ the outputs produced by the algorithm does not change. 
+
+Claim \ref{claim:consistency} and Claim \ref{claim:xsuboptimality} derive Equation \ref{eqn:suboptimalitygoal} in a straightforward manner thus finishing the proof of Theorem \ref{thm:mainthm}.
+
+\end{proof}
+
+We now provide the proofs of Claim \ref{claim:consistency} and Claim \ref{claim:xsuboptimality}. 
+
+\begin{proof}[Proof of Claim \ref{claim:consistency}]
+Note that since the algorithm is deterministic $y_1$ is fixed and $y_i$ for $i \geq 2$ is defined inductively as follows. 
+\begin{equation}
+\label{eqn:inductivecaseproof}
+  Inp^y_i \defeq \{ \hardf_T(y_i), \nabla \hardf_T(y_i), \ldots \nabla^k \hardf_T(y_i)\} \quad \quad \quad y_{i+1} = \alg(Inp^y_1, \ldots Inp^y_T)
+\end{equation}
+
+We will prove the claim via strong induction. The base case $x_1 = y_1$ is immediate because $\alg$ is deterministic and therefore the first point queried by it is always the same. 
+
+Assume now that the claim holds for all $j \leq i$.  
+Since by definition $2k\delta_T \leq \gamma/T$, we can see as a direct consequence of Lemma \ref{lemma:derivatives}, that
+\begin{equation}
+\label{eqn:inputequalities}
+  \{\forall j \leq i \;\; x_j = y_j \} \Rightarrow \{ \forall j \leq i \;\; Inp_i^{y_i} = Inp_i^{x_i} \}  
+  \end{equation}
+where $Inp_i^x$ is as defined in Equation \eqref{eqn:inductinpidefn}. Note that $Inp_i^{x_i}$ is the set of derivatives of $\hardf_i$ at $x_i$ and $Inp_i^{y_i}$ is the set of derivatives of $\hardf_T$ at $y_i$. Also by definition we have that 
+\[ \{ \forall j \leq i \;\; Inp_i^{y_i} = Inp_i^{x_i} \} \Rightarrow \{x_{i+1} = y_{i+1}\}.\]
+Putting the above two together we have that $\{\forall j \leq i \;\; x_j = y_j \} \Rightarrow \{x_{i+1} = y_{i+1}\}$
+which finishes the induction. 
+\end{proof}
+
+ 
+\begin{proof}[Proof of Claim \ref{claim:xsuboptimality}]
+  Using Lemma \ref{lemma:derivatives} we have that $\hardf_i(x_i) = \hardf_T(x_i)$. Further Equation \eqref{eqn:templabel1} implies that 
+  \[\hardf_i(x_i) \geq \left(1 - \frac{i}{T}\right)\gamma - k\delta_T.\]Now using \eqref{eqn:funcminbound} using we get that every point in $\{x_1 \ldots x_T\}$ is such that 
+\[ \hardf_T(x_i) - \min_{x \in B} \hardf_T(x) \geq  \left( \frac{1}{\sqrt{T}} - \frac{i\gamma}{T} - 2k\delta_T \right)\geq \frac{1}{2\sqrt{T}}.\] 
+The above follows by the choice of parameters and $T$ being large enough. This finishes the proof of Claim \ref{claim:xsuboptimality}.
+\end{proof}
+
+\section{Lower Bounds against Randomized Algorithms}
+
+\label{sec:randomized}
+
+
+
+In this section we prove the version of Theorem \ref{thm:mainthm} for randomized algorithms. The key idea underlying the proof remains the same. However since we cannot \textit{simulate} the algorithm anymore we choose the vectors $\{a_i\}$ forming the subspace randomly from $\reals^d$ for a large enough $d$. This ensures that no algorithm with few queries can discover the subspace in which the function is non-invariant with reasonable probability. Naturally the dimension required for Theorem \ref{thm:mainthm} now is larger than the tight $d > T$ we achieved as in the case of deterministic algorithms.
+
+The proof of Theorem \ref{thm:mainthmprecise} for randomized algorithms follows in exactly the same way as the proof for the deterministic case using Theorem \ref{thm:mainthm}. 
+
+\begin{theorem}
+\label{thm:mainthmrandomized}
+  For any integer $k$, any $T > 5k$, $\delta \in [0,1]$,  and any $k$-order (potentially randomized algorithm), there exists a $k$-differentiable convex function $\hardf: B_d \rightarrow \reals$ for $d = \Omega(T^3\log(T^2/\delta))$, such that with probability at least $1 - \delta$ (over the randomness of the algorithm) for $T$ steps of the algorithm every point $y$ queried by the algorithm is such that 
+   \[\hardf(y) \geq \min_{x \in B_d}\hardf(x) + \frac{1}{2\sqrt{T}}.\] 
+   Moreover the function $\hardf$ is guaranteed to be $k$-differentiable with Lipschitz constants $L_i$ bounded as 
+  \[ \forall \;i \leq k \;\; L_{i+1} \leq (20kT^{2.5})^i.\]
+\end{theorem}
+\noindent Due to space constraints the proof of Theorem \ref{thm:mainthmrandomized} is included in the appendix.
+
+\section{Conclusion}
+
+We have considered the problem of achieving dimension free polynomial time algorithms for minimizing convex functions where the function is guaranteed to be $k$-differentiable and $k^{th}$-order smooth and the algorithm is allowed to have access to $k$ derivatives at every iteration. We showed an oracle complexity lower bound for convex optimization under these conditions demonstrating that the number of points queried by any deterministic/randomized algorithm should have at least an inverse polynomial dependence on the desired error. This rules out linearly-converging derivative-based algorithms even under these assumptions. 
+
+While we provide precise guarantees for the dependence on the exponent, our bounds are weaker than those proved independently and concurrently by \cite{shamir2017oracle} (which only applies to deterministic algorithms). We believe that our construction (or potentially a similar one) might be able to achieve the improved bounds and leave this direction as immediate future work. Furthermore we remark that while the known upper and lower bounds are tight for first and second order optimization, they are not tight for $k > 2$ and this is an intriguing open question. 
+
+
+
+
+
+
+
+% Acknowledgments---Will not appear in anonymized version
+\acks{The authors would like to acknowledge and thank Ohad Shamir for providing insightful comments on the first draft of this manuscript and Brian Bullins and Gopi Sivakanth for helpful suggestions. The authors are supported by NSF grant 1523815.}
+
+
+\bibliography{references}
+\pagebreak
+
+
+\appendix
+\input{appendix}
+\end{document}

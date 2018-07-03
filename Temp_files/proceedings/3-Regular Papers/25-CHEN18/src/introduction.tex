@@ -1,0 +1,164 @@
+\section{Introduction} \label{sec:introduction}
+
+Many websites and apps facilitate joint discovery,
+sharing, and recommendation of content.
+This includes news-, photo-, and video-sharing sites;
+sites that host user-written reviews of products, restaurants, hotels, and travel experiences;
+and citizen science projects
+such as eBird \citep{sullivan2009ebird,xue-ebird} and Galaxy Zoo \citep{lintott-galaxy-zoo}.
+Users of these sites improve their own experiences 
+by learning from the experiences of others 
+\citep{schmit2017human}.
+
+Viewed more abstractly, users jointly explore a space of
+options (products, news stories, photos, birdwatching sites,
+%patches of sky to train their telescopes on, 
+$\ldots$),
+with the implicit goal of identifying the ``best'' ones.
+Such scenarios are often modeled in a bandit
+learning framework.
+However, unlike standard bandit settings, the utilities of the
+decision makers (the users) are not aligned with overall utility.
+Societally (i.e., in a suitable aggregate over users),
+substantial exploration of options could provide higher future rewards.
+However, individual users interact with the site a limited number
+of times, and therefore have little incentive to explore.
+Recent work has focused on the setting in which users interact only once, 
+and therefore have no intrinsic incentive to explore.
+
+Two recent lines of work have shown that
+effecting a societally near-optimal outcome in this setting requires
+explicitly inducing exploration:
+\citet{kremer2014implementing}
+and
+\citet{mansour2015bayesian,mansour2016bayesian,mansour2018competition}
+(see \cite{slivkins:asymmetry} for an overview)
+assume that the site (also called the \emph{principal}) has an
+informational advantage in being the only one to observe the results
+of past arm pulls
+(as in driving route recommendations).
+The principal can use her%
+\footnote{We use male pronouns to refer to users and female pronouns
+  to refer to the principal.}
+advantage to induce exploration by recommending apparently sub-optimal arms,
+as long as agents cannot do better on their own.
+\citet{frazier2014incentivizing} and 
+\citet{han2015incentivizing} instead assume that the results of all
+past arm pulls are publicly observable
+(as on a review-sharing site).
+They suppose that the principal can incentivize exploration by offering arm-specific reward payments.
+We follow this second model.
+
+Past work has assumed that users have homogeneous preferences over
+arms, i.e., the expected reward derived from an arm is the same for all users.
+(\citet{han2015incentivizing} model users that are
+heterogeneous in their tradeoff between utility derived from arm pulls
+and utility derived from the principal's payment,
+but assume that preferences across arms are homogeneous.)
+In reality, users have different preferences, e.g., gastronomic,
+political, aesthetic, practical.
+Indeed, the websites and mobile apps most widely used for joint discovery,
+sharing, and recommendation of content tend to concern products and items 
+with heterogeneity in preferences (movies, restaurants,
+videos, travel experiences), and not items with a universally
+agreed-on best order.
+This is perhaps because regimes with heterogeneous preferences are the
+ones where people have the most difficulty discovering the best items, 
+and thus where online platforms provide the most value.  
+Thus, we see an appropriate
+accounting for heterogeneity as critical to incentivizing
+exploration in online communities.
+
+In this work, we present the first algorithm and analysis (of which we
+are aware) for incentivizing exploration when users have heterogeneous 
+preferences over arms.
+Our analysis provides insight into the
+impact of user heterogeneity on the principal's ability to achieve
+high social utility with low incentive payments,
+and on the best approaches for doing so.
+Heterogeneity presents both a challenge and an opportunity.
+On the one hand, unobserved heterogeneity hides critical
+information about an agent's preferences from the principal,
+making her unaware of agents' preferred arms.
+Thus, even with an unlimited incentive budget, incentivizing 
+pulls according to a standard multi-armed bandit algorithm does not provide
+low regret.  Instead, she must use incentives sparingly and 
+allow agents to reveal their preferences through action.
+On the other hand, heterogeneity also offers
+the possibility of ``free exploration.''
+Even unincentivized, agents will
+play a variety of arms, revealing information about their attributes.
+This stands in sharp contrast to the case of homogeneous preferences,
+where unincentivized agents will herd onto a single apparently best arm,
+and where effecting essentially any exploration at all requires incentives.
+
+
+% With these challenges and opportunities in mind, 
+% our goal is to understand the
+% impact of user heterogeneity on the principal's ability to achieve
+% high social utility with low incentive payments,
+% and on the best approaches for doing so.
+% We wish to understand whether incentivizing exploration with
+% heterogeneous preferences  is ``harder'' or ``easier'' than with
+% homogeneous ones,
+% and to understand how exploration strategies that do well in the
+% heterogeneous preference setting differ from those in the homogeneous one.
+% Toward that end, we model our setting as follows.
+We describe our model at a high level here,
+with formal definitions given in Section~\ref{sec:prob}.
+The \ARMNUM arms and users (or \emph{agents})
+are characterized by payoff-relevant
+\emph{attribute} (or \emph{feature}) vectors.
+Arms' attributes are a priori unknown,
+and agents' attributes are drawn from a known distribution.
+An agent's reward from pulling an arm is the inner product of his
+vector with the arm's vector (plus noise).
+When an arm is pulled, a noisy version of its attribute vector is
+observed by everyone.
+This models full-text product reviews on websites like Amazon,
+or ratings of ``service'', ``value'',
+and other restaurant attributes on websites like Tripadvisor.  
+Agents are myopic and will pull the arm whose expected attribute
+vector (based on past noisy observations) maximizes their reward.
+This assumption requires agents to have access to aggregate
+information about the feature vector estimates of all (relevant) arms. 
+Such access is facilitated by the platforms' ability to aggregate and
+effectively display past feedback, e.g., by displaying simple averages
+of ratings and using automatic summarization of full-text reviews 
+\citep{wang2010product,liu2012movie,abulaish2009feature}.
+While platforms could in principle manipulate the display of such
+data, most have an incentive to be seen as truthful.
+%\pfedit{Agents' ability to effectively base decisions on all past observations models platforms' abilities to aggregate and effectively display past feedback, through simple averages of ratings and automatic summarization of full-text reviews \citep{wang2010product,liu2012movie,abulaish2009feature}.  While platforms can manipulate the display of user data, most have an incentive to be seen as truthful.}
+The principal can incentivize agents to pull particular arms by
+offering arm-specific payments.
+The principal's goal is to keep the cumulative regret across all
+agents small, while incurring only small total payments.
+
+Our main theorem can be stated informally as follows:
+
+%One example where agents give noisy observations of items’ feature vectors is restaurant reviews on TripAdvisor.  Users provide not just an overall rating, but also separate ratings for Service, Value, Food and Atmosphere.  We may treat these as our feature vector.  Platforms collect similar explicit feature vector observations whenever their users rate not just satisfaction with an item but the more granular components that contribute to it.
+
+%As another example, consider websites like Amazon and Yelp whose users provide full-text reviews of items.  Reviews on Yelp describe a restaurants’ attributes (service, value, etc.), and reviews on Amazon similarly describe products’ attributes.  Thus, we can think of a user reading past reviews as aggregating past users’ observations of items’ feature vectors.  In this way, platforms with full-text reviews implicitly provide feature vector observations.
+
+%As a third example, a platform with full-text reviews could run an NLP algorithm to extract features and sentiments from reviews, and then surface them to users as rated attributes.
+
+
+\begin{theorem} \label{thm:main-intro}
+Assume that for each arm, at least a constant fraction \MinProb
+of the population likes this arm best,
+and let \TieDensity be a measure of the ``density of near-ties''
+between agents' arm preferences
+(in a sense made precise in Section~\ref{sec:prob}).
+There is a policy that achieves expected 
+cumulative regret $O (\ARMNUM \e^{2/\MinProb} + \TieDensity \ARMNUM \log^3(T))$,
+using expected cumulative payments of $O(\ARMNUM^2 \e^{2/\MinProb})$.
+In particular, when agents who are close to tied between two arms have measure $0$,
+both the expected regret and expected payment are bounded by constants
+(with respect to $T$). 
+\end{theorem}
+
+
+The policy achieving the result of Theorem~\ref{thm:main-intro} is
+simple: it mostly lets agents exploit arms, but incentivizes
+them to explore when arms appear unlikely to be pulled without incentives.
+It is presented in detail in Section~\ref{sec:ub}.

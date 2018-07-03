@@ -1,0 +1,414 @@
+% !TEX root = main.tex
+
+\section{Omitted Proofs from Section~\ref{sec:bss}}
+\label{app:bss}
+
+In this section, we give more details about Section~\ref{sec:bss} and prove Lemmas~\ref{lem:sdp-sol}~and~\ref{lem:phi-no-increase}.
+
+Recall that we are given a set of input vectors $\{v_i\}_{i=1}^m$ where each $v_i = L^{-1/2} b_i$ for a fixed Laplacian $L$ and some $b_i$ representing an edge, and we assume that there exist weights $w_i$ such that $(1-\beta) I \preceq \sum_{i=1}^m w_i v_i v_i^\top \preceq (1+\beta) I$.
+The goal is to compute a set of weights $\tilde w_i$ in nearly-linear time so that $(1-O(\beta)-\eps)I \preceq \sum_{i=1}^m \tilde w_i v_i v_i^\top \preceq I$.
+
+We maintain barrier values $u$ and $\ell$, and a weighted sum $A = \sum_{i=1}^m \tilde w_i v_iv_i^\top$ such that $\ell I \prec A \prec uI$.
+It is worth noting that we never explicitly compute the vectors $v_i = L^{-1/2} b_i$.  We store $A$ by keeping track of the weights $w_i$.
+When updating the weights, we approximate the quantities $v_i^\top C v_i$ (for some matrix $C = C(A)$) simultaneously for all $i$ in nearly-linear time (see Lemma~\ref{lem:sdp-computation}).
+
+We use the following potential functions proposed in \citep{LeeS17} to measure how far $A$ is away from the barriers:
+\begin{align*}
+\Phi_{u,\ell}(A) & = \Phi_u(A)+\Phi_{\ell}(A), \text{ where} \\
+\Phi_u(A) & = \tr \exp \left((u I - A)^{-1}\right), \\
+\Phi_\ell(A) & = \tr \exp \left((A - \ell I)^{-1}\right).
+\end{align*}
+
+The derivatives of the potential functions with respect to $A$ are
+\begin{align*}
+\nabla \Phi_u (A) & = \exp \left((u I - A)^{-1}\right) (u I - A)^{-2}, \\ %\text{ and} \\
+\nabla \Phi_\ell (A) & = - \exp \left((A - \ell I)^{-1}\right) (A - \ell I)^{-2}.
+\end{align*}
+
+By convexity we have
+\[
+\Phi_{u,\ell}(A+\Delta) \ge \Phi_{u,\ell}(A) + \nabla \Phi_{u}(A) \bullet \Delta + \nabla \Phi_{\ell}(A) \bullet \Delta.
+\]
+
+The following lemma from \cite{LeeS17} shows that when $\Delta$ is small, the first-order approximation of $\Phi_{u,\ell}(A+\Delta)$ is a good estimation.
+
+\begin{lemma}[\cite{LeeS17}]
+\label{lem:potential-FO}
+Let $A$ be a symmetric matrix.
+Let $\ell < u$ be barrier values such that $u - \ell \le 1$ and $\ell I \prec A \prec u I$.
+Assume that $0 \preceq \Delta$, $\Delta \preceq \eps (uI - A)^2$, and $\Delta \preceq \eps (A - \ell I)^2$ for $\eps \le 1/10$. Then,
+\begin{alignat*}{3}
+\Phi_{u}(A+\Delta) & \le \Phi_u(A) + (1+2\eps) \nabla \Phi_u(A) \bullet \Delta &&= \Phi_u(A) + (1+2\eps) C_- \bullet \Delta, \\
+\Phi_{\ell}(A+\Delta) & \le \Phi_\ell(A) + (1-2\eps) \nabla \Phi_\ell(A) \bullet \Delta &&= \Phi_\ell(A) - (1-2\eps) C_+ \bullet \Delta; \\
+\Phi_{u}(A-\Delta) & \le \Phi_u(A) - (1-2\eps) \nabla \Phi_u(A) \bullet \Delta &&= \Phi_u(A) - (1-2\eps) C_- \bullet \Delta, \\
+\Phi_{\ell}(A-\Delta) & \le \Phi_\ell(A) - (1+2\eps) \nabla \Phi_\ell(A) \bullet \Delta &&= \Phi_\ell(A) + (1+2\eps) C_+ \bullet \Delta.
+\end{alignat*}
+\end{lemma}
+
+%Recall that $C = -\left[(1+2\delta) \nabla \Phi_u(A) + (1-2\delta) \nabla \Phi_\ell(A)\right]$.
+%Lemma~\ref{lem:potential-FO} implies that $\Phi_{u,\ell}(A+\Delta) \le \Phi_{u,\ell}(A) - C \bullet \Delta$.
+Recall that for notational convenience, we write 
+\begin{alignat*}{3}
+C_+ & = -\nabla \Phi_\ell (A) &&= \exp \left((A - \ell I)^{-1}\right) (A - \ell I)^{-2}, \\
+C_- & = \nabla \Phi_u (A) &&= \exp \left((u I - A)^{-1}\right) (u I - A)^{-2}.
+\end{alignat*}
+
+When $\ell I \prec A \prec u I$, both $C_+$ and $C_-$ are PSD matrices.
+Recall that $\rho = (\lambda_{\min}\{uI-A, A-\ell I\} )^2$.
+We are interested in the following packing SDP:
+\begin{lp*}
+\maxi {(C_+ - C_-) \bullet X} \tag{\ref{eqn:sdp-oracle}}
+\st \con{X \preceq \eps \rho I, \quad X = \sum_{i=1}^m x_i v_i v_i^\top \text{ (which implies $0 \preceq X$)}.}
+\end{lp*}
+
+The constraint $X \preceq \eps \rho I$ implies that $X \preceq \eps(uI-A)^2$ and $X \preceq \eps(A-\ell I)^2$.
+Thus, by Lemma~\ref{lem:potential-FO}, when $\eps \le 1/10$, the first-order approximation of the potential function is accurate:
+\[
+\Phi_{u,\ell}(X) - (C_+ - C_-) \bullet X \le \Phi_{u,\ell}(A+X) \le \Phi_{u,\ell}(A) - ((1-2\eps) C_+ - (1+2\eps)C_- ) \bullet X.
+\]
+Let $C = C_+ - C_-$. The SDP in \eqref{eqn:sdp-oracle} is naturally trying to find an $X$ to maximize the $C \bullet X$, while making sure $C \bullet X$ is a good approximation to the reduction of the potential function.
+
+Ideally, we would like to have $X = \eps \rho I$ so that $A$ grows equally in each dimension, and the potential function stays the same:
+\[
+\Phi_{u+\eps\rho,\ell+\eps\rho}(A+\eps\rho I) = \Phi_{u,\ell}(A).
+\]
+When $X = \eps \rho I$, the objective value of the SDP is
+\[
+(C_+ - C_-) \bullet X = \eps \rho (\tr(C_+) - \tr(C_-)).
+\]
+While in general $I$ may not be in the span of the rank-one matrices, we will show in Lemma~\ref{lem:sdp-computation} that we can compute an $X$ with
+\[
+(C_+ - C_-) \bullet X \ge \frac{\eps \rho}{2} \left((1-\beta-2\eps)\tr(C_+) - (1+\beta+2\eps)\tr(C_-)\right).
+\]
+We first prove Lemma~\ref{lem:phi-no-increase}, which states that the potential function does not increase if $\Delta_j$ in each iteration satisfies Lemma~\ref{lem:sdp-computation}.
+
+\begin{proof}[Proof of Lemma~\ref{lem:phi-no-increase}]
+We want to show $\Phi_{u_{j+1},\ell_{j+1}}(A_{j+1}) \le \Phi_{u_{j},\ell_{j}}(A_{j})$, where $A_{j+1} = A_j + \Delta_j$.
+
+When we increase the weights $\{w_i\}$ and expand $A$, the lower barrier potential $\Phi_\ell$ decreases (since $A$ gets farther away from $\ell I$) and the upper barrier $\Phi_u$ increases (since $A$ gets closer to $u I$).
+When we increase the barrier values $u$ and $\ell$, the opposite happens: $\Phi_\ell$ increases and $\Phi_u$ decreases.
+Intuitively, the proof works by carefully increasing $u$ and $\ell$ to cancel out the change due to adding $\Delta_j$, while making sure both $u$ and $\ell$ increase at roughly the same rate.
+
+Recall that $C_+ = -\nabla \Phi_{\ell_j} (A_j)$ and $C_- = \nabla \Phi_{u_j} (A_j)$.
+Formally, we have
+\begin{align}
+& \Phi_{u_{j+1},\ell_{j+1}}(A_{j+1}) \notag \\
+% & = \Phi_{u_j+\delta_{u,j}, \ell_j+\delta_{\ell,j}}(A_{j+1}) \notag \\
+& = \Phi_{u_j}(A_{j+1}-\delta_{u,j} I) + \Phi_{\ell_j}(A_{j+1}-\delta_{\ell,j} I) \notag \\
+& \le \Phi_{u_j,\ell_j}(A_{j+1}) - (1-2\eps) \nabla \Phi_{u_j}(A_{j+1}) \bullet (\delta_{u,j} I) - (1+2\eps) \nabla \Phi_{\ell_j}(A_{j+1}) \bullet (\delta_{\ell,j} I) \tag{Lemma~\ref{lem:potential-FO}}\\
+& \le \Phi_{u_j,\ell_j}(A_{j+1}) - (1-2\eps) \nabla \Phi_{u_j}(A_{j}) \bullet (\delta_{u,j} I) - (1+2\eps) \nabla \Phi_{\ell_j}(A_{j}) \bullet (\delta_{\ell,j} I) \label{eqn:nabla-Aj1} \\
+& = \Phi_{u_j,\ell_j}(A_{j+1}) - (1-2\eps) \delta_{u,j} \tr(C_-) + (1+2\eps) \delta_{\ell,j} \tr(C_+) \label{eqn:phi-change-1}.
+\end{align}
+Our choice of $\delta_{u,j}, \delta_{\ell,j}$ satisfies that $\delta_{u,j}, \delta_{\ell,j} \le \eps \rho$ when $\eps, \beta \le 1/10$, which allows us to apply Lemma~\ref{lem:potential-FO}.
+Step~\eqref{eqn:nabla-Aj1} uses $A_{j} \preceq A_{j+1}$ and the fact that, for any $\ell I \prec A_1 \preceq A_2 \prec u I$, we have $0 \preceq \nabla \Phi_u (A_1) \preceq \nabla \Phi_u (A_2)$ and $0 \preceq -\nabla \Phi_\ell (A_2) \preceq -\nabla \Phi_\ell (A_1)$.
+
+We continue to bound the change of the potential function when we set $A_{j+1} = A_j + \Delta_j$ for any $\Delta_j$ that satisfies Lemma~\ref{lem:sdp-computation}.
+\begin{align}
+& \Phi_{u_j,\ell_j}(A_{j+1})
+= \Phi_{u_j,\ell_j}(A_{j} + \Delta_j) \notag \\
+& \le \Phi_{u_j, \ell_j}(A_j) + (1+2\eps) C_- \bullet \Delta_j - (1-2\eps) C_+ \bullet \Delta_j \tag{Lemma~\ref{lem:potential-FO}} \\
+& = \Phi_{u_j, \ell_j}(A_j) - (C_+ - C_-) \bullet \Delta_j + 2\eps (C_+ + C_-) \bullet \Delta_j \notag \\
+& = \Phi_{u_j, \ell_j}(A_j) - (C_+ - C_-) \bullet \Delta_j + 2\eps^2\rho \tr(C_+ + C_-) \tag{$\Delta_j \le \eps\rho I$} \notag \\
+& \le \Phi_{u_j, \ell_j}(A_j) - \frac{\eps\rho}{2}\left[(1-\beta-\eps)\tr(C_+) - (1+\beta+\eps)\tr(C_+)\right] + 2\eps^2 \rho\tr(C_+ + C_-) \tag{Lemma~\ref{lem:sdp-computation}} \\
+& = \Phi_{u_j, \ell_j}(A_j) + \frac{\eps\rho(1+\beta+5\eps)}{2} \tr(C_-) - \frac{\eps\rho(1-\beta-5\eps)}{2} \tr(C^+) \label{eqn:phi-change-2}.
+\end{align}
+We conclude the proof by comparing lines \eqref{eqn:phi-change-1} and \eqref{eqn:phi-change-2}, and setting $\delta_{u,j} = \frac{\eps\rho(1+\beta+5\eps)}{2(1-2\eps)}$ and $\delta_{\ell,j} = \frac{\eps\rho(1-\beta-5\eps)}{2(1+2\eps)}$.
+The trace terms cancel out and we get $\Phi_{u_{j+1},\ell_{j+1}}(A_{j+1}) \le \Phi_{u_{j},\ell_{j}}(A_{j})$ as needed.
+\end{proof}
+
+We remark that the best we can hope for is to increase the upper and lower barriers at a rate of $1+\beta$ vs. $1-\beta$ (which is the case as $\eps \to 0$), because the ground-truth is a set of weights $w_i$ with $(1-\beta) I \preceq \sum_i w_i v_i v_i^\top \preceq (1+\beta) I$. Our algorithm only achieves a ratio of $1+O(\beta+\eps)$ vs. $1-O(\beta+\eps)$ for several reasons: (1) the error in the first-order approximation of the potential function, (2) we solve the SDP approximately, and (3) we use Taylor expansion and Johnson-Lindenstrauss to speed up the computation.
+
+
+
+We break Lemma~\ref{lem:sdp-sol} into two lemmas and prove them separately.
+Lemma~\ref{lem:sdp-sol-exist} states that SDP~\eqref{eqn:sdp-oracle} has a good solution. Lemma~\ref{lem:sdp-computation} shows that we can compute $\rho$ and solve this packing SDP~\eqref{eqn:sdp-oracle} approximately in nearly-linear time.
+
+\begin{lemma}
+\label{lem:sdp-sol-exist}
+Let $A$ be a symmetric matrix. Let $\ell < u$ be barrier values such that $\ell I \prec A \prec u I$.
+The SDP in \eqref{eqn:sdp-oracle} has a solution $X$ with
+\[
+C \bullet X \ge \eps \rho \left(\frac{1-\beta}{1+\beta}\tr(C_+) - \tr(C_-)\right).
+\]
+\end{lemma}
+\begin{proof}%[Proof of Lemma~\ref{lem:sdp-sol}]
+%Ideally, we would like to have $X = \eps \rho I$ so that $A$ grows equally in each dimension, and the potential function stays the same:
+%\[
+%\Phi_{u+\eps\rho,\ell+\eps\rho}(A+\eps\rho I) = \Phi_{u,\ell}(A).
+%\]
+When $X = \eps \rho I$, the objective value is $C \bullet X = \eps \rho \tr(C)$.
+%While in general $I$ may not be in the span of the rank-one matrices, we will show that there is a good solution $X$ with $C \bullet X$ close to $\eps \rho \tr(C)$.
+% Moreover, we can compute an approximately optimal solution to this SDP in nearly-line time.
+Note that $C$ is not PSD, so when $X \approx \eps \rho I$, we need to split $C$ into the difference of two PSD matrices $C_+$ and $C_-$ to bound the error.
+
+Recall that there exists a set of weights $w_i$ with $(1-\beta) I \preceq \sum_{i=1}^m w_i v_i v_i^\top \preceq (1+\beta)I$.
+We look at a solution of this SDP with $X = \frac{\rho}{1+\beta} \sum_{i=1}^m w_i v_i v_i^\top$.
+It follows directly that $X$ is feasible since $X$ is a weighted sum of $v_i v_i^\top$ and $X \preceq \eps \rho I$.
+For the objective value, since $\frac{1-\beta}{1+\beta} \eps \rho I \preceq X \preceq \eps \rho I$,
+\begin{equation*}
+%\mathrm{OPT} & \ge 
+(C_+ - C_-) \bullet X
+  \ge C_+ \bullet (\frac{1-\beta}{1+\beta} \eps \rho I) - C_- \bullet (\eps \rho I)
+  = \eps\rho\left(\frac{1-\beta}{1+\beta} \tr(C_+) - \tr(C_-)\right). \tag*{\jmlrQED} %\qedhere 
+\end{equation*}
+\renewcommand{\jmlrQED}{}
+\end{proof}
+
+We now provide details about how to implement Algorithm~\ref{alg:ls17} in nearly-linear time.
+We remark that similar implementations were shown in~\cite{AllenLO15, LeeS15, LeeS17}.
+
+\begin{lemma}
+\label{lem:sdp-computation}
+Fix $0 < \beta,\eps \le 1/10$. %Let $\{v_i\}_{i=1}^m$ be the set of input vectors given in Theorem~\ref{thm:main}.
+%, and a graph Laplacian $L \in \R^{n \times n}$.
+%Given a set of $m$ vectors $\{v_i = L^{-1/2} b_i\}_{i=1}^m$, assume there exist weights $w_i \ge 0$ such that
+%\[
+%(1-\beta) I \preceq \sum_{i=1}^m w_i v_i v_i^\top \preceq (1+\beta) I.
+%\]
+Given an $n \times n$ matrix $A = \sum_{i=1}^m w_i v_i v_i^\top$ represented by a set of weights $\{w_i \ge 0\}_{i=1}^m$, let $\ell < u$ be barrier values such that $u - \ell \le 1$ and $(\ell + g) I \prec A \prec (u - g) I$ for some gap $g = \Omega(\log^{-2} n)$.
+
+We can compute $\rho$ and weights $\{\tilde w_i\}_{i=1}^m$ in $\tilde O(m / \eps^{5})$ time, such that with high probability,
+\begin{enumerate}
+\item[(1)] $\rho \in [1-\eps, 1] \cdot (\lambda_{\min}\{u I - A, A - \ell I\})^2$;
+\item[(2)] $X = \sum_{i=1}^m \tilde x_i v_i v_i^\top$ satisfies $X \preceq \eps\rho I$ and
+\[
+(C_+ - C_-) \bullet X \ge \frac{\eps \rho}{2} \left((1-\beta-\eps)\tr(C_+) - (1+\beta+\eps)\tr(C_-)\right).
+\]
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+Recall that $v_i = L^{-1/2} b_i$ for a fixed Laplacian $L$.
+Let $\hat L = \sum_i w_i b_i b_i^\top$ be the Laplacian specified by the weights of $A$.
+In this proof, we will frequently use the following fact,
+\[
+A = \sum_{i=1}^m w_i v_i v_i^\top = L^{-1/2} \sum_{i=1}^m w_i b_i b_i^\top L^{-1/2} = L^{-1/2} \hat L L^{-1/2}.
+\]
+
+\begin{enumerate}
+\item[(1)] We show how to compute $\rho \in [1-\eps, 1] \cdot \lambda_{\min}(u I - A)^2$. The approach is similar for $A - \ell I$.
+It is sufficient to compute $\rho \approx_{\eps/2} \lambda_{\min}(u I - A)^2$.~\footnote{We write $a \approx_{\eps} b$ for $\exp(-\eps) a \le b \le \exp(\eps) a$. This extends naturally to PSD matrices, where $A \approx_{\eps} B$ means $\exp(-\eps)A \preceq B \preceq \exp(\eps) A$. It is sufficient to approximate $\rho$ up to a factor of $1\pm \exp(\eps/2)$ because $\exp(\eps) \le \frac{1}{1-\eps}$.}
+By Lemma~\ref{lem:mat-taylor}, there exists a degree $\tilde O\left(\frac{\log(1/\eps)}{g}\right) = \tilde O(\log^2 n \log(1/\eps))$ polynomial $p(A)$ such that $p(A) \approx_{\eps/4} (u I - A)^{-2}$.
+%This polynomial can be viewed as a low-degree polynomial of $A$, which we abuse notation and denote by $p(A)$.
+Since $\lambda_{\max} (p(A)) \approx_{\eps/4} \lambda_{\max} ((u I - A)^{-2}) = \left(\lambda_{\min} (u I - A)^2\right)^{-1}$, it is sufficient to approximate $\lambda_{\max} (p(A))$.
+
+Observe that for any $n \times n$ PSD matrix $M$,
+\[
+\lambda_{\max}(M) \le \left(\tr\left(M^{2k}\right)\right)^{1/2k} \le n^{1/2k} \lambda_{\max} (M).
+\]
+In particular, for $k = O(\log n / \eps)$ we can get $\left(\tr(p(A)^{2k})\right)^{1/2k} \approx_{\eps/4} \lambda_{\max}(p(A))$,
+and thus, we can return $\rho = \left(\tr(p(A)^{2k})\right)^{-1/2k} \approx_{\eps/2} \lambda_{\min}(u I - A)^2$.
+
+It remains to show that we can approximate
+\[
+\tr(p(A)^{2k}) = \tr(p(L^{-1/2} \hat L L^{-1/2})^{2k}) = \tr(p(L^{-1} \hat L)^{2k}).
+\]
+Let $M = p(L^{-1} \hat L)^{k}$ so $\tr(p(A)^{2k}) = \tr(M^2)$.
+We approximate each diagonal entry of $M^2$ by writing it as $\left(M^2\right)_{i,i} = \chi_i^\top M M \chi_i = \normtwo{M \chi_i}^2$, where $\chi_i$ denote the $i$-th standard basis vector.
+By the Johnson-Lindenstrauss lemma, we can generate a random $O(\log n/\eps^2) \times n$ matrix $Q$, so that with high probability, for all $1 \le i \le n$,
+\[
+\normtwo{M \chi_i}^2 = \normtwo{Q M \chi_i}^2.
+\]
+Note that $Q M \chi_i$ is the $i$-th column of $QM$.
+We can compute (approximately) $Q M = \left(M Q^\top\right)^\top$ by multiplying each column of $Q^\top$ through $M$.
+
+This can be done in time $\tilde O(n/\eps^5)$, because $Q^\top$ has $O(\log n/\eps^2)$ columns, and matrix-vector multiplication with $M = p(L^{-1} \hat L)^{k}$ can be implemented using $k \cdot \mbox{deg}(p) = \tilde O(\log^3 n / \eps)$ matrix-vector multiplications with $L^{-1} \hat L$. We will show that matrix-vector multiplication with $L^{-1} \hat L$ can be done in time $\tilde O(n / \eps^2)$, so the overall running time is $\tilde O(n / \eps^5)$.
+
+Recall that the number of edges in $\hat L$ is at most $m$.
+Let $m'$ denote the number of edges in $L$.
+W.l.o.g., we can assume both $m, m' = O(n/\eps^2)$ by sparsifying the input graphs first.
+Therefore, one matrix-vector multiplication with $L^{-1} \hat L$ can be done in time $\tilde O(n/\eps^2)$, by first multiplying the vector through $\hat L$, and then solving a linear system in $L$ in $\tilde O(m' \log (1/\eps))$ time~\citep{SpielmanT14, KoutisMP11, KelnerOSZ13, PengS14, ChengCLPT15, CohenKMPPRX14, KyngS16}.
+
+\item[(2)]
+Since we represent the variable $X$ of the SDP by a set of weights $\{x_i\}_{i=1}^m$, the objective function is of the form $C \bullet X = C \bullet \left(\sum_{i=1}^m x_i v_i v_i^\top\right) = \sum_{i=1}^m x_i (v_i^\top C v_i)$.
+Let $c \in \R^m$ be a vector with $c_i = v_i^\top C v_i$.
+The SDP in \eqref{eqn:sdp-oracle} can be rewritten as
+\begin{lp*}
+\maxi {c^\top x}
+\st \con{\sum_{i=1}^m x_i (v_i v_i^\top) \preceq \eps \rho I.}
+\end{lp*}
+
+This is a packing SDP that can be solved in polylogarithmic iterations (see, e.g., \citep{JainY11, AllenLO16, PengTZ16}).
+Formally, we use Lemma~\ref{lem:alo16} from \cite{AllenLO16}.
+Because Lemma~\ref{lem:alo16} returns a solution $X$ with $\expect{}{C \bullet X} \ge \frac{4}{5} \mathrm{OPT}$, it must return a $\frac{3}{5}$ approximation with probability at least $1/2$.
+Since $\frac{3}{5} > \frac{1+\beta}{2}$, we can invoke Lemma~\ref{lem:alo16} $O(\log n)$ times so that we get $\frac{1+\beta}{2}$-approximation with high probability. We assume this event happens for the rest of the proof.
+
+Let $c_i^+ = v_i^\top C_+ v_i$ and $c_i^- = v_i^\top C_- v_i$.
+If we can approximate $c^+$ and $c^-$ by a (multiplicative) factor of $1 \pm \frac{\eps}{2}$, we have
+\begin{align*}
+(c^+ - c^-)^\top x
+& \ge \frac{1+\beta}{2} \mathrm{OPT} - \frac{\eps}{2} (c^+ + c^-)^\top x \tag{Lemma~\ref{lem:alo16}} \\
+& \ge \frac{1+\beta}{2}  \mathrm{OPT} - \frac{\eps^2 \rho}{2} \tr(C^+ + C^-) \tag{$X \preceq \eps \rho I$} \\
+& \ge \frac{1+\beta}{2} \eps \rho \left(\frac{1-\beta}{1+\beta}\tr(C_+) - \tr(C_-)\right) - \frac{\eps^2 \rho}{2} \tr(C^+ + C^-) \tag{Lemma~\ref{lem:sdp-sol-exist}}. \\
+& = \frac{\eps \rho}{2} \left( (1-\beta-\eps) \tr(C_+) - (1+\beta+\eps) \tr(C_-) \right).
+\end{align*}
+
+Finally, 
+%Before we can invoke Lemma~\ref{lem:alo16}, we need to approximate $c^+$ and $c^-$ in nearly-linear time.
+%To make our proof more self-contained,
+we will show how to approximate $c^-_i$ by a factor of $1 \pm \frac{\eps}{2}$ for all $1 \le i \le m$ in time $\tilde O(m / \eps^{O(1)})$.
+The algorithms for approximating $c^+_i$ and implementing the oracle required by Lemma~\ref{lem:alo16} follow from a similar approach.\footnote{
+We remark that the problem of approximating these quantities is akin to that of approximating (relative) effective resistances~\citep{SpielmanS11, AllenLO15, LeeS15}, and a nearly-linear time algorithm for computing the same quantities was shown in~\citep{LeeS17}.}
+
+Recall that $C_- = \exp((uI - A)^{-1}) (uI-A)^{-2}$, where $A = L^{-1/2} \hat L L^{-1/2}$.
+By Lemma~\ref{lem:mat-taylor} the assumption that $g = \Omega(\log^{-2} n)$, there exists a degree $\tilde O\left(\frac{\log(1/\eps)}{g^2}\right) = \tilde O(\log^4 n \log(1/\eps))$ polynomial $q(A)$ such that
+\[
+q(A) \approx_{\eps/6} \exp\left(\frac{1}{2}(uI - A)^{-1}\right) (uI-A)^{-1}.
+\]
+Because both sides are matrix polynomials of $A$, we can diagonalize them simultaneously so that the approximation only happens to the eigenvalues. Therefore,
+\[
+\left(q(A)\right)^2 \approx_{\eps/3} \exp((uI - A)^{-1}) (uI-A)^{-2},
+\]
+which implies $v_i^\top q(A)^2 v_i \in [1\pm \frac{\eps}{2}] v_i^\top C_- v_i$, since $\exp(\eps/3) \le 1+\eps/2$ when $\eps \le \frac{1}{10}$.
+
+Recall that $m$, $m'$ denotes the number of edges in $\hat L$ and $L$.
+Recall that $L = B^\top B$ where $B \in \R^{m' \times n}$ is the edge-vertex incident matrix of $L$.
+Fix some $1 \le i \le m$.
+Let $v_i = L^{-1/2} b_i$ where $b_i = \chi_u - \chi_{u'}$ for the $i$-th edge $(u, u')$.
+
+For any $1 \le i \le m$, we have
+\begin{align*}
+v_i^\top C_- v_i
+& \approx_{\eps/3} \normtwo{q(A) v_i}^2 \\
+& = \normtwo{q(L^{-1/2} \hat L L^{-1/2}) L^{-1/2} b_i}^2 \\
+& = \normtwo{L^{1/2} q(L^{-1} \hat L) L^{-1} b_i}^2 \\
+& = \normtwo{B q(L^{-1} \hat L) L^{-1} b_i}^2 \\
+& = \normtwo{B q(L^{-1} \hat L) L^{-1} (\chi_u - \chi_{u'})}^2.
+\end{align*}
+So the quantities $\{c^-_i\}_{i=1}^m$ are just the squared distances between the $m$-dimensional points $\{B q(L^{-1} \hat L) L^{-1} \chi_u\}_{u\in V}$.
+We invoke the Johnson-Lindenstrauss lemma and generate a random $O(\log n/\eps^2) \times m$ matrix $Q$, so that with high probability, for all $1 \le u, u' \le n$,
+\[
+\normtwo{Bq(L^{-1} \hat L)L^{-1}(\chi_u - \chi_{u'})} \approx_{\eps/6} \normtwo{QBq(L^{-1} \hat L)L^{-1}(\chi_u - \chi_{u'})}.
+\]
+Recall that $A_i$ is the $i$-th row of a matrix $A$.
+Let $Z = QBq(L^{-1} \hat L)L^{-1}$ and $Y = QBq(L^{-1} \hat L)$.
+Both $Y$ and $Z$ have $O(\log n/\eps^2)$ rows and $n$ columns.
+We have $Z^\top = L^{-1} Y^\top$, which allows us to approximate each $(Z_i)^\top = L^{-1} (Y_i)^\top$ by solving a linear system in $L$.
+The time it takes to solve $O(\log n/\eps^2)$ linear systems in $L$ is $\tilde O(n/\eps^4)$, because we can assume $m, m' = O(n/\eps^2)$ by sparsifying the input graphs.
+
+We can compute $Y^\top = q(L^{-1} \hat L) B^\top Q^\top$ in $\tilde O(n/\eps^4)$ time, since we can perform matrix-vector multiplication with $q(L^{-1} \hat L)$ in time $\tilde O(m/\eps^2)$, and $B^\top Q^\top$ can be computed in $\tilde O(n/\eps^4)$ time because $B$ has $2m' = O(n/\eps^2)$ non-zeros and $Q$ has $O(\log n/\eps^2)$ rows. \jmlrQED %\qedhere
+\end{enumerate}
+\renewcommand{\jmlrQED}{}
+\end{proof}
+
+The overall running time of Algorithm~\ref{alg:ls17} is $\tilde O(m / \eps^7)$, because there are at most $O(\log n / \eps^2)$ iterations (shown in Section~\ref{sec:bss}), and each iteration can be implemented to run in time $\tilde O(m / \eps^{5})$ by Lemma~\ref{lem:sdp-computation}.
+
+One of our main contributions is conceptual: we show that the framework of~\cite{BatsonSS12} can be applied to a much broader settings to obtain scalable algorithms.
+On a technical level, because there exists a hidden set $S$ whose sum is only \emph{approximately} equal to $I$, the optimal solution to the SDP will be worse, so we need to carefully control the error caused by this, and move the barriers at a slightly different rate.
+Our analysis is considerably simpler than that in~\citep{LeeS17}, partly because we do not require the output weights to be sparse;
+We also take care of two minor issues with~\citep{LeeS17}: They assumed $\rho$ can be computed exactly for simplicity, and they proved Taylor expansion of $C_-$ can be truncated (where it should be $C_-^{1/2}$ as in Lemma~\ref{lem:mat-taylor}).
+
+\begin{lemma}[\cite{AllenLO16}]
+\label{lem:alo16}
+Consider the following SDP with $M_i \succeq 0$ and $c \in \R^m$.
+\begin{lp*}
+\maxi{c^\top x}
+\st \con{x \ge 0}
+    \con{\sum_{i=1}^m x_i M_i \preceq I.}
+\end{lp*}
+Suppose $c$ is given explicitly and we have access to $M_i$ via an oracle $\OO_{\eta, \delta}$ which on input $x \in \R^m$ outputs a vector $y \in \R^m$ such that
+\[
+y_i \in (1 \pm \frac{\delta}{2}) \; M_i \bullet \exp \left(\eta \Bigl(\sum_{i} x_i M_i - I \Bigr) \right)
+\]
+% for $\eta = (4/\delta) \log(nm/\delta)$
+in time $T_{\eta, \delta}$ for any $x \in \R^m$ such that $x \ge 0$ and $\sum_{i=1}^m x_i M_i \preceq 2I$.
+% \todo{$n$ needs to appear in this theorem.}
+Then, we can output an $x$ in time $\tilde O(T_{\eta, \delta} \log m / \delta^3)$ such that
+\[
+\expect{}{c^\top x} \ge (1-O(\delta)) \cdot \mathrm{OPT} \text{ with } \sum_{i=1}^m x_i M_i \preceq I.
+\]
+\end{lemma}
+
+
+
+\begin{lemma}
+\label{lem:mat-taylor}
+Let $A$ be a real symmetric matrix. When $(u-1) I \prec A \prec (u-g) I$ for some $0 < g < 1$, we can compute
+\begin{enumerate}
+\item[(1)] A polynomial $p(A)$ of degree $O\left(\frac{\log(1/(\eps g))}{g}\right)$ such that $p(A) \approx_{\eps} (uI-A)^{-2}$.
+\item[(2)] A polynomial $q(A)$ of degree $O\left(\frac{\log(1/(\eps g))}{g^2}\right)$ such that $q(A) \approx_{\eps} \exp\left(\frac{1}{2}(uI - A)^{-1}\right) (uI-A)^{-1}$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+The lemma is proved by truncating Taylor expansions.
+Because $A$ is symmetric, the matrix polynomials $p(A)$ and $q(A)$ can be diagonalized simultaneously with $A$.
+Therefore, it is sufficient to prove such polynomials exist for scalars.
+
+\begin{enumerate}
+\item[(1)] Let $f(x) = x^{-2}$. Let $p(a) = \hat p(u-a)$, and we define $\hat p(\cdot)$ to be the first $d$ terms of the Taylor expansion of $f(x)$ at $x=1$.
+\[
+f(x) = \sum_{i=0}^d \frac{f^{(i)}(1)}{i!}(x-1)^n + \frac{1}{d!} \int_1^{x} f^{(d+1)}(t) (x-t)^d dt.
+\]
+We know that all eigenvalues of $(uI-A)$ are in the interval $(g, 1)$.
+For any $x \in (g, 1)$, there exists some $d = \left(g^{-1} \log(1/(\eps g)) \right)$ such that the remainder of the Taylor series satisfies
+\begin{align*}
+\left| f(x) - \sum_{i=0}^d \frac{f^{(i)}(1)}{i!}(x-1)^n \right|
+  & = \left| \frac{1}{d!} \int_1^{x} f^{(d+1)}(t) (x-t)^d dt \right| \\
+  & = \frac{(1-x)^{d+1} (1+x+dx)}{x^2} \\
+  & \le (1-g)^{d+1}\frac{d+2}{g^2} \le \eps.
+\end{align*}
+\item[(2)] Let $h(x) = \exp\left(\frac{1}{2}x^{-1}\right) x^{-1}$.
+Let $q(a) = \hat q(u-a)$, and we define $\hat q(\cdot)$ to be the first $d$ terms of the Taylor expansion of $h(x)$ at $x=1$.
+
+For any $x \in (g, 1)$ and $t \in [x, 1]$, $h$ is holomorphic on a neighborhood of the ball $B := \{z \in \C : |z - t| \le r \}$ for $r = t - x/2$, so we can bound the coefficients of the Taylor expansion using Cauchy's estimates.
+\[
+\frac{1}{(d+1)!} h^{(d+1)}(t) \le r^{-d-1} \sup_{z \in B} |h(z)| \le r^{-d-1} \cdot 2 \exp(x^{-1}) x^{-1}.
+\]
+There exists some $d = O\left(g^{-2} \log(1/(\eps g))\right)$ such that the remainder at $x \in (g, 1)$ satisfies
+\begin{align*}
+\left| h(x) - \hat q(x) \right|
+  & = \left| \frac{1}{d!} \int_1^{x} h^{(d+1)}(t) (x-t)^d dt \right| \\
+  & \le 2(d+1) \exp(x^{-1}) x^{-1} \int_x^1 \frac{(t-x)^d}{(t-x/2)^{d+1}} dt \\
+  & \le 4(d+1) \exp(x^{-1}) x^{-2} \int_x^1 \bigl(1-\frac{x}{2}\bigr)^d dt \\
+  & \le 4(d+1) \exp(g^{-1}) g^{-2} \bigl(1-\frac{g}{2}\bigr)^d \le \eps. \tag*{\jmlrQED} %\qedhere
+\end{align*}
+\end{enumerate}
+\renewcommand{\jmlrQED}{}
+\end{proof}
+
+
+
+\section{Omitted Proof from Section~\ref{sec:lap-to-adj}}
+\label{apx:lap-to-adj}
+
+In this section, we restate Lemmas~\ref{lem:random-graph}~and~\ref{lem:Lclose-Aclose} and prove them.
+
+\noindent {\bf Lemma~\ref{lem:random-graph}}
+{\enspace \em
+Let $G$ denote the $n_1 \times n_2$ complete bipartite graph.
+We write $n = n_1 + n_2$ for the number of vertices, and $m = n_1 n_2$ for the number of edges.
+Let $H$ denote a random graph generated by including each edge of $G$ independently with probability $p$.
+with high probability, we can re-weight edges of $H$ so that the (weighted) Laplacian matrix $L_H$ is $\eps$-spectrally similar with $L_G$, where $\eps = O\left(\sqrt{\frac{n \log n}{p m}}\right)$.
+}
+\begin{proof}
+For complete bipartite graphs, all edges have the same effective resistance, so uniform sampling among all the edges will produce a good spectral sparsifier.
+
+Formally, we can use the main result of~\cite{SpielmanS11}: Fix any $0 < \eps < 1$. For sufficiently large $n$ and all graphs on $n$ vertices, there is a universal constant $C$ so that sampling $C n \log n/\eps^2$ edges independently (with sample probability $p_e$ proportional to [edge weight $\times$ effective resistant]) produces an $\eps$-spectral sparsifier with high probability.
+The lemma allows reweighting on $H$ because when we include an edge we give it weight $1/p_e$.
+
+At the core of~\citep{SpielmanS11} are matrix concentration inequalities~\citep{RudelsonV07, AhlswedeW02, Tropp12}.
+Note that the original proof in~\citep{SpielmanS11} used sampling with replacement and holds only with constant probability, but the analysis can be adapted to show that sampling by effective resistance without replacement works with high probability.
+\end{proof}
+
+\noindent {\bf Lemma~\ref{lem:Lclose-Aclose}}
+{\enspace \em
+Let $L = D - A$ and $\tilde L = \tilde{D} - \tilde{A}$ be two graph Laplacians, where $D$ is the degree matrix and $A$ is the adjacency matrix of the graph.
+If $(1-\eps) L \preceq \tilde L \preceq L$, then we have:
+\begin{enumerate}
+\item[(1)] $(1-\eps) D_{i,i} \le \tilde{D}_{i,i} \le D_{i,i}$.
+\item[(2)] $\norm{D^{-1/2}(\tilde{A} - A)D^{-1/2}} \le 3\eps$.
+\end{enumerate}
+}
+\begin{proof}
+For (1), the spectral similarity between $L$ and $\tilde L$ implies that $(1-\eps) x^\top L x \le x^\top \tilde{L} x \le x^\top L x$ for all $x \in \R^n$.
+In particular, this holds for all standard basis vectors, so $(1-\eps) D_{i,i} \le \tilde{D}_{i,i} \le D_{i,i}$.
+
+For (2), we know that $0 \preceq L - \tilde{L} \preceq \eps L$ and similarly $0 \preceq D-\tilde{D} \preceq \eps D$, and therefore
+\begin{align*}
+\norm{D^{-1/2}(\tilde{A} - A)D^{-1/2}}
+& = \norm{D^{-1/2}(\tilde{D} - D + L - \tilde{L})D^{-1/2}} \\
+& \le \norm{D^{-1/2} (D - \tilde D) D^{-1/2}} + \norm{D^{-1/2} (L - \tilde L) D^{-1/2}} \\
+& \le \eps \norm{I} + \eps \norm{D^{-1/2} L D^{-1/2}} \le 3\eps. %\tag*{\jmlrQED} %\qedhere
+\end{align*}
+The last step uses the fact that eigenvalues of a normalized Laplacian matrix $D^{-1/2} L D^{-1/2}$ are always between $0$ and $2$.
+%\renewcommand{\jmlrQED}{}
+\end{proof}

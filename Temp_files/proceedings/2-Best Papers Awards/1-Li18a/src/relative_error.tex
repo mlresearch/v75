@@ -1,0 +1,406 @@
+\subsection{Proof of Proposition~\ref{prop:low-rank-relative-error}}
+
+Towards proving Proposition~\ref{prop:low-rank-relative-error}, we further decompose $Z_t$ into 
+\begin{align}
+Z_t = (\bUg + F_t)R_t \label{eqn:decompose_rankr}
+\end{align}
+where $R_t\in \R^{r\times d}, F_t\in \R^{d\times r}$ are defined as
+\begin{align}
+R_t = \bUg^\top Z_t, \textup{ and } F_t = (\Id- \Id_{\bUg})Z_t R_t^{+} \label{eqn:decompose_z}
+\end{align}
+Recall that $X^+$ denotes the pseudo-inverse of $X$. We first relate the the spectral norm of $F_t$ with our target in Proposition~\ref{prop:low-rank-relative-error}, the principal angle between $Z_t$ and $\bUg$.  Up to third order term, we show that $\|F_t\|$ is effective equal to the principle angle, and this is pretty much the motivation to decompose $Z_t$ in equation~\eqref{eqn:decompose_rankr}. 
+
+
+
+\begin{lem}\label{lem:angleF}
+	Let $F_t$ be defined as in equation~\eqref{eqn:decompose_z}. Then, if $\Norm{F_t} < 1/3$, we have that 
+	\begin{align}
+	\Norm{F_t} - \Norm{F_t}^3 \le \sin(Z_t, \bUg) \le \Norm{F_t} \nonumber
+	\end{align}
+\end{lem}
+\begin{proof}
+	Let $S_t = (\bUg + F_t)(\Id + F_t^\top F_t)^{-1/2}$. By the fact that $\bUg^\top F_t = 0$, we have $S_t^\top S_t = \Id$ and $S_t$ has the same column span as $Z_t$. Therefore, the columns of $S_t$ form an orthonormal basis of $Z_t$, and we have that 
+	\begin{align}
+	\sin(Z_t, \bUg) = \Norm{(\Id - \Id_{\bUg})S_t} = \Norm{F_t(\Id + F_t^\top F_t)^{-1/2}}\nonumber
+	\end{align}
+	\sloppy Suppose $F_t$ has singular value $\sigma_j, j=1,\dots, r$, then it's straightforward to show that $F_t(\Id + F_t^\top F_t)^{-1/2}$ has singular values $\frac{\sigma_j}{\sqrt{1+\sigma_j^2}}, j=1,\dots, r$. The conclusion then follows basic calculus and the fact that $\max \sigma_j \le 1/3$. 
+\end{proof}
+
+Therefore, it suffices to bound the spectral norm of $F_t$.  However, the update rules of $F_t$ or $Z_t$ are difficult to reason about. Therefore, we introduce the following intermediate term $\tilde{Z}_t$ that bridges $Z_{t+1}, F_{t+1}$ with $Z_t$ and $F+t$. We define $\tilde{Z}_t$ as:
+\begin{align}
+\tilde{Z}_t = (\Id -  \eta E_t Z_t^{\top})Z_t ( \Id -  2 \eta Z_t^{+} \Id_{S_t} M_t E_t )
+\end{align}
+
+The motivation of defining such $Z_t$ is that $Z_{t+1}$ depends on $Z_t$ via relatively simple formula as the lemma below shows:
+\begin{prop}\label{prop:update_z_t_1}
+	In the setting of Proposition~\ref{prop:low-rank-relative-error},
+\begin{align}\Norm{Z_{t + 1} - \left(\tilde{Z}_t - \eta \nabla f(Z_t) \right)}= O(\eta \tau_t)\nonumber\end{align}
+\end{prop}
+
+\noindent The proof of Proposition~\ref{prop:update_z_t_1} is deferred to the later part of this section. We also decompose $\tilde{Z}_t$ same as $Z_t$ to $\tilde{Z}_t = (\bUg + \tilde{F}_t) \tilde{R}_t$, where 
+\begin{align}
+\tilde{R}_t = \bUg^\top \tilde{Z}_t, \textup{ and } \tilde{F}_t = (\Id- \Id_{\bUg})\tilde{Z}_t \tilde{R}_t^{+} \label{eqn:decompose_z_tilde}
+\end{align}
+
+\noindent We will prove that $\tilde{R}_t$ is close to $R_t$ and $\tilde{F}_t$ is close to $F_t$ in the following sense:
+\begin{prop}\label{prop:R_t_close}In the setting of Proposition~\ref{prop:low-rank-relative-error},
+\begin{align}
+\sigma_{\min}(\tilde{R}_t ) \geq \sigma_{\min}(R_t)\left( 1 - \frac{\eta}{100 \kappa} \right)\nonumber
+\end{align}
+\end{prop}
+\begin{prop}\label{prop:F_t_close}In the setting of Proposition~\ref{prop:low-rank-relative-error},
+\begin{align}
+\norm{\tilde{F}_t - F_t} \lesssim \eta \Norm{E_t}  + \eta \rho\nonumber
+\end{align}
+\end{prop}
+
+We will prove these propositions in the following sections. After that, we will focus on the update from $\tilde{Z}_t$ to $Z_{t + 1}$. In particular, we will bound $R_{t + 1} $ and $F_{t + 1}$ directly using $\tilde{R}_{t}$ and $\tilde{F}_t$.
+
+\subsubsection{Proofs of Proposition~\ref{prop:update_z_t_1}, \ref{prop:R_t_close}, and \ref{prop:F_t_close}}
+
+
+\begin{proof}[Proof of Proposition~\ref{prop:update_z_t_1}]
+By definition of $\tilde{Z}_t$, 
+\begin{align}
+\tilde{Z}_t &=  (\Id -  \eta E_t Z_t^{\top})Z_t ( \Id -  2 \eta Z_t^{+} \Id_{S_t} M_t E_t )
+\\
+&= Z_t - \eta \left( E_t Z_t^{\top} Z_t + 2 \Id_{S_t} M_t E_t \right) + 2 \eta^2  E_t Z_t^{\top} \Id_{S_t} M_t E_t
+\end{align}
+
+Recall that by Proposition~\ref{prop:unknown}, the update rule of $Z_{t + 1}$ satisfies 
+\begin{align}
+\Norm{Z_{t + 1} - \left(Z_t  - \eta \nabla f(Z_t)- \eta E_t Z_t^{\top} Z_t - 2 \eta\Id_{S_t} M_t E_t  \right)} \leq \eta \tau_t\nonumber
+\end{align}
+
+Putting the above two formulas together (using the bound of $\Norm{M_t E_t}$ as in Lemma~\ref{lem:norm_M_t}) we have that
+\begin{align}
+\Norm{Z_{t + 1} - \left(\tilde{Z}_t - \eta \nabla f(Z_t) \right)} = O(\eta^2 \Norm{E_t}+  \eta \tau_t)
+\end{align}
+
+On the other hand, a direct calculation also shows that $\norm{\tilde{Z}_t - Z_t} = O(\eta \norm{E_t})$. Moreover, $\tilde{Z}_t$ is a rank $r$ matrix and $\Norm{Z_t}, \norm{\tilde{Z}_t} = O(1)$. Therefore, let us denote by $\tilde{Z}_t = Z_t + \Delta_t$, we have:
+\begin{align*}
+ \nabla f(\tilde{Z_t}) &= \frac{1}{m}  \sum_{i = 1}^m \langle A_i, \tilde{Z}_t \tilde{Z}_t^{\top}  - X^* \rangle A_i \tilde{Z}_t 
+\\
+& = \frac{1}{m}  \sum_{i = 1}^m \langle A_i, Z_t Z_t^{\top}  - X^* \rangle A_i \tilde{Z}_t  +  \frac{1}{m}  \sum_{i = 1}^m \langle A_i, Z_t \Delta_t^{\top} + \Delta_t Z_t^{\top} \rangle A_i \tilde{Z}_t  +  \frac{1}{m}  \sum_{i = 1}^m \langle A_i, \Delta_t \Delta_t^{\top} \rangle A_i \tilde{Z}_t 
+\\
+&= \frac{1}{m}  \sum_{i = 1}^m \langle A_i, Z_t Z_t^{\top}  - X^* \rangle A_i Z_t+  \frac{1}{m}  \sum_{i = 1}^m \langle A_i, Z_t Z_t^{\top}  - X^* \rangle A_i  \Delta_t
+\\
+&+  \frac{1}{m}  \sum_{i = 1}^m \langle A_i, Z_t \Delta_t^{\top} + \Delta_t Z_t^{\top} \rangle A_i \tilde{Z}_t  +  \frac{1}{m}  \sum_{i = 1}^m \langle A_i, \Delta_t \Delta_t^{\top} \rangle A_i \tilde{Z}_t 
+\end{align*}
+
+
+Note that $\Delta_t$ is at most rank $2r$, therefore, we can apply the RIP property of $\{ A_i \}_{i = 1}^m$ (Lemma~\ref{lem:property_1}) and $\norm{\tilde{Z_t}}, 
+\norm{Z_t} = O(1)$ to conclude that 
+\begin{align}
+\frac{1}{m} \Norm{ \sum_{i = 1}^m \langle A_i, Z_t Z_t^{\top}  - X^* \rangle A_i  \Delta_t
++    \sum_{i = 1}^m \langle A_i, Z_t \Delta_t^{\top} + \Delta_t Z_t^{\top} \rangle A_i \tilde{Z}_t  +    \sum_{i = 1}^m \langle A_i, \Delta_t \Delta_t^{\top} \rangle A_i \tilde{Z}_t } = O(\Norm{\Delta_t})\nonumber
+\end{align}
+
+\noindent Recall that $\Norm{\Delta_t} = O(\eta \| E_t \|)$, the equation above and the formula for $\nabla f(\tilde{Z})$ implies that
+\begin{align}
+\Norm{Z_{t + 1} - \left(\tilde{Z}_t - \eta \nabla f(\tilde{Z_t}) \right)} = O(\eta^2 \Norm{E_t}+  \eta \tau_t) = O(\eta \tau_t)\nonumber
+\end{align}
+
+
+\end{proof}
+\noindent
+The above proposition implies that $Z_{t + 1}$ is very close to doing one step of gradient descent from $\tilde{Z}_t$. Thus, we will mainly focus on $\tilde{Z}_t$ in the later section. 
+
+\begin{proof}[Proof of Proposition~\ref{prop:R_t_close}]
+By definition of $\tilde{R}_t$, we know that 
+\begin{align}
+\tilde{R}_t &= \bUg^{\top} \tilde{Z}_t = \bUg^{\top}(\Id -  \eta E_t Z_t^{\top})Z_t ( \Id -  2 \eta Z_t^{+} \Id_{S_t} M_t E_t )\nonumber
+\\
+&= \bUg^{\top}Z_t ( \Id -  2 \eta Z_t^{+} \Id_{S_t} M_t E_t ) -   \eta \bUg^{\top} E_t Z_t^{\top} Z_t ( \Id -  2 \eta Z_t^{+} \Id_{S_t} M_t E_t ) \label{eqn:Rt}
+\end{align}
+
+
+By definition of $R_t$ and the assumption that $\| F_t \| \leq 1/3$, we have that $\sigma_{r}(Z_t) \geq \frac{1}{2} \sigma_{\min} (R_t)$, which implies that $\Norm{Z_t^+} \leq 2 \Norm{R_t^+}$. Thus,
+using the bound of $\Norm{M_t E_t}$ as in Lemma~\ref{lem:norm_M_t},
+\begin{align}
+\Norm{Z_t^{+} \Id_{S_t} M_t E_t } \lesssim \frac{\Norm{ M_t E_t} }{\sigma_{\min}(R_t)} \lesssim \frac{\Norm{E_t} (\delta \sqrt{r} + \sin(Z_t, \bUg))}{\sigma_{\min}(R_t)}\nonumber
+\end{align}
+
+
+Similarly, we can get: 
+\begin{align}
+\norm{\bUg^{\top}E_t } = \Norm{\bUg^{\top}(\Id - \Id_{S_t})E_t }  \leq \Norm{E_t} \Norm{\bUg^{\top}(\Id - \Id_{S_t})} =  \Norm{E_t}  \sin(Z_t, \bUg)\label{eq:12345afjosji}
+\end{align}
+Therefore, bounding the terms in equation~\eqref{eqn:Rt} using the bounds above, we have:
+\begin{align}
+\sigma_{\min}(\tilde{R}_t ) &\geq \sigma_{\min}(\bUg^{\top}Z_t) (1 - \eta \Norm{ Z_t^{+} \Id_{S_t} M_t E_t}) - \eta \Norm{ \bUg^{\top} E_t Z_t^{\top} Z_t ( \Id -  2 \eta Z_t^{+} \Id_{S_t} M_t E_t )}\nonumber
+\\
+& \geq \sigma_{\min}(R_t)  (1 - \eta \Norm{ Z_t^{+} \Id_{S_t} M_t E_t}) - 2\eta \Norm{\bUg^{\top} E_t}\nonumber
+\\
+& \geq \sigma_{\min}(R_t)\left( 1 - \eta O\left(  \frac{\Norm{E_t} (\delta \sqrt{r} + \sin(Z_t, \bUg))}{\sigma_{\min}(R_t)} \right) \right) \label{eqn:201_rel}
+\end{align}
+
+
+Again, using $\sigma_{r}(Z_t) \geq \frac{1}{2} \sigma_{\min} (R_t)$ we know that 
+\begin{align}
+\frac{\Norm{E_t} (\delta \sqrt{r} + \sin(Z_t, \bUg))}{\sigma_{\min}(R_t)} &\leq 2\frac{\Norm{E_t} (\delta \sqrt{r} + \sin(Z_t, \bUg))}{\sigma_{\min}(Z_t)}\nonumber
+\end{align}
+
+By assumption of Proposition~\ref{prop:low-rank-relative-error} and that $\sigma_{\min}(Z_t) \geq \frac{1}{2} \Norm{E_t}$, we obtain:
+\begin{align}
+ 2\frac{\Norm{E_t} (\delta \sqrt{r} + \sin(Z_t, \bUg))}{\sigma_{\min}(Z_t)}
+ &\leq 2(\delta \sqrt{r} + \sin(Z_t, \bUg))\nonumber
+ \\
+ & \lesssim \sqrt{\rho} \tag{{by Assumption in proposition~\ref{prop:low-rank-relative-error}}}
+\end{align}
+
+Thus, by equation~\eqref{eqn:201_rel} above, and our choice of parameter such that $\sqrt{\rho} \lesssim 1/\kappa$, we conclude that
+\begin{align}
+\sigma_{\min}(\tilde{R}_t ) \geq \sigma_{\min}(R_t)\left( 1 - \frac{\eta}{100 \kappa} \right)\nonumber
+\end{align}
+\end{proof}
+
+
+\noindent Next we prove prove Proposition~\ref{prop:F_t_close}, which focus on $\tilde{F}_t$:
+\begin{proof}[Proof of Proposition~\ref{prop:F_t_close}]
+
+We know that right multiply $Z_t 
+$ by an invertible matrix does not change the column subspace as $Z_t$, thus won't change the definition of $F_t$, so we can just focus on $ (\Id -  \eta E_t Z_t^{\top})Z_t $. 
+We know that 
+\begin{align*}
+\tilde{F}_t &= (\Id- \Id_{\bUg}) \left(\Id -  \eta E_t Z_t^{\top})Z_t (\bUg^{\top} (\Id -  \eta E_t Z_t^{\top})Z_t\right)^{+}
+\\
+ &= (\Id- \Id_{\bUg}) Z_t \left(\bUg^{\top} Z_t - \eta \bUg^{\top} E_t Z_t^{\top} Z_t \right)^{+}
+ \\
+ & - \eta  (\Id- \Id_{\bUg})E_t Z_t^{\top}\left(\bUg^{\top} Z_t - \eta \bUg^{\top} E_t Z_t^{\top} Z_t \right)^{+}
+\end{align*}
+
+
+Since $Z_t$ is rank $r$, we can do the SVD of $Z_t$ as $Z_t =  V \Sigma_Z W^{\top}$ for column orthonormal matrices $V, W \in \mathbb{R}^{d \times r}$ and diagonal matrix $\Sigma_Z \in \mathbb{R}^{r \times r}$. Then, we can write $\left(\bUg^{\top} Z_t - \eta \bUg^{\top} E_t Z_t^{\top} Z_t \right)^{+}$ as:
+\begin{align*}
+\left(\bUg^{\top} Z_t - \eta \bUg^{\top} E_t Z_t^{\top} Z_t \right)^{+} &= \left(\left(\bUg^{\top} V- \eta \bUg^{\top} E_t Z_t^{\top}V \right) \Sigma_Z W^{\top} \right)^{+}
+\\
+&=  W^{\top} \Sigma_Z^{-1} \left( \bUg^{\top}V - \eta \bUg^{\top}  \bE_t Z_t^{\top} V\right)^{-1}
+\end{align*}
+
+
+By our assumption that $\sin(Z_t, \bUg) \leq \frac{1}{3}$ we know that $\sigma_{\min}(\bUg^{\top} V) = \Omega(1)$. Thus, by $\Norm{Z_t} = O(1)$ and Woodbury matrix inversion formula we have:
+\begin{align*}
+\Norm{\left( \bUg^{\top}V - \eta \bUg^{\top}  \bE_t Z_t^{\top} V\right)^{-1} -  (\bUg^{\top}V )^{-1} } &\lesssim  \eta \Norm{\bUg^{\top}  \bE_t Z_t^{\top} V} \lesssim \eta \Norm{\bUg^{\top}  \bE_t}
+\end{align*}
+
+
+
+
+Recall that $F_t  = (\Id - \Id_{\bUg}) Z_t R_t^+ = (\Id - \Id_{\bUg}) Z_t W^{\top} \Sigma_Z^{-1} (\bUg^{\top} \bV)^{-1} $. Thus, using $\sigma_{r}(Z_t) \geq \frac{1}{2} \sigma_{\min} (R_t)$, an elementary calculation gives us:
+\begin{align*}
+\Norm{\tilde{F}_t - F_t} &\lesssim \eta \Norm{E_t} + \eta \frac{ \Norm{F_t} \Norm{\bUg^{\top} E_t } }{\sigma_{\min}(R_t)}
+\end{align*}
+
+By assumption $\Norm{E_t} \lesssim \sigma_{\min}(Z_t) $ in Proposition~\ref{prop:low-rank-relative-error}, together with $\sigma_{r}(Z_t) \geq \frac{1}{2} \sigma_{\min} (R_t)$ and inequality~\ref{eq:12345afjosji}, we have
+\begin{align*}
+\frac{ \Norm{F_t} \Norm{\bUg^{\top} E_t } }{\sigma_{\min}(R_t)} \lesssim \frac{  \Norm{F_t}\Norm{E_t}  \sin(Z_t, \bUg)}{\sigma_{\min}(Z_t)} \lesssim \Norm{F_t}^2
+\end{align*}
+By our choice of parameter, we know that $\Norm{F_t}^2 \leq \rho$, therefore, we proved that $\Norm{\tilde{F}_t - F_t}  \leq \eta( \| E_t\|_2 + \rho )$ as desired.
+\end{proof}
+
+Now, we can just focus on $\tilde{Z}_t$. One of the crucial fact about the gradient $\cG(\tilde{Z}_t)$ is that it can be decomposed into 
+\begin{align*}
+\cG(\tilde{Z}_t) = N_t \tilde{R}_t 
+\end{align*}
+where $N_t$ is a matrix defined as 
+\begin{align}
+N_t =  \frac{1}{m}\sum_{i = 1}^m\inner{\bA_i, \tilde{Z}_t\tilde{Z}_t^\top - \bXg}\bA_i(\bUg + \tilde{F}_t) \label{eqn:N_t}
+\end{align}
+Therefore, $\tilde{Z}_t$ and $\cG(\tilde{Z}_t)$ share the row space and we can factorize the difference between $\tilde{Z}_t$ and $\eta \cG_t(\tilde{Z}_t)$ as
+\begin{align*}
+\tilde{Z}_tN_t - \eta \cG(\tilde{Z}_t) = (\tilde{F}_t - \eta N_t)\tilde{R}_t
+\end{align*}
+
+Note that the definition of $N_t$ depends on the random matrices $A_1,\dots, A_t$. The following lemma show that for our purpose, we can essentially view $N_t$ as its population version --- the counterpart of $N_t$ when we have infinitely number of examples. The proof uses the RIP properties of the matrices $A_1,\dots, A_m$. 
+
+
+
+\begin{lem}\label{lem:M}
+	In the setting of Proposition~\ref{prop:low-rank-relative-error}, let $N_t$ be defined as in equation~\eqref{eqn:N_t}. Then, 
+	\begin{align*}
+	\Norm{N_t - (\tilde{Z}_t\tilde{Z}_t^\top - X^\star)(\bUg + \tilde{F}_t)} \le 2\delta \Norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F
+	\end{align*}
+\end{lem}
+\begin{proof}
+Recalling the definition of $N_t$, 
+by Lemma~\ref{lem:property_1}, we have that 
+\begin{align}\label{place_2}
+\Norm{N_t - (\tilde{Z}_t\tilde{Z}_t^\top - X^\star)(\bUg + \tilde{F}_t)} & \le \delta \Norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F \Norm{\bUg + \tilde{F}_t} \\
+& \le 2\delta \Norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F \tag{by the assumption $\Norm{\tilde{F}_t}< 1/3$}
+\end{align}
+\end{proof}
+
+
+\begin{lem}\label{lem:Zt}
+For any $t \geq 0$, suppose $\Norm{Z_{t + 1} - (\tilde{Z}_t - \eta \mathcal{G}(\tilde{Z}_t))} \leq \eta \tau$, we have
+\begin{align*}
+\| Z_{t + 1} \| \leq \| \tilde{Z}_t \| \left( 1 - \frac{1}{2}\eta \| \tilde{Z}_t\|^2 \right) + 2 \eta \| \tilde{Z}_t \| \| X^\star\| + \eta \tau\mper\nonumber
+\end{align*}
+\end{lem}
+\begin{proof}
+	By Lemma~\ref{lem:property_1}, we have: 
+	\begin{align}\label{place_4}
+	\Norm{\mathcal{G}(\tilde{Z}_t) - (\tilde{Z}_t \tilde{Z}_t^{\top} - X^\star )\tilde{Z}_t  } \leq \delta \Norm{\tilde{Z}_t \tilde{Z}_t^{\top} - X^\star}_{F} \Norm{\tilde{Z}_t }\mper 
+	\end{align}
+	Therefore, 
+	\begin{align*}
+	\Norm{Z_{t + 1}  }  &\leq \Norm{\tilde{Z}_t  - \eta \mathcal{G}(\tilde{Z}_t) } + \eta \tau 
+	\\
+	& \leq \Norm{\tilde{Z}_t   - \eta (\tilde{Z}_t \tilde{Z}_t^{\top} - X^\star )\tilde{Z}_t } + \eta \delta \Norm{\tilde{Z}_t \tilde{Z}_t^{\top} - X^\star}_{F} \Norm{\tilde{Z}_t } + \eta \tau
+	\\
+	& \leq \Norm{\left(\Id - \eta \tilde{Z}_t \tilde{Z}_t^{\top} + \eta X^\star \right)\tilde{Z}_t } + \eta \delta   \sqrt{r} \Norm{\tilde{Z}_t} \left(\Norm{\tilde{Z}_t}^2 + \Norm{X^\star} \right) + \eta \tau
+	\\
+	& \leq (1 - \eta \Norm{\tilde{Z}_t}) \Norm{\tilde{Z}_t } + \frac{1}{2}\eta\Norm{\tilde{Z}_t} \left( \Norm{\tilde{Z}_t}^2 + 4\Norm{X^\star}  \right)+ \eta \tau\tag{by $\delta \sqrt{r} \leq 1/2$}
+	\end{align*}	
+\end{proof}
+
+As a direct corollary, we can inductive control the norm of $\tilde{Z}_t$. 
+\begin{cor}\label{cor:stat}
+	In the setting of Proposition~\ref{prop:low-rank-relative-error}, we have that 
+	\begin{align*}
+	\Norm{Z_{t+1}}\le 5, \Norm{\tilde{R}_t} \leq 6
+	\end{align*}
+	Moreover, 
+	\begin{align*}
+	\norm{Z_{t+1}Z_{t+1}^\top - X^\star}_F\lesssim \sqrt{r}, \textup{ and } \Norm{N_t}\lesssim \sqrt{r}
+	\end{align*}
+\end{cor}
+\begin{proof}
+	Using the assumption that $\Norm{\bXg}=1$ and the assumption that equation~\eqref{eqn:reduction} holds, then we have that $\Norm{\tilde{Z}_t} \leq \Norm{Z_t}(1 + O(\eta \Norm{E}_t)) \leq 5(1 + O(\eta \Norm{E}_t))$. Applying Lemma~\ref{lem:Zt} with $\tau = O(\tau_t)$, we have that $\Norm{Z_{t+1}}\le 5$. We also have that $\Norm{\tilde{R}_t}\le \Norm{\tilde{Z}_t}\le 6$. Moreover, we have $\norm{Z_{t+1}Z_{t+1}^\top - X^\star}_F \le \Norm{\tilde{Z}_t}_{\star} + \Norm{X^\star}_F \lesssim \sqrt{r}(\Norm{\tilde{Z}_t}+ \Norm{X^\star})\lesssim \sqrt{r}$. As a consequence, $\Norm{N_t}\leq (1 + \delta)\Norm{\tilde{Z}_t \tilde{Z}_t^{\top} - X^\star}_F\left( \Norm{U^\star} + \Norm{\tilde{F}_t} \right)\lesssim \sqrt{r}$. 
+\end{proof}
+
+
+We start off with a lemma that controls the changes of $\tilde{R}_t$ relatively to $R_{t+1}$.  
+\begin{lem}\label{lem:RtRtplus1}
+	In the setting of Proposition~\ref{prop:low-rank-relative-error}, then we have that $\tilde{R}_tR_{t+1}^{-1}$ can be written as
+	\begin{align*}
+		\tilde{R}_tR_{t+1}^{+} = \Id + \eta \tilde{R}_t\tilde{R}_t^\top - \eta \bSigmag + \xi_t^{(R)}
+	\end{align*}
+where $\norm{\xi_t^{(R)}} \lesssim \eta \delta\sqrt{r} + \eta \rho + \eta \norm{\tilde{F}_t} + \eta^2$. It follows that $\Norm{\tilde{R}_tR_{t+1}^+}\le 4/3$ and $\tau \leq 2 \rho \sigma_{\min}(R_{t+1})$. 
+\end{lem}
+\begin{proof}
+	By the definition of $\tilde{R}_t$ and equation~\eqref{eqn:reduction}, we have that
+	\begin{align}
+	\eta \tau & \ge \|\bR_{t + 1} - \tilde{R}_t - \eta \bUg^{\top} \cG(\tilde{Z}_t) \| \nonumber\\
+	& = \|\bR_{t + 1} - (\Id - \eta \bUg^\top N_t)\tilde{R}_t\| \label{eqn:1}
+	\end{align}
+Form this we can first obtain a very weak bound on $\sigma_{\min}(R_{t+1})$:
+		\begin{align}
+\sigma_{\min}(\bR_{t + 1}) & \ge  \sigma_{\min}((\Id - \eta \bUg^\top N_t)\tilde{R}_t) - \eta \tau  \nonumber\\
+& \ge  \frac{3}{4}\cdot \sigma_{\min}(\tilde{R}_t) - O(\eta \rho \sigma_{\min}(\tilde{R}_t)) \tag{by $\tau \le O(\rho \sigma_{\min}(\tilde{R}_t))$ and $\norm{\eta \bUg^\top N_t}\le \Norm{\eta N_t}\lesssim \eta\sqrt{r}\le 1/4$}\\
+&\ge \frac{1}{2}\cdot \sigma_{\min}(\tilde{R}_t)\label{eqn:weakbound}
+	\end{align}
+	Re-using equation~\eqref{eqn:1}, we have 
+		\begin{align}
+\|\Id - (\Id - \eta \bUg^\top N_t)\tilde{R}_tR_{t+1}^+\|& \le \eta \tau\cdot \Norm{R_{t+1}^+} = \eta \tau/\sigma_{\min}(R_{t+1})\nonumber\\
+ &\le 2\eta \tau/\sigma_{\min}(\tilde{R}_t) \le O(\eta \rho)\label{eqn:3}
+\end{align}
+where we used equation~\eqref{eqn:weakbound} and $\tau \le O(\rho \sigma_{\min}(\tilde{R}_t))$. This also implies a weak bound for $\tilde{R}_tR_{t+1}^+$ that $\norm{\tilde{R}_tR_{t+1}^+}\le 2$. 
+By Lemma~\ref{lem:M}, we have that 
+\begin{align*}
+\norm{\eta\bUg^\top N_t -\eta \bUg^\top (\tilde{Z}_t\tilde{Z}_t^\top - X^\star)(\bUg + \tilde{F}_t)} \le 2\delta \eta \norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F\lesssim \delta \eta \sqrt{r}
+\end{align*}
+where we use the fact that $\norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F\lesssim \sqrt{r}$.  Note that $ \bXg = \bUg \bSigmag\bUg^\top $ and $\tilde{Z}_t = (\bUg + \tilde{F}_t)\tilde{R}_t$,  we have $\norm{\eta\bUg^\top N_t -\eta (\tilde{R}_t\tilde{R}_t^\top-\bSigmag) (\bUg+\tilde{F}_t)^\top(\bUg +\tilde{F}_t)} \lesssim \delta \eta \sqrt{r}$. 
+
+Bounding the higher-order term, we have that 
+\begin{align*}
+\Norm{\eta (\tilde{R}_t\tilde{R}_t^\top-\bSigmag)(\bUg+\tilde{F}_t)^\top (\bUg + \tilde{F}_t)- \eta (\tilde{R}_t\tilde{R}_t^\top-\bSigmag)}\lesssim \eta \Norm{\tilde{F}_t} \tag{by $\Norm{\tilde{R}_t}\le 6$}
+\end{align*}
+which implies that 
+\begin{align}
+ \norm{\eta\bUg^\top N_t -\eta (\tilde{R}_t\tilde{R}_t^\top-\bSigmag)} \lesssim \delta \eta \sqrt{r} + \eta \norm{\tilde{F}_t}\label{eqn:2}
+\end{align}
+Combining the equation above with equation~\eqref{eqn:3} and $\norm{\tilde{R}_tR_{t+1}^+}\le 2$, we have that 
+	\begin{align}
+\|\Id - (\Id - \eta \tilde{R}_t\tilde{R}_t^\top + \eta \bSigmag) \tilde{R}_tR_{t+1}^+\|& \lesssim \eta\delta\sqrt{r}  + \eta \rho + \eta\Norm{\tilde{F}_t} \label{eqn:21}
+\end{align}
+For $\eta \lesssim 1$, we know that 
+\begin{align*}
+\left\|(\Id - \eta \tilde{R}_t\tilde{R}_t^\top + \eta \bSigmag)  (\Id + \eta \tilde{R}_t\tilde{R}_t^\top - \eta \bSigmag) - \Id  \right\| \lesssim \eta^2 
+\end{align*}
+This implies that 
+\begin{align*}
+\|(\Id + \eta \tilde{R}_t\tilde{R}_t^\top - \eta \bSigmag) - \tilde{R}_tR_{t+1}^+\|& \lesssim \eta\delta\sqrt{r} + \eta \rho + \eta\Norm{\tilde{F}_t} + \eta^2  
+\end{align*}
+which completes the proof. 
+\end{proof}
+
+
+
+We express $F_{t+1}$ as a function of $\tilde{F}_t$ and other variables. 
+\begin{lem}\label{lem:FtFtplus1}
+In the setting of Proposition~\ref{prop:low-rank-relative-error}, let $N_t$ be defined as in equation~\eqref{eqn:N_t}. Then, 
+\begin{align*}
+F_{t+1} = \tilde{F}_t(\Id -\eta \tilde{R}_t\tilde{R}_t^\top )\tilde{R}_tR_{t+1}^{+} + \xi_t^{(F)}
+\end{align*}	
+where 
+$
+\norm{\xi_t^{(F)}}\lesssim \delta\eta\sqrt{r} + \eta  \rho+ \eta \Norm{\tilde{F}_t}^2
+$.
+\end{lem}
+
+\begin{proof}
+By equation~\eqref{eqn:reduction}, we have that 
+\begin{align*}
+\Norm{(\Id - \Id_{\bUg})\cdot \left(Z_{t+1} - (\tilde{Z}_t - \eta \cG(\tilde{Z}_t))\right)} 	\le \eta \tau_t
+\end{align*}
+which, together with the decomposition~\eqref{eqn:decompose_z}, implies  
+\begin{align*}
+\eta \tau &\ge 	\left\|\bF_{t + 1}\bR_{t + 1} -  \tilde{F}_t \tilde{R}_t + \eta (\Id - \Id_{\bUg}) \cG(\tilde{Z}_t) \right\| \\
+&= 	\left\|\bF_{t + 1}\bR_{t + 1} -  (\tilde{F}_t -\eta (\Id - \Id_{\bUg}) N_t)\tilde{R}_t \right\| 
+\end{align*}
+Recall that $\tau_t \le 2\rho\sigma_{\min}(R_{t+1})$ (by Lemma~\ref{lem:RtRtplus1}), we conclude
+\begin{align}
+\left\|\bF_{t + 1}-  (\tilde{F}_t -\eta(\Id - \Id_{\bUg})  N_t)\tilde{R}_t R_{t+1}^{+}\right\|  \le 2\eta\rho  \label{eqn:5}
+\end{align}
+Note that $(\Id -\Id_{\bUg})X^\star = 0$ and that $(\Id -\Id_{\bUg})\tilde{Z}_t\tilde{Z}_t^\top = \tilde{F}_t\tilde{R}_t\tilde{R}_t^\top(\bUg+\tilde{F}_t)^\top$. We obtain that 
+
+\begin{align}
+\Norm{(\Id -\Id_{\bUg})N_t-  \tilde{F}_t\tilde{R}_t\tilde{R}_t^\top(\bUg+\tilde{F}_t)^\top(\bUg + \tilde{F}_t)} & \le 2\delta \Norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F \lesssim \delta \sqrt{r} \label{eqn:4}
+\end{align}
+where we used the fact that $\Norm{\tilde{Z}_t\tilde{Z}_t^\top - X^\star}_F  \lesssim \sqrt{r}$ (by Lemma~\ref{cor:stat}). 
+
+Bounding the higher-order term, we have that
+\begin{align*}
+\Norm{\tilde{F}_t\tilde{R}_t\tilde{R}_t^\top(\bUg+\tilde{F}_t)^\top (\bUg + \tilde{F}_t)- \tilde{F}_t\tilde{R}_t\tilde{R}_t^\top}\lesssim \Norm{\tilde{F}_t}^2 \tag{by $\Norm{\tilde{R}_t}\le 6$ from Corollary~\ref{cor:stat}}
+\end{align*}
+Combining equation~\eqref{eqn:5},~\eqref{eqn:4} and the equation above, and using the fact that $\Norm{\tilde{R}_tR_{t+1}^+}\le 2$, we complete the proof.\end{proof}
+
+
+
+
+
+
+Combining Lemma~\ref{lem:FtFtplus1} and Lemma~\ref{lem:RtRtplus1}, we can relate the $\Norm{F_{t+1}}$ with $\Norm{\tilde{F}_t}$:
+\begin{lem}\label{lem:FtFtplus1strong}
+	In the setting of Proposition~\ref{prop:low-rank-relative-error}, we have that $\tilde{F}_t$ can be written as 
+	\begin{align*}
+	F_{t+1} = \tilde{F}_t(\Id - \eta \bSigmag) + \xi_t
+	\end{align*}
+	where $\Norm{\xi_t} \le O(\eta\delta\sqrt{r}  + \eta \Norm{\tilde{F}_t}^2 +  \eta \rho + \eta^2)$. As a consequence, 
+	\begin{align*}
+	\Norm{F_{t+1}} \le \Norm{\tilde{F}_t} + O(\eta \Norm{\tilde{F}_t}^2 + \eta \rho)
+	\end{align*}
+\end{lem}
+\begin{proof}
+	Combine Lemma \ref{lem:FtFtplus1} and Lemma \ref{lem:RtRtplus1}, we have that 
+	\begin{align*}
+	F_{t + 1} &= \tilde{F}_t(\Id -\eta \tilde{R}_t\tilde{R}_t^\top )\tilde{R}_tR_{t+1}^{+} + \xi_t^{(F)}
+	\\
+	&= \tilde{F}_t(\Id -\eta \tilde{R}_t\tilde{R}_t^\top)\left(\Id + \eta \tilde{R}_t\tilde{R}_t^\top - \eta \bSigmag + \xi_t^{(R)} \right) + \xi_t^{(F)}
+	\end{align*}
+	
+	Thus, with the bound on $\norm{\xi_t^{(R)} }$ and $\norm{\xi_t^{(F)} }$ from Lemma~\ref{lem:FtFtplus1} and Lemma~\ref{lem:RtRtplus1}, we know that 
+	\begin{align}
+	\Norm{F_{t + 1} - (\Id - \eta \bSigmag) \tilde{F}_t} \lesssim  \eta \norm{\tilde{F}_t} +  \norm{\tilde{F}_t} \norm{\xi_t^{(R)}}  + \norm{\xi_t^{(F)}} &\lesssim \eta \norm{\tilde{F}_t}^2 + \eta \delta \sqrt{r} + \eta  \rho + \eta^2\nonumber\\
+	& \lesssim \eta \Norm{\tilde{F}_t}^2 + \eta \rho\mper\nonumber
+	\end{align}
+\end{proof}
+
+The proof of Proposition~\ref{prop:low-rank-relative-error} follow straightforwardly from Lemma~\ref{lem:angleF} and Lemma~\ref{lem:FtFtplus1strong}. 
+
+\begin{proof}[Proof of Proposition~\ref{prop:low-rank-relative-error}]
+	Using the assumption that $\Norm{F_t} \lesssim \sqrt{\rho}$ (Thus $\Norm{F_t}^2 \lesssim \rho$). Since we have showed that $\Norm{\tilde{F_t} - F_t} \lesssim \eta (\rho + \Norm{E_t}) $, the proof of this proposition followings immediately from Lemma \ref{lem:FtFtplus1strong}. 
+\end{proof}
+

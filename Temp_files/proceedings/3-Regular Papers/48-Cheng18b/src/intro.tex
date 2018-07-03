@@ -1,0 +1,120 @@
+% !TEX root = main.tex
+
+\section{Introduction}
+\label{sec:intro}
+Non-convex optimization techniques are now very popular for machine learning applications, especially in learning neural networks \citep{deepsurvey1,deepsurvey2}. These methods are easier to implement and extremely efficient in practice. %Surprisingly, even though optimizing a non-convex function is NP-hard in general, in practice, simple algorithms such as gradient descent converge to desirable solutions. Understanding the average-case behavior of these non-convex algorithms has attracted a lot of recent attention, and 
+Even though optimizing a non-convex function is hard in general, recent works proved convergence guarantees for problems including matrix completion, dictionary learning and tensor decomposition \citep{jain2013low, sun2015guaranteed,rgDict2,ge2015escaping}.
+
+Unlike convex optimization, non-convex problems may have many bad local optima. Existing techniques rely heavily on model assumptions to get a strong initialization (e.g., \citep{jain2013low, sun2015guaranteed}), or to prove that the objective function has no bad local optima (e.g., \citep{ge2016matrix, GeJZ17}). In this paper, we investigate the robustness of non-convex algorithms against model misspecification. In particular, we focus on the matrix completion problem \--- a well-known learning problem with applications to recommendation systems \citep{koren2009bellkor,rennie2005fast}. Both its convex relaxations \citep{srebro2005rank,recht2011simpler} and non-convex approaches \citep{jain2013low, sun2015guaranteed,ge2016matrix} were studied extensively before (see Section~\ref{sec:related} for more related work).
+
+%\yccomment{The maths is a bit heavy here, especially so early in the intro.}
+In the matrix completion problem, there is an unknown low-rank matrix $\Ms$ that can be factored into $\Ms = \Us(\Vs)^\top$, where $\Us \in \R^{n_1\times r}$, $\Vs = \R^{n_2\times r}$, and $r$ is the rank of the matrix. %Each entry of the low-rank matrix is observed with probability $p$. %Let $\Omega$ be the set of observed entries, given $\Ms_{i,j}$ for all $(i,j)\in \Omega$, 
+After observing a random set of entries, the goal is to recover the entire low-rank matrix $\Ms$. % based on the observed entries. 
+
+Matrix completion arises naturally in the design of recommendation systems. For example, the rows of the matrix may correspond to users, and the columns of the matrix correspond to items. Each row of $\Us$ is then a vector representing the preference of a user, and each row of $\Vs$ is a vector representing the properties of an item. Revealing an entry $\Ms_{i,j}$ can be interpreted as user $i$ providing his rating for item $j$. If the matrix $\Ms$ can be recovered from few observations, the system can simply recommend the item with the highest rating in $\Ms$ (among all the items that the user has not rated before).
+
+The standard assumption made by both convex and non-convex approaches for matrix completion is that the entries are observed {\em uniformly} at random. That is, every entry is observed with the same probability $p$. This is not realistic in recommendations systems, as different groups of users may have different probabilities of rating different items.
+
+In this paper, we investigate whether the popular approaches for matrix completion can handle {\em model misspecification}. In particular, we show that if the observation probability is always {\em at least} $p$, then the popular non-convex approaches provably fail. In light of this, we give an efficient pre-processing algorithm that reweights the observed entries, and prove that non-convex optimization algorithms applied to the reweighted objective will always find the desired solution.
+
+\subsection{Non-Convex Matrix Completion}
+
+%Traditionally, matrix completion can be solved by a convex relaxation \cite{candes2010power}: 
+%\begin{align*}
+%\min \quad &\|M\|_* \\
+%s.t. \forall (i,j)\in \Omega\quad & M_{i,j} = \Ms_{i,j}.
+%\end{align*}
+%
+%Here $\|\cdot\|_*$ is the nuclear norm of a matrix and $\Omega$ is the set of observed entries. This optimization problem can be solved by a semidefinite programming (SDP). Under reasonable assumptions, for a matrix of size $n_1\times n_2$ with rank $r$, even if only $\Omega((n_1+n_2)r\log^2 (n_1+n_2))$ entries are observed, the optimal solution satisfies $M = \Ms$.
+
+Traditionally, matrix completion can be solved by a convex relaxation \citep{candes2010power}.
+\[
+\min \; \|M\|_* \qquad \mathrm{s.t.} \; M_{i,j} = \Ms_{i,j}, \; \; \forall (i,j)\in \Omega.
+\]
+Here $\|\cdot\|_*$ is the nuclear norm of a matrix and $\Omega$ is the set of observed entries.
+However, in practice the matrix $\Ms$ can have very high dimensions. Solving the convex relaxation can be very expensive. The most popular approaches in practice use non-convex heuristics: The algorithms represent the matrix $M$ as $UV^\top$ where $U,V$ have the same dimensions as $\Us, \Vs$, and then try to minimize %they represent the matrix $M$ as $UV^\top$ where $U,V$ have the same dimensions as $\Us, \Vs$. The algorithms then try to optimize
+\begin{align*}
+\sum_{(i,j)\in \Omega} & \left((UV^\top)_{i,j} - \Ms_{i,j}\right)^2,
+\end{align*}
+using techniques such as alternating minimization \citep{koren2009bellkor} or gradient descent \citep{rennie2005fast}. Sometimes additional terms are added as regularizers. Recently, many results established strong convergence guarantees for these non-convex approaches (e.g., \citep{jain2013low,sun2015guaranteed,ge2016matrix}, see more discussions in Section~\ref{sec:related}).
+
+%For matrix completion, the critical average-case assumption is that all the entries are observed with the same probability $p$. This is especially important in the proof of non-convex algorithms, as they may converge to a local optimal solution if the entries are not revealed with the same probability. To highlight this issue, %One of the major differences between non-convex and convex approach is whether they are robust against {\em model assumptions}. For the convex optimization approach, we can always find the global optimal solution, even if the set of revealed entries $\Omega$ is not generated by including each entry with probability $p$. On the other hand, all the non-convex techniques may converge to a local optimal solution if $\Omega$ is not generated by the exact model. 
+%we consider a semi-random model. 
+In order to understand robustness of algorithms under model misspecification, we consider a natural setting where the probability $p_{i,j}$ of observing entry $(i,j)$ can be different, but they are still all at least $p$. In fact, our algorithm can work with a slightly stronger semi-random model: each entry is first revealed with probability $p$ (same as the standard model). After that, an adversary is allowed to examine the ground-truth matrix $\Ms$ and the set of currently observed entries. The adversary can choose to reveal additional entries of the matrix (adding elements to $\Omega$). 
+The setting where every entry is observed with probability $p_{i,j} \ge p$ is a special case of this semi-random model.
+%Note that if the adversary reveals each unobserved entry with probability $\frac{p_{i,j}-p}{1-p}$ this is equivalent to the setting where entries are observed with probability $p_{i,j}$. %The adversary is  more powerful because it is allowed to look at what entries are actually observed. %Note that this is analogous to an adversary changing the observation probabilities of each entry to a value that is at least $p$.
+
+Intuitively, what the adversary does is beneficial for us, because we get to observe more entries of the matrix. Indeed, the convex relaxation will still work in this semi-random model.\footnote{To see this, notice that the additional entries correspond to additional constraints, and the original optimal solution ($\Ms$) also satisfies all of these additional constraints. Therefore $\Ms$ must still be the optimal solution.} Our work is motivated by the following questions: Are the non-convex approaches robust in this semi-random model? If not, is there a way to fix the non-convex algorithms to get an algorithm that is both robust to the semi-random adversary and efficient in practice?
+
+\subsection{Our Results}
+\label{sec:results}
+%
+%
+%Non-convex optimization has attracted much recent attention.
+%Robustness.
+%
+%Background of the low-rank matrix completion problem.
+%We study the low-rank matrix completion problem when the entries are revealed in a semi-random way: (1) each entries is revealed with probability $0 < p < 1$, and (2) an adversary, after examining the ground-truth matrix and which entries are already revealed, can choose to reveal any number of additional entries.
+%
+%A bad example where an adversary can reveal more entries so that the problem admits bad local optima.
+%
+%\todo{Sketch Rong's counter example and point to its later appearance.}
+
+
+We first give some examples where the non-convex approaches fail.
+When each entry is revealed with equal probability, \cite{GeJZ17} showed that all local minima of a non-convex objective (see Equation \eqref{eqn:asymmetricobj} in Section~\ref{sec:matprelim}) recovers the ground-truth matrix $\Ms$. We give an example where Equation \eqref{eqn:asymmetricobj} has a local minimum that is very far from $\Ms$ in the semi-random model. Another popular approach in non-convex approaches is to rely on SVD to do initialization. In the second example, we show that in the semi-random model, the SVD of the observed entries can be very far from the ground truth $\Ms$. These examples show that the current non-convex approaches rely heavily on the assumption that entries are revealed independently. We leave the details to Appendix~\ref{app:examples}.
+
+We then give an efficient pre-processing algorithm that can make non-convex algorithms robust to the semi-random adversary. Intuitively, we view the observed entries as edges of a bipartite graph (between rows and columns of the matrix): the initial random procedure generates a random bipartite graph with independent edges, and the adversary can add additional edges. We design an algorithm that will {\em re-weight} the edges, so that the resulting weighted graph ``looks like'' a random bipartite graph in terms of its spectral properties.
+In Section~\ref{sec:matcomp}, we will show that such spectral properties are sufficient for non-convex approaches to approximately recover the ground-truth $\Ms$.
+
+\begin{problem}[Removing Noisy Edges]
+\label{prob:main}
+Let $G = (V_1,V_2, E)$ be an unweighted bipartite graph. Assume there exists a subset $S \subseteq E$ of edges such that $(V_1,V_2, S)$ is spectrally similar to a complete bipartite graph. Compute a set of weights $w_e \ge 0$ for every edge $e\in E$ such that the weighted graph is spectrally similar to a complete bipartite graph.
+\end{problem}
+
+The existence of weights $w_e$ in Problem~\ref{prob:main} is guaranteed by assigning weight $1$ to the edges selected randomly, and weight $0$ to the edges added by the adversary. Roughly speaking, the pre-processing algorithm will try to put large weights on the edges generated originally, and assign small weights to the edges added by the adversary. %\footnote{Of course, this is in general impossible because the adversary could just reveal another random set of edges, in which case it is impossible to distinguish the new edges and the original edges. However, our goal is just to find a set of weights that leads to spectral similarity.}
+%\yccomment{Hint that the spectral similarity are sufficient to guarantee the non-convex problem has nice properties?}
+Note that these weights cannot be found by simple reweighting schemes based on the number of observed entries in each row/column, because our counter-examples have the same number of observed entries in every row/column. %, therefore they cannot be fixed by simple reweighting schemes based on number of observed entries.
+
+We give a nearly-linear time algorithm for Problem~\ref{prob:main} in Section~\ref{sec:bss}.
+Our approach extends techniques from a line of work on linear-sized graph sparsification algorithms \citep{BatsonSS12, AllenLO15, LeeS17}.% In particular, we extend the approach in \citep{LeeS17} and give a nearly-linear time algorithm for Problem~\ref{prob:main}.
+
+%\yccomment{I am not sure if BSS is viewed as solving SDP. In any case, I would move this paragraph to the later related work section and refer to it, and just keep the first and last sentence of this paragraph.} that tries to sparsify a graph by solving an SDP. Unlike the graph sparsification problem, our goal here is not to get a sparse graph, instead we are trying to get a weighted version of the graph that has the same spectral property as a known target graph (in this case the complete bipartite graph), while the original graph may have very different spectral property from the target graph. We also emphasize that although this pre-processing step is also trying to solve an SDP, this SDP can be solved very efficiently:
+
+\begin{theorem}[Pre-processing (Informal)]
+\label{thm:preprocess-informal}
+Given an input graph with $m$ edges, assume a subset of the edges forms a graph that is $\beta$-spectrally close to the complete bipartite graph. There is an algorithm that runs in time $\tilde{O}(m/\epsilon^{O(1)})$ that outputs a set of weights for the edges, and the weighted graph is $O(\beta)+\epsilon$ spectrally close to the complete bipartite graph.~\footnote{Throughout the paper, $\tilde O(\cdot)$ hides polylogarithmic factors.}
+\end{theorem}
+
+See Definition~\ref{def:spectral} for the definition of spectrally similarity, and Theorem~\ref{thm:bss} for the formal version of the theorem. 
+After this pre-processing step, we get a weighted graph that is spectrally similar to the original random graph (before the adversary added edges). We can then use these weights to change the non-convex objective, and minimize:
+\[
+\sum_{(i,j)\in \Omega} W_{i,j} \left((UV^\top)_{i,j} - \Ms_{i,j}\right)^2.
+\]
+
+We will show this objective (with some additional regularizers) has no bad local minimum.
+
+\begin{theorem}[Main]\label{thm:main}
+In the semi-random model, if the reveal probability $p \ge \frac{C\mu^6r^6(\kappa^\star)^6\log (n_1+n_2)}{n_1\epsilon^2}$ for a large enough constant $C$, with high probability, using weights produced by Algorithm~\ref{alg:ls17}, all local minima of Objective~\eqref{eqn:asymmetricobj} satisfies $\|UV^\top - \Ms\|_F^2 \le \epsilon \|\Ms\|_F^2$. The pre-processing time is $\tilde O(m \cdot \mathrm{poly}(\mu, r, \kappa^\star, \eps^{-1}))$ where $m$ is the total number of revealed entries. %number of entries revealed after the semi-random adversary.
+\end{theorem}
+
+Here $\mu, r, \kappa^\star$ are the incoherence parameter, rank, and the condition number of $\Ms$ (see Section~\ref{sec:prelim} for formal definitions).
+Previous analyses crucially rely on concentration bounds obtained from observing the entries of $\Ms$ uniformly at random.
+We prove Theorem~\ref{thm:main} in Section~\ref{sec:matcomp}, where we replace these concentration bounds with spectral properties guaranteed by our pre-processing algorithm (Theorem~\ref{thm:preprocess-informal}).
+See Section~\ref{sec:matcomp} and Appendix~\ref{app:matrix} for details.
+%We follow the high level approach proposed in \citep{ge2016matrix,GeJZ17}, except we need to replace concentration bounds from the random set $\Omega$ with spectral properties. See Section~\ref{sec:matcomp} and Appendix~\ref{app:matrix} for details.
+
+%Our approach uses both techniques from convex and non-convex optimizations.
+%Before we apply the non-convex optimization algorithms~\cite{} to recover the underlying low-rank matrix, we first pre-process the input to ``recover'' only the entries revealed in step (1).
+%This problem corresponds to recovering a planted subgraph with a specific spectrum (e.g., looks like $G(n, p)$) in a given graph.
+%Formally, we pose and study the following algorithmic question:
+%\begin{problem}
+%\label{prob:main}
+%For a set of $m$ vectors $\{b_i\}_{i=1}^m$, if there exists a subset $S$ of vectors such that $\sum_{i \in S} b_i b_i^\top = I$, compute a set of weights $w_i \ge 0$ such that $\sum_{i} w_i b_i b_i^\top \approx I$.
+%\end{problem}
+%
+%In this paper, we solve Problem~\ref{prob:main} with running time nearly-linear in its input size.
+%
+%\todo{Related work for matrix completion. Our contribution.}
+
+\input{related}

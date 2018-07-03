@@ -1,0 +1,211 @@
+%!TEX root = main.tex
+
+\section{Proof of Main Result}
+In this section, we set up the machinery needed to prove our main result, Theorem \ref{thm:main}. We first present the generic setup, then, as in Section \ref{sec:framework}, we split the proof into two cases, one where gradient is large and the other where the Hessian has negative curvature. In the end, we put everything together and prove Theorem \ref{thm:main}.
+
+To simplify the proof, we introduce some notation for this section, and state a convention regarding absolute constants. Recall the choice of parameters in Eq.\eqref{eq:parameter}:
+\begin{equation*}
+\eta = \frac{1}{4\ell}, \quad
+\theta = \frac{1}{4\sqrt{\cn}},
+\quad \gamma = \frac{\theta^2}{\eta} = \frac{\sqrt{\rho\epsilon}}{4} ,
+\quad s = \frac{\gamma}{4\rho} = \frac{1}{16}\sqrt{\frac{\epsilon}{\rho}}, 
+\quad r = \eta\epsilon\cdot \chi^{-5}c^{-8},
+\end{equation*}
+where $\cn = \frac{\ell}{\sqrt{\rho\epsilon}}, \chi = \max\{1,  \log \frac{d \ell\Delta_f}{\rho \epsilon\delta}\}$, and $c$ is a sufficiently large constant as stated in the precondition of Theorem \ref{thm:main}.
+Throughout this section, we also always denote
+\begin{equation*}
+\utime \defeq  \sqrt{\cn} \cdot \chi c,  \quad
+\ufun \defeq \sqrt{\frac{\epsilon^3}{\rho}}\cdot \chi^{-5}c^{-7}, \quad \uspace \defeq \sqrt{\frac{2\eta \utime\ufun}{\theta}} = \sqrt{\frac{2\epsilon}{\rho}} \cdot \chi^{-2}c^{-3}, \quad
+\umom \defeq \frac{\epsilon \sqrt{\cn}}{\ell} c^{-1},
+\end{equation*}
+which represent the special units for time, the Hamiltonian, the parameter space and the momentum.
+All the lemmas in this section hold when the constant $c$ is picked to be sufficiently large. To avoid ambiguity, throughout this section $O(\cdot), \Omega(\cdot), \Theta(\cdot)$ notation \textbf{only hides an absolute constant which is independent of the choice of sufficiently large constant $c$}, which is defined in the precondition of Theorem \ref{thm:main}. That is, we will always make $c$ dependence explicit in $O(\cdot), \Omega(\cdot), \Theta(\cdot)$ notation. Therefore, for a quantity like $O(c^{-1})$, we can always pick $c$ large enough so that it cancels out the absolute constant in the $O(\cdot)$ notation, and make $O(c^{-1})$ smaller than any fixed required constant.
+
+% in this section, 
+
+
+% We choose our parameter:
+% \begin{equation*}
+% \eta = \frac{1}{2\ell}, \quad
+% \theta = \frac{1}{4\sqrt{\cn}},
+% \quad \gamma = \frac{\theta^2}{\eta} = \Theta(\sqrt{\rho\epsilon}),
+% \quad s = \frac{\gamma}{4\rho} = \Theta(\sqrt{\frac{\epsilon}{\rho}})
+% \end{equation*}
+
+
+% We aim to prove 
+% which then finishes the proof. Above argument shows whenever NCE is triggered, we can allow in $\utime$ no progress been made, but Hamiltonian still has enough decrease. For the remaining part we focus on the case NCE is not triggered, which is the behavoir of AGD.
+
+
+\subsection{Common setup}
+Our general strategy in the proof is to show that if none of the iterates $\x_t$ is a SOSP, then in all $\utime$ steps, the Hamiltonian always decreases by at least $\ufun$. This gives an average decrease of $\ufun/\utime$. In this section, we establish some facts which will be used throughout the entire proof, including the decrease of the Hamiltonian in NCE step, the update of AGD in matrix form, and upper bounds on approximation error for a local quadratic approximation.
+
+The first lemma shows if negative curvature exploitation is used, then in a single step, the Hamiltonian will decrease by $\ufun$.
+\begin{lemma} \label{lem:NCE_decrease}
+Under the same setting as Theorem \ref{thm:main}, for every iteration $t$ of Algorithm~\ref{algo:PAGD} where~\eqref{eq:certificate} holds (thus running NCE), we have:
+\begin{equation*}
+E_{t+1} - E_t\le  - 2\ufun.
+\end{equation*}
+\end{lemma}
+\begin{proof}
+It is also easy to check that the precondition of Lemma \ref{lem:energy_NCE} holds, and by the particular choice of parameters in Theorem \ref{thm:main}, we have:
+\begin{equation*}
+\min\{\frac{s^2}{2\eta},  \frac{1}{2}(\gamma - 2\rho s) s^2\} \ge \Omega(\ufun c^{7})\ge 2\ufun,
+\end{equation*}
+where the last inequality is by picking $c$ in Theorem \ref{thm:main} large enough, which finishes the proof.
+\end{proof}
+
+
+Therefore, whenever NCE is called, the decrease of the Hamiltonian is already sufficient. We thus only need to focus on AGD steps. The next lemma derives a general expression for $\x_t$ after an AGD update, which is very useful in multiple-step analysis. 
+The general form is expressed with respect to a reference point $\zero$, which can be any arbitrary point (in many cases we choose it to be $\x_0$).
+
+\begin{lemma}\label{lem:AGD_update_general} 
+Let $\zero$ be an origin (which can be fixed at an arbitrary point).  Let $\H = \hess f(\zero)$.  Then an AGD (Algorithm \ref{algo:AGD}) update can be written as:
+\begin{equation}
+\begin{pmatrix}
+\x_{t+1} \\ \x_t
+\end{pmatrix}
+= \A^{t}\begin{pmatrix}
+\x_1 \\ \x_0
+\end{pmatrix} 
+-\eta\sum_{\tau = 1}^t \A^{t-\tau}
+\begin{pmatrix}
+\grad f(\zero) + \delta_\tau \\ 0
+\end{pmatrix},
+\label{eq:update_AGD_matrix}
+\end{equation}
+where $\delta_{\tau} = \grad f(\y_{\tau}) - \grad f(\zero) - \H \y_{\tau}$, and 
+$$\A = \begin{pmatrix}
+(2-\theta) (\I - \eta \H)&  -(1-\theta) (\I - \eta \H) \\
+\I& 0
+\end{pmatrix}.$$
+\end{lemma}
+
+\begin{proof}
+Substituting for $(\y_t, \v_t)$ in Algorithm \ref{algo:AGD}, we have a recursive equation for $\x_t$:
+\begin{equation} \label{eq:update_AGD}
+\x_{t+1}  = (2-\theta) \x_{t}
+- (1-\theta)  \x_{t-1}
+ -\eta \grad f((2-\theta) \x_{t}
+- (1-\theta)  \x_{t-1}).
+\end{equation}
+By definition of $\delta_\tau$, we also have:
+\begin{equation*}
+\grad f(\y_\tau) = \grad f(\zero) + \H \y_\tau + \delta_\tau.
+\end{equation*}
+Therefore, in matrix form, we have:
+\begin{align*}
+\begin{pmatrix}
+\x_{t+1} \\ \x_t
+\end{pmatrix}
+=& 
+\begin{pmatrix}
+(2-\theta) (\I - \eta \H)&  -(1-\theta) (\I - \eta \H) \\
+\I& 0
+\end{pmatrix}
+\begin{pmatrix}
+\x_{t} \\ \x_{t-1}
+\end{pmatrix}  - \eta
+\begin{pmatrix}
+\grad f(0) + \delta_t \\ 0
+\end{pmatrix} \\
+=& \A^{t}\begin{pmatrix}
+\x_1 \\ \x_0
+\end{pmatrix} 
+-\eta\sum_{\tau = 1}^t \A^{t-\tau}
+\begin{pmatrix}
+\grad f(0) + \delta_\tau \\ 0
+\end{pmatrix},
+% \label{eq:update_AGD_matrix}
+\end{align*}
+which finishes the proof.
+\end{proof}
+Clearly $\A$ in Lemma \ref{lem:AGD_update_general} is a $2d \times 2d$ matrix, and if we expand $\A$ according to the eigenvector directions of $\begin{pmatrix}
+\H& 0 \\
+0 & \H
+\end{pmatrix}$, $\A$ can be reorganized as a block-diagonal matrix consisting of $d$ $2\times 2$ matrices. Let the $j$th eigenvalue of $\H$ be denoted $\lambda_j$, and denote $\A_j$ as the $j$th $2\times 2$ matrix with corresponding eigendirections:
+\begin{equation}\label{eq:definition_Aj}
+\A_j = \begin{pmatrix}
+(2-\theta) (1 - \eta \lambda_j)&  -(1-\theta) (1 - \eta \lambda_j) \\
+1 & 0\end{pmatrix}.
+\end{equation}
+We note that the choice of reference point $\zero$ is mainly to simplify
+mathmatical expressions involving $\x_t - \zero$. 
+
+Lemma \ref{lem:AGD_update_general} can be viewed as update from a quadratic expansion around origin $\zero$, and $\delta_\tau$ is the approximation error which marks the difference between true function and its quadratic approximation.
+The next lemma shows that when sequence $\x_0, \cdots, \x_t$ are all close to $\zero$, then the approximation error is under control:
+
+
+% Then we establish useful bounds on approximation error for AGD when treated function as quadratic in local region. All the formula established in this section will be used for both large gradient case and negative curvature case.
+
+
+% Fix a origin point $0$ (it can be $\x_0$ or not), and denote $\H = \hess f(0)$. This gives
+% \begin{equation*}
+% \grad f(\y_t) = \grad f(0) + (\H + \Delta_t) \y_t
+% \end{equation*}
+% where $\Delta_t = \int_0^1 (\hess f(\phi \y_t) - \H) \mathrm{d} \phi$.
+% Therefore, in matrix form, we can have:
+% \begin{align}
+% \begin{pmatrix}
+% \x_{t+1} \\ \x_t
+% \end{pmatrix}
+% =& 
+% \begin{pmatrix}
+% (2-\theta) (\I - \eta \H)&  -(1-\theta) (\I - \eta \H) \\
+% \I& 0
+% \end{pmatrix}
+% \begin{pmatrix}
+% \x_{t} \\ \x_{t-1}
+% \end{pmatrix}  - \eta
+% \begin{pmatrix}
+% \grad f(0) + \delta_t \\ 0
+% \end{pmatrix} \nn \\
+% =& \A^{t}\begin{pmatrix}
+% \x_1 \\ \x_0
+% \end{pmatrix} 
+% -\eta\sum_{\tau = 1}^t \A^{t-\tau}
+% \begin{pmatrix}
+% \grad f(0) + \delta_\tau \\ 0
+% \end{pmatrix} 
+% \label{eq:update_AGD_matrix}
+% \end{align}
+
+
+
+% Finally, we need to setup some property about $\delta_t$. It turns out if all iterates stay in some ball with radius $\uspace$ around origin, by Hessian smoothness, we can easily get upper bound of $\delta_t$:
+
+\begin{proposition} \label{prop:delta} Using the notation of Lemma \ref{lem:AGD_update_general},
+if for any $\tau\le t$, we have $\norm{\x_\tau} \le R$, then for any 
+$\tau\le t$, we also have 
+\begin{enumerate}
+\item $\norm{\delta_\tau} \le O(\rho R^2)$; 
+\item $\norm{\delta_\tau - \delta_{\tau -1}}
+\le O(\rho R) (\norm{\x_t - \x_{\tau-1}} +\norm{\x_{\tau-1} - \x_{\tau-2}})$;
+\item $\sum_{\tau = 1}^t \norm{\delta_\tau - \delta_{\tau -1}}^2 \le O(\rho^2 R^2)\sum_{\tau = 1}^t \norm{\x_\tau -\x_{\tau - 1}}^2$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+Let $\Delta_\tau = \int_0^1 (\hess f(\phi \y_\tau) - \H) \mathrm{d} \phi$.
+The first inequality is true because $\delta_\tau = \Delta_\tau \y_\tau$, thus:
+\begin{align*}
+\norm{\delta_\tau} = &\norm{\Delta_\tau\y_\tau} \le \norm{\Delta_\tau}\norm{\y_\tau}
+= \norm{\int_0^1 (\hess f(\phi \y_\tau) - \H) \mathrm{d} \phi}\norm{\y_\tau} \\
+\le & \int_0^1\norm{ (\hess f(\phi \y_\tau) - \H)} \mathrm{d} \phi \cdot \norm{\y_\tau}
+\le \rho \norm{\y_\tau}^2
+\le \rho \norm{(2-\theta)\x_\tau  - (1-\theta)\x_{\tau-1} }^2 \le O(\rho R^2).
+\end{align*}
+For the second inequality, we have:
+\begin{align*}
+\delta_\tau - \delta_{\tau-1} =\grad f(\y_\tau) - \grad f(\y_{\tau-1})  - \H(\y_\tau - \y_{\tau-1})
+=\Delta'_\tau (\y_\tau - \y_{\tau-1}),
+\end{align*}
+where $\Delta'_\tau = \int_0^1 (\hess f(\y_{\tau-1} + \phi (\y_\tau - \y_{\tau-1})) - \H) \mathrm{d} \phi$.
+As in the proof of the first inequality, we have:
+\begin{align*}
+\norm{\delta_\tau - \delta_{\tau-1}} \le& \norm{\Delta'_\tau}\norm{\y_\tau - \y_{\tau-1}}
+= \norm{\int_0^1 (\hess f(\y_{\tau-1} + \phi (\y_\tau - \y_{\tau-1})) - \H) \mathrm{d} \phi}\norm{\y_\tau - \y_{\tau-1}} \\
+\le & \rho \max\{\norm{\y_\tau}, \norm{\y_{\tau-1}}\}\norm{\y_\tau - \y_{\tau-1}} \le O(\rho R) (\norm{\x_\tau - \x_{\tau-1}} +\norm{\x_{\tau-1} - \x_{\tau-2}}).
+\end{align*}
+Finally, since $(\norm{\x_\tau - \x_{\tau-1}} +\norm{\x_{\tau-1} - \x_{\tau-2}})^2 \le 2(\norm{\x_\tau - \x_{\tau-1}}^2 + \norm{\x_{\tau-1} - \x_{\tau-2}}^2)$, the third inequality is immediately implied by the second inequality.
+\end{proof}
+

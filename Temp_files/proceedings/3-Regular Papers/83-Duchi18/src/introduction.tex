@@ -1,0 +1,180 @@
+% -*- Mode: latex -*-
+
+\section{Introduction}
+
+Moore's law on the increasing speeds of computer processors, for reasons of
+basic physics, energy consumption, and area, is no longer true: computer
+clock speeds are no longer increasing~\citep{FullerMi11}. As a consequence,
+processor manufacturers and algorithm designers have moved toward increased
+parallelism, with reduced communication among processors, as the way to
+continue to see increased computing performance~\citep{FullerMi11,
+  BallardDeHoSc11}. This has had wide-ranging influences, most saliently for
+us in the context of optimization, where a number of researchers, including
+\citet{DekelGiShXi12}, \citet{DuchiBaWa12}, and \citet{NiuReReWr11},
+show how leveraging parallelism to compute many stochastic (sub)gradients
+of convex functions simultaneously during iterations of stochastic
+gradient-based procedures yields faster convergence.
+
+In this paper, we attempt to
+delineate the tradeoffs between parallelism and sequential computation
+in stochastic optimization, providing upper and lower bounds on the
+convergence rates for algorithms as a
+function of the number of \emph{rounds} of computation they may complete.
+To make this more precise, consider the problem of minimizing a
+convex function $f$ subject to the constraint that $x \in \domain \subset
+\R^d$, where $\domain$ is a closed compact convex set. We consider
+algorithms based on noisy zeroth- or first-order oracles, which proceed
+iteratively by querying a point $x$, and then receive (conditional on $x$)
+either an unbiased estimate of $f(x)$ (the zeroth-order case) or an unbiased
+estimate of some $g \in \partial f(x)$ (the first-order case).  Stochastic
+optimization procedures proceed in iterative \emph{batches}, where in each
+batch, one chooses a set of points $x_1, \ldots, x_n$ at which to query the
+function $f$, receives the information about $f$, and then the algorithm may
+choose the next batch of points.  Given the growing expense of sequential
+computation as opposed to parallel computation, it is thus of interest to
+understand more precisely what the tradeoffs are between the number of
+batches---or rounds of interaction---and their size. Currently, the
+algorithms we develop are of intellectual rather than practical interest,
+but we hope that this investigation is a stepping stone toward a deeper
+understanding of sequential versus parallel optimization methods.
+
+\citet{PerchetRiChSn16} inspired our interest in this problem with work on a
+more classical statistical setting: estimating the effect of a medical
+treatment.  \citeauthor{PerchetRiChSn16}\ study the \emph{batched bandit}
+problem, where, motivated by multi-stage trials in medical settings, they
+ask the following: given noisy observations
+from distributions with means $\{\mu^{(1)}, \mu^{(2)}\}$, what is the regret
+of a procedure that may only update its strategy a small number of times?
+\citet{PerchetRiChSn16} show that in a two-armed bandit problem with $n$
+observations, $O(\log \log n)$ batches is sufficient to
+achieve optimal regret.
+
+We consider a different problem, as we do not study regret: we
+study only stochastic optimization, where the optimizer need only output
+some estimate $\what{x}$ such that the optimality gap
+\begin{equation}
+  \label{eqn:optimality-gap}
+  f(\what{x}) - \inf_{x\opt \in \domain} f(x\opt)
+\end{equation}
+is small; we do not care which points are queried during iterations of
+the algorithm, and we do not measure the sequential error or regret $\sum_i
+f(x_i) - \inf_{x\opt \in \domain} f(x\opt)$.  This problem differs
+substantially from the linear bandits case, and deriving near optimal
+algorithms (as well as proving lower bounds) is harder. Indeed, if all we
+care about is stochastic accuracy, the linear problem that underpins the
+typical multi-armed bandit problem is quite solvable---at least in terms of
+achieving accuracy that is optimal in the sample size $n$, ignoring
+dimensional issues. To make this clear, consider the $2$-dimensional
+setting, where $f(x) = \<\mu, x\>$ for some
+vector $\mu \in \R^2$ that we assume satisfies $\linf{\mu} \le 1$,
+and we wish to minimize $f$ over the simplex $\domain = \{x \in \R_+^d \mid
+\sum_j x_j = 1\}$ given observations of the form $f(x) + \varepsilon$ for
+sub-Gaussian, mean-zero noise $\varepsilon$. Then we sample $x_1,
+\ldots, x_n$ alternating between the $2$ basis vectors $\unitvec[1],
+\unitvec[2]$, observing $y_i = f(x_i) + \varepsilon_i$. Letting
+$\what{\mu}_j = \frac{2}{n} \sum_{i : x_i =
+  \unitvec[j]} y_i$ and defining the
+estimator $\what{j} =
+\argmin_j \{\what{\mu}_j\}$, then noting that
+$t e^{- \frac{\alpha}{2} t2} \le \sqrt{e / \alpha}$, we obtain
+\begin{align*}
+  \E[f(e_{\what{j}}) - \min_j f(e_{j})]
+  = |\mu_1 - \mu_2| \cdot \P(\what{j} \neq 1)
+  \le
+  |\mu_1 - \mu_2| \cdot \exp\left(-\frac{n |\mu_1 - \mu_2|^2}{4}\right)
+  \le \sqrt{\frac{2e}{n}}.
+\end{align*}
+We can thus solve the linear stochastic \emph{optimization} problem with no
+rounds of interaction.
+
+In contrast with the linear case, we show that for general \emph{convex}
+optimization, the number of rounds of interaction to solve convex problems
+even to accuracy $n^{-\half}$ must scale at least as $d \log \log n$ when
+$n$ is the total number of observations. We shall be more precise in the
+coming sections, but roughly, our results are as follows.  We work in an
+oracle model of optimization~\citep{NemirovskiYu83} where in each of $M$
+rounds, the algorithm may query $n$ points $x_1,
+\ldots, x_n \in \domain$. After issuing all of the queries, the algorithm
+receives noisy function evaluations $f(x_i) + \varepsilon_i$ (a zeroth-order
+oracle) or noisy (sub)gradient evaluations $g_i$ satisfying $\E[g_i] \in
+\partial f(x_i)$ (the first-order oracle). After $M$ such rounds, the
+algorithm must output an estimator $\what{x}$. For a given information
+oracle (noisy function or subgradient evaluations), we evaluate the
+performance of the algorithm in a worst-case sense as $\sup_{f \in \mc{F}}
+\E[f(\what{x})] - \inf_{x\opt \in \domain} f(x\opt)$, where $\E$ denotes the
+expectation taken over randomness in the algorithm and in the noisy
+evaluation oracle, and $\mc{F}$ is a collection of convex functions defined
+on $\domain$. We provide a number of lower and upper bounds on these
+quantities, but roughly, we show that for the case of zeroth-order oracles,
+for any (possibly randomized) algorithm using $M$ rounds with $n$ function
+computations in each round,
+\begin{equation}
+  \label{eqn:minmax-rate}
+  \sup_{f \in \mc{F}}
+  \left\{\E[f(\what{x})] - \inf_{x\opt \in \domain} f(x\opt)\right\}
+  \ge c \cdot
+  n^{-\half \left(1 - \left(\frac{d}{d + 2\kappa}\right)^M\right)}
+\end{equation}
+where $\mc{F}$ is either the class of $1$-Lipschitz convex functions (in
+which case $\kappa = 1$) or $1$-strongly-convex and $O(1)$-strongly smooth
+functions (in which case $\kappa = 2$), and $c$ is a constant depending on
+problem parameters. In the first order case, we show a similar result,
+except the lower bound in the strongly convex case becomes $n^{-(1 -
+  (\frac{d}{d + 2(\kappa-1)})^M)}$. Let us perform an asymptotic comparison,
+in which $d$ is held fixed as $n \to \infty$. The
+gold-standard in such cases is for fully sequential algorithms that receive
+$n$ queries, in which case the minimax rates for the two settings scale
+(ignoring polynomials in dimension $d$) as $n^{-\half}$ and $n^{-1}$,
+respectively~\citep{AgarwalBaRaWa12,Shamir13}; achieving these comparatively
+good rates requires a number of rounds scaling as $\frac{d}{\kappa} \log
+\log n$.
+
+
+We are not the first to study these questions of interactivity and
+sequential versus batch access in the case of convex optimization.
+\citet{PerchetRiChSn16} study the problem in its most natural statistical
+setting, as the design of experiments in a bandit problem, and provide a
+comprehensive literature review. Much of the statistical and medical
+literature on batched sample access focuses on testing hypotheses: can we
+determine which treatment (of a set of treatments) is best, or at least
+reject a null hypothesis with a desired \emph{a priori}
+power~\citep{Dantzig40, Stein45}; \citet{HardwickSt02} provide an elegant
+treatment of multi-stage experimental design. More recent work in the
+statistical learning theory literature focuses on so-called ``switching
+bandits,'' in which an algorithm plays a certain strategy and pays a penalty
+for switching between strategies~\citep{CesaBianchiDeSh13,
+  CesaBianchiGeMa13}. In most of these cases, the problems are different
+from general (convex) stochastic optimization, in that one has a linear
+function or hypothesis to test (the standard multi-armed bandit scenario),
+and one must control the regret rather than the optimality
+gap~\eqref{eqn:optimality-gap}.  The results of \citet{SmithThUp17} are
+related; they study the interaction necessary for locally differentially
+private estimation. Their results suggest that roughly $\log
+\frac{1}{\epsilon}$ rounds of function queries are necessary for
+$\epsilon$-accurate optimization of a $d$-dimensional convex function, but
+it is hard to compare this with the current work; most saliently, our lower
+and upper bounds indicate that the number of rounds (batches) must at least
+scale linearly in the dimension, though it may be sub-logarithmic in the
+sample size $n$. In addition, our lower bound arguments are
+information-theoretic.
+
+\paragraph{Notation}
+Throughout the paper, we consider the domain $\domain = [0, 1]^d$.  We use
+$\ballp{u}{\delta}$ to denote an $\ell_p$ ball centered at $u \in
+\reals^d$ with radius $\delta$. As is standard, a
+\emph{$\delta$-packing} of $S$ with respect to the metric $\rho$ is a set
+$S' \subset S$ such that for $v, v' \in S'$ with $v \neq v'$, $\rho(v, v')
+\ge \delta$.  A maximal $\delta$-packing is any $\delta$-packing $S'$ of $S$
+with maximum cardinality. For integers $a \leq b$, let $a:b \defeq \{a, a +
+1, \ldots, b\}$.  
+%Let $\ones \in \reals^d$ be a $d$-dimensional vector full
+%with ones, and $\unitvec[j]$ be the $j$th standard
+%basis vector.  Given two functions $f, g : \R^d \to \R$,
+%we define the their \emph{intersection set} by
+%\begin{equation*}
+%  \intset{f}{g} \defeq \{x \in \R^d \mid f(x) = g(x) \}.
+%\end{equation*}
+%For $A \subset \R^d$, $\cl A$ and $\interior A$ denote its closure and
+%interior, respectively. 
+For any $m \in \N$ we use $[m]$ to denote 
+the set $\{1, 2, \ldots, m\}$.

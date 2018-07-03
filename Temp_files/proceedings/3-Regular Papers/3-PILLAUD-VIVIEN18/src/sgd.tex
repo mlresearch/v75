@@ -1,0 +1,101 @@
+%!TEX root = colt2018.tex
+
+We now consider results on (averaged) SGD for least-squares that are interesting on their own. As said before, we show  results in two different settings depending on the step-size sequence. First,  we consider $(\gamma_n)$ as a decreasing sequence, second we take $(\gamma_n)$ constant but prove the convergence of the (tail-)averaged iterates.
+
+Since the results we need could be of interest (even for finite-dimensional models), in this section, we study the following general recursion:
+\begin{align}
+\label{eq:SGDabstract}
+\eta_n = ( \idm - \gamma H_n) \eta_{n-1} + \gamma_n \varepsilon_n,
+\end{align}
+%
+We make the following assumptions:  
+\vspace{-0.2cm}
+%
+\basgd \label{asm:init}  We start at some $\eta_0 \in \H$. \easgd
+\vspace{-0.65cm}
+\basgd \label{asm:noise-iid}   $(H_n,\varepsilon_n)_{n \geqslant 1} $ are  i.i.d. and $H_n$ is a positive self-adjoint operator so that almost surely $H_n \succcurlyeq \lambda \idm$, and $H  := \E H_n$. \easgd
+\vspace{-0.5cm}
+\basgd \label{asm:noise-bound}  Noise: $ \E  \varepsilon_n   = 0$, $\| \varepsilon_n  \|_\H \leqslant c^{1/2} $ almost surely and $\E  ( \varepsilon_n   \otimes \varepsilon_n ) \preccurlyeq C$, with $C$ commuting with $H$. Note that one consequence of this assumption is $\E \|\varepsilon_n\|_\H^2 \leqslant \tr C$. \easgd
+\vspace{-0.5cm}
+\basgd \label{asm:weird-bound}  For all $n \geqslant 1$, $\E \Big[  H_n C H^{-1} H_n \Big] \preccurlyeq \gamma_0^{-1} C$ and $\gamma \leqslant \gamma_0$. \easgd
+\vspace{-0.5cm}
+\basgd \label{asm:commute}  $A$ is a positive self-adjoint operator which commutes with $H$. \easgd
+%
+Note that we will later apply the results of this section to $H_n =  K_{x_n} \otimes K_{x_n} + \lambda I$, $H = \Sigma + \lambda \idm$, $C = \Sigma$ and $A \in \{\idm, \Sigma\}$. We first consider the non-averaged SGD recursion, then the (tail-)averaged recursion. The key difference with existing bounds is the need for precise probabilistic deviation results.
+
+
+For least-squares, one can always separate the impact of the initial condition $\eta_0$ and of the noise terms $\varepsilon_k$, namely $\eta_n = \eta_n^{\textrm {bias}} + \eta_n^{\textrm {variance}}$, where $\eta_n^{\textrm {bias}}$ is the recursion with no noise ($\varepsilon_k = 0$), and $\eta_{n}^{\textrm {variance}}$ is the recursion started at $\eta_0=0$. The final performance will be bounded by the sum of the two separate performances \citep[see, e.g.,][]{defossez2014constant}. Hence all of our bounds will depend on these two. See more details in Appendix \ref{sec:AppSGD}.
+
+
+\subsection{Non-averaged SGD}
+
+In this section, we prove results for the recursion defined by Eq.~\eqref{eq:SGDabstract} in the case where for $\alpha \in [0,1]$, $ \gamma_n = \gamma/n^\alpha$. These results extend the ones of \citet{gradsto} by providing deviation inequalities, but are limited to least-squares. For general loss functions and in the strongly-convex case, see also~\citet{kakade2009generalization}.
+
+\begin{theorem}[SGD, decreasing step size: $\gamma_n = \gamma/n^\alpha$] \label{th:SGDalpha}
+Assume \sgdasm{asm:init}, \sgdasm{asm:noise-iid}, \sgdasm{asm:noise-bound}, $\gamma_n = \gamma/n^\alpha$, $\gamma\lambda < 1$ and denote by $\eta_n \in \H$ the n-th iterate of the recursion in Eq. \eqref{eq:SGDabstract}. We have for $t > 0, n \geqslant 1$ and  $\alpha \in (0,1)$, $\|g_n - g_\lambda\|_\H \leqslant \exp\left(  -\frac{\gamma\lambda}{1-\alpha}\left( (n+1)^{1-\alpha} -1  \right)   \right) \|g_0 - g_\lambda\|_\H + V_n$, almost surely for~$n$ large enough \footnote {See Appendix Section \ref{sec:AppSGD} Lemma \ref{le:nalpha} for more details.}, with
+$\displaystyle \P \left( V_n \geqslant t \right) \leqslant 2\exp\left( -\frac{ t^2 }{ 8 \gamma \tr C/\lambda  + \gamma c^{1/2}t }\cdot n^{\alpha}\right).$
+\end{theorem}
+%
+We can make the following observations: 
+\vspace{-0.1cm}
+\BIT
+\itemsep-3pt
+\item The proof technique (see Appendix \ref{ap:SGDalpha} for the detailed proof) relies on the following scheme: we notice that $\eta_n$ can be decomposed in two terms, (a) the bias: obtained from a product of $n$ contractant operators, and (b) the variance: a sum of increments of a martingale. We treat separately the two terms. For the second one, we prove almost sure bounds on the increments and on the variance that lead to a Bernstein-type concentration result on the tail $\P (V_n \geqslant t)$. Following this proof technique, the coefficient in the latter exponential is composed of the variance bound plus the almost sure bound of the increments of martingale times $t$.
+%
+\item Note that we only presented in Theorem \ref{th:SGDalpha} the case where $\alpha \in (0,1)$. Indeed, we only focused on the case where we had exponential convergence (see the whole result in the Appendix: Proposition \ref{prop:fullalpha}). Actually, that there are three different regimes. For $\alpha=0$ (constant step-size), the algorithm is not converging, as the tail probability bound on $\P \left( V_n \geqslant t \right) $ is not dependent on $n$. For $\alpha=1$, confirming results from~\citet{gradsto}, there is no exponential forgetting of initial conditions. And for $\alpha \in (0,1)$, the forgetting of initial conditions and the tail probability are converging to zero exponentially fast, respectively,  as $\exp( - C n^{1-\alpha})$ and $\exp( - C n^{\alpha})$, for a constant $C$, hence the natural choice of $\alpha=1/2$ in our experiments.
+
+\EIT
+
+\subsection{Averaged and Tail-averaged SGD with constant step-size}
+ 
+In the subsection, we take: $\forall n \geqslant 1, \ \gamma_n = \gamma$. We first start with a result on the variance term, whose proof extends the work of \citet{daft} to deviation inequalities which are sharper than the ones from \cite{newsto}.
+
+
+\begin{theorem}[Convergence of the variance term in averaged SGD]
+\label{th:SGDaveraged}
+Assume \sgdasm{asm:init}, \sgdasm{asm:noise-iid}, \sgdasm{asm:noise-bound},$\ $ \sgdasm{asm:weird-bound}, \sgdasm{asm:commute} and consider the average of the $n+1$ first iterates of the sequence defined in Eq. \eqref{eq:SGDabstract}: $\bar{\eta}_n = \frac{1}{n+1} \sum_{i=0}^n \eta_i$. Assume $\eta_0 = 0$.
+ We have for $t > 0, n \geqslant 1$:    
+\begin{equation}
+\displaystyle\P \left( \left\| A^{1/2} \bar{\eta}_n  \right\|_\H \geqslant t \right) \leqslant 2 \exp\left[-\frac{(n+1) t^2}{E_t}\right],
+\end{equation}
+where $E_t$ is defined with respect to the constants introduced in the assumptions:  
+\begin{equation}
+\label{eq:Et}
+ E_t =   4\tr(AH^{-2}C)+\frac{2c^{1/2} \|A^{1/2}\|_{\textrm {op}}}{3\lambda}\cdot t  .
+ \end{equation}
+\end{theorem}
+%
+The work that remains to be done is to bound the bias term of the recursion $\bar{\eta}_n^{\textrm {bias}}$. We have done it for the full averaged sequence (see Appendix \ref{ap:SGDfullaverage} Theorem \ref{th:withbias}) but as it is quite technical and could lower a bit the clarity of the reasoning, we have decided to leave it in the Appendix. We present here another approach and consider the tail-averaged recursion, $\bar{\eta}_n^{\textrm {tail}} 
+= \frac{1}{\lfloor n/2 \rfloor} \sum_{i=\lfloor n/2 \rfloor}^{n} \eta_i$ \citep[as proposed by][]{jain2016parallelizing,shamir2011SGD}.
+%
+For this, we use the simple almost sure bound
+$ \| \eta_i^{\textrm {bias}} \|_\H \leqslant ( 1- \lambda \gamma )^i \|\eta_0\|_\H$, such that 
+$\| \bar{\eta}_n^{\textrm {tail, bias}} \|_\H \leqslant ( 1- \lambda \gamma )^{n/2} \|\eta_0\|_\H$. For the variance term, we can simply use the result above for $n$ and $n/2$, as 
+$\bar{\eta}_n^{\textrm {tail}}  = 2 \bar{\eta}_n  - \bar{\eta}_{n/2}$. This leads to:
+ \clearpage
+ \begin{corollary}[Convergence of tail-averaged SGD]
+ \label{co:SGDtailaveraged}
+Assume \sgdasm{asm:init}, \sgdasm{asm:noise-iid}, \sgdasm{asm:noise-bound}, \sgdasm{asm:weird-bound}, \sgdasm{asm:commute} and consider the tail-average of the sequence defined in Eq. \eqref{eq:SGDabstract}: $\bar{\eta}_n^{\textrm {tail}} = \frac{1}{\lfloor n/2 \rfloor} \sum_{i=\lfloor n/2 \rfloor}^{n} \eta_i$.
+ We have for $t > 0, n \geqslant 1$:   
+\begin{eqnarray}
+\left\|A^{1/2}\bar{\eta}_n^{\textrm {tail}} \right\|_\H &\leqslant& (1-\gamma\lambda)^{n/2} \|A^{1/2}\|_{op} \|\eta_0\|_\H + L_n \quad,\ \text{with} \\
+ \P(L_n \geqslant t ) &\leqslant& 4\exp\left( -  (n+1)t^2 /( 4 E_t)\right),
+\end{eqnarray}
+where $L_n$ is defined in the proof (see Appendix \ref{ap:SGDcorrolary}) and is the variance term of the tail-averaged recursion.
+\end{corollary}
+%
+We can make the following observations on the two previous results:
+\vspace{-0.1cm}
+\BIT
+\itemsep-3pt
+\item The proof technique (see Appendix \ref{ap:SGDaverage} and \ref{ap:SGDcorrolary} for the detailed proofs) relies on concentration inequality of Bernstein type. Indeed, we notice that (in the setting of  Theorem \ref{th:SGDaveraged}) $\bar{\eta}_n$ is a sum of increments of a martingale. We prove almost sure bounds on the increments and on the variance \citep[following the proof technique of][]{daft} that lead to a Bernstein type concentration result on the tail $\P (V_n \geqslant t)$. Following the proof technique summed-up before, we see that $E_t$ is composed of the variance bound plus the almost sure bound times $t$. 
+%
+\item Remark that classically, $A$ and $C$ are proportional to $H$ for excess risk predictions. In the finite $d$-dimensional setting this leads us to the usual variance bound proportional to the dimension~$d$: $\tr (AH^{-2}C) \cong \tr \idm = d$. The result is general in the sense that we can apply it for all  matrices $A$ commuting with $H$ (this can be used to prove results in $L_2$ or in~$\H$). 
+%
+\item Finally, note that we improved the variance bound with respect to the strong convexity parameter $\lambda$ which is usually of the order $1/\lambda^2$ \citep[see][]{shamir2011SGD}, and is here $\tr (AH^{-2}C)$. Indeed, in our setting, we will apply it for $A = C = \Sigma$ and $H = \Sigma + \lambda I$, so that $\tr (AH^{-2}C)$ is upper bounded by the effective dimension $\tr (\Sigma (\Sigma + \lambda I)^{-1})$ which can be way smaller than $1/\lambda^2$ \citep[see][]{caponnetto2007optimal,dieuleveut2016nonparametric}.
+%
+\item The complete proof for the full average is written in Appendix \ref{ap:SGDfullaverage} and more precisely in Theorem \ref{th:withbias}. In this case the initial conditions are not forgotten exponentially fast though.
+\EIT
+
+
+

@@ -1,0 +1,282 @@
+\section{Preconditioning with Lewis Weights and Rotation}\label{sec:lewis}
+
+In this section, we show how to precondition a given matrix $\AA \in \R^{n \times d}$ into a ``good" matrix, primarily
+using techniques by \cite{cohenpeng}, and will ultimately prove Lemma~\ref{lem:lewisAndRotate}.
+Recall that our overall goal was to efficiently transform $\AA$ into a matrix $\tilde{\AA}$ such that the $\ell_1$ norm is approximately maintained for all $\xx$, along with $\tilde{\AA}$ being isotropic and having all row norms approximately equal. 
+
+Accordingly, our preconditioning will be done in the following two primary steps:
+\begin{enumerate}
+	\item We sample $N = O(d \epsilon^{-2} \log d )$ rows from $\AA$ according to Lewis weights \citep{cohenpeng}
+	to construct a matrix $\tilde{\AA} \in \R^{N \times d}$. The guarantees of \cite{cohenpeng} ensure that
+	for all $x \in \R^d$, $||\tilde{\AA} x||_1 \approx_{1+\epsilon} \norm{\AA x}_1$ with high probability. We then further show that this sampling scheme gives $\tau_i (\tilde{\AA}) = O(d/N)$ for all $1 \leq i \leq N$ with high probability.
+	\item We then find an invertible matrix $\UU$ such that $\tilde{\AA}\UU$ still has the two necessary properties from Lewis weight sampling and is also isotropic.
+\end{enumerate}
+
+The matrix $\tilde{\AA}\UU$ then has all the prerequisite properties
+to run our $\ell_1$ minimization algorithms, and it only becomes necessary to show that running an $\ell_1$-minimization routine on $\tilde{\AA}\UU$
+will help us find an approximate solution to the original problem.
+
+In \Cref{subsec:lewis}, we show that Lewis weight sampling gives a matrix with approximately equal leverage scores.
+In \Cref{subsec:rotate}, we find the invertible matrix $\UU$ that makes $\tilde{\AA}\UU$ isotropic while preserving other properties.
+In \Cref{subsec:translateToOriginal}, we show that an approximate solution with respect to the preconditioned matrix will give an approximate solution with respect to the original matrix.
+Finally, we prove our primary preconditioning result, Lemma~\ref{lem:lewisAndRotate}, in \Cref{subsec:proof}.
+
+Before we do this, the following facts are useful. 
+
+\begin{fact}[Foster's theorem \citep{Foster53}]
+	\label{fact:fosters}
+	For a matrix $\AA \in \R^{n \times d}$,
+	\[\sum_{i=1}^n \tau_i(\AA) = d.\]
+\end{fact}
+
+\begin{fact}[Lemma 2 in \cite{CohenLMMPS15}]
+	\label{fact:boundLev}
+	Given a matrix $\AA$, for all rows $i$,
+	\[\tau_i(\AA) = \min_{\AA^T\xx = \AA_{i,:}^T} \norme{\xx}^2.\]
+\end{fact}
+
+
+\subsection{Lewis Weight Sampling gives Approximately Equal Leverage Scores}\label{subsec:lewis}
+
+%\saurabh{This subsection can be moved to the appendix - it isn't a new proof}
+
+
+In this section, we prove that sampling according to Lewis weights gives a matrix with approximately equal leverage scores. 
+This proof will largely rely on showing that, up to row rescaling, the sampled matrix $\tilde{\AA}$ is such that $\tilde{\AA}^T\tilde{\AA}$ is spectrally close to $\AA^T\AA$.
+This proof will boil down to a standard application of matrix concentration bounds for sampling according to leverage scores.
+Our primary lemma in this section will then mostly follow from the following lemma, which will be proven at the end of this section.
+
+\begin{lemma}
+	\label{lem:l2Sampling}
+	Given a matrix $\AA$ that is sampled according to \Cref{thm:lewisWeights} with error $\epsilon$ and gives matrix $\tilde{\AA}$, then
+	\[ \tilde{\AA}^T\tilde{\AA} \approx_{O(1)} \frac{1}{h(n,\epsilon)}\AA^T\LW^{-1}\AA \]
+	with high probability.
+	
+\end{lemma}
+
+Using this, we can prove our key lemma.
+
+\begin{lemma}
+	\label{lem:lewisGivesEqualLevScores}
+	Given a matrix $\AA \in \R^{n \times d}$ that is sampled according to \Cref{thm:lewisWeights} and gives matrix $\tilde{\AA}$, then for all rows $i$ of $\tilde{\AA}$,
+	\[ \tau_i(\tilde{\AA}) \approx_{O(1)} \frac{d}{N}\]
+	with high probability.
+\end{lemma}
+
+\begin{proof}
+	Lemma~\ref{lem:l2Sampling} implies that 
+	\[ \tau_i(\tilde{\AA}) = \tilde{\AA}_{i,:}\left(\tilde{\AA}^T\tilde{\AA}\right)^{-1}\tilde{\AA}_{i,:}^T \approx_{O(1)} h(n,\epsilon)\cdot \tilde{\AA}_{i,:}\left(\AA^T\LW^{-1}\AA\right)^{-1}\tilde{\AA}_{i,:}^T 
+	\] 
+	with high probability. 
+	\Cref{thm:lewisWeights} implies that every row $i$ of $\tilde{\AA}$ is simply some row $j$ of $\AA$, scaled by $\frac{1}{\pp_j}$. 
+	Therefore, for any row $i$ of $\tilde{\AA}$ we must have 
+	\[\tau_i(\tilde{\AA}) \approx_{O(1)} h(n,\epsilon) \cdot \tilde{\AA}_{i,:}\left(\AA^T\LW^{-1}\AA\right)^{-1}\tilde{\AA}_{i,:}^T  =  h(n,\epsilon) \cdot \frac{\AA_{j,:}}{\pp_j}\left(\AA^T\LW^{-1}\AA\right)^{-1}\frac{\AA_{j,:}^T}{\pp_j}.
+	\]
+	From Definition~\ref{def:lewis} we have 
+	\[\lw_j^2 = \AA_{j,:}\left(\AA^T\LW^{-1}\AA\right)^{-1}\AA_{j,:}^T\]
+	which along with the fact that $\pp_j \approx_{O(1)} \lw_j \cdot h(n,\epsilon)$ reduces the leverage score to
+	\[ \tau_i(\tilde{\AA}) \approx_{O(1)} h(n,\epsilon) \cdot \frac{\lw_j^2}{\pp_j^2} \approx_{O(1)}\frac{1}{h(n,\epsilon)}.
+	\]
+	Finally \Cref{fact:fosters} gives us that the sum of Lewis weights must be $d$ because they are leverage scores of $\LW^{-1/2}\AA$, which implies $\frac{1}{h(n,\epsilon)} \approx_{O(1)} \frac{d}{N}$ by our definition of $N = \sum_i \pp_i$.
+\end{proof}
+
+It now remains to prove Lemma~\ref{lem:l2Sampling}.
+The proof follows similarly to the proof of Lemma 4 in \cite{CohenLMMPS15}, except that their leverage score sampling scheme draws each row without replacement, and we need a fixed number of sampled rows with replacement. Accordingly, we will also use the following matrix concentration result from \cite{Harvey12}, which is a variant of Corollary 5.2 in \cite{Tropp12}:
+
+\begin{lemma} [\cite{Harvey12}]
+	\label{lem:matrixConcentration}
+	Let $\YY_1...\YY_k$ be independent random positive semidefinite matrices of size $d \times d$. Let $\YY= \sum_{i=1}^k \YY_i$, and let $\ZZ = \expec{ }{\YY}$. If $\YY_i \preceq R\cdot\ZZ$ then
+	\[ \prob{}{\sum_{i=1}^k \YY_i \preceq \left( 1 - \epsilon \right) \ZZ} \leq de^{\frac{-\epsilon^2}{2R}} \]
+	and 
+	\[ \prob{}{\sum_{i=1}^k \YY_i \succeq \left( 1 + \epsilon \right) \ZZ} \leq de^{\frac{-\epsilon^2}{3R}}. \]
+\end{lemma}
+
+\begin{proof}[Proof of Lemma~\ref{lem:l2Sampling}]
+	First, we define $\barA \defeq \LW^{-1/2}\AA$.
+	Then, by Definition~\ref{def:lewis}, $\lw_i = \tau_i(\barA)$.
+	Since $\LW$ is the diagonal matrix of Lewis weights $\lw$,
+	each row of $\barA$ is simply $\barA_{i,:} = \lw_i^{-1/2} \AA_{i,:}$.
+	
+	By construction of our random $\tilde{\AA}$ in \Cref{thm:lewisWeights} we choose a row $j$ of $\AA$ with probability $\frac{\pp_j}{N}$ and scale by $\frac{1}{\pp_j}$. Therefore, if we let $\YY_i$ be the random variable
+	\[
+	\YY_i = 
+	\begin{cases}
+	\frac{\AA_{j,:}\AA_{j,:}^T}{\pp_j^2},& \text{with probability } \frac{\pp_j}{N} \text{ for each } j
+	\end{cases}
+	\]
+then,
+	\[
+	\YY = \sum_{i=1}^N \YY_i = \sum_{i=1}^N \tilde{\AA}_{i,:}\tilde{\AA}_{i,:}^T = \tilde{\AA}^T\tilde{\AA}.
+	\]
+	
+	Furthermore, we can substitute $\barA_{j,:}\sqrt{\lw_i}$ for $\AA_{j,:}$ and use the fact that $\pp_j \approx_{O(1)} \lw_j \cdot h(n,\epsilon)$ to obtain
+	\[
+		\frac{\AA_{j,:}\AA_{j,:}^T}{\pp_j^2} \approx_{O(1)} \frac{\barA_{j,:}\barA_{j,:}^T}{\pp_j \cdot h(n,\epsilon)}.
+	\] 	
+	As a result, we have
+	\begin{align*}
+	\ZZ = \expec{}{\sum_{i=1}^N \YY_i} &= \sum_{i=1}^N \expec{}{\YY_i} \\
+	&\approx_{O(1)} \sum_{i=1}^N \sum_{j=1}^n \frac{\barA_{j,:}\barA_{j,:}^T}{N \cdot h(n,\epsilon)} \\
+	&= \frac{1}{h(n,\epsilon)} \sum_{j=1}^n \barA_{j,:}\barA_{j,:}^T = \frac{1}{h(n,\epsilon)}\AA^T\LW^{-1}\AA.
+	\end{align*}
+	In order to apply Lemma~\ref{lem:matrixConcentration} we need to find $R$ such that $\YY_i \preceq R \cdot \ZZ$, which by our construction of $\YY_i$ requires 
+	\[\frac{\AA_{j,:}\AA_{j,:}^T}{\pp_j^2} \preceq R\cdot \ZZ
+	\]
+	for all $j$. We use our constant factor approximations of $\ZZ$ and $\frac{\AA_{j,:}\AA_{j,:}^T}{\pp_j^2}$ to see that it also suffices to show
+	\[
+	\frac{\barA_{j,:}\barA_{j,:}^T}{\pp_j \cdot h(n,\epsilon)} \preceq \frac{R}{O(1)} \cdot \frac{1}{h(n,\epsilon)}\barA^T\barA.
+	\]
+	Given that $\tau_j(\barA) = \lw_j$ and $\pp_j \approx_{O(1)} \lw_j \cdot h(n,\epsilon)$, we have
+	\[\frac{\barA_{j,:}\barA_{j,:}^T}{\pp_j \cdot h(n,\epsilon)} \preceq \frac{O(1)\barA_{j,:}\barA_{j,:}^T}{\tau_j(\barA) \cdot h(n,\epsilon)^2}
+	\]
+	which along with the fact (Equation 12 in the proof of Lemma 4 from \cite{CohenLMMPS15}) that 
+	\[ \frac{\barA_{j,:}\barA_{j,:}^T}{\tau_j(\barA)} \preceq \barA^T\barA
+	\]
+	implies that
+	\[\YY_i \preceq \frac{O(1)}{h(n,\epsilon)}\ZZ.
+	\]
+	By Theorem~\ref{thm:lewisWeights} we know that $h(n,\epsilon) \geq c \epsilon^{-2}\log{n}$ for some constant $c$. Plugging this in for $R$ in Lemma~\ref{lem:matrixConcentration} gives that 
+	\[
+	\YY \approx_{1 + \epsilon} \ZZ
+	\]
+	or, substituting our values of $\YY$ and $\ZZ$,
+	\[ \tilde{\AA}^T\tilde{\AA} \approx_{O(1)} \frac{1}{h(n,\epsilon)}\AA^T\LW^{-1}\AA \]
+	with probability at least $1 - 2de^{-\frac{\epsilon^{-2}}{3R}} \geq 1 - 2de^{-\frac{c\log{n}}{O(1)}} \geq 1 - 2dn^{-c/O(1)}$.
+	This implies that the statement in the lemma is true with high probability for $c$ bigger than $O(1)$ (where the $O(1)$ comes from our $\pp_i$ approximation of $\lw_i\cdot h(n,\epsilon)$) and our assumption on $n \geq d$.
+\end{proof}
+
+\subsection{Rotating the Matrix to Achieve Isotropic Position}\label{subsec:rotate}
+
+Now that we have sampled by Lewis weights and achieved all leverage scores to be approximately equal, we will show that we can efficiently rotate the matrix into isotropic position while still preserving the fact that all leverage scores are approximately equal.
+
+\begin{lemma}
+	\label{lem:rotate}
+	If $\UU \in \R^{d \times d}$ is an invertible matrix and $\UU^T\UU = \left(\AA^T\AA\right)^{-1}$ then
+	\begin{enumerate}
+		\item $\left(\AA\UU\right)^T\left(\AA\UU\right) = \II$.
+		\item For all rows $i$,
+		$ \tau_i(\AA) = \tau_i(\AA\UU)$.
+	\end{enumerate}
+	
+\end{lemma}
+
+\begin{proof}
+	For the first condition, we see that 
+	\[\UU^T\AA^T\AA\UU = \II \iff \AA^T\AA = (\UU^T)^{-1}\UU^{-1} \iff (\AA^T\AA)^{-1} = \UU^T\UU.\]
+	
+	For the second condition, the $i$th row of $\AA\UU$ will be $\AA_{i,:}\UU$,
+	which by the definition of leverage scores then gives,
+	\begin{align*}
+	\tau_i(\AA\UU) & = \AA_{i,:}\UU\left((\AA\UU)^T(\AA\UU)\right)^{-1}\left(\AA_{i,:}\UU\right)^T \\
+	& = \AA_{i,:}\UU \UU^{-1}\left(\AA^T\AA\right)^{-1}(\UU^T)^{-1}\UU^T\AA_{i,:}^T \\
+	& = \AA_{i,:}\left(\AA^T \AA\right)^{-1}\AA_{i,:}^T \\
+	& = \tau_i(\AA). 
+%\qedhere
+	\end{align*}
+\end{proof}
+
+It is clear then that we want to rotate our matrix by $\UU$ as above, so it only remains to efficiently compute such a $\UU$.
+
+\begin{lemma}
+	\label{lem:rotateRoutine}
+	Given a full rank matrix $\tilde{\AA} \in \R^{N \times d}$,
+	there is a routine $\textsc{Rotate}$ that can find an invertible $\UU$
+	such that $\UU^T\UU = \left(\tilde{\AA}^T\tilde{\AA}\right)^{-1}$
+	in time $O(Nd^{\omega-1} + d^{\omega})$.
+\end{lemma}
+
+\begin{proof}
+	Computing $\tilde{\AA}^T \tilde{\AA}$ can be done in $O(Nd^{\omega-1})$ time using fast matrix multiplication. Inverting $\tilde{\AA}^T\tilde{\AA}$, a $d \times d$ matrix that must have an inverse because $\tilde{\AA}$ is full rank, will require $O(d^{\omega})$ time.
+	Finally, we perform a QR-decomposition of $\left(\tilde{\AA}^T\tilde{\AA}\right)^{-1}$ in $O \left(d^{\omega}\right)$ time to obtain our square invertible matrix $\UU$.\footnote{For an invertible matrix $\MM \in \R^{d \times d}$, it is easy to see that $\MM(\MM^T \MM)^{-1/2}$ is an orthonormal basis for $\MM$. We can compute $(\MM^T \MM)^{-1}$ using Schur decomposition in $O(d^{\omega})$ time, and by careful analysis of that algorithm, we can also compute $(\MM^T \MM)^{-1/2}$ in the same amount of time.}
+\end{proof}
+
+Lastly, we want to ensure that by rotating our matrix, we can still use an approximate solution to the rotated matrix to obtain an approximate solution of the original matrix.
+
+\begin{lemma}\label{lem:approxStillGoodWithRotation}
+	Given a matrix-vector pair $\AA \in \R^{n \times d}, \bb \in \R^{n}$,
+	another matrix-vector pair $\tilde{\AA} \in \R^{N \times d}, \tilde{\bb} \in \R^{N}$,
+	and an invertible matrix $\UU \in \R^{d \times d}$,
+	\[\norm{[\AA,\bb]\xx}_1 \approx_{1+\epsilon} \|[\tilde{\AA},\tilde{\bb}]\xx\|_1 \forall \xx \in \R^{d+1} \iff  \norm{[\AA\UU,\bb]\yy}_1 \approx_{1+\epsilon} \|[\tilde{\AA}\UU,\tilde{\bb}]\yy\|_1 \forall \yy \in \R^{d+1}.
+	\]
+\end{lemma}
+
+\begin{proof}
+	This follows immediately from the fact that for any $\xx$ satisfying the LHS,
+	there exists a $\yy$ satisfying the RHS, and vice versa.
+	Specifically $\yy_{[1,d]} = \UU^{-1}\xx_{[1,d]}$ and $\yy_{d+1} = \xx_{d+1}$, 
+	and equivalently $\UU\yy_{[1,d]} = \xx_{[1,d]}$ and $\yy_{d+1} = \xx_{d+1}$.	
+\end{proof}
+
+\subsection{Translating between Preconditioned and Original Matrix Solutions}\label{subsec:translateToOriginal}
+Our preconditioning combination of Lewis weights and rotating the matrix gives our desired conditions, specifically an IRB matrix, but it remains to be seen that we can take a solution to this preconditioned matrix and translate it back into an approximate solution of the original matrix. In the following lemma we will show that this is in fact true.
+
+\begin{lemma}\label{lem:objectiveApproxAfterLewis}
+	Given a matrix-vector pair $\AA \in \R^{n \times d}, \bb \in \R^{n}$,
+	another matrix-vector pair $\tilde{\AA} \in \R^{N \times d}, \tilde{\bb} \in \R^{N}$,
+	and an invertible matrix $\UU \in \R^{d \times d}$;
+	if
+	\[ \big\|[\tilde{\AA}\;\tilde{\bb}]\yy\big\|_1 \approx_{1+\epsilon}\big\|[\AA\;\bb]\yy\big\|_1\]
+	for all $\yy \in \R^{d+1}$, and
+	if $\tilde{\xx}_{\UU}^*$ minimizes $\|\tilde{\AA}\UU\xx - \tilde{\bb}\|_1$, then for any $\tilde{\xx}$ such that 
+	\[ \|\tilde{\AA}\UU\tilde{\xx} - \tilde{\bb}\|_1\leq (1 + \delta) \|\tilde{\AA}\UU\tilde{\xx}_{\UU}^* - \tilde{\bb}\|_1 \]
+	we must have
+	\[
+	\|\AA(\UU\tilde{\xx}) - \bb\|_1 \leq (1 + \epsilon)^2(1 + \delta)\|\AA \xx^* - \bb \|_1 \]
+	with high probability.	
+\end{lemma}
+
+
+\begin{proof}
+	By assumption we have 
+	\[ \big\|[\tilde{\AA}\;\tilde{\bb}]\yy \big\|_1 \approx_{1 + \epsilon}\big\|[\AA\;\bb]\yy\big\|_1\]
+	for all $\yy \in \R^{d+1}$, and we can then use Lemma~\ref{lem:approxStillGoodWithRotation} to obtain 
+	\[ \big\|[\tilde{\AA}\UU\;\tilde{\bb}]\yy\big\|_1 \approx_{1 + \epsilon}\big\|[\AA\UU\;\bb]\yy \big\|_1\]
+	for all $\yy \in \R^{d+1}$. 
+	By fixing $\yy$ to be $\begin{pmatrix}
+	\xx \\ -1
+	\end{pmatrix}$, we get
+	\begin{align}\label{eqn:approx1norm}
+	& \|\tilde{\AA}\xx - \tilde{\bb}\|_1 \approx_{1+\epsilon}\|\AA\xx - \bb\|_1 &  \forall~ \xx \in \R^{d}, \\
+	\label{eqn:approx1normrotated} & \|\tilde{\AA}\UU\xx - \tilde{\bb}\|_1 \approx_{1+\epsilon}\|\AA\UU\xx - \bb\|_1 &  \forall~ \xx \in \R^{d}.
+	\end{align}
+	
+	\Cref{eqn:approx1norm} gives
+	\[ \norm{{\AA}\UU\tilde{\xx} - {\bb}}_1\leq (1 + \epsilon)\|\tilde{\AA}\UU\tilde{\xx} - \tilde{\bb}\|_1.  \]
+	Using our initial assumption and defining $\tilde{\xx}^* \defeq \UU\tilde{\xx}_{\UU}^*$ then gives us
+	\[ \norm{{\AA}\UU\tilde{\xx} - {\bb}}_1\leq (1 + \epsilon)(1 + \delta)\|\tilde{\AA}\tilde{\xx}^* - \tilde{\bb}\|_1.  \]
+	Notice that if $\tilde{\xx}_{\UU}^*$ minimizes $\|\tilde{\AA}\UU\xx - \tilde{\bb}\|_1$,
+	then $\tilde{\xx}^*$ must minimize $\|\tilde{\AA}\xx - \tilde{\bb}\|_1$ because $\UU$ is invertible.
+	Therefore, $\|\tilde{\AA}\tilde{\xx}^* - \tilde{\bb}\|_1 \leq \|\tilde{\AA}\xx^* - \tilde{\bb}\|_1$ and we have 
+	\[ \|{\AA}\UU\tilde{\xx} - {\bb}\|_1\leq (1 + \epsilon)(1 + \delta)\|\tilde{\AA}{\xx}^* - \tilde{\bb}\|_1.  \]
+	Finally, applying \Cref{eqn:approx1normrotated} gives
+	\[ \|{\AA}\UU\tilde{\xx} - {\bb}\|_1\leq (1 + \epsilon)^2(1 + \delta)\|{\AA}{\xx}^* - {\bb}\|_1.
+	%\qedhere 
+	\]
+\end{proof}
+
+%\input{simulated_sampling}
+
+
+\subsection{Proof of Lemma~\ref{lem:lewisAndRotate}}\label{subsec:proof}
+
+We now have all the necessary pieces to prove our primary preconditioning lemma, which we will now restate and prove.
+
+\lewisAndRotate*
+\begin{proof}
+	From Theorem~\ref{thm:lewisWeights} we have that
+	\[ \big\|[\tilde{\AA}\;\tilde{\bb}]\yy\big\|_1 \approx_{1+\epsilon}\big\|[\AA\;\bb]\yy\big\|_1\]
+	for all $\yy \in \R^{d+1}$ with high probability. Lemma~\ref{lem:objectiveApproxAfterLewis} then gives
+	\[
+	\norm{\AA(\UU\tilde{\xx}) - \bb}_1 \leq (1 + \epsilon)^2(1 + \delta)\norm{\AA \xx^* - \bb }_1 \]
+	by our assumption on $\tilde{x}$.
+	
+	Lemma~\ref{lem:l2Sampling} and the assumption that $\AA$ is full rank imply that $\tilde{\AA}$ is full rank with high probability.
+	Our use of $\textsc{Rotate}$ to generate $\UU$, such that $\UU^T\UU = (\tilde{\AA}^T\tilde{\AA})^{-1}$, along with Lemma~\ref{lem:rotate}, gives $(\tilde{\AA}\UU)^T\tilde{\AA}\UU = \II$ and also that $\tau_i(\tilde{\AA}\UU) = \tau_i(\tilde{\AA})$ for all $i$.
+	\Cref{fact:boundLev} gives $\tau_i(\tilde{\AA}) \leq \tau_i([\tilde{\AA}\;\tilde{\bb}])$, which along with Lemma~\ref{lem:lewisGivesEqualLevScores}, implies $\tau_i(\tilde{\AA}\UU) \leq O(d/N)$ for all $i$.
+	Finally, by Definition~\ref{def:levScore} and the fact that $(\tilde{\AA}\UU)^T\tilde{\AA}\UU = \II$, we then have 
+	\[\tau_i(\tilde{\AA}\UU) = \bigg\|\left(\tilde{\AA}\UU\right)_{i,:}\bigg\|_2.
+	\]
+	
+	The sampling of $\AA$ is done according to the technique by \cite{cohenpeng}, which requires $O(nnz(\AA)\log{n} + d^{\omega})$ time to obtain the sampling probabilities. Then the actual sampling requires $O(\min\{d\epsilon^{-2}\log{n}, (d\epsilon^{-2}\log{n})^{1/2 + o(1)} + n\log^2{n}\})$-time according to Corollary~\ref{cor:sampleEfficiently} shown in \Cref{subsec:simulatedSplitting}. Computing the invertible matrix $\UU$ for input $\tilde{\AA}$ takes $O(Nd^{\omega-1} + d^{\omega})$ time from Lemma~\ref{lem:rotateRoutine}, and the number of rows of $\tilde{\AA}$ is $N = O(d\epsilon^{-2}\log{n})$.
+	Finally, Lemma~\ref{lem:duplicateRowsForAtransposeA} and Corollary~\ref{cor:duplicateRowsRotAndInit} in \Cref{subsec:simulatedSplitting} show that this computation time can also be bounded with $N \leq n$, which then gives our desired runtime.
+\end{proof}

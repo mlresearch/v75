@@ -1,0 +1,2204 @@
+\documentclass[final, 12pt]{colt2018}
+% 11pt is the size for STOC
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+% 1 in margins for stoc
+%\usepackage[letterpaper,top=1in,bottom=1in,left=1in,right=1in,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+%\usepackage{amsmath,amsfonts,amsthm,amssymb,mathrsfs,dsfont} % Math packages
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[capitalize,nameinlink]{cleveref}
+%\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{verbatim}
+%\usepackage{showlabels}
+
+% Commonly used stylized letters
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cQ}{\mathcal{Q}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\bP}{\mathbb{P}}
+\newcommand{\bE}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\eps}{\varepsilon}
+
+
+% Probabilistic notation
+\newcommand{\E}{\bE}      % Expectation
+\newcommand{\poisson}{\mathrm{Poisson}}
+\newcommand{\stirlingii}{\genfrac{\{}{\}}{0pt}{}}
+\newcommand{\KL}{\mathop{\bf KL\/}}
+\newcommand{\bone}{\boldsymbol{1}}
+
+% Collaboration macros
+\newcommand{\vnote}[1]{\textcolor{red}{\small {\textbf{(Vishesh: }#1\textbf{) }}}}
+\newcommand{\fnote}[1]{\textcolor{blue}{\small {\textbf{(Fred: }#1\textbf{) }}}}
+\newcommand{\enote}[1]{\textcolor{orange}{\small {\textbf{(Elchanan: }#1\textbf{) }}}}
+
+% environments
+\newtheorem{defn}[theorem]{Definition}
+\iffalse
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem*{namedtheorem}{\theoremname}
+\newcommand{\theoremname}{testing}
+\newenvironment{named}[1]{ \renewcommand{\theoremname}{\#1} \begin{namedtheorem}} {\end{namedtheorem}}
+\newtheorem{thm}[theorem]{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{lem}[theorem]{Lemma}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{clm}[theorem]{Claim}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{prop}[theorem]{Proposition}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{res}{Restriction}
+\newtheorem{observation}{Observation}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{cor}[theorem]{Corollary}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{cons}{Constraints}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem*{question*}{Question}
+\newtheorem{vars}{Variables}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{defn}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{rem}[theorem]{Remark}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{notn}[theorem]{Notation}
+\theoremstyle{plain}
+\newtheorem{Alg}{Algorithm}
+\fi
+
+% algorithm package
+%\usepackage{algpseudocode,algorithm,algorithmicx}
+
+\title{The Mean-Field Approximation: Information Inequalities, Algorithms, and Complexity}
+\usepackage{times}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+  \coltauthor{\Name{Vishesh Jain} \Email{visheshj@mit.edu}\\
+   \Name{Frederic Koehler} \Email{fkoehler@mit.edu}\\
+   \addr Massachusetts Institute of Technology. Department of Mathematics.
+   \AND
+   \Name{Elchanan Mossel} \thanks{Supported by ONR grant N00014-16-1-2227   and 
+NSF CCF-1665252 and DMS-1737944.} \Email{elmos@mit.edu}\\
+   \addr Massachusetts Institute of Technology. Department of Mathematics and IDSS.}
+
+
+ % Authors with different addresses:
+ %\coltauthor{\Name{Author Name1} \Email{abc@sample.com}\\
+ %\addr Address 1
+ %\AND
+ %\Name{Author Name2} \Email{xyz@sample.com}\\
+ %\addr Address 2
+ %}
+
+%\author{Vishesh Jain\thanks{Massachusetts Institute of Technology. Department of Mathematics. Email: {\tt visheshj@mit.edu}} \and Frederic Koehler\thanks{Massachusetts Institute of Technology. Department of Mathematics. Email: {\tt fkoehler@mit.edu}} \and Elchanan Mossel\thanks{Massachusetts Institute of Technology. Department of Mathematics and IDSS. Supported by ONR grant N00014-16-1-2227   and 
+%NSF CCF-1665252 and DMS-1737944. Email: {\tt elmos@mit.edu} } }
+
+\begin{document}
+\maketitle
+% Skip title page in numbering
+%\thispagestyle{empty}
+%\setcounter{page}{0}
+
+\begin{abstract}
+The mean field approximation to the Ising model is a canonical variational tool that is used for analysis and inference in Ising models. We provide a simple and optimal bound for the KL error of the mean field approximation for Ising models on general graphs, and extend it to higher order Markov random fields. Our bound improves on previous bounds obtained in work in the graph limit literature by Borgs, Chayes, Lov{\'a}sz, S{\'o}s, and Vesztergombi and recent works by Basak and Mukherjee, and Eldan. Our bound is tight up to lower order terms. 
+%not just for approximation by product distributions but for many other approximating distributions, including Markov Random Fields on acyclic graphs. 
+
+Building on the methods used to prove the bound, along with techniques from combinatorics and optimization, 
+we study the algorithmic problem of estimating the (variational) free energy for Ising models and general Markov random fields. For a graph $G$ on $n$ vertices and interaction matrix $J$ with Frobenius norm $\| J \|_F$, we provide algorithms that approximate the free energy within an additive error of $\epsilon n \|J\|_F$ in time $\exp(poly(1/\epsilon))$. We also show that approximation within $(n \|J\|_F)^{1-\delta}$ is NP-hard for every $\delta > 0$. Finally, we provide more efficient approximation algorithms,
+which find the optimal mean field approximation, for ferromagnetic Ising models and for Ising models satisfying Dobrushin's condition.  
+\end{abstract}
+
+\section{Introduction}
+One of the most widely studied models in statistical physics is the Ising model. An \emph{Ising model} is specified by
+a probability distribution on the discrete cube $\{\pm1\}^n$ of the form
+\[ P[X = x] := \frac{1}{Z} \exp(\sum_{i,j} J_{i,j} x_i x_j) = \frac{1}{Z} \exp(x^T J x), \]
+where the collection $\{J_{i,j}\}_{i,j\in\{1,\dots,n\}}$ are the entries of
+an arbitrary real, symmetric matrix with zeros on the diagonal. The distribution $P$ is referred to as the \emph{Boltzmann distribution}. The normalizing constant $Z=\sum_{x\in\{\pm1\}^{n}}\exp(\sum_{i,j=1}^{n}J_{i,j}x_{i}x_{j})$
+is called the \emph{partition function }of the Ising model and the quantity $\F := \log{Z}$ is known as the \emph{free energy}. 
+
+The free energy is a key physical quantity. It provides important information %one of the most
+%useful to compute to get information 
+about the structure of the Boltzmann distribution. Given a naturally growing family of (possibly weighted) graphs with adjacency matrices $M_n$, %for example taking $M$ to be the adjacency matrix of the 2D $n \times n$ square lattice, 
+one of the main problems of interest in statistical physics is to compute the asymptotics of the (suitably renormalized) free energy of the sequence of Ising models $J_n(\beta) = \beta M_n$ in the $n \to \infty$ limit for all values of $\beta$, where $\beta > 0$ is a parameter referred to as the \emph{inverse temperature}. This is because understanding the behavior of the free energy reveals a wealth of information about the underlying Ising model. For instance, points of non-smoothness in the limiting free energy (as a function of $\beta$) reveal the location of \emph{phase transitions}, which typically correspond to significant
+changes in the behavior of the underlying Boltzmann distribution e.g. the emergence of long-range correlations. In addition, many other quantities of interest (such as net magnetization) can be computed in terms of free energies.
+
+Although originally introduced in statistical physics, Ising models and their generalizations have also found a wide range of applications in many different areas like statistics, computer science, combinatorics, social networks, and biology (see, e.g., the references in \citet{basak2017universality}). Studying the free energy is of great interest in many of these applications as well. 
+
+In fact for every finite $\beta$, the free energy corresponds
+to the objective value of a natural optimization problem of its own.
+More precisely, the free energy is characterized by the following \emph{variational principle} (dating back to Gibbs, see the references in \citet{ellis2007entropy}):
+\begin{equation}
+\label{eqn:free-energy-variational-char}
+\F = \max_{\mu} \left[\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] + H(\mu)\right],
+\end{equation}
+where $\mu$ ranges over all probability distributions on the boolean hypercube $\{\pm 1\}^{n}$. This can be seen by noting that 
+\begin{equation}
+\label{eqn:free-energy-KL}
+\KL(\mu ||P)=\F - \sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] - H(\mu),
+\end{equation}
+and recalling that $\KL(\mu ||P) \geq 0$ with equality if and only if $\mu = P$.
+ 
+By substituting $J = \beta M$ in equation \cref{eqn:free-energy-variational-char}, we see %by the theory of Lagrange multipliers 
+that the Boltzmann distribution is simply the maximum entropy distribution $\mu$ for a fixed value
+of the expected energy $\E_{\mu}[x^T M x]$. Thus, studying the free
+energy for different values of $\beta$ provides much richer information about
+the optimization landscape of $x \mapsto x^T M x$ over the hypercube than just the maximum value, e.g., in the max-cut case, the free energies encode
+information about non-maximal cuts as well (see e.g. \citet{borgs2012convergent} for related discussion).
+
+Apart from the applications mentioned above, it is clear by definition that knowledge of the free energy (or equivalently, the partition function) allows one to perform fundamental inference tasks like computing marginals and posteriors in Ising models and their generalizations. Unfortunately, the partition function, which is defined as a sum of exponentially many terms, turns out to be both theoretically and computationally intractable. Closed form expressions for the partition function are extremely hard to come by; in fact, providing such an expression even for the Ising model on the standard $3$-dimensional lattice remains one of the most outstanding problems in statistical physics. From a computational perspective, it is known that exactly computing the partition function of an Ising model with $J$ the adjacency matrix of a nonplanar graph is NP-hard \citep{Istrail2000StatisticalMT}, and that approximate sampling/approximating the partition function is still NP-hard, even e.g. in the case of graphs with degree bounded by a small constant \citep{sly-sun}.
+%\fnote{Citation? Also by compute does this mean PTAS?}\vnote{I meant actual compute. I'll add a citation}
+
+\subsection{The mean-field approximation: structural results}
+Since exact computations, either analytic or otherwise, are typically infeasible, it is natural to look at schemes for approximating the partition function or the free energy. The \emph{naive mean-field approximation} provides one of the simplest and most common methods for doing this.  
+
+The mean-field approximation to the free energy (also referred to as the \emph{variational free energy}) is obtained by restricting the distributions $\mu$ in the variational characterization of the free energy (\cref{eqn:free-energy-variational-char}) to be product distributions. Accordingly, we define the \emph{variational free energy} by 
+\[ \F^* := \max_{x \in [-1,1]^n} \left[\sum_{i,j} J_{ij}
+      x_i x_j + \sum_i H\left(\frac{x_i +
+        1}{2}\right)\right]. \] 
+Indeed, if $\bar{x} = (\bar{x}_1,\dots,\bar{x}_n)$ is the optimizer in the above definition, then the product distribution $\nu$ on the boolean hypercube, with the $i^{th}$ coordinate having expected value $\bar{x}_i$, minimizes $\KL(\mu||P)$ among all product distributions $\mu$. Moreover, it is immediately seen from \cref{eqn:free-energy-KL} that the value of this minimum KL is exactly $\F - \F^*$. Thus, the quantity $\F - \F^*$, which measures the quality of the mean-field approximation, may be interpreted information theoretically as the divergence between the closest product distribution to the Boltzmann distribution and the Boltzmann distribution itself.  
+ 
+Owing to its simplicity, the mean field approximation %for Ising models 
+has long been used in statistical physics (see, e.g., \citet{parisi1988statistical} for a textbook treatment) and also in Bayesian statistics \citep{peterson-anderson,jordan1999introduction,wainwright-jordan-variational}, where it is one of the prototypical examples of a \emph{variational method}. As a variational method, the mean field approximation has the attractive property that it always gives a valid lower bound for the free energy. It is well known \citep{ellis-newman} that the mean field approximation
+is very accurate for the Curie-Weiss model, which is the Ising
+model on the complete graph (see \cref{example:curie-weiss}
+for a complete description of the model). On the other hand, it is also known \citep{DemboMontanari:10} that for very sparse graphs like trees of bounded arity, this is not the case. 
+In recent years, considerable effort has gone into bounding the error of the mean-field approximation on more general
+graphs; we will give a detailed comparison of our results
+with recent work in \cref{sec:previous-results}. Our main structural result is the following inequality, which gives an explicit bound on the error of the mean field approximation for general graphs:
+
+\begin{theorem}\label{thm-main-structural-result} 
+Fix an Ising model $J$ on $n$ vertices.
+Let $\nu := \arg\min_{\nu} \KL(\nu || P)$, where $P$ is the Boltzmann distribution and the minimum ranges
+over all product distributions. %and $P$ is the Boltzmann distribution.
+Then,
+$$ \KL(\nu || P)  = \F - \F^{*} \leq 200 n^{2/3} \|J\|_F^{2/3} \log^{1/3}(n \|J\|_F + e).$$
+\end{theorem}
+Here, $\|J\|_F := \sqrt{\sum_{i,j}J_{i,j}^2}$ is the \emph{Frobenius norm} of the matrix $J$. 
+
+This result is \emph{tight up to logarithmic factors}, not just for product distributions, but also for a large class of variational methods. In particular, this class includes approximation by bounded mixtures of product distributions (as in \citet{jaakkola1998improving}),
+as well as (mixtures of) restricted classes of Ising models, e.g. Ising models on acyclic graphs (see the discussion of tractable families in \citet{wainwright-jordan-variational}). Some other
+methods for estimating the free energy, such as the Bethe approximation and the method of \citet{risteski-ising}, optimize over \emph{pseudo-distributions} and so the theorem itself cannot be directly applied, but essentially the same obstruction should still apply.
+%(this is the widely studied \emph{Bethe approximation}, for its use as a
+%variational method see, e.g., the discussion in \citep{wainwright-jordan-variational}).
+\begin{theorem}\label{thm:variational-lb}
+Let $(\mathcal{Q}_n)_{n = 0}^{\infty}$ be a sequence of families
+of probability distributions on $\{\pm 1\}^n$ which are closed under the following two operations:
+\begin{enumerate}
+\item Conditioning on variables: if
+  $Q \in \mathcal{Q}_n$, $i \in [n]$, and $x_i \in \{\pm 1\}$, then the conditional distribution of $X_{\sim i}$ under $Q$ given $X_i = x_i$, which is a
+  probability distribution on $\{\pm 1\}^{n - 1}$, is in $\mathcal{Q}_{n - 1}$.
+\item Taking products: if $Q_1 \in \mathcal{Q}_m$ and $Q_2 \in \mathcal{Q}_n$,
+  then $Q_1 \times Q_2 \in \mathcal{Q}_m \times \mathcal{Q}_n$.
+\end{enumerate}
+Furthermore, suppose that $(\mathcal{Q}_n)_{i = 1}^\infty$ does not contain the class of all probability
+distributions induced by Ising models. Then, there exists a sequence $(J_i)_{i = 1}^{\infty}$ of Ising models of increasing size $n_i$ and with Boltzmann distributions $P_{J_i}$ %, of increasing size such that if $n_i$ is the number of vertices of $J_i$ and 
+such that 
+\[ \KL(Q_{n_i} || P_{J_i}) = \Omega(n_i^{2/3}\|J_{n_i}\|_F^{2/3}), \]
+where $Q_{n_i} := \arg\min_{Q \in \mathcal{Q}_{n_i}} \KL(Q,P_{J_i})$.
+\end{theorem}
+\begin{remark}\label{rmk:optimal-bound-question}
+The above theorem shows that our bound is essentially optimal in the natural univariate quantity $n \|J\|_F$. However, the construction we use does not contradict any upper bound of the form $O(n^{1 - \alpha} \|J\|_F^{2 \alpha})$ for $\alpha \in [0,1]$. As there is always a trivial bound $O(n)$ for the mean-field approximation (consider the optimal point-mass distribution), we may assume that $\|J\|_F = o(n^{1/2})$ and ask about the supremum of all $\alpha$ such that an upper bound of this form holds. We conjecture that the supremum is, in fact, $\alpha = 1/3$, so that our bound is optimal in this stronger sense as well.
+\end{remark}
+
+Our methods extend in a straightforward manner not just to Ising models with external fields, but indeed to general higher order Markov random fields, as long
+as we assume a bound $r$ on the order of the highest interaction (i.e. size of the largest hyper-edge). The
+results also generalize naturally to the case of non-binary alphabets but for simplicity, we only discuss the binary case.
+%We will review the definitions in \cref{mrf}. \fnote{A better way to state this: let $J$ be an arbitrary polynomial of degree $r$ and let $\|J\|_F^2$ denote the sum of squares of its coefficients. (It's fourier energy.) Then we don't need any hard definitions.}
+\begin{defn}%[Order $r$ Markov Random Field]
+Let $J$ be an arbitrary function on the hypercube $\{ \pm 1\}^n$
+and suppose that the degree of $J$ is $r$ i.e. the Fourier decomposition of $J$ is 
+$J(x) = \sum_{\alpha \subset [n]} J_{\alpha} x^{\alpha}$
+with $r = \max_{J_{\alpha} \ne 0} |\alpha|$.
+The corresponding \emph{order $r$ (binary) Markov random field} is the probability distribution
+on $\{\pm 1\}^n$ given by
+\[ P(X = x) = \frac{1}{Z}\exp(J(x)) \]
+where the normalizing constant $Z$ is referred to as the \emph{partition function}.
+For any polynomial $J$ we define $J_{=d}$ to be its $d$-homogeneous part and
+ $\|J\|_F$ to be the square root of the total Fourier energy of $J$ i.e. $\|J\|_F^2 := \sum_{\alpha} |J_{\alpha}|^2$.
+\end{defn}
+\begin{theorem}\label{thm-mrf-main-structural-result} 
+Fix an order $r$ Markov random field $J$ on $n$ vertices.
+Let $\nu := \arg\min_{\nu} \KL(\nu || P)$, where $P$ is the Boltzmann distribution and the minimum ranges
+over all product distributions.
+Then, 
+%\fnote{maybe check a few more details of the proof,
+%this is morally correct but the step optimizing $\epsilon$ may give something slightly different?}
+$$ \KL(\nu || P)  = \F - \F^{*} \leq 2000r \max_{1 \le d \le r} d^{1/3}n^{d/3} \|J_{=d}\|_F^{2/3} \log^{1/3}(d^{1/3}n^{d/3} \|J_{=d}\|_F^{2/3} + e).$$
+\end{theorem}
+
+\subsection{Examples}
+We give a few examples of natural families of Ising models in order to illustrate the consequences
+of our bounds.
+\begin{example}[Curie-Weiss]\label{example:curie-weiss}
+As our first example, we show how our bounds imply classical
+results about the Curie-Weiss model (see \citet{ellis-newman}), in which $J_{ij} = (\beta/2n)$
+for $i \ne j$ and there is a uniform external field $h$. In this case, we can explicitly solve the variational problem;
+indeed, by checking the first-order optimality condition (\cref{eqn:mean-field-equations}), we see that an optimal
+product distribution with marginals $\E[X_i] = x_i$ must have 
+$x_i = \tanh(\sum_{j: j \ne i} \beta x_j/n + h)$.
+Furthermore, since $x_i < x_j$ implies that $\tanh(\sum_{k: k \ne i} \beta x_k/n + h) > \tanh(\sum_{k: k \ne j} \beta x_k/n + h)$, it follows that  we cannot have $x_i < x_j$ for any pair $(i,j)$. %, because
+%we would find the opposite inequality holds for the rhs of the previous equation; 
+Therefore, the optimal product distribution has all marginals equal to $x$, where $x$ is a solution of
+\[ x = \tanh((1 - 1/n) \beta x + h). \]
+Taking $n \to \infty$ and $h = 0$, this correctly predicts a phase transition at $\beta = 1$; the mean field equations go from having just one solution ($x = 0$) to two additional ``symmetry-breaking'' solutions with $x \ne 0$. By \cref{thm-mrf-main-structural-result}, we see that for any 
+constant $\beta,h$, the normalized free energy $\mathcal{F}/n$ agrees with $\mathcal{F}^*/n$ in the $n \to \infty$ limit with error decaying at least as fast as $\tilde{O}(n^{-1/3})$.
+\end{example}
+\begin{example}[Uniform edge weights on graphs of increasing degree]
+Fix $\beta \in \mathbb{R}$ and a sequence of graphs
+$(G_{n_i})_{i = 1}^{\infty}$ with the number of vertices $n_i$ going to infinity, and let $m_i$ be the corresponding number of edges. Then, it is natural to look at the model
+with uniform edge weights equal to $\beta n_i/m_i$, since this makes
+the maximum value of $x^T J x$ on the order of $\Theta(n_i)$, which is 
+the same scale as the entropy term in the variational definition of the free energy (\cref{eqn:free-energy-variational-char}). We say the model is \emph{ferromagnetic} if $\beta > 0$ and \emph{anti-ferromagnetic} if $\beta < 0$. Observe that $\|J\|_F = \beta n_i/\sqrt{m_i}$, so that by \cref{thm-main-structural-result}, we have $|\mathcal{F}/n_i - \mathcal{F}^*/n_i| = O(n_i^{1/3}\log^{1/3}{n_i}/m_i^{1/3})$. In particular, this goes to $0$ as long as $m_i = \omega(n_i \log n_i)$.
+\end{example}
+\begin{example}[Uniform edge weights on $r$-uniform hypergraphs]
+Fix $\beta \in \mathbb{R}$ and
+let $(G_{n_i})_{i=1}^{\infty}$ be a sequence of $r$-uniform hypergraphs
+with $n_i$ vertices and $m_i$ hyperedges. Analogous to the graph case, we let $J(x) = \frac{\beta n_i}{m_i} \sum_{S \in E(G_{n_i})} x_S$,
+so that the maximum of $J$ is on the same order as the entropy term in the free energy. We still have $\|J\|_F = \beta n_i/\sqrt{m_i}$, and see by \cref{thm-mrf-main-structural-result} that $|\mathcal{F}/n_i - \mathcal{F}^*/n_i| = O(n_i^{(r - 1)/3}\log{n_i}/m_i^{1/3})$. This converges
+to $0$ as long as $m_i = \omega(n_i^{r - 1} \log{n_i})$.
+\end{example}
+\subsection{Algorithmic results}
+Next, we study the algorithmic aspects of the mean field approximation and variational methods. We begin by showing that in a certain \emph{high-temperature regime} (specifically, the range of parameters satisfying the \emph{Dobrushin uniqueness criterion} \citet{dobrushin-uniqueness}), the minimization problem
+defining the variational free energy is convex.  %Note that in our convention the total weight of the edge $(i,j)$ is $2 J_{ij}$.
+%, so requiring $\sum_j |J_{ij}| \le (1 - \eta)/2$ is the same as requiring that the total absolute weight of edges adjacent to vertex $i$ is at most $1 - \eta$.
+\begin{theorem}\label{thm:high-temperature-convex}
+Suppose $J$ is the interaction matrix of an Ising model with
+arbitrary external field $h_i$ at vertex $i$, and suppose that
+for every row $i$ of $J$, we have $\sum_{j} 2|J_{ij}| \le 1$.
+Then, the maximization problem defining the variational free energy is concave, and hence can be solved to additive $\epsilon$-error in time $poly(n,\log(1/\epsilon))$.
+\end{theorem}
+
+\begin{remark}
+Note that in the literature (e.g. \citet{dobrushin-uniqueness}), the Dobrushin uniqueness criterion is stated as $\sum_j |J_{i,j}| \leq 1$. This corresponds to the above condition $\sum_j 2|J_{i,j}| \leq 1$ in our normalization, since we do not insert a factor of ${1/2}$ in front of the quadratic term in the definition of (variational) free energy.
+\end{remark}
+
+A well known heuristic for finding the optimal mean-field approximation (see, e.g., the discussion in \citet{wainwright-jordan-variational})
+% other possible citations: original paper of Peterson & Anderson, 1999 survey of jordan et al
+consists of iterating the \emph{mean-field equations} to search for a fixed point. The mean field equations are just the first-order optimality conditions for $\mathcal{F}^*$:
+\begin{equation}\label{eqn:mean-field-equations}
+x^* = \tanh^{\otimes n}(2Jx^* + h).
+\end{equation}
+In the Dobrushin uniqueness regime,
+% unsure the footnote i added is actually true (don't think modifying the pf works).
+%\footnote{The Dobrushin uniqueness condition may also refer to a slightly weaker assumption $\sum_j \tanh(2|J_{ij}|) \le 1 - \eta$; Theorem~\ref{thm:message-passing} holds also in this setting, which includes all cases in which Theorem~\ref{thm:high-temperature-convex}, as stated, applies. On the other hand, it is easy to see Theorem~\ref{thm:high-temperature-convex} generalizes to the case $J \preceq (1/2)I_{n \times n}$.}
+we prove that this message passing algorithm in fact converges exponentially fast to the optimum of the variational free energy.
+\begin{theorem}\label{thm:message-passing}
+Suppose $J$ is the interaction matrix of an Ising model with
+arbitrary external field $h_i$ at vertex $i$, and suppose that
+for every row $i$ of $J$, we have $\sum_{j} 2|J_{ij}| \le 1 - \eta$ 
+for some uniform $\eta > 0$.
+Let $x^*$ be the optimizer of the optimization problem given by $\mathcal{F}^*$.
+Let $x_0$ be an arbitrary point in $[-1,1]^n$ and iteratively define $x_n := \tanh^{\otimes n}(2 J x_{n - 1} + h)$.
+Then,
+\[ \|x_n - x^*\|_{\infty} \le (1 - \eta)^n \|x_0 - x^*\|_{\infty} \le 2 (1 - \eta)^n. \]
+\end{theorem}
+\begin{remark}\label{rmk:exp-slow}
+The high-temperature assumption is necessary for this algorithm to converge
+quickly to the optimum. In the super-critical Curie Weiss model without external field (\cref{example:curie-weiss} with $\beta > 1$ and $h = 0$), we see that
+$x = (0,\ldots,0)$ is a critical point for the variational free energy (fixed point of the mean-field equations) but not the global optimum. Furthermore,
+even if we start from the point $(\epsilon, \ldots, \epsilon)$ for $\epsilon$ a small positive number, we see that for $\beta$ large, iterating the mean field equations converges exponentially slowly in $\beta$ as $\tanh'(\beta)$ is exponentially small in $\beta$. 
+\iffalse % I think this is false.
+Similarly, we see that near the optimum the gradients can be exponentially large in $\beta$, so for gradient descent with constant step sizes, we likely need to choose a step size which is exponentially small. \fnote{Check details?}
+\fi
+\end{remark}
+% something like this is true? but this is not true.
+%\begin{remark}
+%Theorem~\ref{thm:message-passing} generalizes to arbitrary Markov random fields under the assumption that for every vertex $u \in [n]$, $\sum_{\alpha \ni u} |J_{\alpha}| \le 1 - \eta$. %In this case, instead of relying on convexity, we use the Banach fixed point theorem to ensure the uniqueness of $x^*$.
+%\end{remark}
+Even though there exist such situations where the optimization problem
+defining the variational free energy is \emph{non-convex} and the message passing algorithm may fail or converge exponentially slowly (see Remark~\ref{rmk:exp-slow}),
+there is a way to solve the optimization problem in polynomial time as long
+as the model is ferromagnetic.
+\begin{theorem}\label{thm:ferromagnetic-algorithm}
+Fix an Ising model $J$ %with interaction matrix $J$ 
+on $n$ vertices which is 
+ferromagnetic (i.e. $J_{ij} \ge 0$ for every $i,j$) and has uniform external field $h$ at every node.
+There is a randomized algorithm which runs in time $poly(n,1/\epsilon,\log(1/\delta))$ and succeeds with probability at least $1 - \delta$ in solving the optimization problem defining $\mathcal{F}^*$ up to $\epsilon$-additive error.
+\end{theorem}
+However, in the general case, we show that it is NP-hard to estimate
+the variational free energy. In fact,
+it is NP-hard to return an estimate to the 
+free energy within additive error $n^{1 - \delta} \|J\|_F^{1 - \delta}$, 
+whereas by \cref{thm-main-structural-result} and \cref{thm-mrf-main-structural-result}, the true variational free energy is much closer than this. %, by Theorem~\ref{thm-main-structural-result} (and corresponding Theorem~\ref{thm-main-structural-result} for MRFs).
+\begin{theorem}\label{thm:free-energy-hardness}
+For any fixed $\delta > 0$, it is NP-hard to approximate the free energy
+$\mathcal{F}$ (or variational free energy $\mathcal{F}^*$) of an Ising model $J$ within an additive error of $n^{1 - \delta} \|J\|_F^{1 - \delta}$. More generally, for
+an $r$-uniform Markov random field, it is NP-hard to approximate $\mathcal{F}$ within
+an additive error of $(n^{r/2} \|J_{=r}\|_F)^{1 - \delta}$.
+\end{theorem}
+We now give an algorithm to approximate
+the free energy in the most general setting;
+in light of the NP-hardness result (\cref{thm:free-energy-hardness})
+this approximation must be roughly on the scale of $n \|J\|_F$.
+In the general setting, the only previous algorithm which gives non-trivial guarantees for approximating the log-partition function is that of \citep{risteski-ising}, which requires time $n^{O(1/\epsilon^2)}$ as well as stronger density assumptions in order to provide a  guarantee similar to \cref{thm:regularity-alg}. In comparison, the algorithm we give has the advantage that it runs in \emph{constant-time} for fixed $\epsilon$.
+\begin{theorem}\label{thm:regularity-alg}
+Fix $\epsilon > 0$. There is an algorithm which runs in time $2^{O(\log(1/\epsilon)/\epsilon^2)}$ and
+returns, with probability at least $0.99$, an implicit description of a product distribution $\mu$
+such that
+\[ \KL(\mu || P) \le \epsilon n \|J\|_F  + C\log(1/\epsilon)/\epsilon^2 + 0.5^{2^{1/\epsilon^2}} n \]
+and an estimate to the free energy $\hat{\mathcal{F}}$ such that
+%\fnote{note we had to be a little careful here: we can't actually compute above KL in constant time on the true graph. add any missing necessary details for below bound to proof}
+\[ |\mathcal{F} - \hat{\mathcal{F}}| \le \epsilon n \|J\|_F  + C'\log(1/\epsilon)/\epsilon^2 + 0.5^{2^{1/\epsilon^2}} n, \]
+%\[ \hat{\mathcal{F}} = -\left[\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] + H(\mu)\right] \]
+where $C$ and $C'$ are absolute constants. 
+\end{theorem}
+\begin{remark}
+Typically, the first term in the bound of \cref{thm:regularity-alg} dominates. In particular, the last term $0.5^{2^{1/\epsilon^2}} n$ is dominated by the first term except in a very unusual regime where $\|J\|_F$ is extremely small,
+%i.e. the interactions in our model are extremely weak, 
+and even then it vanishes doubly-exponentially fast as we take $\epsilon \to 0$.
+\end{remark}
+
+
+Our algorithm extends to general order $r$ Markov random fields as well. In \cref{thm:algo-mrf-regularity-bad-dependence} we obtain an algorithm that runs in time $2^{O(\log(1/\epsilon)/\epsilon^{2r-2})}$ while in
+\cref{thm:algo-mrf-dependence-on-n} the running time is $2^{O(\log(1/\epsilon)/\epsilon^2)}n^{r}$.
+See \cref{sec-hypergraph} for further details.
+
+
+\subsection{Comparison with previous work}
+\label{sec:previous-results}
+As mentioned earlier, providing guarantees on the quality of the mean-field approximation for general graphs has attracted much interest in recent years. Notably, in the
+context of graph limits \citep{borgs2012convergent}, the following result (stated here in our notation\footnote{In their paper, the edge weights are normalized by $1/n$ so that on dense graphs, the limit as $n \to \infty$ will sensibly converge. Their bound is stated for the slightly more general setting of models over finite alphabets -- to facilitate ease of comparison, we have stated it only in the simplest case of binary Ising models with uniform external field $h$.}) was shown:
+\[ |\mathcal{F}^*/n - \mathcal{F}/n| \le \frac{48}{n^{1/4}} + \frac{130 n \|J\|_{\infty}}{\sqrt{\log n}} + \frac{5 |h|}{n^{1/2}}. \]
+Here, $\|J\|_{\infty}$ denotes the absolute value of the largest entry of $J$. This result was sufficient for the application 
+in \citep{borgs2012convergent}, i.e., proving convergence of the free energy
+density and the variational free energy density for sequences of dense graphs (i.e. those with $\Theta(n^2)$
+many edges). In this case, it is natural to take $\|J\|_{\infty} = O(1/n)$ and thus,
+their error bound converges to 0 at rate $1/\sqrt{\log n}$. %In \citep{borgs2012convergent} 
+They used this
+bound to prove that defining the free energy density of a graphon in terms
+of the variational free energy density is asymptotically consistent with the combinatorial
+definition of the free energy in terms of sums over states (which cannot naively be made sense of in the
+graphon setting).
+
+The bound in \citep{borgs2012convergent}
+has two limitations: first, it does not provide any information about models where $\|J\|_{\infty} = \omega(\sqrt{\log n}/n)$ -- a setting which includes
+essentially all natural models on graphs with $o(n^2)$ edges --
+and secondly, the convergence rate of $1/\sqrt{\log n}$ is very slow: in order to get $\epsilon$
+error in the bound, we must look at graphs of size $2^{1/\epsilon^2}$, which raises
+the possibility that the approximation may perform badly even on very large graphs. 
+
+The papers of \citep{borgs2014p} and \citep{basak2017universality} resolve the first issue by giving bounds which extend to sparser graphs. In our context, the latter result is more relevant, and we refer the reader to the discussion in \citep{basak2017universality}
+for the relationship to \citep{borgs2014p}. The main result of \citep{basak2017universality}
+is that $|\F^*/n - \F/n| = o(1)$ whenever $\|J\|_F^2 = o(n^2)$. 
+%hence the free energy densities $\F^*/n$ and $\F/n$ agree asymptotically. 
+As noted by the authors, if we do not
+care about the rate of convergence, then this result is tight -- there are simple
+examples of models with $\|J\|_F^2 = \Theta(n^2)$ where $|\F^*/n - \F/n| = \Omega(1)$.
+%for example Ising models on trees and lattices. 
+However, their result is focused
+on the asymptotic regime and does not give good control of the rate of convergence (though it is certainly possible to extract some effective bound from their argument). Most recently, a much better convergence rate was shown in the work of \citep{eldan2016gaussian} where, under a mild assumption on $\|J\|_{\infty}$, an explicit bound of $O(n^{5/6} \|J\|_F^{1/3})$ for the error of mean-field approximation was shown. 
+
+Our result improves on all of this previous work by giving an explicit bound (\cref{thm:variational-lb}) of the form $\tilde{O}(n^{2/3} \|J\|_F^{2/3})$. Except for the log factor, our bound is always superior to that of \citep{eldan2016gaussian}: see \remarkref{rmk:optimal-bound-question}. Concretely, in the setting of dense graphs with edge weights scaled by $1/n$, our bound shows a convergence rate of $\tilde{O}(n^{-1/3})$ for the rescaled error $|\mathcal{F}^*/n - \mathcal{F}/n|$
+whereas the previously best known bound of \citep{eldan2016gaussian} showed only the slower rate $O(n^{-1/6})$.
+
+%the reason is that there is a \emph{trivial} bound of $O(n)$ which always holds, by considering the product distribution supported on a single $x$ where $x$ maximizes $x^T J x$. Therefore for comparing these bounds we need only consider the case where $\|J\|_F = o(n^{1/2})$. 
+
+%In contrast, our main result gives an explicit bound on the rate of convergence
+%which is optimal up to logarithmic factors . 
+%Moreover, this bound is much better than the one in \citep{borgs2012convergent}, even in regimes where the latter is applicable. For instance, in the setting of dense graphs with edge weights scaled by $1/n$, their bound shows that $|\mathcal{F}^*/n - \mathcal{F}/n|$ converges to $0$ at the rate $O(1/\sqrt{\log n})$, whereas our bound gives the convergence rate $O(\log^{1/3}(n)/n^{1/3})$.
+
+It is interesting to note that both our result 
+and \citep{borgs2012convergent} use the Frieze-Kannan weak regularity lemma. However, our analysis introduces a number of new ideas that let us avoid the $2^{1/\epsilon^2}$ dependence which is typical in applications of the weak regularity lemma, thereby obtaining bounds with exponentially better dependence on $n$. Besides giving the best known convergence rate, our result is almost as strong as \citep{basak2017universality,eldan2016gaussian} asymptotically and has a much
+simpler proof which generalizes easily to higher-order Markov random fields. %In contrast, the spectral methods used in \citep{basak2017universality}
+%may be more difficult to generalize to the case where higher-order tensors become involved.
+
+As far as algorithmic results are concerned, there has been a very long line of work historically in understanding the performance
+of Markov Chain Monte Carlo methods (MCMC), especially the Glauber chain (Gibbs sampling). As mentioned earlier, it is known from \citep{dobrushin-uniqueness} that the Glauber dynamics
+mix rapidly in the Dobrushin uniqueness regime, where the entries of each row of $J$ are bounded by $(1 - \eta)/2$. There has been
+a lot of work on improvements to this result, see for example
+\citep{mossel-sly} for a tight result on bounded degree graphs.
+Although the Glauber dynamics typically cannot mix rapidly in the low-temperature regime (see e.g. \cite{sly-sun}), in the special case where $J$ is ferromagnetic, there is a different Markov chain which can approximately sample from the Boltzmann distribution in polynomial time \citep{JerrumSinclair:90}; see also recent work \citep{lss-deterministic}. With respect to \cref{thm:message-passing}, we note that some related ideas have been used in the convergence analysis of other algorithms like loopy belief propagation (see for example \citet{TatikondaJordan:02,mooij-kappen}).
+
+Note that in situations where Markov chain methods do work, they allow for approximate sampling and approximation of the partition
+function to a higher precision than our results. However, in the general case where Markov chain methods typically have no guarantees, the previous best result is due to \citep{risteski-ising}, which gave a similar
+guarantee for approximating the free energy as our \cref{thm:regularity-alg}, but requiring stronger
+density assumptions as well as $n^{O(1/\epsilon^2)}$ time. It is interesting to note that this algorithm is also a variational method which \emph{upper bounds} the free energy by relaxing \cref{eqn:free-energy-variational-char} to \emph{pseudo-distributions}, 
+whereas mean-field approximation optimizes a \emph{lower bound}.
+%and then describing a rounding scheme to convert
+%pseudo-distributions back to true probability distributions. However, the distributions produced by
+%the rounding process are more complicated than product distributions.
+
+%\begin{remark}
+%We finally note a recent preprint by the authors titled ``Approximating Partition Functions in Constant Time'' \citep{old-paper}.
+%\citep{old-paper} is completely superseded by this paper and \citep{next-paper}. The main focus of \citep{next-paper} is the sampling complexity of approximating the free energy of Ising models. Both the current paper and \citep{next-paper} include important references that the authors were not aware while writing \citep{old-paper}. 
+%\end{remark}
+%The main result of  an algorithmic result similar to Theorem~\ref{thm:regularity-alg}; The paper 
+%it is completely superseded by this paper and \citep{next-paper}.
+
+
+
+\subsection{Outline of the techniques}
+\begin{comment}
+To illustrate the main reason for the intractability of the (log) partition
+function of an Ising model, we consider the ferromagnetic case where
+$\Pr[X=x]=\frac{1}{Z}\exp\{\sum_{i,j}J_{i,j}x_{i}x_{j}\}$, $J_{i,j}\geq0$.
+In this case, it is clear that a given \emph{magnetized} state $x$, 
+where almost all of the spins are either $+1$ or $-1$, is more likely than a given \emph{unmagnetized }state $y$, where the spins are almost evenly split between $+1$ and $-1$. However, since the number of states with exactly $\alpha n$ spins equal to $+1$ is simply ${n \choose \alpha n}$, we see that the total number of strongly magnetized states is exponentially
+smaller than the total number of unmagnetized states. Therefore, while
+any given unmagnetized state is less likely than any given magnetized
+state, it may very well be the case that the \emph{total} probability
+of the system being in an unmagnetized state is greater than that
+of the system being in a magnetized state.
+\end{comment}
+
+The proof of our main structural inequality is based on the weak regularity lemma of Frieze and Kannan (\cref{fk}). Roughly speaking, this lemma allows us to (efficiently) partition the underlying weighted graph into a small number of blocks in a manner such that ``cut-like'' quantities associated to the graph approximately depend only on the \emph{numbers} of edges between various blocks. It is well known (see, e.g., \citet{borgs2012convergent}, and also \lemmaref{lemma: free-energy-lipschitz}) that the free energy and variational free energy fit into this framework. This observation shows that in order to prove \cref{thm-main-structural-result}, it is sufficient to prove the statement for such graphs composed of a small number of blocks.
+
+In order to do this, we will first show that the free energy for such graphs is well approximated by an intermediate optimization problem (\cref{eqn:intermediate-var-problem}) which is quite similar to the one defining the variational free energy. Next, we will use basic facts about entropy to show that the solution to this optimization problem is indeed close to the variational energy (\lemmaref{lemma:epsilon-bound}). We now describe this intermediate optimization problem. 
+
+The key point in the weak regularity lemma is that the number of blocks depends only on the desired quality of approximation, and \emph{not} of the size of the underlying graph. Since we only care about the numbers of edges between the various blocks, this allows us to approximately rewrite the sum computing the partition function in terms of only \emph{polynomially} many nonnegative summands, as opposed to the \emph{exponentially} many nonnegative summands we started out with (\cref{eqn:partition-function-cut}). Moreover, since none of the edge weights coming from the weak regularity lemma are too big, one can further group terms to reduce the number of summands to a polynomial in only the error parameter, independent of the number of vertices in the original graph (\lemmaref{lemma:gamma-def}). This provides the desired intermediate optimization problem -- the log of the largest summand of this much smaller sum approximates the free energy  well (\cref{eqn:approx-sum-by-max-lb}, \cref{eqn:approx-sum-by-max-ub}). 
+
+For the proof of \cref{thm:regularity-alg}, we show that solving (a slight variation of) this intermediate optimization problem amounts to solving a number of convex programs. However, since we want to provide algorithms which run in constant time (see \remarkref{rmk:constant-time-assumptions}), we first need to rewrite these programs in a manner which uses only a constant number of variables and constraints. The proofs of the corresponding theorems for general order $r$ Markov random fields follow a similar outline, with the application of \cref{fk} replaced by \cref{reg-alon-etal-mrf} or \cref{reg-fk-higher}.   
+
+%The preceding discussion also suggests a natural algorithm for finding either a product distribution close to the Boltzmann distribution, or to estimate the free energy.  reduces the problem of estimating the log partition function to an optimization problem, although a very different one from \citep{risteski-ising}. However, as stated, it is not a problem we can solve in constant time. In \cref{lemma:gamma-def}, we show how to ``granulate'' the parameters to reduce the problem to constant size,
+%and then our Algorithm~\ref{convex-partition} solves this problem efficiently via convex programming. The proofs of \cref{thm-mrf}, \cref{thm-mrf-nonconstant} and \cref{thm-ltr} follow a similar outline, with the application of \cref{fk} replaced by \cref{reg-fk-higher}, \cref{reg-alon-etal} and \cref{reg-ghar-trev} respectively.   
+\begin{comment}
+On the other hand, given such a decomposition of the graph, it is
+readily seen that \emph{all} states which have approximately the same
+number of $+1$ spins in each block contribute approximately the same
+to the partition function. We emphasize here that \emph{where }the
+$+1$ spins occur in each block does not matter \textendash{} only
+their total number does. Moreover, since we are interested in only
+approximating the (log) partition function anyway, even knowing the
+fraction of $+1$ spins in each block with some constant precision
+is already enough. Since there are only a constant number of blocks
+to start with, we see that we now have a constant sized problem. 
+\vnote{TO DO} 
+\end{comment}
+
+
+
+\section{Preliminaries}
+
+We will make essential use of the weak regularity lemma \citep{frieze-kannan-matrix}. Before stating
+it, we introduce some terminology. Throughout this section, we will
+deal with $m\times n$ matrices whose entries we will index by $[m]\times[n]$,
+where $[k]=\{1,\dots,k\}$. 
+\begin{defn}
+Given $S\subseteq[m]$, $T\subseteq[n]$ and $d\in\R$, we define
+the $[m]\times[n]$ \emph{Cut Matrix }$C=CUT(S,T,d)$ by 
+\[
+C(i,j)=\begin{cases}
+d & \text{if }(i,j)\in S\times T\\
+0 & \text{otherwise}
+\end{cases}
+\]
+\end{defn}
+
+\begin{defn}
+A \emph{Cut Decomposition }expresses a matrix $J$ as 
+\[
+J=D^{(1)}+\dots+D^{(s)}+W
+\]
+
+where $D^{(i)}=CUT(R_{i},C_{i},d_{i})$ for all $t=1,\dots,s$. 
+We say that such a cut decomposition has \emph{width }$s$\emph{,
+coefficient length $(d_{1}^{2}+\dots+d_{s}^{2})^{1/2}$ }and \emph{error
+$\|W\|_{\infty\mapsto1}$}.
+\end{defn}
+
+We are now ready to state the weak regularity lemma of Frieze and Kannan. The particular choice of constants can be found in \citep{alon-etal-samplingCSP-conference}. % journal version is slightly better..
+\begin{theorem}[\citet{frieze-kannan-matrix}]
+\label{fk}
+Let $J$ be an arbitrary real matrix, and let $\epsilon>0$.
+Then, we can find a cut decomposition of width at most $16/\epsilon^{2}$, 
+coefficient length at most $4\|J\|_F/\sqrt{mn}$, error at most $4\epsilon\sqrt{mn}\|J\|_F$, and such that $\|W\|_{F}\leq\|J\|_F$.  
+\end{theorem}
+\begin{comment}
+\begin{remark}
+\label{rmk:dense-norm-bounds}
+In particular, we have $$\|\vec{W}\|_{\infty}\leq \|J\|_{\infty}+|d_{1}|+\dots+|d_{s}|\leq||J||_{\infty}+\sqrt{s}(d_{1}^{2}+\dots+d_{s}^{2})^{1/2}\leq||J||_{\infty}+\sqrt{16s}\|J\|_F/\sqrt{mn}.$$
+%Note also that in the $\Delta$-dense case, we have $||J||_{\infty}\leq||J||_{1}/\Delta n^{2}$
+%and $\|J\|_F\leq||J||_{1}/n\sqrt{\Delta}$. 
+\end{remark}
+\end{comment}
+
+\section{Proof of the main structural result}
+We begin by showing that both the free energy and the variational free energy are $1$-Lipschitz with respect to the cut norm of the matrix of interaction strengths. 
+
+\begin{lemma}
+\label{lemma: free-energy-lipschitz} 
+Let $J$ and $D$ be the matrices of interaction strengths of 
+Ising models with partition functions $Z$ and $Z_{D}$, and variational free energies $\F^{*}$ and $\F^{*}_{D}$. Then, with $W:= J - D$, we have  
+$|\log Z-\log Z_{D}|\leq \|W\|_{\infty \mapsto 1}$ and $|\F^{*}-\F^{*}_{D}|\leq\|W\|_{\infty \mapsto 1}$. 
+\end{lemma}
+\begin{proof}
+Note that for any $x\in[-1,1]^{n}$, we have 
+\begin{align*}
+|\sum_{i,j}J_{i,j}x_{i}x_{j}-\sum_{i,j}D_{i,j}x_{i}x_{j}| & =|\sum_{i}(\sum_{j}W_{i,j}x_{j})x_{i}| \leq \sum_{i}|\sum_{j}W_{i,j}x_{j}|
+ \leq\|W\|_{\infty\mapsto1}, 
+\end{align*}
+from which we immediately get that $|\F^{*}-\F^{*}_{D}|\leq\|W\|_{\infty \mapsto 1}$. 
+Moreover, for any $x\in\{\pm1\}^{n}$, we have 
+\[
+\exp\left(\sum_{i,j}J_{i,j}x_{i}x_{j}\right) \in \left[ \exp\left(\sum_{i,j}D_{i,j}x_{i}x_{j}) \pm \|W\|_{\infty \mapsto 1}\right) \right].
+\]
+Taking first the sum of these inequalities over all $x\in\{\pm1\}^{n}$
+and then the log, we get 
+\[
+\log Z \in \left[ \log\left(\sum_{x\in\{\pm1\}^{n}}\exp \left(x^{T}Dx \right)\right) \pm \|W\|_{\infty \mapsto 1} \right],
+\]
+as desired. 
+\end{proof}
+\begin{remark}
+\label{rmk:applying-regularity-structural-result}
+For the remainder of this section, we take $D:=D^{(1)}+\dots+D^{(s)}$, where $D^{1},\dots,D^{s}$ are the cut matrices coming from applying \cref{fk} to $J$ with parameter $\epsilon/12$, so that $s \le 2304/\epsilon^2$ and $\|J - D\|_{\infty \mapsto 1} \le \|J\|_F/3$. By \lemmaref{lemma: free-energy-lipschitz}, it follows that $|\log Z -\log Z_{D}|\leq \epsilon n\|J\|_F/3$ and $|\F^{*}-\F^{*}_{D}|\leq \epsilon n\|J\|_F/3 $. Thus, in order to show that $\F - \F^{*} \leq \epsilon n\|J\|_F$, it suffices to show that $\log Z_D - \F^{*}_D \leq \epsilon n\|J\|_F/3$. 
+\end{remark}
+
+In order to show this, we begin by approximating $\log Z_{D}$ by the solution to an optimization problem. Let 
+$R_{i}$ (resp. $C_{i}$) denote the rows (respectively columns) corresponding
+to the cut matrix $D^{(i)}$. Then,
+it follows by definition that
+
+\[
+Z_{D}=\sum_{x\in\{\pm1\}^{n}}\exp\left(\sum_{i=1}^{s}r_{i}(x)c_{i}(x)d_{i}\right),
+\]
+where $r_{i}(x)=\sum_{a\in R_{i}}x_{a}$ and $c_{i}(x)=\sum_{b\in C_{i}}x_{b}$.
+By rewriting the sum in terms of the possible values that $r_{i}(x)$
+and $c_{i}(x)$ can take, we get that 
+\begin{equation}
+\label{eqn:partition-function-cut}
+Z_{D}=\sum_{r,c}\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}\right)\left(\sum_{x\in\{\pm1\}^{n}:r(x)=r,c(x)=c}1\right),
+\end{equation}
+where $r=(r_{1},\dots,r_{s})$ ranges over all elements of $[-|R_{1}|,|R_{1}|]\times\dots\times[-|R_{s}|,|R_{s}|]$
+and similarly for $c$. The following lemma shows that for estimating the contribution of the term corresponding to some vector $x$, it suffices to know the components of $x$ up to some constant precision. 
+\begin{lemma}\label{lemma:gamma-def}
+Let $J, D^{1},\dots,D^{s}$ be as above. Then, given real numbers $r_{i},r'_{i},c_{i},c'_{i}$ for each $i\in[s]$ and some 
+$\upsilon \in (0,1)$ such that $|r_i|,|c_i|,|r'_i|,|c'_i| \le n$, 
+$|r_i - r'_i| \le \upsilon n$ and $|c_i - c'_i| \le \upsilon n$ 
+for all $i\in[s]$, we get that 
+$\sum_i d_i|r'_i c'_i - r_i c_i| \le 8\|J\|_F\upsilon ns^{1/2}$. 
+\end{lemma}
+\begin{proof}
+%From \cref{fk}, we know that for all $i\in[s]$,  
+%\begin{equation}\label{dtbound}
+%$|d_i| \le \frac{4 \|J\|_F}{n}$.
+%\end{equation}
+Since $ |r'_i c'_i - r_i c_i| \le |c'_i||r'_i - r_i| + |r_i||c'_i - c_i| \le 2\upsilon n^2$, it follows by Cauchy-Schwarz that
+\[ \sum_i d_i|r'_i c'_i - r_i c_i|
+\le \left(\sum_i d_i^2\right)^{1/2} 2s^{1/2}\upsilon n^2
+\le  8\|J\|_F\upsilon ns^{1/2}. \]
+\end{proof}
+
+The previous lemma motivates grouping together configurations $x$ with similar values of $r_i(x),c_i(x)$. Accordingly, for any $r \in [-|R_1|,|R_1|]\times\dots\times[-|R_s|,|R_s|]$, $c \in [-|C_1|,|C_1|]\times\dots\times[-|C_s|,|C_s|]$ and $\upsilon > 0$, let 
+$$X_{r,c,\upsilon}:= \{x\in \{\pm1\}^{n}: |r_i(x)-r_i| \leq \upsilon n, |c_i(x)-c_i| \leq \upsilon n \text{ for all } i\in [s]\}.$$ 
+Let $I_\upsilon := \{\pm\upsilon n, \pm 3\upsilon n,\pm 5\upsilon n,\dots,\pm\ell \upsilon n\}$, where $\ell$ is the smallest odd integer satisfying $|\ell \upsilon n - n| \leq \upsilon n$, so $|I_{\upsilon}| \le 1/\upsilon + 1$. Let 
+%$$Z_{D,\upsilon,\alpha}^{*}:=\max_{r,c\in I_{\upsilon}^{s}}\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}+\log|X_{r,c,\alpha\upsilon}|\right).$$
+\begin{equation}
+\label{eqn:intermediate-var-problem}
+Z_{D,\upsilon}^{*}:=\max_{r,c\in I_{\upsilon}^{s}}\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}+\log|X_{r,c,\upsilon}|\right).
+\end{equation}
+
+Then, it follows immediately from \lemmaref{lemma:gamma-def} that 
+%\[
+%Z^{*}_{D,\upsilon,\alpha}\exp\left(-8\alpha\|J\|_F\upsilon ns\right) \leq Z_{D}\leq\sum_{r,c\in I_{\upsilon}^{s}}|X_{r,c,\upsilon}|\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}\right)\exp\left(8\|J\|_F\upsilon ns\right).
+%\]
+\[
+Z^{*}_{D,\upsilon}\exp\left(-8\|J\|_F\upsilon ns^{1/2}\right) \leq Z_{D}\leq\sum_{r,c\in I_{\upsilon}^{s}}|X_{r,c,\upsilon}|\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}\right)\exp\left(8\|J\|_F\upsilon ns^{1/2}\right).
+\]
+
+In particular, since the outer sum is over $|I_{\upsilon}|^{2s}$ terms, it follows
+that
+\begin{equation}
+\label{eqn:approx-sum-by-max-lb}
+%\log Z_{D,\upsilon,1}^{*}\geq\log Z_{D}-8\|J\|_F\upsilon ns^{1/2} - 2s\log |I_\upsilon| \ge \log Z_{D}-8\|J\|_F\upsilon ns^{1/2} - 2s\log(1/\upsilon + 1)
+\log Z_{D,\upsilon}^{*}\geq\log Z_{D}-8\|J\|_F\upsilon ns^{1/2} - 2s\log |I_\upsilon| \ge \log Z_{D}-8\|J\|_F\upsilon ns^{1/2} - 2s\log(1/\upsilon + 1)
+\end{equation}
+and
+\begin{equation}
+\label{eqn:approx-sum-by-max-ub}
+%\log Z^{*}_{D,\upsilon,\alpha}\leq\log Z_{D}+8\alpha\|J\|_F\upsilon ns.
+\log Z^{*}_{D,\upsilon}\leq\log Z_{D}+8\|J\|_F\upsilon ns^{1/2}.
+\end{equation}
+\iffalse % This lemma is no longer needed, move to appendix?
+Finally, we will need the following lemma, which lets us approximate $|X_{r,c,\upsilon}|$ by a sum of entropies.    
+
+\begin{lemma}
+\label{lemma:entropyapprox}
+Let $\{U_{i}\}_{i=1}^{2s}$ be a collection of subsets of $[n]$.
+For $t:=(t_{1},\dots,t_{n})\in[-n,n]^{2s}$ and $\upsilon \in (0,1)$, let 
+$$T_{t,\upsilon}:=\{x\in[-1,1]^{n}\colon t_{i}-\upsilon n\leq\sum_{j\in U_{i}}x_{j}\leq t_{i}+\upsilon n\text{ for all } i\in[2s]\}.$$
+Let $S_{t,\upsilon}:=\{-1,1\}^{n}\cap T_{t,\upsilon}$, and $O_{t,\upsilon}:=\max\left\{\sum_{i=1}^{n}H\left(\frac{1+x_{i}}{2}\right)\colon x\in T_{t,\upsilon}\right\}$.
+Then, $$\log|S_{t,\upsilon}|\leq O_{t,\upsilon}\leq\log|S_{t,2\upsilon}|+20ns\exp\left(-2\upsilon^{2}n\right),$$
+provided $s\exp(-2\upsilon^{2}n)\leq\frac{1}{4}$.
+\end{lemma}
+\begin{proof}
+To see that $\log|S_{t,\upsilon}|\leq O_{t,\upsilon}$, let $\bar{y}_{j}:=|S_{t,\upsilon}|^{-1}\sum_{x\in S_{t,\upsilon}}x_{j}$
+be the average value of the $j^{th}$ coordinate in $S_{t,\upsilon}$,
+and note that $\bar{y}:=(\bar{y}_{1},\dots,\bar{y}_{n})\in T_{t,\upsilon}$.
+Note also that $H(Y_{j})=H\left(\frac{1+\bar{y}_{j}}{2}\right)$, where $Y:=(Y_{1},\dots,Y_{n})$
+denotes a random vector distributed uniformly in $S_{t,\upsilon}$.
+Therefore, by the chain rule for entropy, we get
+\[
+\log|S_{t,\upsilon}| =H(Y) \leq \sum_{j=1}^{n}H(Y_{j})=\sum_{j=1}^{n}H\left(\frac{1+\bar{y}_j}{2}\right)\leq O_{t,\upsilon}.\\
+\]
+For the second inequality, let $\bar{x}=(\bar{x}_{1},\dots,\bar{x}_{n})$
+attain $O_{t,\upsilon}$, and consider the product distribution on $\{-1,1\}^{n}$
+with $\Pr(x_{i}=1)=\frac{1+\bar{x}_{i}}{2}$. Let $X=(X_{1},\dots,X_{n})$ denote
+a random $\{-1,1\}^{n}$-valued vector sampled according to this distribution,
+and let $A_{t,2\upsilon}$ denote the event that $X\in T_{t,2\upsilon}$.
+Then, it follows immediately from Hoeffding's inequality and the union
+bound that $\Pr(A_{t,2\upsilon}^{c})\leq 4s\exp(-2\upsilon^{2}n)$. Finally,
+since $H(X\mid\boldsymbol{1}_{A_{t,2\upsilon}}=1)\leq\log|S_{t,2\upsilon}|$
+and $H(X\mid\boldsymbol{1}_{A_{t,2\upsilon}}=0)\leq n$, we get 
+\[ H(X | \bone_{A_{t,2v}}) = \Pr(A_{t,2v})H(X | \bone_{A_{t,2v}} = 1) + \Pr(A_{t,2v}^c) H(X | \bone_{A_{t,2v}} = 0) \le \log|S_{t,2\upsilon}|+4ns\exp\left(-2\upsilon^{2}n\right) \]
+while on the other hand using that $H(\bone_{A_{t,2v}}) \le 16s\upsilon^{2}n\exp\left(-2\upsilon^{2}n\right)$ we find
+\begin{align*}
+ H\left(X\mid\boldsymbol{1}_{A_{t,2\upsilon}}\right)
+ & =H\left(X,\boldsymbol{1}_{A_{t,2\upsilon}}\right)-H\left(\boldsymbol{1}_{A_{t,2\upsilon}}\right) \\
+ & =H(X)-H\left(\boldsymbol{1}_{A_{t,2\upsilon}}\right)\\
+ & \geq\sum_{j=1}^{n}H\left(\frac{1+\bar{x}_{j}}{2}\right)-16s\upsilon^{2}n\exp\left(-2\upsilon^{2}n\right)
+  =O_{t,\upsilon}-16s\upsilon^{2}n\exp\left(-2\upsilon^{2}n\right),
+\end{align*}
+and combining these inequalities completes the proof. 
+\end{proof}
+\fi
+
+We can now prove \cref{thm-main-structural-result}:
+ all we need to do is give an upper bound on $\F - \F^{*}$.
+\iffalse. Note that we only need to prove the upper bound on $|\F - \F^{*}|$ -- the statement about the KL-divergence follows immediately from this upper bound and \cref{rmk:variational-free-energy}. Furthermore, from \cref{rmk:free-energy-variational-char} and \cref{rmk:variational-free-energy} we see automatically that $\F^* \ge \F$ so we need only prove an upper bound on $\F^* - \F$.
+\fi
+\begin{lemma}\label{lemma:epsilon-bound}
+For any $\epsilon > 0$,
+\[ \F - \mathcal{F^*} \le \epsilon n \|J\|_F + 10^5 \log(e + 1/\epsilon)/\epsilon^2. \]
+\end{lemma}
+\begin{proof}%[Proof of \cref{thm-main-structural-result}]
+\label{proof:main-structural-result}
+Let $\gamma=\epsilon/48s^{1/2}$. 
+Let $r=(r_1,\dots,r_s),c=(c_1,\dots,c_s) \in I_{\gamma}^{s}$ be such that $\log Z^{*}_{D,\gamma}=\sum_{i=1}^{n}r_{i}c_{i}d_{i}+\log|X_{r,c,\gamma}|$. 
+Define
+\[ \bar{y}_j := \frac{1}{|X_{r,c,\gamma}|} \sum_{x \in X_{r,c,\gamma}} x_j, \]
+and let $Y := (Y_1, \ldots, Y_n)$ be a random vector distributed uniformly in 
+$X_{r,c,\gamma}$. Then by the chain rule for entropy,
+\[ \log |X_{r,c,\gamma}| = H(Y) \le \sum_{j = 1}^n H(Y_j) = \sum_{j = 1}^n H\left(\frac{1 + \overline{y}_j}{2}\right). \]
+Using this, we have 
+\begin{align*}
+\log Z_{D,\gamma}^{*} & =\sum_{i=1}^{n}r_{i}c_{i}d_{i}+\log|X_{r,c,\gamma}|%\\
+ %& 
+ \leq\sum_{i=1}^{n}r_{i}c_{i}d_{i}+\sum_{j = 1}^n H\left(\frac{1 + \overline{y}_j}{2}\right)\\
+ & \leq\left\{ \sum_{i=1}^{n}r_{i}(\bar{y})c_{i}(\bar{y})d_{i}+8\|J\|_F\gamma ns^{1/2}\right\} + \sum_{j = 1}^n H\left(\frac{1 + \overline{y}_j}{2}\right)\\
+ & =\left\{ \sum_{i=1}^{n}r_{i}(\bar{y})c_{i}(\bar{y})d_{i}+\sum_{j = 1}^n H\left(\frac{1 + \overline{y}_j}{2}\right)\right\} +8\|J\|_F\gamma ns^{1/2}\\
+ & \leq \F_{D}^{*}+8\|J\|_F\gamma ns^{1/2},
+\end{align*}
+where the second line follows from $\overline{y}$ lying in the convex hull of $X_{r,c,\gamma}$ and \lemmaref{lemma:gamma-def}, and the last line follows from the definition of $\F^{*}_{D}$. Thus, we get
+\begin{align*}
+\F_{D}^{*} \geq \log Z_{D,\gamma}^{*} - 8\|J\|_F\gamma ns^{1/2}
+ & \geq \log Z_{D} - 16\|J\|_F\gamma ns^{1/2} - 2s\log(1/\gamma + 1)\\
+ & \geq \log Z_{D} - \frac{\epsilon n\|J\|_F}{3} - 10^5\log\left(\frac{1}{\epsilon} + e\right)\frac{1}{\epsilon^{2}},
+\end{align*}
+where in the second inequality, we have used \cref{eqn:approx-sum-by-max-lb}, and in the last line, we have used the values of $\gamma$ and $s$. 
+\iffalse % This direction is trivial
+For the upper bound on $-\F^{*}_{D}$, let $\bar{x}=(\bar{x}_1,\dots,\bar{x}_n)$ attain $\F^{*}_{D}$, and let $r=(r_1,\dots,r_s),c=(c_1,\dots,c_s) \in I_{\gamma}^{s}$ be such that $\bar{x}\in X_{r,c,\gamma}$. 
+Then, we have
+\begin{align*}
+-\F_{D}^{*} & \leq\sum_{i=1}^{n}r_{i}(\bar{x})c_{i}(\bar{x})d_{i}+O_{r,c,\gamma}\\
+ & \leq\left\{ \sum_{i=1}^{n}r_{i}c_{i}d_{i}+8\|J\|_F\gamma ns\right\} +\left\{ \log|X_{r,c,2\gamma}|+20sn\exp(-2\gamma^{2}n)\right\} \\
+ & =\left\{ \sum_{i=1}^{n}r_{i}c_{i}d_{i}+\log|X_{r,c,2\gamma}|\right\} +8\|J\|_F\gamma ns+20sn\exp(-2\gamma^{2}n)\\
+& \leq Z_{D,\gamma,2}^{*}+8\|J\|_F\gamma ns+20sn\exp(-2\gamma^{2}n)\\
+ & \leq Z_{D}+24\|J\|_F\gamma ns+20sn\exp(-2\gamma^{2}n)\\
+ & \leq Z_{D}+\frac{\epsilon n\|J\|_F}{3}+10^{7}\frac{ne^{-\epsilon n/10^{7}}}{\epsilon^{2}}\\
+& \leq Z_{D}+\frac{\epsilon n\|J\|_F}{3}+10^{7}\log\left(\frac{1}{\epsilon}\right)\frac{1}{\epsilon^{2}},
+\end{align*}
+where the first line follows from the definition of $O_{r,c,\gamma}$, the second line follows from \cref{lemma:gamma-def} and \cref{lemma:entropyapprox} (and the assumed lower bound on $n$), the fourth line follows from the definition of $Z^{*}_{D,\gamma,2}$, the fifth line follows from \cref{eqn:approx-sum-by-max-ub}, the sixth line follows from the values of $\gamma$ and $s$, and the last line follows from the assumed lower bound on $n$. 
+\fi
+Now, \remarkref{rmk:applying-regularity-structural-result} gives
+$\mathcal{F} - \mathcal{F}^* \le \epsilon n \|J\|_F + 10^5 \log(e + 1/\epsilon)/\epsilon^2$ as desired.
+\end{proof}
+Finally, we use this bound to prove Theorem~\ref{thm-main-structural-result}.
+
+\begin{proof}[Proof of \cref{thm-main-structural-result}]
+Fix $M > e$ a constant to be optimized later. 
+Observe that since $\E_{\mu}[\sum_{i,j} J_{i,j}X_i X_j] \leq n \|J\|_{F}$ by Cauchy-Schwarz, and since $\F^* \geq n$, we always have $\F - \F^* \leq n\|J\|_F$. Therefore, if $n \|J\|_F \le M$, we see that $\mathcal{F} - \mathcal{F}^* \le n \|J\|_F \le M^{1/3} (n \|J\|_F)^{2/3}$.
+
+Next, we analyze the case when $n \|J\|_F > M$.
+Taking $\epsilon = \left(\frac{M\log(n \|J\|_F + e)}{n \|J\|_F \log{M}}\right)^{1/3}$ in \cref{lemma:epsilon-bound} gives
+\begin{align*}
+\mathcal{F} - \mathcal{F}^* 
+&\le \frac{M^{1/3}}{\log^{1/3} M} n^{2/3} \|J\|_F^{2/3} \log^{1/3}(n \|J\|_F + e)  + 10^5\frac{\log^{2/3} M}{M^{2/3}} \frac{\log(n \|J\|_F + e)}{\log^{2/3}(n \|J\|_F + e)} n^{2/3} \|J\|_F^{2/3} \\
+&\le \left((M/\log M)^{1/3} + 10^5 (\log M/M)^{2/3}\right) n^{2/3} \|J\|_F^{2/3} \log^{1/3}(n \|J\|_F + e).
+\end{align*}
+Finally, taking $(M/\log M) = 10^{5}$, we see that $\mathcal{F} - \mathcal{F}^* \le 200 n^{2/3} \|J\|_F^{2/3} \log^{1/3}(n \|J\|_F + e)$  for all values of $n \|J\|_F$.
+%which proves Theorem~\ref{thm-main-structural-result}.
+\end{proof}
+
+\begin{comment}
+\begin{proof}[Proof of \cref{thm-mrf-main-structural-result}]
+The proof is exactly the same as that of Theorem~\ref{thm-main-structural-result},
+except that for each $d$ from $1$ to $r$, we use the following generalized
+weak regularity lemma to decompose $J_{=d}$:
+\begin{theorem}
+\citep{alon-etal-samplingCSP-journal}\label{reg-alon-etal-mrf}
+Let $J$ be an arbitrary $k$-dimensional matrix on $X_{1}\times\dots\times X_{k}$,
+where we assume that $k\geq 1$ is fixed. Let $N:=|X_{1}|\times\dots\times|X_{k}|$
+and let $\epsilon>0$. Then, in time $2^{O(1/\epsilon^{2})}O(N)$
+and with probability at least $0.99$, we can find a cut decomposition of
+width at most $4/\epsilon^{2}$, error at most $\epsilon\sqrt{N}\|J\|_F$,
+and the following modified bound on coefficient length: $\sum_i |d_i| \le 2\|J\|_F/\epsilon\sqrt{N}$, where $(d_i)_{i =1}^s$ are the coefficients of
+the cut arrays.
+\end{theorem}
+
+We omit further details. 
+%Compared to \cref{fk}, the bounds for this theorem are similar, except that
+%the coefficient length is worse by a factor of $1/\epsilon$. However, this is easily handled by choosing a slightly more granular partition, setting
+%the parameter $\gamma = \Theta(\epsilon^2)$ instead of $\Theta(\epsilon)$.
+\end{proof}
+\end{comment}
+
+\acks{We thank David Gamarnik for insightful comments, Andrej Risteski for helpful discussions related to his work \citep{risteski-ising}, Yufei Zhao for introducing us to reference \citep{alon-etal-samplingCSP-conference}}, and an anonymous reviewer for introducing us to the reference \citep{eldan2016gaussian}. 
+ 
+%\bibliographystyle{plain}
+\bibliography{ising-regularity,all}
+
+\appendix
+
+\section{Hyper-graph Statements and proofs}
+\label{sec-hypergraph}
+
+\begin{proof}[Proof of \cref{thm-mrf-main-structural-result}]
+The proof is exactly the same as that of Theorem~\ref{thm-main-structural-result},
+except that for each $d$ from $1$ to $r$, we use the following generalized
+weak regularity lemma to decompose $J_{=d}$:
+\begin{theorem}[\citet{alon-etal-samplingCSP-journal}]\label{reg-alon-etal-mrf}
+Let $J$ be an arbitrary $k$-dimensional matrix on $X_{1}\times\dots\times X_{k}$,
+where we assume that $k\geq 1$ is fixed. Let $N:=|X_{1}|\times\dots\times|X_{k}|$
+and let $\epsilon>0$. Then, in time $2^{O(1/\epsilon^{2})}O(N)$
+and with probability at least $0.99$, we can find a cut decomposition of
+width at most $4/\epsilon^{2}$, error at most $\epsilon\sqrt{N}\|J\|_F$,
+and the following modified bound on coefficient length: $\sum_i |d_i| \le 2\|J\|_F/\epsilon\sqrt{N}$, where $(d_i)_{i =1}^s$ are the coefficients of
+the cut arrays.
+\end{theorem}
+
+We omit further details. 
+%Compared to \cref{fk}, the bounds for this theorem are similar, except that
+%the coefficient length is worse by a factor of $1/\epsilon$. However, this is easily handled by choosing a slightly more granular partition, setting
+%the parameter $\gamma = \Theta(\epsilon^2)$ instead of $\Theta(\epsilon)$.
+\end{proof}
+
+The next two theorems are the analogs of \cref{thm:regularity-alg} for general order $r$ Markov random fields. The first theorem runs in constant time for any fixed $\epsilon$, but the constant is of the form $2^{\tilde{O}((1/\epsilon)^{2r-2})}$. In contrast, the second algorithm runs in time $O_{\epsilon,r}(n^r)$ for any fixed $r$ and $\epsilon$, with the dependence of the  constant on $\epsilon$ being the much improved $2^{\tilde{O}(1/\epsilon^{2})}$. In \citep{second-paper}, we build upon the latter result to provide a constant time algorithm, with similar guarantees as \cref{thm:algo-mrf-regularity-bad-dependence} but requiring time $2^{\tilde{O}(1/\epsilon^{2})}$, for approximating the free energy.      
+\begin{theorem}
+\label{thm:algo-mrf-regularity-bad-dependence}
+Fix $r \geq 3$. Then, there exists a constant $C=C(r)$  such that for any order $r$ Markov random field $J$ with Boltzmann distribution $P$ and free energy $\F$, and for any $\epsilon >0$, there is an algorithm which runs in time $2^{O(\log(1/\epsilon)/\epsilon^{2r-2})}$ and
+returns, with probability at least $0.99$, an implicit description of a product distribution $\mu$
+and estimate to the free energy $\hat{\mathcal{F}}$
+such that
+\[ \KL(\mu || P) \le \max_{1\leq d\leq r} \epsilon n^{d/2} \|J_{=d}\|_F  + C\log(1/\epsilon)/\epsilon^{2d-2} + 0.5^{2^{1/\epsilon^{2d-2} }} n \]
+and
+%\fnote{note we had to be a little careful here: we can't actually compute above KL in constant time on the true graph. add any missing necessary details for below bound to proof}
+\[ |\mathcal{F} - \hat{\mathcal{F}}| \le \max_{1\leq d\leq r} \epsilon n^{d/2} \|J_{=d}\|_F  + C\log(1/\epsilon)/\epsilon^{2d-2} + 0.5^{2^{1/\epsilon^{2d-2} }} n. \]
+%\[ \hat{\mathcal{F}} = -\left[\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] + H(\mu)\right] \]
+\end{theorem}
+
+In the previous theorem, it is possible to improve the dependence on $\epsilon$ at the expense of introducing a factor of $n^r$ in the running time. 
+\begin{theorem}
+\label{thm:algo-mrf-dependence-on-n}
+Fix $r \geq 3$. Then, there exists a constant $C=C(r)$ such that for any order $r$ Markov random field $J$ with Boltzmann distribution $P$ and free energy $\F$, and for any $\epsilon > 0$, there is an algorithm which runs in time $2^{O(\log(1/\epsilon)/\epsilon^2)}n^{r}$ and
+returns, with probability at least $0.99$, an implicit description of a product distribution $\mu$
+and estimate to the free energy $\hat{\mathcal{F}}$
+such that
+\[ \KL(\mu || P) \le \epsilon \max_{1\leq d\leq r}n^{d/2} \|J_{=d}\|_F  + C\log(1/\epsilon)/\epsilon^2 + 0.5^{2^{1/\epsilon^2}} n \]
+and
+%\fnote{note we had to be a little careful here: we can't actually compute above KL in constant time on the true graph. add any missing necessary details for below bound to proof}
+\[ |\mathcal{F} - \hat{\mathcal{F}}| \le \epsilon \max_{1\leq d\leq r}n^{d/2} \|J_{=d}\|_F  + C\log(1/\epsilon)/\epsilon^2 + 0.5^{2^{1/\epsilon^2}} n. \]
+%\[ \hat{\mathcal{F}} = -\left[\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] + H(\mu)\right] \]
+\end{theorem}
+
+\begin{comment}
+\section{Main Structural Result}
+NOTE: below is snapshot of lipschitz-sketch.tex on Jan 11
+
+Let's sketch the argument for our paper in terms of the graphon free energy. 
+Recall that the the partition function is
+\[ Z = \sum_{x \in \{-1,1\}^n} \exp(\sum_{i \sim j} J_{ij} x_i x_j) \]
+and the \emph{free energy (per node)} is defined to be
+\[ \hat{\mathcal{F}} = -\frac{1}{n} \log Z. \]
+The \emph{graphon free energy} is given by the solution
+to an optimization problem with competing terms coming
+from the constraints expressed by $J$ and the entropy:
+\[ \mathcal{F} = -\max_{x \in [-1,1]^n} \left[\sum_{i \sim j} J_{ij}
+      x_i x_j + \sum_i H\left(\frac{x_i +
+        1}{2}\right)\right] \] 
+this is sometimes referred to as a \emph{variational principle}
+in the literature. We are interested in the true free energy but this
+quantity will
+be very useful.
+
+We now use the following facts from the graphon literature:
+\begin{theorem}
+For graphs of size $\Omega(2^{1/\epsilon^2})$, the graphon free energy
+and free energy are $\epsilon$-close. (DEFINE)
+\end{theorem}
+\begin{theorem}
+The graphon free energy is Lipschitz with respect to the cut norm. (or the cut metric.)
+\end{theorem}
+The first two facts can easily be proven using a variant of our arguments
+from our old paper. 
+We will also need the Frieze-Kannan Weak Regularity Lemma \citep{frieze-kannan-matrix}; we use the following version which holds also for higher-order tensors:
+\iffalse
+: (TODO: we will actually use the slightly sharper and more general version in Alon et al)
+
+
+We need to also recall the weak regularity lemma; here we state a version
+for general $r$: 
+\fi
+\begin{defn}
+Given $S\subseteq[m]$, $T\subseteq[n]$ and $d\in\R$, we define
+the $[m]\times[n]$ \emph{Cut Array} $C=CUT(S,T,d)$ by 
+\[
+C(i,j)=\begin{cases}
+d & \text{if }(i,j)\in S\times T\\
+0 & \text{otherwise}
+\end{cases}
+\]
+and refer to $d$ as the \emph{coefficient} of the cut array.
+\end{defn}
+\begin{theorem}
+\label{fk}
+\citep{frieze-kannan-matrix}
+Let $J$ be an arbitrary real matrix, and let $\epsilon,\delta>0$.
+Then, in time $2^{\tilde{O}(1/\epsilon^{2})}/\delta^{2}$, we can,
+with probability $\geq1-\delta$, find a cut decomposition of width
+$O(\epsilon^{-2})$, coefficient length at most $\sqrt{27}\|J\|_F/\sqrt{mn}$
+and error at most $4\epsilon\sqrt{mn}\|J\|_F$. 
+\end{theorem}
+\begin{theorem}[Theorem 4 of \citep{alon-etal-samplingCSP}]
+(FIXME: check that the guarantee here is strong enough,
+not sure the coefficient bound is good enough. Can always use the FK version.)
+
+
+Let $A$ be an $r$-dimensional array (i.e. an $r$-order tensor) of dimensions
+$n \times \cdots \times n$.
+There exist, for some $s \le 4/\epsilon^2$, cut arrays $D^{(1)}, \ldots,
+D^{(s)}$ such that
+\[ \|A - D\|_C \le \epsilon n^{r/2}\|A\|_F \]
+and
+\[ \|A - D\|_F \le \|A\|_F \]
+and the sum of the absolute value of the coefficients of the cut arrays is at most $\frac{2 \|A\|_F}{\epsilon n^{r/2}}$.
+\end{theorem}
+
+We now sketch our approach to proving the result.
+
+Fix $\epsilon$. We start with a very large graph $G$, of size
+bigger than $2^{1/\epsilon^2}$ so the free energy of $G$ is close
+to its graphon free energy. We next form a graph $G'$ by weak
+regularity lemma, which is close to $G$ in cut norm.
+
+Now we sample $G$ down to a $q := poly(1/\eps)$ size graph $H$,
+multiplying the edge weights\footnote{To understand this, observe
+that if all the edges have the same weight, then the correct scaling
+for this edge weight is $\beta/n$ where $\beta$ is the inverse temperature parameter, independent of $n$. This is the case  in the Curie-Weiss model.} by $n/q$,
+and let $H'$ be the corresponding graph induced by sampling
+down $H$ in the same way. (There also might be a rescaling of the
+edge weights in this process?) By the lemma of Alon et al, we know
+that $\|H - H'\|_C$ is bounded by $\|G - G'\|_C$, so they remain
+close in cut norm.
+
+Now our main technical result will show that the graphon free energy of $G'$ is
+close to that of $H'$. By triangle inequality and the lipschitz property,
+this implies that $\mathcal{F}(G) \approx \mathcal{F}(H)$, and using
+that $G$ is a big graph we see $\mathcal{\hat{F}}(G) \approx \mathcal{F}(F) \approx \mathcal{F}(H)$. 
+\end{comment}
+
+\section{An almost matching lower bound for a large class of variational methods}
+\begin{proof}[Proof of \cref{thm:variational-lb}]
+Let $(\mathcal{Q}_n)_{n = 0}^{\infty}$ be a sequence of families
+of probability distributions as in the theorem statement. By assumption, there exist $k$ and $J$ such that $\mathcal{Q}_k$ does not contain the probability distribution $P_J$ corresponding to the Ising model $J$ on $k$ nodes. We denote by $Q_J$ the probability distribution in $\mathcal{Q}_k$ which is closest to $P_J$. In particular, by the closure under products assumption, we have that $Q_J^{\otimes m} \in \mathcal{Q}_{mk}$ for all integers $m \geq 1$. 
+
+
+%Suppose that $\mathcal{Q}_k$ does not contain the probability
+%distribution $P_J$ corresponding to a Ising model $J$ on $k$
+%nodes; let $Q_J$ be the closest probability distribution in
+%$\mathcal{Q}$. 
+Consider the Ising model on $n:= mk$ nodes whose matrix of interaction strengths $J'_n$ is the block diagonal matrix consisting of $m$ copies of $J$. Combinatorially, we can view $J'_n$ as $m$ vertex disjoint copies of $J$. 
+%Then consider the Ising model $J'$ given by duplicating
+%$J$ $m$ times, i.e. it is a graph with $m$ copies of the graph of $J$
+%on a total of $n := mk$ nodes. 
+%Then we see
+%that $Q_J^{\otimes n} \in \mathcal{Q}_{nk}$, and furthermore 
+We claim that $Q_J ^{\otimes m}$ is the
+closest distribution in $\mathcal{Q}_{mk}$ to the Ising model $J'$. Suppose on the contrary that there is some other distribution $Q_{J'} \in \mathcal{Q}_{mk}$ which is strictly closer to $P_{J'}$ than $Q_J ^{\otimes m}$. Then, the chain rule for KL divergence immediately implies that there exists some distribution $\tilde{Q}_J$ on $\{\pm 1\}^{k}$, obtained by conditioning $Q_{J'}$ on $k(m-1)$ variables, which is strictly closer to $P_J$ than $Q_J$. Since $\tilde{Q}_J \in \mathcal{Q}_k$ by assumption, and since $Q_J$ is the closest distribution to $P_J$ in this class, this gives a contradiction. 
+%if this is not the case, then the chain rule for KL divergence immediately shows that there is 
+%if there existed a closer distribution, then by looking at the marginal
+%distribution on one of the copies of $J$ would give a probability distribution
+%closer to $P_J$ than $Q_J$, giving a contradiction. 
+%Explicitly, if $V_i$
+%is the set of vertices corresponding to the $i^{th}$ copy of $J$, then
+%using the chain rule for KL divergence we see
+
+Therefore, we see that  
+$$ \inf_{Q\in \mathcal{Q}_n}\KL(Q|| P_{J'}) \geq m \KL (Q_J|| P_J) = \Theta(n).$$
+%\begin{align*}
+%\inf_{Q\in \mathcal{Q}_n}\KL(Q|| P_{J'})
+%&= \sum_{i = 1}^m \E[\KL(Q_{J'}(X_{V_i} | X_{V_{< i}}), P_J)] \\
+%&\ge m \KL(Q_J || P_J) = \Theta(n)
+%\end{align*}
+\iffalse
+entropy we see
+\begin{align*} 
+\KL(Q_{J'} || P_{J'}) 
+&= \sum_{i = 1}^m \E_{Q_{J'}}[X_{V_i}^T J X_{V_i}] + H_{Q_{J'}}(X) \\
+&\le \sum_{i = 1}^m (\E_{Q_{J'}}[X_{V_i}^T J X_{V_i}] + H_{Q_{J'}}(X_{V_i})).
+\end{align*}
+\fi
+%Since the optimizer is $Q_J^{\otimes m}$ we see
+%\[ \KL(Q_{J'} || P_{J'}) = m \KL(P_J, Q_J) = \Theta(n). \]
+Furthermore, $\|J\|_F = \Theta(\sqrt{n})$ so that $n^{2/3} \|J\|_F^{2/3} = \Theta(n)$. Hence, we see that the variational method corresponding to $(\mathcal{Q}_n)_{n = 0}^{\infty}$ must make an error of size $\Omega(n^{2/3} \|J\|_F^{2/3}$).
+\end{proof}
+
+
+\section{The high-temperature regime}
+In this section, we show that in the high-temperature regime
+where Markov chain methods are guaranteed to mix quickly, the
+variational free energy functional is convex and furthermore,
+a simple message passing algorithm solves the corresponding
+optimization problem quickly.
+\begin{lemma}\label{lem:H-strong-concave}
+For $H(p) := H(Ber(p))$ and for any $p \in [0,1]$, we have
+\[ H''(p) \le -4. \]
+\end{lemma}
+\begin{proof}
+By definition,
+\[ H(p) = -p \log p - (1 - p)\log(1 - p). \]
+Therefore,
+\[ H'(p) = -\log p - 1 + \log(1 - p) + 1 = -\log p + \log(1 - p), \]
+and
+\[ H''(p) = -\frac{1}{p} - \frac{1}{1 - p} \le -4. \]
+\end{proof}
+%Recall that the variational free energy is defined by
+%the following optimization problem:
+%\[ \min_{x \in [-1,1]^n} \left[-\sum_{i,j} J_{i,j} x_i x_j - \sum_i H\left(\frac{x_i + 1}{2}\right)\right] \]
+%where the interaction matrix $J$ is symmetric and has diagonal entries equal to 0.
+\begin{proof}[Proof of \cref{thm:high-temperature-convex}]
+Recall that $J$ is symmetric and has diagonal entries $0$. Therefore, the assumption $\sum_{j} 2|J_{i,j}| \leq 1$ for all $i$, along with Gershgorin's disk theorem, shows that all the eigenvalues of $J$ lie in $[-1/2, 1/2]$. 
+%By the assumption and Gershgorin's disk theorem, we see
+%that the eigenvalues of $J$ lie in $[-1/2,1/2]$; 
+Observe that the Hessian
+of the corresponding quadratic form is $2J$. Combining
+this with the strong concavity of entropy (\lemmaref{lem:H-strong-concave}) and the chain rule, which gives $\frac{d^2}{dx^2} H((1 + x)/2) \le -1$, proves the concavity claim. 
+
+The runtime complexity
+follows from standard algorithms from convex optimization,
+e.g. standard guarantees for the ellipsoid method \citep{gls}.
+\end{proof}
+\begin{proof}[Proof of \cref{thm:message-passing}]
+Since $\tanh$ is $1$-Lipschitz, we have for any %Observe that for any 
+$x^1,x^2 \in [-1,1]^n$ that% using that
+%$\tanh$ is $1$-Lipschitz we find
+\[ \|\tanh^{\otimes n}(2J x^1 + h) - \tanh^{\otimes n}(2J x^2 + h)\|_{\infty}
+\le 2\|J x^1 - J x^2\|_{\infty}
+%\le 2|J|_{\infty \to \infty} |x^1 - x^2|_{\infty}
+\le (1 - \eta) \|x^1 - x^2\|_{\infty}. \]
+Since the optimum $x^*$ is a fixed point of the mean field equations, the above inequality shows that 
+\[ \|\tanh^{\otimes n}(2J x_{n + 1} + h) - x^*\|_{\infty} \le (1 - \eta)\|\tanh^{\otimes n}(2J x_n + h) - x^*\|_{\infty}, \]
+and iterating this inequality gives the desired conclusion.
+\end{proof}
+
+\section{Computing the mean-field approximation in ferromagnetic models}
+\begin{proof}[Proof of Theorem~\ref{thm:ferromagnetic-algorithm}]
+Consider the $m$-blow up of the Ising model, denoted by $J_m$,  defined as follows: replace each vertex $i$ by $m$ vertices $(i,1),\dots,(i,m)$, add an edge of weight $J_{i,j}/m$ between vertices $(i,k)$ and $(j,\ell)$ for all $1\leq k,\ell \leq m$, and assign a uniform external field $h$ at each vertex $(i,k)$. 
+%Replace every vertex by $m$ copies of itself and rescale
+%the edge weights by $1/m$ while preserving the uniform external field $h$, producing a new Ising model on a graph with $nm$ many vertices and $|E|m^2$ many edges. We use the $n$ vertex blocks as the blocks of a  regularity partition. 
+
+Given a spin vector $X$ sampled from
+the Boltzmann distribution of $J_m$, %in the blown-up Ising model,
+define $Y_i \in [-m,m]$ to be
+the net spin of the vertices $(i,1),\dots, (i,m)$. %all of the vertices corresponding to vertex $i$ in the original graph. 
+Let $N_y$ denote the number of spin vectors which correspond
+to the net spin vector $y$ via the correspondence above. Then, we see that
+\begin{align*}
+\Pr(Y = y) 
+&= \frac{1}{Z}\exp\left(\sum_{i,j}\frac{J_{ij}y_iy_j}{m} + h \sum_i y_i + \log N_y\right) \\
+&= \frac{1}{Z}\exp\left(m \sum_{i,j} J_{i,j} (y_i/m) (y_j/m) + m h \sum_i (y_i/m) + m \sum_i H\left(\frac{1 + y_i/m}{2}\right) \pm O(n\log m)\right).
+\end{align*}
+
+Let $Y_{\epsilon}$ be the set of $y$ such that
+\[ \sum_{i,j} J_{ij} (y_i/m) (y_j/m) + h \sum_i (y_i/m) + \sum_i H\left(\frac{1 + y_i/m}{2}\right) < \mathcal{F}^* - \epsilon, \]
+where $\mathcal{F}^*$ is the variational free energy
+of the original Ising model $J$. Note that $Z \geq e^{\F^* - O(n\log{m})}$, as is readily seen by considering the net spin vector $y^*$ given by $y^*_i = mx^*_i$, where $x^* = (x^*_1,\dots, x^*_m)$ is the optimizer of the optimization problem defining $\F^*$.
+Then, the above inequality shows that for each $y \in Y_{\epsilon}$,
+\[ \Pr(Y = y) \le e^{-m \epsilon \pm O(n\log m)}.\]
+Since $|Y_{\epsilon}| \le m^n$, the union bound shows that  
+\[ \Pr(Y \in Y_{\epsilon}) \le e^{-m \epsilon \pm O(n\log m)} \leq \frac{1}{3},\]
+provided we take $m = \Omega(n \log(n)/\epsilon)$. %, this probability is less than $1/2$. 
+
+The preceding analysis shows the following: if we use the algorithm of \citep{JerrumSinclair:90} to draw
+$O(\log(1/\delta))$ independent (approximate) samples $X$ from the Boltzmann distribution of $J_m$, and use these (approximate) samples to obtain normalized net spin vectors $Y/m \in \{\pm 1\}^n$, then with probability $1 - \delta$, at least one of the sampled $Y/m$ solves the optimization problem defining $\F^*$ up to $\epsilon$-additive error in the objective.
+%be an approximate maximizer of the problem defining $\mathcal{F}^*$ up to additive $\epsilon$-error in the objective.
+\end{proof}
+\begin{remark}
+It is known by the result of \citep{Goldberg-Jerrum} that
+approximate sampling becomes \#BIS-hard for ferromagnetic
+Ising models if we allow different (inconsistent) external fields for each node. Thus, our algorithm does not extend to this setting.
+\end{remark}
+
+\section{NP-hardness: Proof of \cref{thm:free-energy-hardness}}
+Our proof is an easy consequence of hardness of approximation results for dense CSPs. Specifically, we rely on a hardness result
+for \emph{fully dense} MAX-r-LIN-2. In this problem, we are given $n$ free variables $x_1, \ldots, x_n$ to be assigned values in $\mathbb{F}_2^n$. Moreover, for each of the ${n \choose r}$ subsets $S$ of $[n]$ of size $r$, we are given a constraint $\sum x_S \equiv y_S$ mod 2, for $y_S$ fixed to be either 0 or 1. The goal is to find the maximum number of constraints which can be satisfied simultaneously by a single assignment of $x_1, \ldots, x_n$. For reasons of convenience, the objective
+value is defined to be $(1/2)(\text{\# of satisfied constraints}) - (1/2)(\text{\# of violated constraints})$.
+\begin{theorem}[\citet{ailon2007hardness}]
+For $r \geq 2$ and any $\epsilon >0$, it is NP-hard to approximate fully dense MAX-r-LIN-2 %for $r \ge 2$ 
+within an
+additive error of $n^{r - \epsilon}$. %for any $\epsilon > 0$.
+\end{theorem}
+
+\begin{proof}[Proof of \cref{thm:free-energy-hardness}]
+We illustrate the reduction to our problem in the case $r = 2$. Given
+an instance of fully dense MAX-r-LIN-2 with constraints corresponding
+to fixed $(y_S)_{|S| = 2}$, we consider the Ising model with matrix of interaction strengths $J$, where 
+%define the corresponding matrix $J$ with 
+$J_{ij} = 1/2 - y_{\{i,j\}}$. It is readily seen that for any distribution $\mu$ on $\{\pm 1\}^n$, 
+$$\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] \leq \text{MAX-r-LIN-2}(y). $$ 
+
+On the other hand, denoting by $x = (x_1,\dots, x_n)$ the optimal assignment of the variables for MAX-r-LIN-2$(y)$, it is immediate that the deterministic distribution $\nu$ concentrated on $X_i = (-1)^{x_i}$ satisfies  
+$$\sum_{i,j} J_{ij} \E_{\nu}[X_i X_j] = \text{MAX-r-LIN-2}(y).$$
+
+Thus, it follows that 
+%and see, by considering the optimal
+%deterministic fixing of the $X_i$, that
+\[ \F = \max_{\mu}\left[\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] + H(\mu)\right] = \text{MAX-r-LIN-2}(y) \pm n. \]
+
+Finally, observe that $n \|J\|_F = \Theta(n^2)$. Therefore, approximating $\F$ within
+additive error $(n \|J\|_F)^{1 - \delta}$ gives an $n^{2(1 - \delta)}$ additive approximation to MAX-r-LIN-2$(y)$.
+\end{proof}
+\iffalse 
+We recall the following result from \citep{dense-maxcut-hardness}:
+\fnote{Can we get a better result from ``Hardness of Fully Dense Problems'' by Ailon and Alon?}
+% FIXME: that paper is basically unpublished, correct citation format?
+\begin{theorem}\label{thm:dense-maxcut-hardness}
+For every $\delta > 0$, on the class $\mathcal{G}$ of graphs satisfying
+$|E| = \Omega(|V|^{2 - \delta})$ it is NP-hard to approximate MAX-CUT within some
+constant factor $C_{\delta}$.
+\end{theorem}
+We now give an NP-hardness reduction by embedding these MAX-CUT instances
+into antiferromagnetic Ising models.
+\begin{proof}[Proof of \cref{thm:free-energy-hardness}]
+ Fix $\delta' > 0$ and let $\delta = 2\delta'$. Let $G = (V,E)$ be a graph with $\Omega(|V|^{2 - \delta})$ many edges with adjacency matrix $A$. We let
+$J = -A$, so the model is anti-ferromagnetic. Observe that
+\[ \|J\|_F = \|A\|_2 = \sqrt{|E|} = \Omega(n^{1 - \delta/2}) \]
+and using that $H(\mu) \le n \log 2$ we see
+\[ \F = -\max_{\mu}\left[\sum_{i,j} J_{ij} \E_{\mu}[X_i X_j] + H(\mu)\right] = -\text{MAX-CUT}(G) \pm O(n) \]
+and similarly
+\[ \F^* = -\max_{x \in [-1,1]^n} \left[ \sum_{i,j} J_{ij} x_ix_j + \sum_i H\left(\frac{x_i + 1}{2}\right)\right] = -\text{MAX-CUT}(G) \pm O(n). \]
+Moreover, if $X$ is distributed according to the product distribution $\nu$
+which minimizes $\KL(\nu || P_J)$, we see that $\E[\sum_{i,j} J_{ij} X_i X_j] = -\text{MAX-CUT}(G) \pm O(n)$.
+Finally, we know that for a $x$ chosen uniformly at random in $\{\pm 1\}^n$ that
+half of the edges are cut in expectation, so $\text{MAX-CUT}(G) \ge |E|/2 \ge n^{2 - \delta}/2$. 
+
+Therefore it follows that if we could approximate $\F^*$ within additive error $C_{\delta} n^{2 - \delta}/3 = C_{\delta} n^{1 - \delta/2}\|J\|_2/3$ in polynomial time, this would imply
+via Theorem~\ref{thm:dense-maxcut-hardness} that $P = NP$. Thus we have proven
+the theorem with $C'_{\delta'} = C_{2\delta'}/3$. 
+\end{proof}
+%Note that by Theorem~\ref{thm-main-structural-result} we know that
+%\[ \F^* - \F = O(n^{2/3 + (1 - \delta/2)(2/3)} \log n) = O(n^{5/3 - \delta/3}) \]
+\fi
+\begin{comment}
+\section{Application: Computing Partition Functions in $2^{O(1/\epsilon^2)}$ Time}
+We sample down and get a $poly(1/\epsilon)$ size graph $H$. Now the following
+approach, following our previous paper, lets us estimate the graphon free energy of $H$ in time $2^{O(1/\epsilon^2)}$:
+\begin{enumerate}
+\item Compute a regularity partition of $H$; call this simplified graph $H''$.
+\item Use the grid-search + convex optimization algorithm of our old paper to compute the graphon free energy of $H''$:
+using the arguments there, we see that this algorithm computes a good approximation to the graphon free energy. (Though not the usual free energy, because that
+guarantee is only good when graphs are large.)
+\item By the Lipschitz property of graphon free energy, this is a good estimate to graphon free energy of $H$, therefore also a good estimate to graphon free energy of $G$, as well as the ordinary free energy of $G$.
+\end{enumerate}
+\end{comment}
+\section{A general algorithm for solving the variational problem}
+By \cref{thm-main-structural-result}, we have an upper bound on $\KL(\nu || P)$ (which is almost tight in the worst case) for the optimal product distribution $\nu$. Unfortunately, \cref{thm:free-energy-hardness} shows that it is not always possible to efficiently find a product distribution which is as close to $P$ as $\nu$ is. In this section, we describe a provable algorithm which does essentially as well as possible without violating \cref{thm:free-energy-hardness}, with the additional benefit that it runs in \emph{constant time} (independent of the size of the graph). Here we will use $\tilde{O}$ notation to hide logarithmic factors independent of $n$.
+
+\begin{remark}
+\label{rmk:constant-time-assumptions}
+In order to provide a constant time guarantee on problems with unbounded input size, we will work under the usual assumptions on the computational model for sub-linear algorithms (as in, e.g., \citet{alon-etal-samplingCSP-conference,frieze-kannan-matrix,indyk1999sublinear}). Thus, we can probe matrix entry $A(i,j)$ in $O(1)$ time. Note also that by the standard Chernoff bounds, it follows that for any set of vertices $V$ for which we can test membership in $O(1)$ time, we can also estimate $|V|/n$ to additive error $\epsilon$ w.h.p. in constant time using $\tilde{O}(1/\epsilon^2)$ samples. This approximation will always suffice for us and so, for the sake of exposition, we will henceforth ignore this technical detail and just assume that we have access to $|V|/n$ (as in, e.g., \citet{frieze-kannan-matrix}).
+
+\end{remark}
+
+\begin{proof}[Proof of \cref{thm:regularity-alg}]
+Observe that it suffices to return the description of an $x \in [-1,1]^{n}$ such that $\F(x):= \sum_{i,j}J_{i,j}x_ix_j + \sum_i H((1+x_i)/2)$ satisfies 
+$$\F^* \leq \F(x) + \frac{2\epsilon n}{3}\|J\|_{F} + 0.5^{2^{1/\epsilon^2}}n .$$ 
+Indeed, since \[ \mathcal{F} - \mathcal{F^*} \le \frac{\epsilon n}{3} \|J\|_F + 10^6 \log(e+1/\epsilon)/\epsilon^2 \]
+by \lemmaref{lemma:epsilon-bound}, the product distribution $\mu$ for which the $i^{th}$ coordinate has expected value $x_i$ will then satisfy the conclusions of the theorem.  
+%where
+%\[ \F^* = \max_{x \in [-1,1]^n} \left[\sum_{i,j} J_{ij}
+%      x_i x_j + \sum_i H\left(\frac{x_i +
+%        1}{2}\right)\right] \]
+%so all we need to do is find a product distribution $x$ which approximately solves this optimization problem. 
+
+Our strategy for finding such an $x$ will be to find an approximate maximizer of the problem defining $\F^*_{D}$, where $D$ is a sum of a small number of cut matrices which is close to $J$ in the $\|\cdot\|_{\infty \mapsto 1}$ norm. Specifically, we % as in \cref{rmk:applying-regularity-structural-result} 
+%Furthermore, by \cref{lemma: free-energy-lipschitz}, it suffices to solve this problem
+%on the regularity version of the graph. We 
+use the following algorithmic weak regularity lemma of Frieze and Kannan:
+\begin{theorem}[\citet{frieze-kannan-matrix}]
+\label{fk-algorithmic}
+Let $J$ be an arbitrary real matrix, and let $\epsilon,\delta>0$.
+Then, in time $2^{\tilde{O}(1/\epsilon^{2})}/\delta^{2}$, we can,
+with probability at least $1-\delta$, find a cut decomposition of width
+$O(\epsilon^{-2})$, coefficient length at most $\sqrt{27}\|J\|_F/\sqrt{mn}$
+and error at most $4\epsilon\sqrt{mn}\|J\|_F$. 
+\end{theorem}
+As in \remarkref{rmk:applying-regularity-structural-result}, we will take $D := D^{(1)}+\dots + D^{(s)}$, where the $D^{(i)}$ are obtained by applying \cref{fk-algorithmic} to $J$ with parameter $\epsilon/12$. In particular, \lemmaref{lemma: free-energy-lipschitz} shows that $|\F^* - \F^*_{D}| \leq \frac{\epsilon n}{3}\|J\|_{F}$, so that any $x$ which satisfies $\F^*_{D} \leq \F(x) + \frac{\epsilon n}{3}\|J\|_{F} + 0.5^{2^{1/\epsilon^2}}n$ also satisfies the desired upper bound on $\F^* - \F(x)$.  
+%we will
+%take such a regularity partition and let $D := D^{(1)} + \cdots + D^{(S)}$; now we are reduced to approximately solving the optimization problem
+%\[ \F^*_D =\max_{x \in [-1,1]^n} \left[\sum_{i,j} D_{ij}
+%      x_i x_j + \sum_i H\left(\frac{x_i +
+%        1}{2}\right)\right] \]
+%Applying Lemma~\ref{lemma:gamma-def}, it suffices to
+
+For $r,c \in I^{s}_{\gamma}$, where $I_{\gamma}$ is as in the proof of \cref{proof:main-structural-result}, consider the following max-entropy program $\mathcal{C}_{r,c,\gamma}$: 
+\begin{align*}
+\max & \quad \sum_{i=1}^{n}H\left(\frac{1+x_{i}}{2}\right)\\
+s.t.\\
+\forall i\in[n]: & \quad -1\leq x_{i}\leq1 \\
+\forall t\in[s]: & \quad r_{t}-\gamma n\leq\sum_{i\in R_{t}}x_{i}\leq r_{t}+\gamma n\\
+\forall t\in[s]: & \quad c_{t}-\gamma n\leq\sum_{i\in C_{t}}x_{i}\leq c_{t}+\gamma n
+\end{align*}
+
+Then, \lemmaref{lemma:gamma-def} shows that  
+\[ \overline{\F}_D := \max_{r,c \in I^s_v} \sum_{i = 1}^s r_i c_i d_i + \mathcal{C}_{r,c,\gamma} \]
+satisfies $|\overline{\F}_{D} - \F^*_{D}| \leq \frac{\epsilon n}{3}\|J\|_{F}$, provided we take $\gamma \leq s^{-1/2}/24$. Let $(\overline{r},\overline{c})$ denote the values of $(r,c)$ attaining $\overline{\F}_{D}$. It follows that if we can return an $x \in [-1,1]^{n}$ such that $x$ is feasible for $\mathcal{C}_{\overline{r},\overline{c},\gamma}$, and 
+$$\mathcal{C}_{\overline{r},\overline{c},\gamma} \leq \sum_{i}H\left(\frac{1+x_i}{2}\right) + 2^{-2^{1/\epsilon^2}}n,$$
+then we would be done. 
+%where $\mathcal{C}_{r,c,\gamma}$ will denote the value of a convex program
+%to maximize the entropy among all product distributions with expected net spin in block $R_i$ within $\gamma n$ of $r_i$ and likewise for $C_i$. 
+
+Since we want our algorithm to run in constant time, we rewrite this convex program in an equivalent way with only a constant number of variables and constraints. Let $(V_a)_{a=1}^{A}$ denote the common refinement of $\{R_i, C_i\}_{i=1}^{s}$. In particular, note that $A \leq 2^{2s}$. 
+%Because we want the convex
+%program to have a constant number of variables, we will group vertices
+%by their membership in $R_i,C_i$; i.e. we group vertices according
+%to the common refinement
+%$(V_a)_{a = 1}^{A}$ of $R_i,C_i$ with $A = 2^{2s}$. 
+Let $n v_a$ denote
+the number of vertices in $V_a$, and recall (\remarkref{rmk:constant-time-assumptions}) that we can estimate $v_a$ to
+high precision in constant time by sampling. Then, by the concavity of entropy, it is readily seen that for the maximum entropy program $\mathcal{H}_{r,c,\gamma}$:
+\begin{alignat*}{4}
+&\max\quad &\sum_a &v_a H\left(\frac{1 + z_a/v_a}{2}\right)\\
+&\ s.t.\quad&-v_a &\le z_a &&\le v_a &\qquad& \forall 1 \le a \le A\\
+&&{r_t/n} &\le \sum_{a : V_a \subset R_t} z_a &&\le {r_t/n} + \gamma && \forall 1 \le t \le s \\
+&&{c_t/n} &\le \sum_{a : V_a \subset C_t} z_a &&\le {c_t/n} + \gamma && \forall 1 \le t \le s,
+\end{alignat*}
+we have $n\mathcal{H}_{r,c,\gamma} = \mathcal{C}_{r,c,\gamma}$. Finally, each of these convex programs can be solved approximately using standard guarantees for the ellipsoid method \citep{gls} -- in time $2^{O(1/\epsilon^2)}$,
+the returned $z_a$ is optimal up to an additive error of $2^{-2^{1/\epsilon^2}}$, and this completes the proof. 
+\end{proof}
+
+\begin{proof}[Proofs of \cref{thm:algo-mrf-regularity-bad-dependence} and \cref{thm:algo-mrf-dependence-on-n}] The proofs of these theorems are essentially the same as the proof of \cref{thm:regularity-alg}, and therefore we will omit details. We only note that for \cref{thm:algo-mrf-regularity-bad-dependence}, we apply the following algorithmic regularity lemma of Frieze and Kannan generalizing \cref{fk-algorithmic}:
+
+\begin{theorem}[\citet{frieze-kannan-matrix}]\label{reg-fk-higher}
+Suppose $J$ is an arbitrary $k$-dimensional matrix on $X_{1}\times\dots\times X_{k}$,
+where we assume that $k\geq3$ is fixed. Let $N:=|X_{1}|\times\dots\times|X_{k}|$
+and let $\epsilon,\delta\in(0,1]$. Then, in time $O(k^{O(1)}\epsilon^{-O(\log_{2}k)}2^{\tilde{O}(1/\epsilon^{2})}\delta^{-2})$,
+we can, with probability at least $1-\delta$, find a cut decomposition
+of width $O(\epsilon^{2-2k})$, coefficient length at most $\sqrt{27}^{k}\|J\|_F/\sqrt{N}$
+and error at most $\epsilon2^{k}\sqrt{N}\|J\|_F$.
+\end{theorem}
+
+For \cref{thm:algo-mrf-dependence-on-n}, we instead use \cref{reg-alon-etal-mrf}. 
+\end{proof}
+
+
+\section{An improved result for graphs of low threshold rank}
+As in \citep{risteski-ising}, we are also able to handle graphs of low threshold rank using our methods; we refer to that paper for further discussion of low threshold rank graphs and their importance. The key additional ingredient which enables us to do so is the algorithmic regularity lemma of Gharan and Trevisan. We start with some preliminary definitions.  
+\begin{defn}
+Let $J$ be the matrix of interaction strengths of an Ising
+model and define the \emph{degree} of a vertex $u$ to be
+\[ d(u) = \sum_{v} |J_{uv}|.\]
+Let $D = diag(d(u))$ be the matrix of degrees, then
+the \emph{normalized adjacency matrix} $J_{D}$ is given by
+\[ J_{D} := D^{-1/2} J D^{-1/2} \]
+Note that the eigenvalues of $J_{D}$ lie in the interval $[-1,1]$. 
+\end{defn}
+\begin{defn}
+The \emph{$\delta$-sum-of squares threshold rank} of $J$ is defined to be $t_{\delta}(J_{D}):=\sum_{i:|\lambda_{i}|>\delta}\lambda_{i}^{2}$,
+where $\lambda_{1},\dots,\lambda_{n}$ denote the eigenvalues of $J_{D}$. 
+\end{defn}
+
+We can now state the algorithmic regularity lemma of Gharan and Trevisan. 
+\begin{theorem}[\citet{gharan-trevisan}]\label{reg-ghar-trev}
+Let $J$ be the matrix of interaction strengths of an Ising
+model, let
+$\epsilon>0$ and let $t:=t_{\epsilon/2}(J_{D})$. There exists
+a cut decomposition of $J$, $D = D^{(1)} + \cdots + D^{(s)}$, such that
+$s \le 16 t/\epsilon^2$, 
+\[ \|J - D\|_{\infty\mapsto 1} \le 4\epsilon \|J\|_1 \]
+and $|d_i|\le \sqrt{t}/m$. Furthermore this decomposition can be computed
+in $poly(n,t,1/\epsilon)$ time.
+\end{theorem}
+
+Finally, we state and prove the main result of this section.
+% This seems even less interesting in light of Mukherjee et al's result.
+%\fnote{Are there any examples
+%where we can explicitly compute the optimal $\epsilon$? Maybe this can get $o(n)$
+%error on a $d$-regular graph where $d \to \infty$ slowly see e.g. %\url{http://web.mit.edu/18.338/www/2012s/projects/yz_report.pdf}}
+\begin{theorem}
+Fix $\epsilon > 0$ and let $t = t_{\epsilon/2}(J_D)$ as in \cref{reg-ghar-trev}, then
+\[ \F - \mathcal{F}^* \le 3 \epsilon \|J\|_1 + \frac{32t}{\epsilon^2} \log\left(\frac{2 \sqrt{t} n s}{\epsilon \|J\|_1} + 1\right). \]
+\end{theorem}
+
+\begin{remark}
+As in Theorems \ref{thm:regularity-alg}, \ref{thm:algo-mrf-regularity-bad-dependence}, and \ref{thm:algo-mrf-dependence-on-n}, it is easily seen that the above result has a natural algorithmic counterpart. Unlike Theorems \ref{thm:regularity-alg} and \ref{thm:algo-mrf-regularity-bad-dependence}, this algorithm is not a constant time algorithm as \cref{reg-ghar-trev} is itself polynomial time in the size of the graph.  
+\end{remark}
+
+\begin{proof}
+We mimic the proof of Theorem~\ref{thm-main-structural-result}. Apply \cref{reg-ghar-trev} to get a matrix $D = D^{(1)} + \cdots + D^{(s)}$ and let $\mathcal{F}_D$ and $\mathcal{F^*}_D$ denote the free energy and variational energy
+of the Ising model with interaction matrix $D$; by \lemmaref{lemma: free-energy-lipschitz} we
+know
+\[ |\mathcal{F}_D - \mathcal{F}| \le \epsilon \|J\|_1, \|\mathcal{F}^*_D - \mathcal{F}| \le \epsilon\|J\|_1. \]
+Letting $Z_D$ denote the partition function of this Ising model, we see
+\[
+Z_{D}=\sum_{r,c}\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}\right)\left(\sum_{x\in\{\pm1\}^{n}:r(x)=r,c(x)=c}1\right),
+\]
+where $r=(r_{1},\dots,r_{s})$ ranges over all elements of $[-|R_{1}|,|R_{1}|]\times\dots\times[-|R_{s}|,|R_{s}|]$
+and similarly for $c$.
+Applying the argument from \lemmaref{lemma:gamma-def} now gives
+\begin{lemma}\label{lemma:gamma-def2}
+Let $J, D^{1},\dots,D^{s}$ be as above. Then, given real numbers $r_{i},r'_{i},c_{i},c'_{i}$ for each $i\in[s]$ and some 
+$\upsilon \in (0,1)$ such that $r_i,c_i,r'_i,c'_i \le n$, 
+$|r_i - r'_i| \le \upsilon n$ and $|c_i - c'_i| \le \upsilon n$ 
+for all $i\in[s]$, we get that 
+$\sum_i d_i|r'_i c'_i - r_i c_i| \le 2\sqrt{t}\upsilon ns$. 
+\end{lemma}
+\iffalse % No need for all the details.
+\begin{proof}
+From \cref{reg-ghar-trev}, we know that for all $i\in[s]$,  
+$|d_i| \le \frac{\sqrt{t}}{n}$.
+Since $ |r'_i c'_i - r_i c_i| \le |c'_i||r'_i - r_i| + |r_i||c'_i - c_i| \le 2\upsilon n^2$, it follows that
+\begin{align*}
+\sum_i d_i|r'_i c'_i - r_i c_i|
+\le \sum_i d_i 2\upsilon n^2
+\le 2\sqrt{t}\upsilon ns.
+\end{align*} 
+\end{proof}
+\fi
+As before we use this lemma to group terms.
+Accordingly, for any $r \in [-|R_1|,|R_1|]\times\dots\times[-|R_s|,|R_s|]$, $c \in [-|C_1|,|C_1|]\times\dots\times[-|C_s|,|C_s|]$ and $\upsilon > 0$, let 
+$$X_{r,c,\upsilon}:= \{x\in \{\pm1\}^{n}: |r_i(x)-r_i| \leq \upsilon n, |c_i(x)-c_i| \leq \upsilon n \text{ for all } i\in [s]\}.$$ 
+Let $I_\upsilon := \{\pm\upsilon n, \pm 3\upsilon n,\pm 5\upsilon n,\dots,\pm\ell \upsilon n\}$, where $\ell$ is the smallest odd integer satisfying $|\ell \upsilon n - n| \leq \upsilon n$, so $|I_{\upsilon}| \le 1/\upsilon + 1$. Let 
+$$Z_{D,\upsilon,\alpha}^{*}:=\max_{r,c\in I_{\upsilon}^{s}}\exp\left(\sum_{i=1}^{s}r_{i}c_{i}d_{i}+\log|X_{r,c,\alpha\upsilon}|\right).$$
+Then by following the argument from \cref{thm-main-structural-result} we find
+\begin{equation}
+\label{eqn:ltr-approx-sum-by-max-lb}
+\log Z_{D,\upsilon,1}^{*}\geq\log Z_{D}-2\sqrt{t}\upsilon ns - 2s\log |I_\upsilon| \ge \log Z_{D}-2\sqrt{t}\upsilon ns - 2s\log(1/\upsilon + 1)
+\end{equation}
+Finally, the argument from \lemmaref{lemma:epsilon-bound} now gives
+\[ \log Z^*_{D,\gamma,1} \le \mathcal{F}^*_D + 2\sqrt{t}\upsilon ns \]
+and so, letting $\upsilon = \frac{\epsilon \|J\|_1}{2 \sqrt{t} n s}$ we find
+\begin{align*}
+\mathcal{F}^*_D 
+&\ge \log Z_D - 2\sqrt{t}\upsilon ns - 2s\log(1/\upsilon + 1) \\
+&\ge \log Z_D - \epsilon \|J\|_1 - \frac{32t}{\epsilon^2} \log(\frac{2 \sqrt{t} n s}{\epsilon \|J\|_1} + 1) \\
+\end{align*}
+and finally
+\[ \mathcal{F} - \mathcal{F}^* \le 3 \epsilon \|J\|_1 + \frac{32t}{\epsilon^2} \log\left(\frac{2 \sqrt{t} n s}{\epsilon \|J\|_1} + 1\right), \]
+which completes the proof. 
+\end{proof}
+
+%moved to next paper
+
+
+\iffalse % Old overcomplicated method. May be useful to look at if
+% we want to compute the solution to variational problem using Jerrum-Sinclair.
+In the ferromagnetic Ising Model case, we know from the result of
+Jerrum and Sinclair we can estimate the partition function (not just
+the log partition function!) in $poly(n,1/\epsilon)$ time. Apparently
+this is not true for more general ferromagnetic markov random fields, like
+ferromagnetic Potts models; Andrej says they are BIS-hard (Bipartite Independent
+Set-hard?). 
+
+We show you can approximate the free energy in just $poly(1/\epsilon)$ time. Note that the only part where we need ferromagneticity is the fact that there is Jerrum and Sinclair's algorithm. Here is the idea.
+\begin{enumerate}
+\item As before, sample down to $H$.
+\item Blow up $H$ by replacing every vertex with $\kappa = poly(1/\epsilon)$
+  many copies of itself and scaling edge weights by $1/\kappa$, to produce a graph $H'''$ with edge weights $J'''$.
+\item This does not change the graphon free energy, it's invariant
+to this kind of blow-up. However I claim that the free energy
+of $H'''$ is now close to its graphon free energy.
+\item Estimate the free energy of $H'''$ using Jerrum and Sinclair's
+algorithm in time $poly(1/\epsilon, |H'''|) = poly(1/\epsilon)$.
+\end{enumerate}
+We now discuss how to prove point (3). Basically we are arguing
+that on the original graph $H$, computing the graphon free energy
+by discretizing $[0,1]$ to $poly(1/\epsilon)$ precision and
+estimating the maximum by a sum is okay.
+\begin{enumerate}
+\item Discretizing the optimization term in the objective is
+  definitely fine, this is the sort of thing we argued in our previous
+  paper.
+\item Discretizing the entropy should be fine as well (TODO).
+\item What is questionable is replacing the maximum by the log of the
+  summation of the exponentials.  Clearly the maximum lower bounds the
+  summation, but it seems the sum is over
+  $O(2^{|H|}) = 2^{poly(1/\epsilon)}$ many terms so it could be bigger
+  by this amount, which when taking the log gives an additive error of
+  $poly(1/\epsilon)$ which is unacceptable, since this is the same order
+  as the free energy...
+
+%FIXME: it should be fine actually! The biggest term is getting boosted because our weights are bigger. FIXME/TODO
+\end{enumerate}
+
+ACTUALLY INSTEAD OF DOING THIS DIRECTLY, use Theorem 5.8 from Borgs Chayes Lovasz Sos and Vesztergombi? I think they already have the quantitative bound that we need.
+
+\begin{theorem}
+(Theorem 5.8 of Borgs et al)
+\[ |\widehat{\mathcal F}  - \mathcal F| = O(\frac{1}{n^{1/4}} + \frac{\|J\|_{\infty}}{\sqrt{\log n}}) \]
+\end{theorem}
+Note the slow convergence in general is due to the $\sqrt{\log n}$, however we are also shrinking $\|J\|_{\infty}$ when we blow up; therefore, because our blow up procedure reduces the infinity norm of the weights, this will work.
+\fi
+\iffalse
+Given graph $H'''$, define $Y$ to be a random variable which
+represents the \emph{net spin} in $H$ by interpreting the blow-up of a
+vertex $v$ in $H$ as a way of discretizing the continuous spin at
+$v$. In other words,
+$Y_v = \frac{1}{\kappa} \sum_{i = 1}^{\kappa} X_{v,\kappa}$. Observe that
+\[ \Pr(Y = y) = \frac{1}{Z'} \exp\left(\sum_{u \sim v} J'''_{uv} (\sum_{i = 1}^{\kappa} X_{u,\kappa}) (\sum_{i = 1}^{\kappa} X_{v,\kappa})\right) = \frac{1}{Z'} \exp\left(\kappa \sum_{u \sim v} J_{uv} Y_u Y_v\right) \]
+and using the entropy approximation for binomial coefficient,
+\[ \Pr(Y \in [y - \epsilon, y + \epsilon]) \approx \frac{1}{Z''} \exp\left(\kappa
+    \sum_{u \sim v} J_{uv} Y_u Y_v + \kappa \sum_u H(\frac{1 +
+      y_u}{2})\right) \] which shows that as $\kappa \to \infty$, the
+distribution becomes more concentrated about the value of $y$ that
+maximizes the free energy, as desired. What remains is to make this
+rate of convergence quantitative.
+\iffalse INSTEAD what we want to do is use the fact that
+Jerrum-Sinclair lets us basically sample from the Gibbs measure,
+\[ \Pr(X = x) = \frac{1}{Z} \exp(\sum_{i,j} J_{ij} x_i x_j) \]
+I claim that after drawing $poly(1/\epsilon)$ many samples from
+this measure, we will find an approximate maximizer of
+\[ \sum_{i \sim j} J_{ij}
+      x_i x_j + \sum_i H\left(\frac{x_i +
+        1}{2}\right) \]
+i.e. $x$ which is close (in objective value) to the true free energy.
+To see this, define $Y$ to be a random variable which represents
+the \emph{net spin} in $H$. Then we have (FIXME: this is missing all sorts of normalizing constants which are important?)
+\[ \Pr(Y = y ) \approx \frac{1}{Z'} \exp\left(\sum_{i,j} J_{ij} y_i y_j + \sum_i H\left(\frac{y_i + 1}{2}\right)\right). \]
+Note there are $2^{O(m \log(1/\epsilon))}$ many possible values of $y$.
+Let
+\[ f(y) = \sum_{i,j} J_{ij} y_i y_j + \sum_i H\left(\frac{y_i + 1}{2}\right). \]
+Note that the free energy, the maximizer of the term inside the exponential,
+must be at least $m\log 2$ where $m := |H|$ because this is what we set all of the $y_i = 0$.
+Suppose the true free energy (the true maximizer) is of size $\gamma m\log 2$.
+Then I claim that it is very likely we see a sample of size $(\gamma - \epsilon)m \log 2$ in a small number of samples. This is because (first inequality is sloppy FIXME)
+\[ \Pr(f(Y) \le (\gamma - \epsilon) m \log 2) \le \frac{2^{O(m \log(1/\epsilon))}2^{(\gamma - \epsilon)m}}{2^{\gamma m} + 2^{O(m\log(1/\epsilon))} 2^{(\gamma - \epsilon)m}} \le \frac{1}{2^{\epsilon m - \log(1/\epsilon)m}} = 2^{O(\log(1/\epsilon))m - \epsilon m}  \]
+this bound is useless, the rhs is typically bigger than $1$.
+\fi
+\fi
+
+\begin{comment}
+\section{Details on Alon et al Lemma}
+\begin{theorem}
+\label{thm-alon-et-al-sampling-cutnorm}
+Suppose $G'$
+is an $r$-dimensional array on $V^{r}=V\times V\times\dots\times V$
+with all entries of absolute value at most $M'$. Let $Q$ be a random
+subset of $V$ of cardinality $q\geq1000r^{7}/\epsilon'^{6}$. Let
+$B'$ be the $r$-dimensional array obtained by restricting $G'$ to
+$Q^{r}$. Then, with probability at least $39/40$, we get 
+\[
+\|B'\|_{C}\leq\frac{q^{r}}{|V|^{r}}\|G'\|_{C}+10\epsilon'^{2}M'q^{r}+5\epsilon'q^{r}\frac{\|\vec{G'}\|_{2}}{|V|^{r/2}}
+\]
+\end{theorem}
+
+We will apply \cref{thm-alon-et-al-sampling-cutnorm} with $r=2$, $V=[n]$, $\epsilon'=$, and $G':= J'-D'$, where $J':= \frac{n}{q}J$ and $D':= \frac{n}{q}D$. Note that $$\|G'\|_{C} \leq\frac{n}{q}\epsilon n\|J\|_F,\text{ } M'\leq \frac{n}{q}\left(\|J\|_{\infty}+\frac{\sqrt{16s}\|J\|_F}{n}\right),\text{ } \|\vec{G'}\|_{2}\leq \frac{n}{q}\|J\|_F.$$
+\begin{comment}
+following Theorem with $r = 2$ for the graph case. (This is 
+from the CONFERENCE version of this paper, add reference; the final version
+of their paper has a different result which is less convenient for us.)
+Rest is copied from Vishesh's notes.
+% hard to apply this due to the need for frobenius norm bound.
+\begin{theorem}[Theorem 6 of \citep{alon-etal-samplingCSP}]
+Suppose $M$ is an $r$-dimensional array of dimensions $n \times \cdots \times n$ (a.k.a. an $r$-order tensor) indexed by a set $V$ of size $n$.
+such that
+\[ \|M\|_C \le \epsilon n^r, \quad \|M\|_{\infty} \le \frac{1}{\epsilon} 2^{2^{r + 1}}, \quad \|M\|_F \le 2^{2^r} n^{r/2}. \]
+Let $\delta,\epsilon > 0$, and suppose $n \ge \frac{10^8r^{20}}{\delta^7 \epsilon^8} e^{10/\epsilon^2}$. Let $V'$ be a random subset of $V$ of cardinality $q$ where
+\[ q \ge \frac{10^6 r^{12}}{\delta^5 \epsilon^4}\log(4/\epsilon^2). \]
+Let $M'$ be the $r$-dimensional array obtained by restricting $M$ to $V'$.
+Then with probability at least $1 - \delta$ we have
+\[ \|M'\|_C \le 2^{2^{r + 1} + 9} \frac{\epsilon}{\sqrt{\delta}} q^r \]
+\end{theorem}
+(Below copied from Vishesh's notes, not updated to use the improved theorem above.)
+\end{comment}
+
+\begin{comment}
+Thus, if $Q$ is a random subset of
+$V$  of size $q\geq2^{17}/\epsilon'^{6}$, and $J'_Q$ and $D'_Q$ denote the matrices induced on $Q\times Q$ by $J'$ and $D'$ respectively, it follows that with probability at least $39/40$, $B':=J'_Q - D'_Q$ satisfies 
+\begin{align*}
+\frac{q}{n}\|B'\|_{C} & \leq\frac{q^{2}}{n^{2}}\epsilon n\|J\|_F+10\epsilon'^{2}q^{2}\left(\|J\|_{\infty}+\frac{\sqrt{16s}\|J\|_F}{n}\right)+5\epsilon'q^{2}\frac{\|J\|_F}{n}\\
+ & \leq\epsilon\frac{q^{2}}{n^{2}}\frac{\|J\|_{1}}{\sqrt{\Delta}}+10\epsilon'^{2}q^{2}\left(\frac{\|J\|_{1}}{\Delta n^{2}}+\sqrt{16s}\frac{\|J\|_{1}}{n^{2}\sqrt{\Delta}}\right)+5\epsilon'q^{2}\frac{\|J\|_{1}}{n^{2}\sqrt{\Delta}}\\
+ & =\frac{q^{2}}{n^{2}}\frac{\|J\|_{1}}{\sqrt{\Delta}}\left(\epsilon+\frac{10\epsilon'^{2}}{\Delta}+\frac{\epsilon'^{2}\sqrt{16s}}{\sqrt{\Delta}}+\frac{5\epsilon'}{\sqrt{\Delta}}\right)\\
+ & \leq\frac{q^{2}}{n^{2}}\frac{\|J\|_{1}}{\sqrt{\Delta}}\left(\epsilon+\frac{10\epsilon'^{2}}{\Delta}+\frac{16\epsilon'^{2}}{\epsilon\sqrt{\Delta}}+\frac{5\epsilon'}{\sqrt{\Delta}}\right),
+\end{align*}
+so that choosing $\epsilon'=\epsilon\sqrt{\Delta}$, we get $\|B'\|_{C}\leq 32\epsilon q \|J\|_{1}/n\sqrt{\Delta}$. In particular, it follows from \cref{lemma: free-energy-lipschitz} that $|\log Z_{J'_Q} - \log Z_{D'_Q}|\leq 128\epsilon q \|J\|_{1}/n\sqrt{\Delta}$ with probability at least $39/40$.
+
+\begin{comment}
+In particular, if we denote by $Z_{Q}$ the (combinatorial) partition function computed
+using $\tilde{J'}$ and by $Z_{Q}'$ the partition function corresponding
+to $\tilde{J'}-B'$, we get (using Lemma 4.1 of the old paper; this is purely a statement about the cut norm) that $|\log Z_{Q}-\log Z_{Q}'|\leq O(\frac{q}{n}\frac{||J||_{1}}{\sqrt{\Delta}}\epsilon)$
+so that $|\frac{n}{q}\log Z_{Q}-\frac{n}{q}\log Z_{Q}'|\leq O(\frac{||J||_{1}}{\sqrt{\Delta}}\epsilon)$.
+The idea here is that algorithmically, we will compute $\log Z_{Q}$
+%(or an $O(\frac{q}{n}\frac{||J||_{1}}{\sqrt{\Delta}}\epsilon)=O(\frac{||qJ/n||_{1}}{\sqrt{\Delta}}\epsilon)$
+%approximation to it if we care about getting the best polynomial in
+%$poly(\frac{1}{\epsilon})$ dependence) 
+and then return $\frac{n}{q}\times\text{this quantity}$
+as our approximation to $\log Z$. For the proof of correctness, we
+will argue that w.h.p. $|\frac{n}{q}\log Z_{Q}'-\log Z'|=O(\frac{\epsilon}{\sqrt{\Delta}}||J||_{1})$
+where $Z'$ is defined below. \\
+
+We can perform a similar calculation with $Z_{Q}'$ instead of $Z'$.
+Let $\tilde{D'}:=\sum_{i=1}^{s}\tilde{D'^{(i)}}$ 
+%(this is really terrible notation...). 
+Note that now, the rows and columns are $\tilde{R_{i}}:=R_{i}\cap Q$
+and $\tilde{C_{i}}:=C_{i}\cap Q$ for all $i\in[s]$. Again, by definition,
+we have 
+\[
+Z_{Q}'=\sum_{r_{Q},c_{Q}}\exp\left(\sum_{i=1}^{s}r_{Q,i}(y)c_{Q,i}(y)\frac{d_{i}n}{q}\right)\left(\sum_{y\in\{0,1\}^{Q},r(y)=r_{Q},c(y)=c_{Q}}1\right)
+\]
+
+where now, $r_{Q}=(r_{Q,1},\dots,r_{Q,s})$ ranges over all elements
+of $[|\tilde{R}_{1}|]\times\dots\times[|\tilde{R}_{s}|]$ and similarly
+for $c_{Q}$. 
+
+Note that if $\gamma\leq\frac{\epsilon\sqrt{\Delta}}{4\sqrt{27}s}$,
+then we have (note that this depends only on the coefficient bound coming from FK regularity lemma, and does not depend on the relationship between $n$ and $\epsilon$) for any $\{r_{Q,i},r'_{Q,i},c_{Q,i},c'_{Q,i}\}_{i=1}^{s}$
+with $|r_{Q,i}-r'_{Q,i}|\leq\gamma q$ and $|c_{Q,i}-c'_{Q,i}|\leq\gamma q$
+for all $i\in[s]$ that $\sum_{i=1}^{s}|r_{Q,i}(y)c_{Q,i}(y)-r'_{Q,i}c'_{Q,i}|\frac{d_{i}n}{q}\leq\sum_{i}\frac{d_{i}n}{q}2\gamma q^{2}\leq s.\frac{n}{q}.\frac{\sqrt{27}||J||_{1}}{n^{2}\sqrt{\Delta}}.2\gamma q^{2}\leq\frac{q}{n}.\frac{\epsilon||J||_{1}}{2}$.
+
+Let $I_{Q}:=\frac{q}{n}.I$, where $.$ means
+each element of the set is multiplied by $q/n$. Defining $X_{Q,r_{Q},c_{Q}}=\{x\in\{0,1\}^{Q}\colon|r_{Q,i}(x)-r_{Q,i}|\leq\gamma q,|c_{Q,i}(x)-c_{Q,i}|\leq\gamma q$
+for all $i\in[s]\}$, we get exactly as before that $\log Z_{Q}^{*}:=\max_{r_{Q},c_{Q}\in I_{Q}^{s}}\{\sum_{i=1}^{s}r_{Q,i}c_{Q,i}\frac{d_{i}n}{q}+\log|X_{Q,r_{Q},c_{Q}}|\}$
+satisfies $|\log Z'_{Q}-\log Z_{Q}^{*}|\leq\frac{q}{n}.\frac{\epsilon||J||_{1}}{2}+2s\log|I|$,
+hence $|\frac{n}{q}\log Z'_{Q}-\frac{n}{q}\log Z_{Q}^{*}|\leq\frac{\epsilon||J||_{1}}{2}+\frac{2s\log|I|n}{q}$.
+The $2s\log|I|n/q$ term looks bad, but note that we are ultimately
+giving only an additive error guarantee of the form $O(\epsilon n+\epsilon||J||_{1})$
+and $\frac{2s\log|I|}{q}\leq\epsilon^{2}$ for our choice of $q$.
+\end{comment}
+
+\begin{comment}
+\section{Estimating the Graphon Free Energy using Convex Programming}
+In this section we will show that the graphon free energy can be
+estimated efficiently by taking the maximum of the output
+of several convex programs:
+\[ \mathcal{F}(D^{(1)} + \cdots + D^{(s)}) \approx \max_{r,c \in I^s} |\mathcal{C}_{r,c}| \]
+where $|\mathcal{C}_{r,c}|$ denotes the value of the convex program $\mathcal{C}_{r,c}$. (TODO: define
+$I, \mathcal{C}_{r,c}$.)
+
+This material can be taken straight from our previous paper (TODO).
+In particular we need the the following lemma, which shows that for estimating the contribution of the term corresponding to some vector $y$, it suffices to know the components of $y$ up to some constant precision. This reduces the optimization problem to one of constant size.  
+\begin{lemma}\label{lemma:gamma-def}
+Let $J$ denote the matrix of interaction strengths of a $\Delta$-dense Ising model, and let $J = D^{1}+\dots+D^{s} + W$ denote a cut decomposition as in \cref{fk}. Then, given $r_{i},r'_{i},c_{i},c'_{i}$ for $i\in[s]$ and some 
+$\gamma \le \frac{\epsilon \sqrt{\Delta}}{4 \sqrt{27} s}$ such that $r_i,c_i,r'_i,c'_i \le n$, 
+$|r_i - r'_i| \le \gamma n$ and $|c_i - c'_i| \le \gamma n$ 
+for all $i$, we get that 
+$\sum_i d_i|r'_i c'_i - r_i c_i| \le \epsilon ||J||_{1}/2$. 
+\end{lemma}
+\begin{proof}
+From \cref{fk}, we know that for all $i\in[s]$,  
+%\begin{equation}\label{dtbound}
+$|d_i| \le \frac{\sqrt{27} ||J||_{1}}{n^2 \sqrt{\Delta}}$.
+%\end{equation}
+\iffalse
+so using that $|R_t| \le n, |C_t| \le n$ we see that if we estimate
+the number of $+$ and $-$ in $R_t,C_t$ within an additive error of $\gamma n$,
+\fi
+Since $ |r'_i c'_i - r_i c_i| \le |c'_i||r'_i - r_i| + |r_i||c'_i - c_i| \le 2\gamma n^2$, it follows that
+\begin{align*}
+\sum_i d_i|r'_i c'_i - r_i c_i|
+\le \sum_i d_i 2\gamma n^2
+\le \frac{\sqrt{27} ||J||_{1} }{\sqrt{\Delta}} 2\gamma s
+\le %\frac{2 \sqrt{27} s}{\sqrt{\Delta}} \gamma J_T
+\frac{\eps \||J||_{1}}{2}
+\end{align*} which completes the proof. 
+%therefore taking
+%\[ \gamma \le \frac{\epsilon \sqrt{\Delta}}{4 \sqrt{27} s} \]
+%we have the desired result.
+\end{proof}
+\end{comment}
+
+\begin{comment}
+Let $x^*\in [0,1]^n$ attain $\F^*_D$, and let $r(x^*)=(r_1(x^*),\dots,r_s(x^*))$ be defined by $r_i(x^*) = \sum_{j\in R_i} x^*_j$ and similarly for $c(x^*)=(c_1(x^*),\dots,c_s(x^*))$. Let $Q$ denote a random subset of $V$, and let $x^*_Q$ denote $x^*$ restricted to the vertices in $Q$. Then, by Hoeffding's inequality, it follows that for all $i\in[s]$, $\Pr\left[\left|r_i(x^*_Q)-\frac{q}{n}r_i(x^*)\right| \geq \gamma q\right] \leq 2\exp(-2\gamma^{2}q)$, and similarly for $c_i$. Again by Hoeffding's inequality, we get $\Pr\left[\sum_{j\in Q}H(x^*_j)-\frac{q}{n}\sum_{i=1}^{n}H(x^*_i) \leq -\gamma q\right] \leq \exp(-2\gamma^{2}q)$. Therefore, by the union bound, we get that except with probability at most $(4s+1)\exp(-2\gamma^{2}q)$,  
+
+\subsection{Background on max-entropy programs}
+\begin{comment}
+NOTES ON REFERENCES.
+Useful brief reference describing statements of convex duality: Nikolov's paper\footnote{Randomized Rounding for the Largest Simplex Problem \url{https://arxiv.org/pdf/1412.0036.pdf}} section 2.2. Readable reference for the proof of Slater's condition (better than Rockafellar): unkown. In our case we can actually just use Von Neumann minimax theorem with concave-convex functions, shown later. END NOTES.
+
+Here is the convex program we are interested in, where $\gamma$ is some error tolerance parameter.
+
+\begin{alignat*}{5}
+&\max\quad &\sum_{i = 1}^n &H(x_i)\\
+&\ s.t.\quad&0 &\le x_i &&\le 1 &\quad& \forall i \in [n] \\
+&&\overline{r_t} - \gamma n &\le \sum_{i \in R_t} x_i &&\le \overline{r_t} + \gamma n && \forall t \in [s] \\
+&&\overline{c_t} - \gamma n&\le \sum_{i \in C_t} x_i &&\le \overline{c_t} + \gamma n && \forall t \in [s].
+\end{alignat*}
+recall $s$ is the number of big parts which is $O(1/\epsilon^2\Delta)$.
+\end{comment}
+
+\begin{comment}
+We will be interested in following general form of the \emph{max-entropy problem for product distributions}, henceforth referred to as the \emph{primal}:
+\begin{alignat*}{5}
+&\sup \quad &\sum_{i = 1}^n &H(x_i)\\
+&\ s.t. \quad &a_j \cdot x - b_j &\le 0 && \forall j \in [m], \\
+\end{alignat*}
+where $H(z)$ is the binary entropy function with $H(z):= -\infty$ for $z\notin [0,1]$. We will denote the optimum of this program by $OPT$. Note that the value of the objective is $-\infty$ if $x\notin [0,1]^{n}$. Therefore, since $\sum_{i=1}^{n} H(x_i)$ is strictly concave on the compact, convex set $[0,1]^{n}$, it follows that either $OPT = -\infty$ or $OPT > -\infty$ is attained by a unique point in $[0,1]^{n}$.    
+
+We define the \emph{Lagrangian} by
+\[ L(x,y) := \sum_{i = 1}^n H(x_i) - \sum_{j = 1}^m y_j (a_j \cdot x - b_j), \]
+and the \emph{Lagrange dual function} by
+\[ g(y) := \sup_{x\in \R^{n}} L(x,y) = \max_{x\in [0,1]^{n}}\left\{\sum_{i = 1}^n H(x_i) - \sum_{j = 1}^m y_j (a_j \cdot x - b_j)\right\}. \]
+%where the $x$ is unconstrained and $y$ is a nonnegative vector, denoted by $y \ge 0$ henceforth. 
+%Key properties of these functions:
+%\begin{enumerate}
+%\item $L(x,y)$ is concave in $x$ and linear in $y$. Therefore $L$ is \emph{concave-convex}.
+%\item $g(y)$ is an supremum of linear functions, hence convex.
+
+We will denote $\arg\max_{x\in [0,1]^n}L(x,y)$ by $x(y)$. Note that  
+\begin{equation}
+\label{eqn:explicit-form-x(y)}
+x_i(y) = \sigma\left(-\sum_{j=1}^{m}y_{j}a_{j,i}\right),
+\end{equation}
+where $\sigma(z):=1/(1+e^{-z})$ is the usual sigmoid function, since the point defined by the right hand side is readily seen to be a local maximum of the strictly concave function $x\mapsto L(x,y)$ on the convex set $[0,1]^{n}$. 
+
+Observe that for any $y \ge 0$, $g(y) \ge OPT$. Indeed, for $x^*$ attaining the primal optimum, we have  
+\begin{equation}\label{weak-duality}
+g(y) \ge \sum_{i = 1}^n H(x_i^*) - \sum_{j = 1}^m y_j (a_j \cdot x^* - b_j) \ge \sum_{i = 1}^n H(x_i^*) = OPT.
+\end{equation}
+%\end{enumerate}
+
+Based on this, it is natural to define the \emph{Lagrange dual problem}: %of finding the best upper bound on the primal optimum in this manner:
+\[ \inf_y g(y) \quad s.t. \quad y \ge 0. \]
+We denote the optimum of the dual program by $OPT^*$, and observe that \cref{weak-duality} shows that $OPT^* \geq OPT$. The next lemma shows that the reverse inequality also holds.   
+\begin{lemma}
+Strong duality holds, i.e. $OPT^* = OPT$.
+\end{lemma}
+\begin{proof}
+Since all the constraints in the primal are affine, Slater's condition for strong convex duality (as in \citep{rockafellar}) immediately shows that $OPT^* = OPT$. 
+%It is a general fact that because all
+%the constraints are all affine, Slater's condition shows $OPT^* = OPT$.
+%This is some version of existence of Lagrange multipliers/minimax theorem.
+%The general source for Slater's condition is Rockafellar Theorem 28.2.
+%Now we give an alternative conceptual proof.
+We provide an alternate proof, which also illustrates some ideas that will be useful later. Observe that $L(x,y)\colon [0,1]^{n} \times [0,\infty)^{m} \to \mathbb{R}$ is continuous and concave on $[0,1]^{n}$ for each $y\in [0,\infty)^{m}$, and is continuous and convex on $[0,\infty)^{m}$ for each $x\in [0,1]^{n}$. Therefore, we have  %In our case the set $x$ ranges over can be taken to be $[0,1]^n$ which is compact and convex, so from the concave-convex version of Von Neumann's minimax theorem\footnote{Often stated requiring $x$ and $y$ to live in compact sets, but an easy argument (e.g. in Sion's paper) shows only one being compact suffices. Also concave-convex version of minimax is apparently due to Shiffman.} we have:
+\[ OPT^* = \inf_{y\geq 0} \max_{x\in [0,1]^{n}} L(x,y) = \max_{x \in [0,1]^{n}} \inf_{y\geq 0} L(x,y) = \max_{x \text{ feasible for primal}} \inf_{y\geq 0}L(x,y) = \max_{x \text{ feasible for primal}} L(x,0) = OPT, \]
+where in the second equality we have used Sion's generalization of Von Neumann's minimax theorem (\citep{}), in the third equality we have used that if $x$ is infeasible for the primal then $\inf_{y\geq 0} L(x,y) = -\infty$ (by blowing up the weight of a violated constraint), and in the last equality, we have used that $\inf_{y\geq 0}L(x,y)=L(x,0)$ for any feasible $x$.
+\end{proof}
+
+\begin{comment}
+Finally we observe that if $y^*$ is an optimizer of the dual program,
+then $x^*$ is indeed the optimum of the primal.
+Because we took $y^*$ to be an optimizer of the dual program, then $g(y^*) = OPT$ so
+defining $x^*$ in terms of $y^*$ by our formula, we see the inequalities in \eqref{weak-duality} collapse and hence
+\[ g(y^*) = \sum_{i = 1}^n H(x_i^*) - \sum_{j = 1}^m y^*_j(a_j \cdot x^* - b_j) =\sum_{i = 1}^n H(x_i^*) = OPT. \]
+I claim this implies that $x^*$ is truly an optimizer of the primal; it is clear that its objective value is optimal, so we just need to check feasibility. Suppose $x^*$ is not feasible, then some constraint $j$ is violated, so $a_j \cdot x^* - b_j > 0$. Now consider increasing $y^*_j$ by a very tiny $\epsilon$ to get $y'$: clearly $L(x^*,y') < L(x,y)$ and also our calculation showed the optimizer $x^*$ was unique; by compactness and continuity of $L$, if $\epsilon$ is sufficiently small no other point $x$ can rise up to replace $x^*$, so $g(y') < g(y^*)$. In other words, $y^*$ could not have been the optimizer of the dual program --- contradiction. 
+\end{comment}
+
+\begin{comment}
+\section{Sample Complexity Bound via Strong Duality}
+%(This is copied from Vishesh's notes.)
+
+%So now, our task has been reduced to showing that $\log Z^{*}$ and
+%$\log Z_{Q}^{*}$ are ``suitable close'' w.h.p. Note again that
+%the algorithm doesn't need to compute $Z^{*},Z_{Q}^{*}$ or the cut
+%decompositions $D,\tilde{D}$ \textendash{} these are only used for
+%the proof for their tractable form, and only their existence is needed.
+%Consider the following convex program $\mathcal{C}_{r,c}$ (for some given $r,c\in I^{s}$): 
+For $r:=(r_1,\dots,r_s) \in [0,n]^s$, $c:=(c_1,\dots,c_s)\in [0,n]^s$, and $\gamma > 0$, consider the following max-entropy program $\mathcal{C}_{r,c,\gamma}$: 
+\begin{align*}
+\max & \quad \sum_{i=1}^{n}H(x_{i})\\
+s.t.\\
+\forall i\in[n]: & \quad 0\leq x_{i}\leq1 \\
+\forall t\in[s]: & \quad r_{t}-\gamma n\leq\sum_{i\in R_{t}}x_{i}\leq r_{t}+\gamma n\\
+\forall t\in[s]: & \quad c_{t}-\gamma n\leq\sum_{i\in C_{t}}x_{i}\leq c_{t}+\gamma n
+\end{align*}
+As before, by taking $H(z) = -\infty$ for $z\notin [0,1]$, we may drop the $0\leq x_i \leq 1$ constraints. We will denote the optimum of this program by $O_{r,c, \gamma}$. The dual program $\mathcal{C}^{*}_{r,c,\gamma}$ is given by
+\begin{align*}
+\inf & \quad \sum_{i=1}^{n}H\left(x_i(y)\right)-\sum_{j=1}^{m}y_{j}\left(\sum_{k=1}^{n}a_{j,k}x_k(y)-b_{j}\right)\\
+s.t.&\quad y\geq0,
+\end{align*}
+where $m=4s$; %$\sigma(x)=\frac{1}{1+e^{-x}}$, 
+for all $j\in [s]$, $a_{j,i}=1_{i\in R_{j}}$,
+$a_{s+j,i}=-1_{i\in R_{j}}$, $a_{2s+j,i}=1_{i\in C_{j}}$, $a_{3s+j,i}=-1_{i\in C_{j}}$; for all $j\in [s]$, $b_{j}=r_{j}+\gamma n$, $b_{s+j}=-r_j + \gamma n$, $b_{2s+j}= c_j +\gamma n$, $b_{3s+j} = -c_j+\gamma n$. We will find it more convenient to work with a version of the dual where $y$ is also bounded from above. Accordingly, we define the program $\mathcal{C}^{*}_{r,c,\gamma,K}$ (with $m$, $a_{j,i}$ and $b_j$ as above): 
+\begin{align*}
+\inf & \quad \sum_{i=1}^{n}H\left(x_i(y)\right)-\sum_{j=1}^{m}y_{j}\left(\sum_{k=1}^{n}a_{j,k}x_k(y)-b_{j}\right)\\
+s.t.\\
+\forall j \in [m]: &\quad 0\leq y_j \leq K/\gamma.
+\end{align*}
+The next lemma is the replacement for strong duality that we will use in this setup. 
+\begin{lemma}
+\label{lemma:modified-strong-duality}
+Let $O^{*}_{r,c,\gamma,K}$ denote the optimum of the program $\mathcal{C}^{*}_{r,c,\gamma,K}$. Then, $$O_{r,c,\gamma} \leq O^{*}_{r,c,\gamma, K} \leq \max\left\{O_{r,c,2\gamma},-(K-1)n\right\}.$$
+\end{lemma}
+\begin{proof}
+The first inequality is immediate from \cref{weak-duality}. For the second inequality, we begin by noting that  
+\begin{equation}
+\label{eqn:infeasible}
+\max_{x\text{ infeasible for }C_{r,c,2\gamma}}\min_{y\in[0,K/\gamma]^{m}}L(x,y) \leq -(K-1)n.
+\end{equation}
+Indeed, if $x$ is infeasible for $\mathcal{C}_{r,c,2\gamma}$, then $(a_{j_0}.x - b_{j_0}) \geq \gamma n$ for some $j_0\in[m]$, and taking $y = (y_1,\dots,y_m)$ with $y_i = \textbf{1}_{i=j_0}K/\gamma$ gives the desired inequality.  
+Thus, we have
+\begin{align*}
+O_{r,c,\gamma,K}^{*} & =\min_{y\in[0,K/\gamma]^{m}}\max_{x\in[0,1]^{n}}L(x,y)\\
+ & =\max_{x\in[0,1]^{n}}\min_{y\in[0,K/\gamma]^{m}}L(x,y)\\
+ & \leq\max\left\{ \max_{x\text{ feasible for }C_{r,c,2\gamma}}L(x,0),\max_{x\text{ infeasible for }C_{r,c,2\gamma}}\min_{y\in[0,K/\gamma]^{m}}L(x,y)\right\} \\
+ & \leq\max\left\{ O_{r,c,2\gamma},-(K-1)n\right\},
+\end{align*}
+where we have used the generalized minimax theorem in the second line and \cref{eqn:infeasible} in the last line. 
+
+%First, suppose that the primal program is feasible. By the minimax
+%theorem, we have $$\min_{y\in[0,O(\frac{1}{\gamma})]^{m}}\max_{x\in[0,1]^{n}}L(x,y)=\max_{x\in[0,1]^{n}}\min_{y\in[0,O(\frac{1}{\gamma})]^{m}}L(x,y).$$
+%For $x\in[0,1]^{n}$ such that $a_{j}.x-b_{j}\leq0$ for all $j\in[m]$, we have that $\min_{y\geq0}L(x,y)=L(x,0)=\sum_{i=1}^{n}H(x_{i})$.
+%For $x\in[0,1]^{n}$ such that $a_{j}.x-b_{j}\geq0.1\gamma n$ for
+%some $j\in[m]$, $\min_{y\in[0,O(\frac{1}{\gamma})]^{m}}L(x,y)\leq-1000n$
+%by taking $y_{j}=O(\frac{1}{\gamma})$ and the others to be $0$.
+%Therefore, the optimum cannot come from such an $x$. So, for parameters
+%$r,c\in I^{s}$ such that the convex program is feasible, we see that
+%$\min_{y\geq0}\max_{x\in[0,1]^{n}}L(x,y)\leq\min_{y\in[0,O(\frac{1}{\gamma})]^{m}}\max_{x\in[0,1]^{n}}L(x,y)\leq\max\sum_{i=1}^{n}H(x_{i})$
+%s.t. $0\leq x_{i}\leq1$, $\sum_{i\in R_{t}}x_{i}\in[r_{t}\pm1.1\gamma n]$
+%and $\sum_{i\in C_{t}}x_{i}\in[c_{t}\pm1.1\gamma n]$. 
+
+\end{proof}
+Let $Q$ denote a random subset of $[n]$ of size $q$, and consider the analogous max-entropy program $\mathcal{C(Q)}_{r,c,\gamma}$:
+%Note that we can get rid of the $0\leq x_{i}\leq1$ constraint by
+%setting $H(x)=-\infty$ outside $[0,1]$ without affecting concavity.
+%This convex program is associated to the following algorithm: iterate
+%through $r,c\in I^{s}$, solve the above convex program to compute
+%$H_{r,c}=OPT$ (note that $H_{r,c}=-\infty$ if the program is not
+%feasible) and return the maximum value (among all iterations) of $\sum_{i=1}^{s}r_{i}c_{i}d_{i}+H_{r,c}$.
+%We denote this maximum by $\log\overline{Z}^{*}$. Consider also the
+%analogous convex program (for some given $r_{Q},c_{Q}\in2.I_{Q}^{s}$).
+%Here we take ``larger'' boxes for concentration purposes): 
+\begin{align*}
+\max & \quad \sum_{i\in Q}H(x_{i})\\
+s.t.\\
+\forall i\in Q & \quad  0\leq x_{i}\leq1\\
+\forall t\in[s]: & \quad  r'_t-\gamma q\leq\sum_{j\in R_{t}\cap Q}x_{j}\leq r'_t+\gamma q\\
+\forall t\in[s]: & \quad c'_t-\gamma q\leq\sum_{j\in C_{t}\cap Q}x_{j}\leq c'_t+\gamma q,
+\end{align*}
+where $r'= \frac{q}{n}r$ and $c'=\frac{q}{n}c$. We will denote the optimum of this program by $O(Q)_{r,c,\gamma}$. Similarly, we can define the corresponding program $\mathcal{C(Q)}^{*}_{r,c,\gamma, K}$ with optimum $O(Q)^{*}_{r,c,\gamma, K}$, and note that by \cref{lemma:modified-strong-duality}, 
+\begin{equation}
+\label{eqn:strong-duality-sample}
+O(Q)_{r,c,\gamma} \leq O(Q)^{*}_{r,c,\gamma, K} \leq \max\left\{O(Q)_{r,c,2\gamma},-(K-1)q\right\}.
+\end{equation}
+
+\begin{lemma}
+
+\end{lemma}
+\begin{proof}
+Let $y^{*}$ denote the optimizer of $\mathcal{C}^{*}_{r,c,\gamma,K}$, so that 
+$$ O^{*}_{r,c,\gamma,K} = \sum_{i=1}^{n}H\left(\sigma\left(-\sum_{j=1}^{m}y^{*}_{j}a_{j,i}\right)\right)-\sum_{j=1}^{m}y^{*}_{j}\left(\sum_{k=1}^{n}a_{j,k}\sigma\left(-\sum_{j=1}^{m}y^{*}_{j}a_{j,k}\right)-b_{j}\right).$$ 
+Moreover, by definition, we have 
+$$ O(Q)^{*}_{r,c,\gamma,K}\leq \sum_{i\in Q}H\left(\sigma\left(-\sum_{j=1}^{m}y^{*}_{j}a_{j,i}\right)\right)-\sum_{j=1}^{m}y^{*}_{j}\left(\sum_{k\in Q}a_{j,k}\sigma\left(-\sum_{j=1}^{m}y^{*}_{j}a_{j,k}\right)-\frac{q}{n}b_{j}\right).$$
+Finally, we rewrite 
+\[
+\sum_{j=1}^{m}y_{j}^{*}\sum_{k}\left(a_{j}\sigma\left(-\sum_{j=1}^{m}y_{j}^{*}a_{j,k}\right)\right)=\sum_{k}\sum_{j=1}^{m}y_{j}^{*}a_{j}\sigma\left(-\sum_{j=1}^{m}y_{j}^{*}a_{j,k}\right),
+\]
+
+and note that Hoeffding's inequality shows that, except with probability
+at most .., the following holds:
+\begin{align*}
+\sum_{i\in Q}H\left(\sigma\left(-\sum_{j=1}^{m}y_{j}^{*}a_{j,i}\right)\right) & \leq\frac{q}{n}\sum_{i=1}^{n}H\left(\sigma\left(-\sum_{j=1}^{m}y_{j}^{*}a_{j,i}\right)\right)+..\\
+\sum_{k\in Q}\sum_{j=1}^{m}y_{j}^{*}a_{j}\sigma\left(-\sum_{j=1}^{m}y_{j}^{*}a_{j,k}\right) & \geq\frac{q}{n}\sum_{k=1}^{n}\sum_{j=1}^{m}y_{j}^{*}a_{j}\sigma\left(-\sum_{j=1}^{m}y_{j}^{*}a_{j,k}\right)-...
+\end{align*}
+
+This completes the proof. 
+
+
+
+
+\begin{comment}
+and by the same remark as before, we can drop the conditions $0\leq x_{j}\leq1$.
+This is also associated to an algorithm as above (recall that now,
+we work instead with $\frac{d_{i}n}{q}$) returning a quantity $\log\overline{Z_{Q}}^{*}=\sum_{i=1}^{s}r_{Q,i}^{*}c_{Q,i}^{*}\frac{d_{i}n}{q}+H_{r_{Q}^{*},c_{Q}^{*}}$.
+Our strategy will be to show that $\log Z^{*}$ is close to $\log\overline{Z}^{*}$,
+$\log Z_{Q}^{*}$ is close to $\log\overline{Z_{Q}}^{*}$ and w.h.p.
+$\log\overline{Z}^{*}$ is close to $\frac{n}{q}\log\overline{Z_{Q}}^{*}$.
+Note that instead of thinking of $Q$ being a random subset of size
+exactly $q$, it will be more convenient to think of $Q$ as being
+generated by choosing $q$ independent uniform elements from $V$
+with replacement. Since $q$ will ultimately be some constant depending
+on $\epsilon$ whereas $|V|=n$, the probability of any element appearing
+at least twice in $Q$ is $\frac{q^{2}}{n}$ so switching to this
+version of $Q$ doesn't really make a difference. \\
+
+For the other direction i.e. showing that if $\log\overline{Z}^{*}$
+is small, then w.h.p. $\log\overline{Z_{Q}}^{*}$ is also small, we
+run a similar argument with the (convex) dual program. The point here
+is that in our case, strong duality holds (see Fred's notes) so that
+if $\log\overline{Z}^{*}$ is small, then the answer to the dual program
+(which is a convex minimization problem) is also small. Then, we will
+use this minimizer to show that a random sample also has a small value
+w.h.p. Note that since we are working up to some error anyway, we
+don't need to worry too much about $\inf/\sup$ vs. $\min/\max$ in
+our discussion of convex duality/programming. From Fred's notes\fnote{There was an unimportant sign error there now fixed, update the expression here.}, the
+dual program (for the big program) is given by 
+\begin{align*}
+\min & \sum_{i=1}^{n}H\left(\sigma\left(\sum_{j=1}^{m}y_{j}a_{ji}\right)\right)-\sum_{j=1}^{m}y_{j}\left(\sum_{k=1}^{n}a_{jk}\sigma\left(\sum_{j=1}^{m}y_{j}a_{jk}\right)-b_{j}\right)\\
+s.t. & y\geq0
+\end{align*}
+
+
+
+\begin{align*}
+\inf & \quad \sum_{i\in Q}H\left(x_i(y)\right)-\sum_{j=1}^{m}y_{j}\left(\sum_{k\in Q}a'_{j,k}x_k(y)-b'_{j}\right)\\
+s.t.&\quad y\geq0
+\end{align*}
+
+The dual to the sampled program is
+constructed similarly and we can write it as 
+\begin{align*}
+\min & \sum_{i\in Q}H\left(\sigma\left(\sum_{j=1}^{m}y_{j}a_{ji}\right)\right)-\sum_{j=1}^{m}y_{j}\left(\sum_{k\in Q}a_{jk}\sigma\left(\sum_{j=1}^{m}y_{j}a_{jk}\right)-b'_{j}\right)\\
+s.t. & y\geq0
+\end{align*}
+
+where $b'_{j}:=\frac{q}{n}b_{j}$. 
+
+\subsection{Explicit form of dual}
+We can actually compute the $x$ which optimizes $\inf_x L(x,y)$ using
+basic calculus. Observe that at the optimizer we have
+\begin{align*}
+0 
+&= \nabla_x L(x,y)  \\
+&= \nabla_x \left(\sum_{i = 1}^n H(x_i) - \sum_{j = 1}^m y_j (a_j \cdot x - b_j)\right) \\
+&= \left(-\log(x_i/(1 - x_i)) - \sum_{j = 1}^m y_j a_{ji} e_i\right)_{i = 1}^n
+\end{align*}
+
+and because $x \mapsto -\log(x/(1 - x))$ is the same as $x \mapsto \sigma^{-1}(1 - x)$ for the usual sigmoid, this means at the optimum we have
+\[ x_i = 1 - \sigma\left(\sum_{j = 1}^m y_j a_{ji}\right) \]
+for all $i \in [n]$.
+
+Therefore we can write the Lagrange dual function explicitly as
+\[ g(y) = \sum_{i = 1}^n H\left(1 - \sigma\left(\sum_{j = 1}^m y_j a_{ji}\right)\right) - \sum_{j = 1}^m y_j \left(\sum_{k = 1}^n a_{jk}\left[1 - \sigma\left(\sum_{j = 1}^m y_j a_{jk}\right)\right] - b_j\right) \]
+\end{comment}
+\begin{comment}
+Note that for any fixed $y\geq0$
+and any $j\in[m]$, we can define i.i.d random variables $X_{1},\dots,X_{q}$
+which take values $\{H\left(\sigma\left(\sum_{j=1}^{m}y_{j}a_{ji}\right)\right)\}_{i=1}^{n}$
+with probability $1/n$. Then, $\sum_{i\in Q}H\left(\sigma\left(\sum_{j=1}^{m}y_{j}a_{ji}\right)\right)=X_{1}+\dots+X_{q}$
+so that by Hoeffding, we get that $Pr[\left|\sum_{i\in Q}H\left(\sigma\left(\sum_{j=1}^{m}y_{j}a_{ji}\right)\right)-\frac{q}{n}\sum_{i=1}^{n}H\left(\sigma\left(\sum_{j=1}^{m}y_{j}a_{ji}\right)\right)\right|\geq\gamma q]\leq\exp(-2\gamma^{2}q)$.
+Since $b'_{j}$ is just a rescaling of $b_{j}$, we only need to analyse
+the term $\sum_{j=1}^{m}y_{j}\sum_{k\in Q}a_{jk}\sigma\left(\sum_{j=1}^{m}y_{j}a_{jk}\right)=\sum_{k\in Q}\sigma\left(\sum_{j=1}^{m}y_{j}a_{jk}\right)\sum_{j=1}^{m}y_{j}a_{jk}$.
+By Hoeffding, this quantity deviates by $\gamma q$ from its expectation
+with probability at most $\exp(-\frac{2\gamma^{2}q^{2}}{q(\sum_{j=1}^{m}y_{j})^{2}})\leq\exp(-\frac{2\gamma^{2}q}{m^{2}|y_{\infty}|^{2}})=\exp(-\frac{2\gamma^{2}q}{16s^{2}|y_{\infty}|^{2}})$
+so we will be done if we can show that $|y_{\infty}^{*}|$ can be
+taken to be sufficiently small where $y^{*}$ is the optimizer of
+the dual program. In particular, we will show that we can take $|y_{\infty}^{*}|=O(\frac{1}{\gamma})$
+\end{comment}
+
+\iffalse % old paper
+\section{Reducing the number of summands using weak regularity}%Pointwise approximation
+The next lemma shows that for the purpose of additively approximating
+the log partition function, we may as well work with the matrix $D^{(1)}+\dots+D^{(s)}$. We define $Z' := \sum_x \exp(x^T(D^{(1)} + \cdots + D^{(s)}) x)$. 
+
+\begin{lemma}\label{applying-reg-lemma} Let $J$ be the matrix of interaction strengths of a $\Delta$-dense
+Ising model. For $\epsilon,\delta>0$, let $J=D^{(1)}+\dots+D^{(s)}+W$
+be a cut decomposition of $J$ as in \cref{fk}.Then, for $Z$ and $Z'$ as above, we have 
+$|\log Z-\log Z'|\leq\frac{4\epsilon}{\sqrt{\Delta}}||J||_{1}$.
+
+\end{lemma}
+\begin{proof}
+Note that for any $x\in\{\pm1\}^{n}$, we have 
+\begin{align*}
+|\sum_{i,j}J_{i,j}x_{i}x_{j}-\sum_{i,j}(D^{(1)}+\dots+D^{(s)})_{i,j}x_{i}x_{j}| & =|\sum_{i}(\sum_{j}W_{i,j}x_{j})x_{i}| \leq|\sum_{i}|\sum_{j}W_{i,j}x_{j}|\\
+ & \leq||W||_{\infty\mapsto1} \leq4\epsilon n\|J\|_F
+\end{align*}
+Therefore, for any $x\in\{\pm1\}^{n}$, we have 
+%\[
+%\exp(-4\epsilon n||J||_{F}+\sum_{i,j}
+%(D^{(1)}+\dots+D^{(s)})_{i,j}x_{i}x_{j})\leq\exp(\sum_{i,j}J_{i,j}x_{i}x_{j})\leq\exp(4\epsilon %n||J||_{F}+\sum_{i,j}(D^{(1)}+\dots+D^{(s)})_{i,j}x_{i}x_{j})
+%\]
+\[
+\exp(\sum_{i,j}J_{i,j}x_{i}x_{j}) \in \left[ \exp\left(\sum_{i,j}(D^{(1)}+\dots+D^{(s)})_{i,j}x_{i}x_{j}) \pm 4\epsilon n\|J\|_F\right) \right].
+\]
+Taking first the sum of these inequalities over all $x\in\{\pm1\}^{n}$
+and then the log, we get 
+%\[
+%\log\sum_{x\in\{\pm1\}^{n}}\exp(x^{T}(D^{(1)}+\dots+D^{(s)})x)-4\epsilon n||J||_{F}
+%\leq\log Z\leq\log\sum_{x\in\%{\pm1\}^{n}}\exp(x^{T}(D^{(1)}+\dots+D^{(s)})x)+4\epsilon n||J||_{F}
+%\]
+\[
+\log Z \in \left[ \log\sum_{x\in\{\pm1\}^{n}}\exp \left(x^{T}(D^{(1)}+\dots+D^{(s)})x \right) \pm 4\epsilon n\|J\|_F \right]
+\]
+Finally, noting that $\|J\|_F^{2}=\sum_{i,j}|J_{i,j}|^{2}\leq||J||_{\infty}||J||_{1}\leq\frac{||J||_{1}^{2}}{\Delta n^{2}}$, and the proof follows.  
+\end{proof}
+
+
+%So far, we have seen how the problem of estimating the log partition function can be reduced to the problem of approximating $\log Z'$, where
+%$Z' := \sum_x \exp(x^T(D^{(1)} + \cdots + D^{(s)}) x)$
+%%within additive error $\epsilon J_T$ for some $\epsilon > 0$. 
+%We will now show how to find this approximation using Algorithm~\ref{convex-partition}. %First, we need a few definitions.
+
+Recall that for each $i\in[s]$, $D^{(i)} = CUT(R_i,C_i,d_i)$ is a cut
+matrix between vertex sets $R_i$ and $C_i$.
+We pass to a common refinement of all of the $R_i$'s and $C_i$'s. This
+gives at most $r \le 2^{2s}$ disjoint sets $V_1, \ldots, V_r$ such that
+that every one of the $R_i$'s and $C_i$'s is a union of these ``atoms'' $V_a$. 
+%Let $v_a := |V_a|/n$ be the relative size of the set $V_a$. 
+In terms of these $V_a$'s, we can define another approximation $Z''$ to the partition function: 
+\[
+Z'':=\sum_{y}\exp\left(\sum_{i=1}^{s}r'(y)_{i}c'(y)_{i}d_{i}+\sum_{a=1}^{r}|V_{a}|H(y_{a}/|V_{a}|)\right)
+\]
+where $y$ ranges over all elements of $[|V_{1}|]\times\dots\times[|V_{r}|]$,
+$r'(y)_{i}:=\sum_{a\colon V_{a}\subseteq R_{i}}(2y_{a}-|V_{a}|)$,
+$c'(y)_{i}:=\sum_{a\colon V_{a}\subseteq C_{i}}(2y_{a}-|V_{a}|)$
+and $H(p):=-p\log p-(1-p)\log(1-p)$ is the binary entropy function. 
+Note that $r'(y)_{i}$ represents the net spin in $R_{i}$, and similarly for $c'(y)_{i}$. The next lemma shows that for approximating $\log{Z'}$, it suffices to obtain an approximation to $\log{Z''}$. Combined with \cref{applying-reg-lemma}, we therefore see that approximating $\log{Z''}$ is sufficient for approximating $\log{Z}$.  
+
+\begin{lemma}\label{z''-approx}
+For $Z'$ and $Z''$ as above, we have $|\log Z' - \log Z''| = O(2^{2s} \log n)$.
+\end{lemma}
+\begin{proof}
+See \cref{app:z''approx}. 
+\begin{comment}
+First, observe that $x^T D^{(i)} x = d_i \sum_{a \in R_i, b \in C_i} x_a x_b = d_i (\sum_{a \in R_i} x_a)(\sum_{b \in C_i} x_b)$. 
+Thus, letting $r'_i(x) := \sum_{a \in R_i} x_a$ and $c'_i(x) := \sum_{b \in C_i} x_b$, we see that that
+\[ Z' = \sum_x \exp(x^T(D^{(1)} + \cdots + D^{(s)}) x) = \sum_{x} \exp\left(\sum_i r'_i(x) c'_i(x) d_i\right). \]
+Re-expressing the summation in terms of the possible values that $r'_i(x)$ and $c'_i(x)$ can take, we get that
+\[ Z' = \sum_{r',c'} \exp\left(\sum_i r'_i c'_i d_i\right) \sum_{\substack{x \\ r'(x) = r' \\ c'(x) = c'}} 1. \]
+where $r'$ ranges over all elements of $[|R_{1}|]\times\dots\times[|R_{s}|]$,
+$r':=(r'_{1},\dots,r'_{s})$, $r'(x):=(r'_{1}(x),\dots,r'_{s}(x))$
+and similarly for $c'$ and $c'(x)$. 
+Next, since 
+\[ \sum_{\substack{x \in \{\pm1\}^{n} \\ r'(x) = r'\\ c'(x) = c'}} 1 = \sum_{\substack{y \in [|V_{1}|]\times\dots\times[|V_{r}|]\\ r'(y) = r'\\ c'(y) = c'}} \prod_a {|V_a| \choose y_a} \]
+%where $y_a$ denotes the number of $+$-spins in atom $V_a$,
+it follows that  $Z' = \sum_{y} \exp\left(\sum_i r'(y)_i c'(y)_i d_i\right)  \prod_a {|V_a| \choose y_a}$. Finally, we apply Stirling's formula
+%\[ \log {n \choose \alpha n} = n H(\alpha) + O(\log n). \] to get the desired result.
+\end{comment}
+\end{proof}
+
+\section{Approximating the reduced sum in constant time using convex programming}
+%{Finding the Bulk Contribution to the Partition Function}
+So far, we have seen how the problem of estimating the log partition function can be reduced to the problem of approximating $\log Z''$. 
+%We will now show how to carry out this approximation using Algorithm~\ref{convex-partition}. Throughout, we will use $v_a$ to denote $|V_a|/n$ i.e. the relative size of the set $V_a$. 
+The next simple lemma reduces the estimation of $\log{Z''}$ to an optimization problem.
+\begin{lemma}\label{approx-sum-by-max}
+Let $y^{\ast}:=\arg\max_{y}\exp\left(\sum_{i}r'_i(y)c'_i(y)d_{i}+\sum_{a}|V_{a}|H(y_{a}/|V_{a}|)\right)$.
+Then, 
+\[
+\left|\log Z''-\left(\sum_{i}r'_i(y^{\ast})c'_i(y^{\ast})d_{i}+\sum_{a}|V_{a}|H(y_{a}^{\ast}/|V_{a}|)\right)\right|\leq2^{2s}\log n.
+\]
+\end{lemma}
+\begin{proof}
+This follows immediately by noting that $Z''$, which is a sum of at most $n^{2^{2s}}$ many nonnegative summands, is at least as large as its largest summand, and no larger than $n^{2^{2s}}$ times its largest summand. 
+\end{proof}
+The following lemma shows that for estimating the contribution of the term corresponding to some vector $y$, it suffices to know the components of $y$ up to some constant precision. This reduces the optimization problem to one of constant size.  
+\begin{lemma}\label{lemma:gamma-def}
+Let $J$ denote the matrix of interaction strengths of a $\Delta$-dense Ising model, and let $J = D^{1}+\dots+D^{s} + W$ denote a cut decomposition as in \cref{fk}. Then, given $r_{i},r'_{i},c_{i},c'_{i}$ for $i\in[s]$ and some 
+$\gamma \le \frac{\epsilon \sqrt{\Delta}}{4 \sqrt{27} s}$ such that $r_i,c_i,r'_i,c'_i \le n$, 
+$|r_i - r'_i| \le \gamma n$ and $|c_i - c'_i| \le \gamma n$ 
+for all $i$, we get that 
+$\sum_i d_i|r'_i c'_i - r_i c_i| \le \epsilon ||J||_{1}/2$. 
+\end{lemma}
+\begin{proof}
+From \cref{fk}, we know that for all $i\in[s]$,  
+%\begin{equation}\label{dtbound}
+$|d_i| \le \frac{\sqrt{27} ||J||_{1}}{n^2 \sqrt{\Delta}}$.
+%\end{equation}
+\iffalse
+so using that $|R_t| \le n, |C_t| \le n$ we see that if we estimate
+the number of $+$ and $-$ in $R_t,C_t$ within an additive error of $\gamma n$,
+\fi
+Since $ |r'_i c'_i - r_i c_i| \le |c'_i||r'_i - r_i| + |r_i||c'_i - c_i| \le 2\gamma n^2$, it follows that
+\begin{align*}
+\sum_i d_i|r'_i c'_i - r_i c_i|
+\le \sum_i d_i 2\gamma n^2
+\le \frac{\sqrt{27} ||J||_{1} }{\sqrt{\Delta}} 2\gamma s
+\le %\frac{2 \sqrt{27} s}{\sqrt{\Delta}} \gamma J_T
+\frac{\eps \||J||_{1}}{2}
+\end{align*} which completes the proof. 
+%therefore taking
+%\[ \gamma \le \frac{\epsilon \sqrt{\Delta}}{4 \sqrt{27} s} \]
+%we have the desired result.
+\end{proof}
+
+We now
+present Algorithm~\ref{convex-partition}
+which approximates the log of the largest summand in $Z''$ by iterating over all possible proportions of up-spins in each block $R_i, C_i$. For each proportion, it 
+approximately solves the following convex program $\mathcal{C}_{\overline{r},\overline{c}}$ (where $\gamma$ is as before, $\lambda$ is a parameter to be specified, and $v_a := |V_a|/n$):
+\begin{alignat*}{4}
+&\max\quad &\sum_a &v_a H(z_a/v_a)\\
+&\ s.t.\quad&0 &\le z_a &&\le v_a & \\
+&&\overline{r_t} &\le \sum_{a : V_a \subset R_t} z_a &&\le \overline{r_t} + \gamma  \\
+&&\overline{c_t} &\le \sum_{a : V_a \subset C_t} z_a &&\le \overline{c_t} + \gamma.
+\end{alignat*}
+The infeasibility of this program means that our ``guess'' for the proportion of up-spins in the various $R_i,C_i$ is not combinatorially possible (recall that there may be significant overlap between the various $R_i,C_i$. On the other hand, if this program is feasible, then we actually obtain an approximate maximum entropy configuration with roughly the prescribed number of up-spins in $R_i,C_i$, $i\in[n]$. Calculating the contribution to $Z''$ of such a configuration, and maximizing this contribution over all iterations gives a good approximation\footnote{A slightly
+better approximation to $\log Z''$ can be found by 
+%instead of solving a convex program to find the max-entropy contribution of each region, instead 
+estimating the discrete sum over each region by an integral (using Lemma~\ref{lemma:entropy-rounding} to bound the error), and approximating this integral via the hit-and-run random walk of \citep{lovasz2006fast}. However, this algorithm
+is slower than Algorithm~\ref{convex-partition}, and it turns out the gain in accuracy is negligible for our application.}\label{footnote}
+to the maximum summand of $Z''$, and hence to $Z''$. This is the content of the next lemma. 
+\begin{algorithm}
+\caption{Convex programming method to estimate log partition unction}
+\label{convex-partition}
+\begin{algorithmic}
+\State Let $S = \{0, \gamma, 2\gamma, \ldots, \lfloor 1/\gamma \rfloor \gamma \}$.
+\State $M \gets 0$.
+\For{$\overline{r} \in S^{s}, \overline{c} \in S^{s}$}
+\State Either find a $\lambda$-approximate solution to, or verify infeasibility of, $\mathcal{C}_{\overline{r},\overline{c}}$. (e.g. by ellipsoid method \citep{gls}) 
+\If{$\mathcal{C}_{\overline{r},\overline{c}}$ is feasible}
+\State Let $H_{\overline r,\overline c}$ denote the %$\epsilon ||J||_{1}$
+$\lambda$-approximate maximum value of $\mathcal{C}_{\overline{r},\overline{c}}$.
+\State Let $r'_i = 2n \overline{r_i} - |R_i|$ and $c'_i = 2n \overline{c_i} - |C_i|$.
+\State Let $M_{\overline r,\overline c} = \exp\left(\sum_i r'_i c'_i d_i +  n H_{\overline{r},\overline{c}}\right)$.
+\State $M \gets \max(M, M_{\overline r,\overline c})$.
+\EndIf
+\EndFor
+\State \Return $\log{M}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{comment}
+We now explain how to choose the rounding parameter $\gamma$.
+\begin{lemma}\label{lemma:gamma-def}
+Suppose $|r_i - r'_i| \le \gamma n$ and $|c_i - c'_i| \le \gamma n$,
+and $r_i,c_i,r'_i,c'_i \le n$
+for all $i$, and
+\[ \gamma \le \frac{\epsilon \sqrt{\Delta}}{4 \sqrt{27} s} \]
+Then
+\[ \sum_i d_i|r'_i c'_i - r_i c_i| \le \epsilon J_T/2. \]
+\end{lemma}
+\begin{proof}
+Note that from the above we know 
+%\begin{equation}\label{dtbound}
+\[ |d_t| \le \frac{\sqrt{27} J_T}{n^2 \sqrt{\Delta}} \]
+%\end{equation}
+\iffalse
+so using that $|R_t| \le n, |C_t| \le n$ we see that if we estimate
+the number of $+$ and $-$ in $R_t,C_t$ within an additive error of $\gamma n$,
+\fi
+so using that
+\[ |r'_i c'_i - r_i c_i| \le |c'_i||r'_i - r_i| + |r_i||c'_i - c_i| \le 2\gamma n^2 \]
+we see
+\begin{align*}
+\sum_i d_i|r'_i c'_i - r_i c_i|
+\le \sum_i d_i 2\gamma n^2
+\le \sum_i \frac{\sqrt{27} J_T}{\sqrt{\Delta}} 2\gamma
+\le \frac{2 \sqrt{27} s}{\sqrt{\Delta}} \gamma J_T
+\end{align*}
+therefore taking
+\[ \gamma \le \frac{\epsilon \sqrt{\Delta}}{4 \sqrt{27} s} \]
+we have the desired result.
+\end{proof}
+\end{comment}
+
+\begin{lemma}\label{convex-partition-correctness}
+The output of Algorithm~\ref{convex-partition} is an $\epsilon ||J||_{1} + \lambda n + O(2^{2s}\log n)$
+additive approximation to $\log Z''$ when $n \geq \frac{4\sqrt{27}s2^{2s}}{\sqrt{\Delta} \epsilon}$.
+\end{lemma}
+\begin{proof}
+\begin{comment}
+Recall that
+\[ Z'' = \sum_{y} \exp\left(\sum_i r'(y)_i c'(y)_i d_i + \sum_a |V_a| H(y_a/V_a)\right) \]
+Observe that if 
+$y$ is an arbitrary term in the sum and $y^*$ corresponds
+to the largest term in the sum,
+we know that
+\begin{align}
+Z'' &\ge\exp\left(\sum_i r'(y)_i c'(y)_i d_i + \sum_a |V_a| H(y_a/V_a)\right), \label{z''-below} \\
+Z'' &\le n^{2^{2s}} \exp\left(\sum_i r'(y^*)_i c'(y^*)_i d_i + \sum_a |V_a|, \label{z''-above} H(y^*_a/V_a)\right).
+\end{align}
+We will use these bounds to relate $Z''$ to the output $M$ of Algorithm~\ref{convex-partition}.
+\end{comment}
+By \cref{approx-sum-by-max}, it suffices to prove the claim with $\log{Z''}$ replaced by 
+%Let $y^{*}$ be as in \cref{approx-sum-by-max} and recall that we reduced approximating $\log Z''$ 
+%to estimating
+\[ \sum_{i}r'_i(y^{\ast})c'_i(y^{\ast})d_{i}+\sum_{a}|V_{a}|H(y_{a}^{\ast}/|V_{a}|). \]
+where $y^{*}$ is defined as in the statement of \cref{approx-sum-by-max}.
+Let $\overline{r},\overline{c}$ correspond to the ``cell'' which $y^*/n$ falls into,
+i.e. the values of $\overline{r},\overline{c}$ such that for the corresponding
+$r',c'$, we have $r' \le r'(y^*)$,$c' \le c'(y^*)$, $|r' - r'(y^*)| \le \gamma n$
+and $|c' - c'(y^*)| \le \gamma n$. Since $H_{\overline{r},\overline{c}}$ 
+is the result of solving $\mathcal{C}_{\overline{r},\overline{c}}$ up to $\lambda$
+additive error and since $y^*/n$ is in the feasible region of the convex program by definition, it follows that
+\[ n H_{\overline{r},\overline{c}} \ge n \sup_{z} \sum_a v_a H(z_a/v_a) - \lambda n \ge \sum_a |V_a| H(y^*_a/|V_a|) - \lambda n \]
+where $z$ ranges over the feasible region for $\mathcal{C}_{\overline{r},\overline{c}}$.
+Combining this with Lemma~\ref{lemma:gamma-def} gives 
+\begin{align*}
+\sum_i &r'_i(y^*) c'_i(y^*) d_i + \sum_a |V_a| H(y^*_a/|V_a|) - \log M_{\overline{r},\overline{c}} \\
+&\le \sum_i d_i (r'_i(y^*)_i c'_i(y^*) - r'_i c'_i) + \sum_a |V_a| H(y^*_a/|V_a|) - n H_{\overline{r},\overline{c}} \\
+&\le \sum_i d_i |r'(y^*) c'(y^*) - r'_i c'_i| + \lambda n \le \epsilon ||J||_{1}/2 + \lambda n.
+\end{align*}
+%therefore by \eqref{z''-above}
+%\[ \log M \ge \sum_i r'(y^*)_i c'(y^*)_i d_i + \sum_a |V_a| H(y^*_a/V_a) - \epsilon J_T/2 - n\lambda \ge \log Z'' - 2^{2s} \log n - \epsilon J_T/2 - \lambda n. \]
+On the other hand, we know that $M = M_{\overline r,\overline c}$ for some
+$\overline{r},\overline{c}$. Let $z$ denote the point at which the $\lambda$-approximate optimum to 
+the convex program $\mathcal{C}_{\overline r, \overline c}$ was attained. Define $y_a$ to be $\lceil z_a n \rceil$ if $z_a n \le |V_a|/2$ and to be
+$\lfloor z_a n \rfloor$ otherwise. Similar to the inequality above, we get 
+\begin{align*}
+\log M_{\overline{r},\overline{c}}-&\sum_{i}r'_i(y^{\ast})c'_i(y^{\ast})d_{i}+\sum_{a}|V_{a}|H(y_{a}^{\ast}/|V_{a}|)\\ 
+&\leq\log M_{\overline{r},\overline{c}}-\sum_{i}r'_i(y)c'_i(y)d_{i}-\sum_{a}|V_{a}|H(y_{a}/|V_{a}|)\\
+%% Unecessary, cut line to shorten display
+% & \leq\left(nH_{\overline{r},\overline{c}}-\sum_{a}|V_{a}|H(y_{a}/|V_{a}|)\right)+\left(\sum_{i}r'_{i}c'_{i}d_i-\sum_{i}r'_i(y)c'_i(y)d_{i}\right)\\
+ & =\sum_{a}\{|V_{a}|H(z_{a}n/|V_{a}|)-|V_{a}|H(y_{a}/|V_{a}|\}+\sum_{i}r'_{i}c'_{i}d_{i}-\sum_{i}r'_i(y)c'_i(y)d_{i}\\
+%% Unecessary, cut line to shorten display
+% & \leq2^{2s}\log5+\left|\sum_{i}r'_{i}c'_{i}d_{i}-\sum_{i}r'_i(y)c'_i(y)d_{i}\right|\\
+ & \leq2^{2s}\log5+\left|\sum_{i}r'_{i}c'_{i}d_{i}-\sum_{i}r'_i(zn)c'_i(zn)d_{i}\right|+\left|\sum_{i}r'_{i}(zn)c'_{i}(zn)d_{i}-\sum_{i}r'_i(y)c'_i(y)d_{i}\right|\\
+ & \leq2^{2s}\log5+\frac{\epsilon||J||_{1}}{2}+\left|\sum_{i}r'_{i}(zn)c'_{i}(zn)d_{i}-\sum_{i}r'_i(y)c'_i(y)d_{i}\right|
+\end{align*}
+where $r'$ and $c'$ are as defined in Algorithm~\ref{convex-partition} in terms of $\overline{r}$ and $\overline{c}$,
+in the second inequality, we have used \cref{lemma:entropy-rounding} and the triangle inequality, and in the
+last line, we have used \cref{lemma:gamma-def}.
+To bound the last term, since $|y_{a}-z_{a}n|\leq1$ for all $a$ by definition,
+and since $|d_{i}|\leq\frac{\sqrt{27}||J||_{1}}{n^{2}\sqrt{\Delta}}$
+by \cref{fk}, we get 
+\begin{align*}
+|\sum_{i}r'_{i}(zn)c'_{i}(zn)d_{i}-\sum_{i}r'(y)_{i}c'(y)_{i}d_{i}| & \leq\sum_{i}|d_{i}||r'_{i}(y)||c'_{i}(y)-c'_{i}(zn)|+\sum_{i}|d_{i}||c'_{i}(zn)||r'_{i}(y)-r'_{i}(zn)|\\
+ & \leq\sum_{i}|d_{i}||R_{i}||\sum_{a\colon V_{a}\subseteq C_{i}}2|+\sum_{i}|d_{i}||C_{i}||\sum_{a\colon V_{a}\subseteq C_{i}}2|\\
+ & \leq2\sum_{i}|d_{i}|n2^{2s}\leq\frac{\sqrt{27}||J||_{1}2^{2s+1}s}{n\sqrt{\Delta}}\\
+ & \leq\frac{\epsilon||J||_{1}}{2}
+\end{align*}
+provided that $n\geq\frac{4s\sqrt{27}2^{2s}}{\sqrt{\Delta}\epsilon}$,
+which finishes the proof.
+
+\begin{comment}
+By Lemma~\ref{lemma:entropy-rounding}
+we know that % $|V_a| |H(y_a/nv_a) - H(z_a)|\le \log 5$ so 
+\[ \sum_a |V_a| (H(y_a/|V_a|) - H(z_a)) \le 2^{2s} \log 5. \]
+Also we have from our bound on $|d_i|$ that
+\begin{align*}
+\sum_i |d_i| |r'(y) c'(y) - r'(zn)c'(zn)| 
+&\le \sum_i |d_i| (|r'(y)||c'(y) - c'(zn)| + |c'(zn)||r'(y) - r'(zn)|) \\
+&\le \sum_i 4|d_i|n \le \frac{4\sqrt{27} s J_T}{n \sqrt{\Delta}}
+\end{align*}
+Similar to above we see by Lemma~\ref{lemma:gamma-def} our bound on $|d_i|$ that
+\begin{align*}
+\sum_i d_i|r'(y) c'(y) - r' c'| 
+&\le \sum_i d_i|r'(zn) c'(zn) - r' c'| + \sum_i d_i |r'(y) c'(y) - r'(zn)c'(zn)| \\
+&\le \epsilon J_T/2 + \frac{4\sqrt{27} s J_T}{n \sqrt{\Delta}}
+\end{align*}
+and so by \eqref{z''-below}
+\begin{align*}
+\log M
+&\le \sum_i r'(y)_i c'(y)_i d_i + \sum_a |V_a| H(y_a/V_a) + \epsilon J_T/2 + \frac{4\sqrt{27} s J_T}{n \sqrt{\Delta}} + O(2^{2s}) \\
+&\le \log Z'' + \epsilon J_T/2 + \frac{4\sqrt{27} s J_T}{n \sqrt{\Delta}} + O(2^{2s})
+\end{align*}
+
+Combining our bounds on $\log M$ we find that
+\[ |\log M - \log Z''| \le \epsilon J_T/2 + \frac{4\sqrt{27} s J_T}{n \sqrt{\Delta}}| + O(2^{2s}\log n) + \lambda n. \]
+Finally if $n \ge \frac{8 \sqrt{27} s}{\sqrt{\Delta} \epsilon}$ then $\frac{4\sqrt{27} s J_T}{n \sqrt{\Delta}}| \le \epsilon J_T/2$
+so we get our desired result.
+%and using that $|J_T| = \Omega(n)$ gives the claimed result.
+\end{comment}
+\end{proof}
+\begin{lemma}\label{lemma:entropy-rounding}
+Let $n$ be a natural number, and let $0 \le z \le n$. Let $y = \lceil z \rceil$ if $z \le n/2$
+and $y = \lfloor z \rfloor$ if $z > n/2$. Then,
+$nH(y/n) \ge nH(z/n) - \log(5)$.
+\end{lemma}
+\begin{proof}
+Observe that if both $y,z \le n/2$ or both $y,z \ge n/2$ then
+this is immediate, since entropy is concave and maximized at $1/2$, thereby implying that $H(y/n) > H(z/n)$. In the remaining case, $y/n$ and $z/n$ are on opposite
+sides of $1/2$. By the definition of $y$, we know that $|y/n - z/n| \le 1/n$, and hence, by the Mean Value Theorem, $n|H(y/n) - H(z/n)| = n|H'(x/n)(y/n - z/n)| \le |H'(x/n)|$ for some $x$ with $|x/n - 1/2| \le 1/n$.  Thus, if $n \ge 3$ we have $x/n \in [1/6,5/6]$ so that
+$|H'(x/n)| = |\log((x/n)/(1 - x/n))| \le \log 5$.
+If $n \le 2$, then we already have $nH(z/n) - nH(y/n) \le nH(z/n) \le 2\log2 < \log5$. 
+\end{proof}
+
+\section{Putting it all Together}
+
+\begin{proof}(\cref{thm-Delta-dense})
+First, we show how to get such an algorithm with constant success probability (i.e. $7/8$). We will then boost it to the desired probability of success using the standard median technique. 
+The constant success algorithm is just 
+Algorithm~\ref{convex-partition} applied to the weakly regular partition generated by Theorem~\ref{fk} with regularity parameter some $\epsilon' = O(\epsilon \sqrt{\Delta})$.
+
+Finally, to boost our success probability to $1 - \delta$, we use the standard median trick, which is to repeat the algorithm $O(\log(1/\delta))$ times independently and take the median of these outputs -- that this works is easily proven by the standard Chernoff bounds.
+\end{proof}
+\fi
+
+\begin{comment}
+\section{Appendix: Extensions}
+%\fnote{above is a binary MRF, should we allow general alphabets? or is there
+%an easy reduction in the dense setting. we could also if we wanted drop the uniformity assumption
+%and apply regularity to each tensor separately...}
+\subsection{General Markov random fields}
+\label{mrf}
+For simplicity, we will restrict ourselves to %$k$-uniform 
+Markov random fields over a binary alphabet. 
+%with otherwise arbitrary interactions
+It is readily seen that the same techniques extend to 
+%non-uniform 
+Markov random fields over general finite alphabets as well.  
+\begin{defn} A \emph{binary Markov random field of order $K$} is a probability distribution on the discrete cube $\{\pm1\}^n$ of the form 
+\[
+\Pr[X=x]=\frac{1}{Z}\exp(\sum_{k=1}^{K}\sum_{i_{1},\dots,i_{k}=1}^{n}J_{i_{1}\dots i_{k}}^{(k)}x_{i_{1}}\dots x_{i_{k}})
+\]
+where for each $k$, $\{J^{(k)}_{i_{1},\dots,i_{k}}\}_{i_{1},\dots,i_{k}\in[n]}$ is an
+arbitrary collection of real numbers. Note that the sum $\sum_{i_{1},\dots,i_{k}}J^{(k)}_{i_{1},\dots,i_{k}}x_{i_{1}}\dots x_{i_{k}}$
+may also be viewed as $J^{(k)}(x,\dots,x)$, where $J^{(k)}$ is a $k$-multilinear
+map or $k$-tensor with $J^{(k)}(e_{i_{1}},\dots,e_{i_{k}})=J^{(k)}_{i_{1},\dots,i_{k}}$. Here, $e_{j}$ denotes the $j^{th}$ standard basis vector of $\R^{n}$
+and we view $\{\pm1\}^{n}$ as a subset of $\R^{n}$. The normalizing
+constant $Z=\sum_{x\in\{\pm1\}^{n}}\exp(\sum_{k=1}^{K}J^{(k)}(x,\dots,x))$ is called
+the \emph{partition function }of the Markov random field. Moreover, if all entries of all $J^{(i)}$, $i\in[K]\backslash{k}$ vanish, then we say that the Markov random field is $k$-uniform.  
+\end{defn}
+\begin{defn}
+A binary Markov random field of order $K$ is \emph{$\Delta$-dense} if $\Delta||\vec{J^{(k)}}||_{\infty}\leq\frac{||\vec{J^{(k)}}||_{1}}{n^{k}}$ for all $k$.
+\end{defn}
+As indicated earlier, our approach for general Markov random fields
+mirrors our approach for the Ising model. This is essentially because
+one has a similar algorithmic regularity lemma for general $k$-dimensional
+matrices. 
+
+\begin{defn}
+A $k$-dimensional matrix $M$ on $X_{1}\times\dots\times X_{k}$
+is a map $M\colon X_{1}\times\dots\times X_{k}\rightarrow\R$. 
+\end{defn}
+
+\begin{defn}
+For $S_{i}\subseteq X_{i}$, $i=1,\dots,k$ and a real number $d$,
+we define the $k$-dimensional matrix 
+\[
+CUT(S_{1},\dots,S_{k};d)(e)=\begin{cases}
+d & e=(x_{1},\dots,x_{k})\in S_{1}\times\dots\times S_{k}\\
+0 & \text{otherwise}
+\end{cases}
+\]
+\end{defn}
+\begin{theorem}\citep{frieze-kannan-matrix}\label{reg-fk-higher}
+Suppose $J$ is an arbitrary $k$-dimensional matrix on $X_{1}\times\dots\times X_{k}$,
+where we assume that $k\geq3$ is fixed. Let $N:=|X_{1}|\times\dots\times|X_{k}|$
+and let $\epsilon,\delta\in(0,1]$. Then, in time $O(k^{O(1)}\epsilon^{-O(\log_{2}k)}2^{\tilde{O}(1/\epsilon^{2})}\delta^{-2})$,
+we can, with probability at least $1-\delta$, find a cut decomposition
+of width $O(\epsilon^{2-2k})$, coefficient length at most $\sqrt{27}^{k}\|J\|_F/\sqrt{N}$
+and error at most $\epsilon2^{k}\sqrt{N}\|J\|_F$. \\
+\end{theorem}
+As in the $k=2$ case, the error of the cut decomposition refers
+to $||J-(D^{(1)}+\dots+D^{(s)})||_{\infty\mapsto1}:=\sup_{||x||_{\infty}\leq1}||J-(D^{(1)}+\dots+D^{(s)})||_{1}$,
+where we view a $k$-dimensional matrix $M$ as a linear operator
+from $(\R^{n})^{k-1}\rightarrow\R^{n}$ via the formula $[M(x_{1},\dots,x_{k-1})]_{i}:=\sum_{j_{1},\dots,j_{k-1}}M_{j_{1}\dots j_{k-1}i}x_{1,j_{1}}\dots x_{k-1,j_{k-1}}$. \\
+
+Given this theorem, the proof proceeds exactly as before \textendash{}
+the same argument as \cref{applying-reg-lemma} shows that we can replace $J$ by $D^{(1)}+\dots+D^{(s)}$
+(possibly incurring an additive error of $\frac{2^{k}\epsilon||J||_{1}}{\sqrt{\Delta}}$),
+and once we have made this replacement, a similar optimization scheme
+as before lets us deduce \cref{thm-mrf}. The proof of \cref{thm-mrf-nonconstant} is identical, the only difference being that we can obtain a cut decomposition of smaller width using the following theorem. 
+
+\begin{theorem}\citep{alon-etal-samplingCSP}\label{reg-alon-etal}
+Let $J$ be a an arbitrary $k$-dimensional matrix on $X_{1}\times\dots\times X_{k}$,
+where we assume that $k\geq3$ is fixed. Let $N:=|X_{1}|\times\dots\times|X_{k}|$
+and let $\epsilon>0$. Then, in time $2^{O(1/\epsilon^{2})}O(N)$
+and with probability at least $0.99$, we can find a cut decomposition
+width at most $4/\epsilon^{2}$, coefficient length at most $2\|J\|_F/\epsilon\sqrt{N}$
+and error at most $\epsilon2^{k}\sqrt{N}\|J\|_F$. 
+\end{theorem}
+
+\begin{comment}
+\begin{remark}
+Although for simplicity, we stated \cref{thm-mrf} and \cref{thm-mrf-nonconstant} only for $k$-uniform $\Delta$-dense Markov random fields, it is immediately seen that the results extend to general $\Delta$-dense Markov random fields of order $K$ by simply applying \cref{reg-fk-higher} or \cref{reg-alon-etal} to each $J^{(k)}$, $k\in[K]$.  
+\end{remark}
+\end{comment}
+\end{document}

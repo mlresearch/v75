@@ -1,0 +1,455 @@
+\documentclass[final,12pt]{colt2018} % Anonymized submission
+
+%Commands
+%================================================%
+ 
+\input commands
+
+%\newcommand{\citep}{\cite}
+%\newcommand{\citet}{\cite}
+
+%================================================%
+
+\title[Faster Rates for Permutation-based Models]{Breaking the $1/\sqrt{n}$ Barrier: \\ Faster Rates for Permutation-based Models in Polynomial Time}
+\usepackage{times}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+\coltauthor{\Name{Cheng Mao} \Email{maocheng@mit.edu}\\
+ \addr Massachusetts Institute of Technology, 
+% 77 Massachusetts Avenue, 
+ Cambridge, MA, 
+% 02139, 
+ USA
+ \AND
+ \Name{Ashwin Pananjady} \Email{ashwinpm@berkeley.edu}\\
+ \addr University of California, Berkeley, CA, 
+% 94720, 
+ USA
+ \AND
+ \Name{Martin J. Wainwright} \Email{wainwrig@berkeley.edu}\\
+ \addr University of California, Berkeley, CA, 
+% 94720, 
+ USA
+ }
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Many applications, including rank aggregation and crowd-labeling, can be modeled in terms of a bivariate isotonic matrix with unknown permutations acting on its rows and columns.  We consider the problem of estimating such a matrix based on noisy observations of a subset of its entries, and design and analyze a polynomial-time algorithm that improves upon the state of the art. In particular, our results imply that any such $n \times n$ matrix can be estimated efficiently in the normalized Frobenius norm at rate $\widetilde{\mathcal O}(n^{-3/4})$, thus narrowing the gap between $\widetilde{\mathcal O}(n^{-1})$ and $\widetilde{\mathcal O}(n^{-1/2})$, which were hitherto the rates of the most statistically and computationally efficient methods, respectively.
+\end{abstract}
+
+\begin{keywords}
+permutation-based models, ranking, pairwise comparisons,
+crowd-labeling, statistical-computational gap, shape-constrained
+estimation.
+\end{keywords}
+
+%================================================%
+%\vspace{-3mm}
+\section{Introduction}
+
+Structured\blfootnote{Extended abstract. Full version appears as \href{https://arxiv.org/abs/1802.09963}{arXiv:1802.09963, v3}.} matrices with entries in the range $[0, 1]$ and unknown
+permutations acting on their rows and columns arise in multiple
+applications, including estimation from pairwise comparisons
+%\citep{BraTer52,ShaBalGunWai17} 
+and crowd-labeling.
+%\citep{DawSke79,ShaBalWai16}. 
+Traditional parametric models~\citep{BraTer52,Luc59,Thu27,DawSke79} assume that these
+matrices are obtained from rank-one matrices via a known link
+function.
+With the goal of increasing
+model flexibility, a recent line of work has studied the class of
+\emph{permutation-based} models~\citep{Cha15,
+ShaBalGunWai17,ShaBalWai16}.  
+%Rather than imposing parametric
+%conditions on the matrix entries, 
+This class of models imposes only shape
+constraints on the matrix, such as monotonicity, before unknown
+permutations act on the its rows and columns. As a result, it reduces modeling bias compared to its parametric counterparts
+while, perhaps surprisingly, producing models that can be estimated at
+rates that differ only by logarithmic factors from parametric models. On
+the negative side, these advantages of permutation-based models are
+accompanied by significant computational challenges. 
+%The unknown
+%permutations make the parameter space highly non-convex, so that
+%efficient maximum likelihood estimation is unlikely. Moreover,
+%spectral methods are often suboptimal in approximating
+%shape-constrained sets of
+%matrices~\citep{Cha15,ShaBalGunWai17}. Consequently, 
+Except for simple models such as the noisy sorting model~\citep{BraMos08,MaoWeeRig17} where polynomial-time algorithms achieve near-optimal rates, results from many
+recent papers show a non-trivial statistical-computational gap in
+estimation rates for models with latent
+permutations~\citep{ShaBalGunWai17,ChaMuk16,ShaBalWai16,FlaMaoRig16,PanWaiCou17}.
+
+In particular, the class of matrices satisfying the \emph{strong stochastic
+  transitivity} condition, or SST for short,
+contains all $n \times n$ bivariate isotonic matrices with unknown
+permutations acting on their rows and columns, with an additional
+skew-symmetry constraint.
+While the minimax rate of estimating a matrix in the SST class with $\Theta(n^2)$ Bernoulli observations is $\widetilde
+\Theta (n^{-1})$ in the normalized Frobenius norm~\citep{ShaBalGunWai17}, the fastest computationally efficient rate is only $\ordertil (n^{-1/2})$, achieved by spectral methods~\citep{Cha15,ShaBalGunWai17} and variants of the Borda count estimator~\citep{ShaBalWai16-2,ChaMuk16,PanMaoMutWaiCou17}.
+
+Our main contribution in the current work is to tighten this statistical-computational gap. More precisely, we study
+the problem of estimating a bivariate isotonic matrix with unknown
+permutations acting on its rows and columns, given noisy, partial
+observations of its entries. Our polynomial-time algorithm provably achieves the rate of estimation $\widetilde \order(n^{-3/4})$ uniformly over the SST class.
+
+%%\vspace{-1mm}
+%\paragraph{Main theorem (informal)}
+%{\it There is an estimator $\Mhat$ computable in time $\order(n^{2.5})$ such that for any $n \times n$ SST matrix $M^*$, given $\Theta(n^2)$ Bernoulli observations of its entries, we have}
+%%\begin{theorem}[informal]
+%%For any $n \times n$ SST matrix $M^*$, there is an estimator $\Mhat$ computable in polynomial time from $n^2$ Bernoulli observations of its entries that satisfies
+%%\vspace{-2mm}
+%\begin{align*}
+%\mathbb{E} \left[ \frac{1}{n^2} \|\Mhat - M^* \|_F^2\right] \leq C \left( \frac{\log n}{n} \right)^{3/4}.
+%\end{align*}
+
+%\paragraph{Notation.}
+%For a positive integer $n$, let $[n] \defn \{1, 2, \ldots, n\}$. For a
+%finite set $S$, we use $|S|$ to denote its cardinality. For two
+%sequences $\{a_n\}_{n=1}^\infty$ and $\{b_n\}_{n=1}^\infty$, we write
+%$a_n \lesssim b_n$ if there is a universal constant $C$ such that $a_n
+%\leq C b_n$ for all $n \geq 1$. The relation $a_n \gtrsim b_n$ is
+%defined analogously.  We use $c, C, c_1, c_2, \dots$ to denote
+%universal constants that may change from line to line.  We use
+%$\BER(p)$ to denote the Bernoulli distribution with success
+%probability $p$, the notation $\BIN(n,p)$ to denote the binomial
+%distribution with $n$ trials and success probability $p$, and the
+%notation $\Poi(\lambda)$ to denote the Poisson distribution with
+%parameter $\lambda$.  Given a matrix $M \in \real^{\dimone \times
+%  \dimtwo}$, its $i$-th row is denoted by $M_i$. For a vector $v \in \mathbb{R}^n$, define its variation as $\var(v) = \max_i v_i - \min_i v_i$. Let $\symgp_n$ denote
+%the set of all permutations $\pi: [n] \to [n]$. Let $\id$ denote the
+%identity permutation, where the dimension can be inferred from
+%context.
+
+%================================================%
+
+%\vspace{-2mm}
+\section{Problem setup} \label{sec:setup}
+
+We define $\Cbiso$ to be the class of matrices
+in $[0,1]^{\dimone \times \dimtwo}$ with nondecreasing rows and
+nondecreasing columns, where we assume $\dimone \geq \dimtwo$ for readability. Given a matrix $M \in
+\real^{\dimone \times \dimtwo}$ and permutations\footnote{We let $\symgp_n$ represent the set of permutations on the set $[n] \defn \{1, 2, \ldots, n \}$ .} $\pi \in
+\symgp_{\dimone}$ and $\sigma \in \symgp_{\dimtwo}$, we define the
+matrix $M(\pi,\sigma) \in \real^{\dimone \times \dimtwo}$ by
+specifying its entries as
+\begin{align*}
+\left[ M(\pi,\sigma)\right]_{i, j} = M_{\pi(i), \sigma(j)} \text{ for
+} i \in [\dimone], j \in [\dimtwo].
+\end{align*}
+Also define the class $ \Cbiso(\pi, \sigma) \defn \{M(\pi, \sigma): M
+\in \Cbiso\} $ as the set of matrices that are bivariate isotonic when
+viewed along the row permutation $\pi$ and column permutation
+$\sigma$, respectively.
+The class of matrices that we are interested contains bivariate isotonic matrices whose rows and columns are acted upon by unknown, and possibly different, permutations:
+\begin{align*}
+\Cperm \defn \bigcup_{\substack{\pi \in \symgp_{\dimone} \\ \sigma \in
+    \symgp_{\dimtwo}}} \Cbiso(\pi, \sigma) .
+\end{align*}
+
+Letting $\Poi(\lambda)$ denote a Poisson random variable of mean $\lambda$, suppose that $N' = \Poi(N)$
+noisy entries\footnote{The rates obtained from such a \emph{Poissonized} observation model are the same as those obtained without Poissonization up to constant factors, so the rates stated here also hold for the observation model with exactly $N$ noisy samples.} are sampled independently and uniformly with replacement
+from all entries of $M^* \in \Cperm$.
+More precisely, let $E^{(i,j)}$ denote the $\dimone \times \dimtwo$
+matrix with $1$ in the $(i,j)$-th entry and $0$ elsewhere, and suppose
+that $X_\ell$ is a random matrix sampled independently and uniformly
+from the set $\{E^{(i,j)}: i \in [\dimone], \, j \in [\dimtwo]\}$. We
+observe $N'$ independent pairs $\{(X_\ell,
+y_\ell)\}_{\ell=1}^{N'}$ from the model
+\begin{align*} %\label{eq:model}
+y_\ell = \trace(X_\ell^\top M^*) + z_\ell,
+\end{align*}
+where the observations are contaminated by independent, centered,
+sub-Gaussian noise $z_\ell$ with variance parameter $\vars^2$.
+%For analytical convenience, we employ the standard trick of Poissonization, whereby we assume throughout the paper that $N' = \Poi(N)$ random samples are drawn according to the trace regression model~\eqref{eq:model}. Upper and lower bounds derived under this model carry over with loss of constant factors to the model with exactly $N$ samples.
+%
+%For notational convenience, denote the probability that an entry of the matrix is observed under Poissonized sampling by $\pobs = 1 - \exp( - N / \dimone \dimtwo)$. Since we assume throughout that $N \leq \dimone \dimtwo$, it can be verified that $\frac{N}{2 \dimone \dimtwo} \leq \pobs \leq \frac{N}{\dimone \dimtwo}$.
+Now given $N'$ observations $\{(X_\ell, y_\ell)\}_{\ell=1}^{N'}$, let us define the matrix of observations $Y = Y \big( \{(X_\ell, y_\ell)\}_{\ell=1}^{N'} \big)$, with entry $(i, j)$ given by
+\begin{align} \label{eq:obs-Y}
+Y_{i,j} = \frac{1}{\pobs} \frac{1}{1 \vee \sum_{\ell = 1}^{N'} \bfone \{ X_\ell = E^{(i,j)} \}} \sum_{\ell = 1}^{N'} y_\ell \, \bfone \{ X_\ell = E^{(i,j)} \}.
+\end{align}
+In words, the rescaled entry $\pobs Y_{i,j}$ is the average of all the noisy realizations of $M^*_{i,j}$ that we have observed, or zero if the entry goes unobserved. 
+%Note that
+%$
+%\EE[Y_{i,j}] = \frac{1}{\pobs} M^*_{i,j} \cdot \pobs = M^*_{i,j},
+%$
+%so that $\E[Y] = M^*$.
+%Moreover, we may write the model in the linearized form $Y = M^* + W$,
+%where $W$ is a matrix of additive noise having independent, zero-mean, sub-Gaussian entries. 
+%\mycomment{Entry-wise independence slightly strange without Poissonization. Changed model to Poissonized version.}
+%We aim to estimate the matrix $M^*$ in the normalized Frobenius norm $\frac{1}{\dimone \dimtwo} \|\Mhat - M^*\|_F^2$.
+
+%================================================%
+
+%\vspace{-3mm}
+\section{Algorithms and results} \label{sec:mainresults}
+
+%\subsection{Statistical limits of estimation}
+%We begin by characterizing the fundamental limits of estimation under the trace regression observation model~\eqref{eq:model} with $N' = \Poi(N)$ observations. 
+%%We define the least squares estimator over a class~$\mathbb{C}$ of $\dimone \times \dimtwo$ matrices as the projection
+%%\begin{align*}
+%%\Mhatls(\mathbb{C}, Y) \defn \arg\min_{M \in \mathbb{C}} \|Y - M \|_F^2.
+%%\end{align*}
+%We define the least squares estimator over the class of matrices~$\Cperm$ as the projection
+%\begin{align*}
+%\Mhatls(Y) \defn \arg\min_{M \in \Cperm} \|Y - M \|_F^2.
+%\end{align*}
+%The projection is a non-convex problem, and is unlikely to be computable exactly in polynomial time. However, studying this estimator allows us to establish a baseline that characterizes the best achievable statistical rate. The following theorem characterizes its risk up to a logarithmic factor in the dimension; recall the shorthand $Y = Y \left(\{X_{\ell}, y_{\ell} \}_{\ell = 1}^{N'}\right)$.
+%%; recall that the noise $z_\ell$ on observation $\ell$ was $\vars$-sub-Gaussian.
+%%\vspace{-1mm}
+%\begin{theorem} \label{thm:funlim}
+%For any matrix $M^* \in \Cperm$, we have
+%%\vspace{-2mm}
+%\begin{subequations}
+%\begin{align} \label{eq:ls-upper}
+%\frac{1}{\dimone \dimtwo} \| \Mhatls(Y) - M^* \|_F^2 \lesssim \maxvarone \frac{\dimone \log^2 \dimone}{N}
+%\end{align}
+%with probability at least $1 - (\dimone \dimtwo)^{-3}$. %\mycomment{Changed probability bound to function of $(\dimone \dimtwo)^{-c}$ to make it comparable with sample size $N \leq \dimone \dimtwo$.}
+%
+%Additionally, under the Bernoulli observation model~\eqref{eq:Bernoise}, any estimator $\Mhat$ satisfies 
+%%that is a measurable function of the observations incurs worst-case error
+%%\vspace{-2mm}
+%\begin{align} \label{eq:lower}
+%\sup_{M^* \in \Cperm} \EE \left[ \frac{1}{\dimone \dimtwo} \| \Mhat - M^* \|_F^2 \right] \gtrsim \frac{\dimone}{N}. 
+%\end{align}
+%\end{subequations}
+%\end{theorem}
+%
+%The factor $\maxvarone$ appears in the upper bound instead of the noise variance $\vars^2$ because even if the noise is zero, there are missing entries.
+%%Via the inclusion $\Cpermr \subseteq \Cperm$, the upper and lower bounds given by equations~\eqref{eq:ls-upper} and \eqref{eq:lower} extend to the classes $\Cpermr$ and $\Cperm$, respectively, and we have thus characterized the minimax rate of estimation for both classes up to a logarithmic factor. 
+%The theorem characterizes the minimax rate of estimation for the class $\Cperm$ up to a logarithmic factor. 
+%%in $\dimone$.
+%%\vspace{-2mm}
+%
+%\subsection{Efficient algorithms} %and computational challenges} 
+%\label{sec:ex-algo}
+
+%Next, we propose polynomial-time algorithms for estimating the permutations $(\pi, \sigma)$ and the matrix $M^*$. 
+Our main algorithm relies on two distinct steps: first, we estimate the unknown permutations, and then project onto the class of matrices that are bivariate isotonic when viewed along the estimated permutations. The formal meta-algorithm is described below. 
+
+%\vspace{-1mm}
+
+\paragraph{Algorithm 1 (meta-algorithm)}
+\begin{itemize}
+\item Step 0: Split the observations into two disjoint parts, each containing $N'/2$ observations, and construct the matrices $Y^{(1)} = Y \left(\{X_\ell, y_\ell \}_{\ell = 1}^{N'/2} \right)$ and $Y^{(2)} = Y \left(\{X_\ell, y_\ell \}_{\ell = N'/2 + 1}^{N'} \right)$.
+%\vspace{-2mm}
+%\item Step 1: Use $Y^{(1)}$ to obtain the estimates $(\pihat, \sigmahat)$ if estimating over the class $\Cperm$, or the estimate $\pihat$ if estimating over the class $\Cpermr$.
+%\item Step 2: Return the matrix estimate 
+%\begin{align*}
+%\Mhat(\pihat, \sigmahat) \defn \arg \min_{M \in \Cbiso(\pihat, \sigmahat)} \| Y^{(2)} - M \|_F^2
+%\end{align*}
+%if estimating over the class $\Cperm$, and
+%\begin{align*}
+%\Mhat(\pihat, \id) \defn \arg \min_{M \in \Cbiso(\pihat, \id)} \| Y^{(2)} - M \|_F^2
+%\end{align*}
+%if estimating over the class $\Cpermr$.
+\item Step 1: Use $Y^{(1)}$ to obtain the permutation estimates $(\pihat, \sigmahat)$.
+\item Step 2: Return the matrix estimate 
+$
+\Mhat(\pihat, \sigmahat) \defn \arg \min_{M \in \Cbiso(\pihat, \sigmahat)} \| Y^{(2)} - M \|_F^2 .
+$
+\end{itemize}
+%Owing to the convexity of the set $\Cbiso(\pihat, \sigmahat)$, the projection operation in Step 2 of the algorithm can be computed in near linear time~\citep{BriDykPilRob84, KynRaoSac15}. 
+%The following result, a slight variant of Proposition~4.2 of Chatterjee and Mukherjee~\cite{ChaMuk16}, allows us to characterize the error rate of any such meta-algorithm as a function of the permutation estimates $(\pihat, \sigmahat)$.
+%
+%\begin{proposition}
+%\label{prop:meta}
+%Suppose that $M^* \in \Cbiso(\pi, \sigma)$ where $\pi$ and $\sigma$
+%are unknown permutations in $\symgp_{\dimone}$ and $\symgp_{\dimtwo}$
+%respectively.  Then with probability at least $1 - (\dimone
+%\dimtwo)^{-3}$, we have
+%\begin{align} 
+%\frac{1}{\dimone \dimtwo} \big\| \Mhat(\pihat, \sigmahat) - M^*
+%\big\|_F^2 \lesssim \maxvarone \frac{\dimone \log^2 \dimone}{N} & +
+%\frac{1}{\dimone \dimtwo} \big\|M^*(\pi^{-1} \circ \pihat, \id) - M^*
+%\big\|_F^2 \notag \\ & + \frac{1}{\dimone \dimtwo} \big\| M^*(\id,
+%\sigma^{-1} \circ \sigmahat) - M^* \big\|_F^2. \label{eq:oracle}
+%\end{align}
+%\end{proposition}
+%
+%The first term on the right hand side of the bound~\eqref{eq:oracle}
+%corresponds to an estimation error, if the true permutations $\pi$ and
+%$\sigma$ were known a priori, and the latter two terms correspond to
+%an approximation error that we incur as a result of having to estimate
+%these permutations from data.  Comparing the bound~\eqref{eq:oracle}
+%to the minimax lower bound~\eqref{eq:lower}, we see that up to a
+%logarithmic factor, the first term of the bound~\eqref{eq:oracle} is
+%unavoidable, and so we can restrict our attention to obtaining good
+%permutation estimates $(\pihat, \sigmahat)$.  
+
+We now present our main permutation estimation procedure that can be plugged into Step~1 of this meta-algorithm. We first define a certain blocking sub-routine that helps us estimate the row permutation by ordering entries according to an estimate of the column permutation (and vice versa).
+%
+%To reorder the rows or columns of a matrix with monotonicity constraints, sorting row or column sums is perhaps the most natural approach popularly adopted in the literature~\cite{ChaMuk16,FlaMaoRig16}. However, such a procedure does not take advantage of the fact that the underlying matrix is monotonic in \emph{both} dimensions. To improve upon simply sorting row sums, we propose an algorithm that first sorts the columns of the matrix approximately, and then exploits this approximate ordering to sort the rows of the matrix.
+%
+%We need more notation to facilitate the description of the
+%algorithm. 
+For a partition \mbox{$\bl = (\bl_1, \dots, \bl_K)$ of
+  the set $[\dimtwo]$}, we group the columns of a matrix $Y \in
+\real^{\dimone \times \dimtwo}$ into $K$ blocks according to their
+indices in $\bl$, and refer to $\bl$ as a partition or \emph{blocking}
+of the columns of $Y$.
+Given a data matrix $Y \in \real^{\dimone \times \dimtwo}$, the
+following blocking subroutine returns a column partition $\BL(Y)$. 
+%In the main algorithm, partial row sums are computed on indices contained in each block.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{Subroutine 1 (blocking)}
+\begin{itemize}
+\item Step 1: Compute the column sums $\{C(j)\}_{j = 1}^{\dimtwo}$ of
+  the matrix $Y$ as
+\begin{align*}
+C(j) = \sum_{i=1}^{\dimone} Y_{i,j}.
+\end{align*} 
+Let $\sigmahatpre$ be the permutation along which the sequence
+$\{C(\sigmahatpre(j))\}_{j=1}^{\dimtwo}$ is nondecreasing.
+
+\item Step 2: Set $\tau = 16 \varplusone \Big( \sqrt{\frac{\dimone^2
+    \dimtwo}{N} \log(\dimone \dimtwo) } + \frac{\dimone \dimtwo}{N}
+  \log(\dimone \dimtwo) \Big)$ and $K = \lceil \dimtwo/\tau
+  \rceil$. Partition the columns of $Y$ into $K$ blocks by defining
+\begin{align*}
+\bl_1 &= \{j \in [\dimtwo]: C(j) \in (-\infty, \tau) \}, \\ \bl_k &=
+\left\{j \in [\dimtwo] : C(j) \in \big[ (k - 1) \tau , k \tau \big)
+  \right\} \text{ for } 1<k<K, \text{ and} \\ \bl_K &= \{j \in
+           [\dimtwo]: C(j) \in [(K-1)\tau, \infty)\}.
+\end{align*}
+Note that each block is contiguous when the columns are permuted by
+$\sigmahatpre$.
+
+\item Step 3 (aggregation): Set $\beta = \blocksize$. Call a block
+  $\bl_k$ ``large'' if $|\bl_k| \geq \beta$ and ``small"
+  otherwise. Aggregate small blocks in $\bl$ while leaving the large
+  blocks as they are, to obtain the final partition $\BL$.
+
+More precisely, consider the matrix $Y' = Y(\id, \sigmahatpre)$ having
+nondecreasing column sums and contiguous blocks. Call two small blocks
+``adjacent'' if there is no other small block between them.  Take
+unions of adjacent small blocks to ensure that the size of each
+resulting block is in the range $[ \frac{1}{2} \beta, 2 \beta]$. If
+the union of all small blocks is smaller than $\frac{1}{2} \beta$,
+aggregate them all.
+
+Return the resulting partition $\BL(Y) = \BL$.
+\end{itemize}
+
+%The threshold $\tau$ is a chosen to be a high probability bound on the perturbation of any column sum, so we are confident that columns in a block $\bl_j$ are in fact close to those in $\bl_j$ when the columns are sorted increasingly. It turns out that comparing partial row sums on these blocks aids us in reordering the rows of the matrix. 
+%Moreover, Step~3 aggregates small blocks into large enough ones to reduce noise in these partial row sums. 
+Finally, we are in a position to describe our main two-dimensional sorting algorithm.
+
+%Ignoring Step~3 for the moment, we see that the blocks $\{\bl_1,
+%\bl_2, \ldots, \bl_K \}$ are analogous to the blocks $\{\bl_{j,
+%  k}\}_{1 \leq j < k \leq \dimtwo}$ of Algorithm~2, along which
+%partial row-sums may be computed. The number of blocks, however, is
+%clearly smaller, since $K \leq \dimtwo \leq \binom{\dimtwo}{2}$, and
+%this leads to computational gains in Algorithm~3, whose description
+%follows.  However, some of these $K$ blocks may be too small,
+%resulting in noisy partial sums; in order to mitigate this issue,
+%Step~3 aggregates small blocks into large enough ones.  We are now in
+%a position to describe the two-dimensional sorting algorithm.
+
+\paragraph{Algorithm 2 (two-dimensional sorting)}
+\begin{itemize}
+\item Step 0: Split the observations into two independent subsamples
+  of equal size, and form the corresponding matrices $Y^{(1)}$ and
+  $Y^{(2)}$ according to equation~\eqref{eq:obs-Y}.
+
+\item Step 1: Apply Subroutine 1 to the matrix $Y^{(1)}$ to obtain a
+  partition $\BL = \BL(Y^{(1)})$ of the columns. Let $K$ be the number
+  of blocks in $\BL$.
+
+\item Step 2: Using the second sample $Y^{(2)}$, compute the row sums
+\begin{align*}
+S(i) = \sum_{j \in [\dimtwo]} Y^{(2)}_{i,j} \text{ for each }i \in
+[\dimone],
+\end{align*} 
+and the partial row sums within each block 
+\begin{align*}
+S_{\BL_k}(i) = \sum_{j \in \BL_k} Y^{(2)}_{i,j} \text{ for each }i \in
+[\dimone], k \in [K].
+\end{align*}
+Create a directed graph $G$ with vertex set $[\dimone]$, where an edge
+$u \to v$ is present if either
+\begin{subequations}
+\begin{align}
+S(v) - S(u) & > 16 \varplusone \bigg( \sqrt{\frac{\dimone
+    \dimtwo^2}{N} \log(\dimone \dimtwo) } + \frac{\dimone \dimtwo}{N}
+\log(\dimone \dimtwo) \bigg), \text{ or} \label{eq:full-sum}
+\\ S_{\BL_k}(v) - S_{\BL_k}(u) & > 16 \varplusone \bigg(
+\sqrt{\frac{\dimone \dimtwo}{N} |\BL_k| \log(\dimone \dimtwo) } +
+\frac{\dimone \dimtwo}{N} \log(\dimone \dimtwo) \bigg) \notag \\
+& \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \text{ for some
+} k \in [K]. \label{eq:block-sum}
+\end{align}
+\end{subequations}
+
+\item Step 3: Compute a topological sort $\pihattds$ of the graph $G$;
+  if none exists, set $\pihattds = \id$.
+
+\item Step 4: Repeat Steps 1--3 with $(Y^{(i)})^\top$ replacing
+  $Y^{(i)}$ for $i=1,2$, the roles of $\dimone$ and $\dimtwo$
+  switched, and the roles of $\pi$ and $\sigma$ switched, to compute
+  the permutation estimate $\sigmahattds$.
+
+\item Step 5: Return the permutation estimates $(\pihattds,
+  \sigmahatftds)$.
+\end{itemize}
+
+Recall that a permutation $\pi$ is called a topological sort of $G$ if $\pi(u)<\pi(v)$ for every directed edge $u \to v$.
+The construction of the graph $G$ in Step~2 dominates the
+computational complexity, and takes time $\order(\dimone^2 \dimtwo /
+\beta) = \order(\dimone^2 \dimtwo^{1/2})$. We have the following
+guarantee for the two-dimensional sorting algorithm.
+
+\begin{theorem} \label{thm:fast-tds}
+For any matrix $M^* \in \Cperm$, we have
+\begin{align*}
+\frac{1}{\dimone \dimtwo} \big\|\Mhat(\pihattds, \sigmahatftds) - M^*
+\big\|_F^2 \lesssim \maxvarone \left[ \Big(\frac{\dimone \log
+    \dimone}{N} \Big)^{3/4} + \frac{\dimone \log^2 \dimone}{N} \right]
+\end{align*}
+with probability at least $1- 9(\dimone \dimtwo)^{-3}$.
+\end{theorem}
+
+In particular, setting $N = \dimone \dimtwo$, we have proved that our
+efficient estimator enjoys the rate
+\begin{align*}
+\frac{1}{\dimone \dimtwo} \big\|\Mhat(\pihattds, \sigmahatftds) - M^*
+\big\|_F^2 = \widetilde O \left(\dimtwo^{-3/4}\right),
+\end{align*}
+which is the main theoretical guarantee established in this paper for
+permutation-based models.
+
+%================================================%
+
+\section*{Acknowledgments}
+
+This work was supported in part by grants NSF CAREER DMS-1541099, NSF DMS-1541100, NSF-DMS-1612948 and DOD ONR-N00014.
+
+%================================================%
+
+%\bibliographystyle{alpha}
+\bibliography{fast_sst}
+
+\end{document}

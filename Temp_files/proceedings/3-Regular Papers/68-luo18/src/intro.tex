@@ -1,0 +1,256 @@
+\section{Introduction}
+%% What is a computationally efficient contextual bandit algorithm with
+%% strong regret guarantees in non-stationary environments?
+
+Algorithms for the contextual bandit problem have been developed for
+adversarial~\citep{AuerCeFrSc02},
+stochastic~\citep{AgarwalHsKaLaLiSc14,LangfordZh08} and
+hybrid~\citep{RakhlinSr16,SyrgkanisLuKrSc16} environments. Despite the
+specific setting, however, almost all these works minimize the
+classical notion of regret that compares the reward of the algorithm
+to the \emph{best fixed policy in hindsight}. This is a natural
+benchmark when the data generating mechanism is essentially
+stationary, so that a fixed policy can attain a large reward. However,
+in many applications of contextual bandits, we are faced with an
+extremely non-stationary world. For instance, the pool of available
+news stories or blog articles rapidly evolves in content
+personalization domains, and people's preferences typically exhibit
+trends on daily, weekly and seasonal scales. In such cases, one wants
+to compete with an appropriately adaptive sequence of benchmark
+policies, for the baseline to be meaningful.
+
+Prior works in a context-free setting (that is, the multi-armed bandit
+problem) have studied regret to a sequence of actions, whenever that
+sequence is \emph{slowly changing} under some appropriate measure (see
+e.g.~\citep{AuerCeFrSc02, BesbesGuZe14, BesbesGuZe15, KarninAn16,
+  WeiHoLu16}). A natural generalization to the contextual setting
+would be to compete with a sequence of policies, all chosen from some
+policy class. %, when the sequence of policies is slowly changing. 
+Extension of the prior context-free works to the contextual
+setting indeed yields algorithms with such guarantees, as we show with
+a baseline example (Exp4.S). However, the computation and storage of
+the resulting algorithms are both linear in the cardinality of the
+policy class, making tractable implementation impossible except for
+very small policy classes.
+
+To overcome the computational obstacle, all previous works on
+efficient contextual bandits assume access to an optimization oracle
+which can find the policy with the largest reward on any dataset
+containing context-reward
+pairs~\citep{LangfordZh08,AgarwalHsKaLaLiSc14,RakhlinSr16,SyrgkanisLuKrSc16}.
+Given such an oracle, however, it is known that no efficient
+low-regret algorithms exist in the fully adversarial
+setting~\citep[Theorem 25]{Hazan2016}, even without any challenges of
+non-stationarity. Consequently all previous works explicitly rely on
+assumptions such as i.i.d. contexts, or even i.i.d. context-reward
+pairs. 
+%On the other hand, most prior works in the non-stationary
+%setting adapt algorithms for the adversarial environment (such as
+%Exp3~\citep{AuerCeFrSc02}) to deal with a changing comparator sequence
+%(for example~\citep{BesbesGuZe14, BesbesGuZe15}).  This creates a
+%fundamental point of departure in contextual bandits from previous
+%works for non-stationary settings.  
+
+%{\color{red} Our work, as far as we know, is the first that studies efficient contextual bandit algorithms without making any of these i.i.d. assumptions. To obtain computationally efficient algorithms, we adapt the above algorithms, which originally target stationary environments, to non-stationary ones,
+%and study appropriate generalizations of regret.}
+
+%we need to adapt these algorithms to non-stationary environments
+%and study appropriate generalizations of regret.
+%Most prior works in the non-stationary setting adapt the algorithms for an adversarial %, but stationary
+%setting to deal with a changing comparator sequence. On the other
+%hand, all the computationally efficient methods for contextual
+%bandits~\cite{AgarwalHsKaLaLiSc14,LangfordZh08,RakhlinSr16,SyrgkanisLuKrSc16}
+%explicitly rely on i.i.d. contexts, and some on an i.i.d. joint
+%distribution over rewards and contexts. They assume an ArgMax Oracle
+%(AMO) over the policy class, which can find the policy with the
+%largest reward on any dataset containing context-reward
+%pairs,\footnote{This is a \emph{fully labeled} dataset, meaning that
+%  the reward of each action on every context is specified.} and
+%construct efficient algorithms by appropriately invoking the AMO. It
+%is however, known that such oracles cannot yield low-regret algorithms
+%in fully adversarial settings (Theorem 25 in Hazan and
+%Koren~\cite{Hazan2016}), even without additional challenges of
+%non-stationarity. This creates a fundamental point of departure in
+%contextual bandits from previous works for non-stationary settings. If
+%we would like computationally efficient algorithms, we need to adapt
+%algorithms which were developed in the i.i.d. settings, and study
+%appropriate generalizations of regret from i.i.d. to non-stationary
+%environments. 
+
+As a warm-up and also an example to show the difficulty of the problem, 
+%compared to the full information setting,
+we first consider a general approach to convert an algorithm for the stationary setting
+to an algorithm that can deal with non-stationary data.
+The idea is to combine different copies of the base algorithm,
+each of which starts at a different time to learn over different data segments.
+This can be seen as a natural generalization of the approach of~\citet{HazanSe07} for the full information
+setting. 
+We build on a recent result of~\citet{AgarwalLuNeSc17} to deal with the additional challenges due to partial
+feedback and use \bistro~\citep{SyrgkanisLuKrSc16} as the base algorithm
+since it is efficient and requires no statistical assumption on the rewards. 
+However, unlike the full information setting, the regret rates degrade after this conversion as we show,
+making this general approach unsatisfying.
+%We can also replace \bistro with other contextual bandit algorithms (e.g. the one
+%in~\citep{SyrgkanisKrSc16}).
+
+%\footnote{For simplicity, we look at the $\epsilon$-greedy
+%  variant of the algorithm which is qualitatively similar.} 
+
+We next consider a more specific approach by equipping existing algorithms for the i.i.d. setting,
+such as \EG~\citep{LangfordZh08} and the statistically more efficient approach of~\cite{AgarwalHsKaLaLiSc14},
+with some sophisticated statistical tests to detect non-stationarity
+(the resulting algorithms are called \AdaEG and \AdaILTCB respectively).
+Once such non-stationarity is detected, the algorithms restart from scratch.
+The exact tests are algorithm-specific and based
+on verifying certain concentration inequalities which the algorithm
+relies upon, but the general idea might be applicable to extending
+other contextual bandit algorithms as well.
+
+%We further adapt the statistically and computationally optimal approach of
+%Agarwal et al.~\cite{AgarwalHsKaLaLiSc14} to this setting as
+%well. Both of our modifications, \AdaEG and \AdaILTCB, probe for the
+%longest period in the past over which the data distribution looks
+%\emph{approximately i.i.d.}, and compute a distribution over policies
+%based on that period. The exact test is algorithm-specific and based
+%on verifying certain concentration inequalities which the algorithm
+%relies upon, but the general idea might be applicable to extending
+%other contextual bandit algorithms as well.
+
+We present strong theoretical guarantees for our algorithms, 
+in terms of interval regret, switching regret and dynamic
+regret (defined in Section~\ref{sec:setup}). 
+A high-level outcome of our analysis is that the algorithms enjoy a regret bound on
+any time interval that is sufficiently stationary (called interval
+regret), compared with the best fixed policy for that interval. 
+%The precise notion of sufficiently stationary is algorithm-specific and
+%formalized in Section~\ref{sec:interval_regret}. 
+This general result has important corollaries, discussed in
+Section~\ref{sec:implications}. For example, if the data-generating
+process is typically i.i.d., except there are \emph{hard switches} in
+the data distribution every so often, then our algorithms perform as
+if they knew the change points in advance, up to a small penalty in
+regret (called switching regret). More generally, if the data
+distribution is \emph{slowly drifting}, we can still provide
+meaningful regret bounds (called dynamic regret) when competing to the
+best policy at each time (instead of a fixed policy across all rounds).
+
+These results are summarized in Table~\ref{tab:results}.
+The highlight is that our computationally efficient algorithm \AdaILTCB enjoys almost the same guarantee
+as the inefficient baseline Exp4.S for all three regret measures,
+which is optimal in light of the existing results for the special case of multi-armed bandit.
+Importantly, the dynamic regret bounds for our algorithms hold under
+a {\it fully adversarial} setting.\footnote{Note that this does not contradict with the hardness results in~\citep{Hazan2016}
+since the bound is data-dependent and could be linear in $T$ in the worst case.}
+As far as we know, this is the first result on adversarial and efficient contextual bandits.
+
+All the results above, including those for Exp4.S, require tuning a parameter
+in terms of some unknown quantity. Otherwise the results degrade as shown in Table~\ref{tab:results}
+and become vacuous when the non-stationarity measure (the number of stationary periods $S$ or the reward variation $\var$) is large.
+Our final contribution is a parameter-free variant of \AdaEG, called \AdaBIN,
+which achieves better regret (even compared to Exp4.S) in the regime when $S$ or $\var$ is large and unknown.
+Importantly, this result even improves upon the best existing result by~\citet{KarninAn16} for the context-free setting,
+where a regret bound of order $\var^{0.18}T^{0.82}$ is shown for the two-armed bandit problem.
+We improve the bound to $\min\{S^{1/4}T^{3/4}, \var^{1/5}T^{4/5}\}$ and also significantly generalize it to 
+the multi-armed and contextual setting.
+
+
+%\exptext{Finally, we also evaluate our simplest algorithm \AdaEG
+%empirically. Our results show that the algorithm has
+%significant gains over just using the i.i.d. version of the method,
+%and frequently improves significantly over a more challenging
+%baseline as well.}
+
+\setcounter{footnote}{0}
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[t]
+\centering
+\caption[Comparisons]{Comparisons of different results presented in this
+  work. ``OE?'' indicates whether the algorithm is Oracle-Efficient or not. 
+  $T$ is the total number of rounds, $\calI$ is the interval on which interval regret is measured,
+  $S$ is the number of i.i.d. periods, $\var$ is the reward variation,
+  and $\bvar \geq \var$ is the total variation, all defined in
+  Section~\ref{sec:setup}. These parameters are assumed to be known
+  for the column ``tuned'' but unknown for the column ``param-free''.\footnotemark  
+  \;Dependence on other parameters are omitted. Results for \bistro assumes a transductive setting,
+  and interval regret for the last three algorithms assumes (approximately) i.i.d. data on $\calI$.}
+\label{tab:results}
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+\multirow{ 2}{*}{\small Algorithm} & \multirow{ 2}{*}{\small OE?} & \multicolumn{2}{c|}{\small Interval Regret} & 
+\multicolumn{2}{c|}{\small Switching Regret} & \multicolumn{2}{c|}{\small Dynamic Regret} \\
+\cline{3-8}
+& & param-free & tuned & param-free & tuned & param-free & tuned \\
+\hline
+{\small Exp4.S (baseline)} & {\small N} & $\sqrt{T}$ & $\sqrt{|\calI|}$  & 
+$S\sqrt{T}$ & $\sqrt{ST} $ & 
+$\sqrt{\var}T^\frac{2}{3}$ & $\var^{\frac{1}{3}}T^{\frac{2}{3}} $ \\
+\hline
+{\small Corral \bistro} & {\small Y} & $T^{\frac{3}{4}}$ & $T^{\frac{1}{4}}\sqrt{|\calI|}$ & 
+$ST^{\frac{3}{4}}$ & $\sqrt{S}T^{\frac{3}{4}}$ & $\sqrt{\var} T^{\frac{5}{6}}$ & $\var^\frac{1}{3}T^{\frac{5}{6}}$ \\
+\hline
+{\small \AdaEG} & {\small  Y} &  $T^{\frac{1}{6}}\sqrt{|\calI|}$ & $|\calI|^\frac{2}{3} $ &
+%\begin{minipage}{2.6cm}\vspace{-5pt}\begin{equation}\tag*{$\ast$} L^{1/6}\sqrt{|\calI|} + \frac{|\calI|}{L^{1/3}} \end{equation}\end{minipage} &
+$ \sqrt{S}T^\frac{2}{3}$ & $S^\frac{1}{3}T^\frac{2}{3} $ &
+$\sqrt{\var}T^\frac{3}{4}$ &  $\var^\frac{1}{4}T^\frac{3}{4} $ \\
+\hline
+{\small \AdaILTCB} & {\small Y} & $\sqrt{T}$ & $\sqrt{|\calI|}$  & 
+$S\sqrt{T}$ & $\sqrt{ST} $ & 
+$ \bvar T^\frac{2}{3}$ & $\bvar^{\frac{1}{3}}T^{\frac{2}{3}} $ \\
+\hline
+{\small \AdaBIN} & {\small Y} & \multicolumn{2}{c|}{$T^{\frac{3}{4}}$}  & 
+\multicolumn{2}{c|}{$S^{\frac{1}{4}}T^{\frac{3}{4}}$} & \multicolumn{2}{c|}{$\var^{\frac{1}{5}}T^{\frac{4}{5}}$} \\
+\hline
+\end{tabular}
+
+\footnotetext{Other (incomparable) bounds for the ``param-free''  column are also possible. See discussions in respective sections.}
+
+%\begin{tabular}{|c|c|c|c|c|}
+%\hline
+%{\small Algorithm} & {\small Fast?} & {\small Interval Regret} & {\small Switching Regret} & {\small Dynamic Regret} \\
+%\hline
+%{\small Exp4.S} & {\small N} & $\sqrt{L} + \frac{|\calI|}{\sqrt{L}} \rightarrow \sqrt{|\calI|}$  & 
+%$S\sqrt{L} + \frac{T}{\sqrt{L}} \rightarrow \sqrt{ST} $ & 
+%$\var L + \frac{T}{\sqrt{L}} \rightarrow \var^{\frac{1}{3}}T^{\frac{2}{3}} $ \\
+%\hline
+%{\small Corral \bistro} & {\small Y} & $T^{3/4}$ & $ST^{3/4}$ & $\sqrt{\var} T^{7/8} + T^{3/4}$ \\
+%%\begin{minipage}{2.2cm}\vspace{-3pt}\begin{equation}\tag*{$\dagger$} T^{3/4} \end{equation}\end{minipage} & 
+%%\begin{minipage}{2.4cm}\vspace{-3pt}\begin{equation}\tag*{$\dagger$} ST^{3/4} \end{equation}\end{minipage} & 
+%%\begin{minipage}{2.9cm}\vspace{-8pt}\begin{equation}\tag*{$\dagger$} \sqrt{\var} T^{7/8} + T^{3/4} \end{equation}\end{minipage} \\
+%\hline
+%{\small \AdaEG} & {\small  Y} &  $L^{\frac{1}{6}}|\calI|^\frac{1}{2} + \frac{|\calI|}{L^{1/3}} \rightarrow |\calI|^\frac{2}{3} $ &
+%%\begin{minipage}{2.6cm}\vspace{-5pt}\begin{equation}\tag*{$\ast$} L^{1/6}\sqrt{|\calI|} + \frac{|\calI|}{L^{1/3}} \end{equation}\end{minipage} &
+%$ L^{\frac{1}{6}}\sqrt{ST} + \frac{T}{L^{1/3}} \rightarrow \sqrt{S}T^\frac{2}{3} $ &
+%$\var L + \frac{T}{L^{1/3}} \rightarrow \var^\frac{1}{4}T^\frac{3}{4} $ \\
+%\hline
+%{\small \AdaILTCB} & {\small Y} &  $\sqrt{L} + \frac{|\calI|}{\sqrt{L}} \rightarrow \sqrt{|\calI|} $ &
+%%\begin{minipage}{2.2cm}\vspace{-3pt}\begin{equation}\tag*{$\ast$} \sqrt{L} + \frac{|\calI|}{\sqrt{L}} \end{equation}\end{minipage} & 
+%$S\sqrt{L} + \frac{T}{\sqrt{L}} \rightarrow \sqrt{ST} $  & 
+%$\bar{\var}L + \frac{T}{\sqrt{L}} \rightarrow \var^{\frac{1}{3}}T^{\frac{2}{3}} $ \\
+%\hline
+%{\small \AdaBIN} & {\small Y} & 
+%{\small N/A} & 
+%$S^{1/4}T^{3/4}$ & 
+%$\var^{1/5}T^{4/5} $ \\
+%\hline
+%\end{tabular}
+\end{table}
+
+\paragraph{Related work.}
+The idea of testing for non-stationarity in bandits was studied
+in~\citep{BubeckSl12} and~\citep{AuerCh16} for a very different
+purpose. 
+%and in~\citep{KarninAn16} for a two-armed bandit problem in non-stationary environments,\footnote{That work focuses on adapting to
+%  unknown parameters, and the regret bound there has a large
+%  independence in $T$, making the results incomparable.}  all without context. 
+The closest bounds to those in Table~\ref{tab:results} are in
+the non-contextual setting~\citep{AuerCeFrSc02, BesbesGuZe14,
+  BesbesGuZe15, WeiHoLu16} as mentioned earlier. \citet{chakrabarti2009mortal} study a context-free setup where
+the action set changes. To the best our knowledge, oracle-efficient
+contextual bandit algorithms for non-stationary environments were only
+studied before in~\citep{SyrgkanisKrSc16}, where a reduction from
+competing with a switching policy sequence to competing with a fixed
+policy was proposed.  However, the reduction cannot be applied to the
+i.i.d methods~\citep{LangfordZh08, AgarwalHsKaLaLiSc14}, and it heavily
+relies on knowing the number of switches and the transductive setting. Additionally,
+this approach gives no guarantees on interval regret or dynamic
+regret, unlike our results.

@@ -1,0 +1,65 @@
+\newcommand{\lcomp}{\loss^{\circ}}
+\section{Preliminaries}\label{s:prel}
+%
+We start by considering a nonstochastic multiarmed bandit problem on
+$K$ actions with oblivious losses in which the loss $\loss_t(i) \in
+[0,1]$ at time $t$ of an action $i \in \{1,\ldots, K\}$ is defined
+by the sum
+\[
+  \loss_t(i) = \sum_{s=0}^{d-1} \loss_t^{(s)}(i)
+\]
+of $d$-many components $\loss_t^{(s)}(i) \ge 0$ for $s=0,\dots,d-1$.
+Let $I_t$ denote the action chosen by the player at the
+beginning of round $t$. If $I_t = i$, then the player incurs loss
+$\loss_t^{(0)}(i)$ at time $t$, loss $\loss_t^{(1)}(i)$ at time $t+1$,
+and so on until time $t+d-1$.
+Yet, what the player observes at time $t$ is only the combined loss incurred at time $t$, which is the sum
+$
+\loss_{t}^{(0)}(I_{t}) + \loss_{t-1}^{(1)}(I_{t-1}) + \cdots + \loss_{t-d+1}^{(d-1)}(I_{t-d+1})
+$
+of the past $d$ loss contributions, where $\loss_t^{(s)}(i) = 0$ for all $i$ and $s$ when $t \le 0$. Since the setting $d=1$ recovers the standard nonstochastic oblivious bandit model, in the following we assume $d \ge 2$. For all sequences of actions $i_1, \ldots, i_d \in \{1,\ldots,K\}$, define the $d$-delayed {\em composite} loss function
+%
+\begin{equation}\label{e:mixedloss}
+    \lcomp_t(i_1,i_2,\dots,i_d) = \sum_{s=0}^{d-1} \loss_{t-s}^{(s)}(i_{d-s})~,
+\end{equation}
+%
+with $\loss_t^{(s)}(i) = 0$ for all $i$ and $s$ when $t \le 0$. With this notation, the $d$-delayed composite anonymous feedback assumption states that what the player observes at the end of each round $t$ is only the composite loss
+$
+\lcomp_t(I_{t-d+1},I_{t-d+2},\dots,I_t)
+$.
+Note that, whereas the losses $\loss_t(i)$ are in $[0,1]$, the composite loss can take values as large as $d$. On the other hand, the cumulative composite loss of any action $i$ over $d$ consecutive steps is at most $2d-1$:
+\begin{equation}
+\label{eq:compsum}
+    \sum_{\tau=t-d+1}^t \lcomp_{\tau}(i,\dots,i)
+=\!\!\!
+    \sum_{\tau=t-d+1}^t \sum_{s=0}^{d-1} \loss_{\tau-s}^{(s)}(i)
+\leq\!\!\!
+    \sum_{\tau=t-2d+2}^t \sum_{s=0}^{d-1}\loss_{\tau}^{(s)}(i)
+=\!\!\!
+    \sum_{\tau=t-2d+2}^t \loss_{\tau}(i)
+\le
+    2d-1~.
+\end{equation}
+The goal of the algorithm is to bound its regret $R_T$ against the best fixed action in hindsight,
+\[
+R_T =\E\left[\sum_{t=1}^T \lcomp_t(I_{t-d+1},\dots,I_t)\right] -
+\min_k \sum_{t=1}^T \lcomp_t(k,\dots,k)~.
+\]
+We define the regret in terms of the composite losses $\lcomp_t$ rather than the true losses $\loss_t$ because in our model $\lcomp_t$ is what the algorithm pays overall in round $t$. It is easy to see that a bound on $R_T$ implies a bound on the more standard notion of regret $\E\left[\sum_{t=1}^T \loss_t(I_t)\right] - \min_{k}\sum_{t=1}^T \loss_t(k)$ up to an additive term of at most $d-1$.
+%\begin{align*}
+%   \E\left[\sum_{t=1}^T \loss_t(I_t)\right] - \min_{k = 1,\ldots,K}\sum_{t=1}^T \loss_t(k)
+%&=
+%   \E\left[\sum_{t=1}^T \lcomp_t(I_{t-d+1},\dots,I_t)\right] - \sum_{t=1}^T \lcomp_t(k,\dots,k)
+%   + \sum_{t=T-d+2}^T \sum_{s=T-t+1}^{d-1} \Big(\E\big[\loss_t^{(s)}(I_t)\big] - \loss_t^{(s)}(k)\Big)
+%\\&\le
+%   \E\left[\sum_{t=1}^T \lcomp_t(I_{t-d+1},\dots,I_t)\right] - \sum_{t=1}^T \lcomp_t(k,\dots,k) + (d-1)~.
+%\end{align*}
+
+Our setting generalizes the composite loss function setting of \citet{ddkp14}.
+Specifically, the linear composite loss function therein can be seen as a
+special case of the composite loss~(\ref{e:mixedloss}) once we remove
+the superscripts $s$ from the loss function components. In fact, in the linear case,
+the feedback in \citep{ddkp14} allows one to easily reconstruct each individual
+loss component in a recursive manner. This is clearly impossible in our more
+involved scenario, where the new loss components that are observed in round $t$ need
+not have occurred in past rounds.

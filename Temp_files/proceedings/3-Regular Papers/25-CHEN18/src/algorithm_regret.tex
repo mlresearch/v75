@@ -1,0 +1,130 @@
+\subsection{Bounding the Total Regret}
+In bounding the total regret, because agents' types are from a compact
+set by Assumption~\ref{A2}, the maximum regret in any one round is
+bounded by a constant.
+We use $\MAXR = \max_{\AgV, i,i'} \AgV \cdot (\ArmV{i} - \ArmV{i'})$
+to denote this constant upper bound on the maximum regret that can be
+incurred in any one time step. 
+
+
+\begin{emptyextraproof}{Theorem~\ref{rst:regret}}
+Regret can arise in two ways:
+(1) an agent was incentivized to pull a suboptimal arm, or
+(2) an agent myopically pulled a suboptimal arm.
+By Lemma~\ref{lem:numP}, Algorithm~\ref{alg:basic-incentivizing}
+incentivizes agents at most 
+$O\left( N\exp\left(\frac{2}{p}\right) \right)$
+times in expectation, each time causing regret at most \MAXR,
+for a total expected regret of at most
+$O\left(\MAXR\cdot N\exp\left(\frac{2}{p}\right) \right)$.
+For the rest of the proof, we focus on the regret incurred when agents
+pull arms myopically and make mistakes.
+
+We distinguish between agents incurring large regret
+(which requires severe misestimates of arm locations;
+such misestimates are exponentially unlikely to occur), 
+and agents incurring small positive regret,
+which requires these agents to be almost tied in their preference for
+the best arm.
+To be more precise, we define (with foresight) a phase-dependent
+cutoff
+$\EarlyCut{s} = \sqrt{\frac{128\log(s) \cdot \Diam^2 d^2 \sigma^2}{1.8 s}}$,
+and consider a regret exceeding \EarlyCut{s} large.
+
+For most of the proof, we will focus on the case $\EarlyCut{s} \leq \TieCutoff$.
+The remaining phases are the ones with
+$\frac{s}{\log s} \leq \frac{128}{1.8} \cdot \Diam^2 d^2 \sigma^2/\TieCutoff^2$.
+Because $\frac{s}{\log s} = \Omega(s^{2/3})$, there are at most
+$O(\Diam^3 d^3 \sigma^3/\TieCutoff^3)$ such phases,
+each such phase lasts for at most $\ARMNUM \cdot \log(s)$ steps
+in expectation by Lemma~\ref{lem:phase-length},
+and each step incurs regret at most \MAXR.
+Therefore, the total expected regret incurred in these phases is at most
+$O(\ARMNUM \MAXR \cdot \Diam^3 d^3 \sigma^3/\TieCutoff^3
+\cdot \log (\Diam^3 d^3 \sigma^3/\TieCutoff^3))
+\leq O(\ARMNUM \MAXR \Diam^4 d^4 \sigma^4/\TieCutoff^4)
+= O(\ARMNUM \MAXR)$,
+by crudely bounding $\log y \leq O(y^{1/3})$.
+
+For the remainder of the proof, we consider phases $s$
+with $\EarlyCut{s} \leq \TieCutoff$.
+We first consider agents \AgV incurring positive regret less than \EarlyCut{s}.
+Let $A_s$ be the set of types satisfying 
+$\AgV \cdot (\ArmV{\Best{\AgV}} - \ArmV{\Second{\AgV}}) \leq \EarlyCut{s}$.
+By Assumption~\ref{A1}, and because $\EarlyCut{s} \leq \TieCutoff$,
+the total measure of $A_s$
+is $\AlmostTied{\EarlyCut{s}} \leq \TieDensity \cdot \EarlyCut{s}$.
+Then, by Lemma~\ref{lem:phase-length},
+the expected number of pulls in phase $s$ by agents in $A_s$  
+is bounded above by $\TieDensity \EarlyCut{s} \cdot \ARMNUM \log(s)$.
+Any agent \AgV incurring positive regret less than $\EarlyCut{s}$
+must have a type in $A_s$,
+so the expected total regret from such agents,
+summed over all phases, is at most
+\begin{equation}
+\sum_{s=1}^{T} \TieDensity \EarlyCut[2]{s} \cdot \ARMNUM \log(s).
+\label{equ:small_regret_bound}
+\end{equation}
+
+We next bound the regret incurred in time steps with large regret.
+Define the stopping times $\tau_{s}^{k}$ to be the \Kth{k}
+time step in the \Kth{s} phase,
+with $\tau_{s}^{k} = \infty$ when phase $s$ has fewer than $k$ steps,
+i.e., $k > t_{s+1}-t_{s}$.
+By Lemma~\ref{lem:right-choice},
+under \AccEU{\tau_s^k}{\frac{\EarlyCut{s}}{2\Diam d}},
+no agent at time $t$ will incur regret more than \EarlyCut{s}.
+  
+To bound the probability of \AccEU{\tau_s^k}{\frac{\EarlyCut{s}}{2\Diam d}},
+we use Lemma~\ref{lem:round-prob}
+(with $x_s = x'_s = \frac{\EarlyCut{s}}{2 \Diam d}$
+and a stopping time of $\tau_s^k$).
+We first verify that this choice of $x_s, x'_s$
+satisfies the assumption of Lemma~\ref{lem:round-prob} for all
+$s \geq 2$,
+i.e., that
+$\sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{n x_n^2}{16 \sigma^2}}
+\leq \frac{n x_n}{2 \sigma}$
+for all $n \geq 2$.
+Substituting that
+$x_n = \frac{\EarlyCut{n}}{2 \Diam d} = \sqrt{\frac{32\log(n) \cdot \sigma^2}{1.8 n}}$,
+the left-hand side is
+
+\[
+  \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{2 \log n}{1.8}}
+  \; \leq \;
+  \sqrt{0.6 n \cdot \log (\log_{1.1}(n) + 1) + \frac{2 n \log n}{1.8}},
+\]
+while the right-hand side is $\sqrt{\frac{8 n \log(n)}{1.8}}$.
+Squaring both sides and canceling out common terms,
+the desired inequality is equivalent to
+$\frac{50}{9} \log n \geq \log(\log_{1.1}(n) + 1)$.
+This can be verified by numerical calculation for $n=2$ and a
+derivative test.
+
+Now, by Lemma~\ref{lem:round-prob} and a union bound over all arms $i$
+and attributes $j$, we get that 
+\begin{align*}
+\Prob{\AccEU{\tau_s^k}{x_s}}
+& \leq 24 \ARMNUM d \cdot \exp \left( \frac{-1.8 s x_s^2}{16 \sigma^2} \right)
+\; = \; \frac{24 \ARMNUM d}{s^2}.
+\end{align*}
+
+In the low-probability event, we simply bound the maximum regret by \MAXR.
+Summing over all time periods,
+the total expected regret from large-regret steps is at most
+$24 \ARMNUM d \MAXR \cdot \frac{\pi^2}{6} = O(\ARMNUM \MAXR)$.
+
+Adding all four types of regret terms,
+and substituting 
+$\EarlyCut[2]{s} = \frac{128 \log(s) \cdot \Diam^2 d^2 \sigma^2}{1.8 s}$,
+the cumulative regret up to time $T$ is at most
+$
+O \left(\ARMNUM \MAXR \cdot \exp \left( \frac{2}{p} \right)
++ \ARMNUM \MAXR
++ \ARMNUM \MAXR
++ \ARMNUM \TieDensity \cdot \sum_{s=1}^{T} \EarlyCut[2]{s} \log(s) \right)\\
+= 
+O \left(\ARMNUM  \cdot \exp \left( \frac{2}{p} \right)
++ \ARMNUM \TieDensity \cdot \log^3(T) \right)$.\QED
+\end{emptyextraproof}

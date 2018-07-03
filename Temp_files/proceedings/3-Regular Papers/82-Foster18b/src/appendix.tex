@@ -1,0 +1,72 @@
+% !TEX root = paper.tex
+
+\subsection{Proofs from \pref{sec:burkholder} and \pref{sec:algorithm}}
+
+
+\begin{proof}[\pfref{lem:suff_to_martingale}]
+We will use the notation $\multiminimax{\ldots}_{t=1}^n$ to denote the repeated application of operators, with the outer application corresponding to $t=1$. Existence of a randomized strategy for \pref{eq:def_phi_regret} is equivalent to the following quantity being non-positive:
+\begin{align*}
+&\multiminimax{\sup_{x_t\in\cX} \inf_{q_t\in\Delta_{\cY}} \sup_{y_t\in\cY} \En_{\yh_t\sim q_t}}_{t=1}^n \left[\sum_{t=1}^n \loss(\pred_t,y_t) - \phi(x_1,y_1,\ldots,x_n,y_n)  \right].
+\end{align*}
+By the minimax theorem, this is equal to 
+\begin{align*}
+&\multiminimax{ \sup_{x_t\in\cX} \sup_{p_t\in\Delta_{\cY}} \inf_{\pred_t\in\cY}\En_{y_t \sim p_t}}_{t=1}^n \brk*{ \sum_{t=1}^n \loss(\pred_t,y_t) - \phi(x_1,y_1,\ldots,x_n,y_n)}.
+\end{align*}
+See \citep{RakSriTew10,rakhlin2012relax,FosRakSri15} for detailed discussion of the technical conditions under which the minimax theorem can be applied in the online learning setting; briefly, our assumptions that $\cY$ is a compact subset of $\bbR$ and that $\ls$ and $\phi$ are bounded are sufficient.
+In view of \pref{eq:suffiency_def}, the above quantity is upper bounded by 
+\begin{align*}
+&\leq{} \multiminimax{\sup_{x_t\in\cX} \sup_{p_t\in\Delta_{\cY}} \inf_{\pred_t\in\cY}\En_{y_t \sim p_t}}_{t=1}^n \brk*{ V\left(\sum_{t=1}^n \suff(x_t,\pred_t,\partial \loss(\pred_t,y_t))\right) }.
+\end{align*}
+ Now, for each time $t$, choose the dual strategy \[\pred_t^* \ldef \arg\min_{\pred\in\cY} \En_{y_t \sim p_t}\loss(\pred,y_t),\] so that $0\in\partial \En_{y_t\sim p_t} \loss(\pred^*_t, y_t)$; that this is possible is implied by the assumption on the loss $\ls$ stated in \pref{sec:problem}.
+This choice implies that $\partial \loss(\pred_t^*,y_t) = \delta_t$ is a zero mean real variable conditionally on the past, i.e. $\En\brk*{\delta_{t}\mid{}\cG_{t}}=0$, where $\cG_{t}=\sigma(\yh_{1:t-1})$.
+This particular choice for the $\yh_t$ in the dual game leads to the upper bound 
+\begin{align*}
+&\multiminimax{ \sup_{x_t\in\cX} \sup_{p_t\in\Delta_{\cY}} \En_{y_t \sim p_t}}_{t=1}^n \brk*{ V\left(\sum_{t=1}^n \suff(x_t,\pred_t^*,\delta_t)\right) },
+\end{align*}
+which is, in turn, upper bounded by 
+\begin{align*}
+&\multiminimax{ \sup_{z_t\in \X\times \cY} \sup_{p_t\in\Delta_{\brk*{-L, L}}: \En[\delta_t]=0} \En_{\delta_t \sim p_t}}_{t=1}^n \brk*{ V\left(\sum_{t=1}^n \suff(z_t,\delta_t)\right) }.
+\end{align*}
+The last expression can be written in the functional form as
+$$
+\sup_{\bz, \bp} \mathbb{E}_{\delta \sim \bp}\left[  V\left(\sum_{t=1}^n \suff(\bz_t, \delta_t)\right) \right].
+$$
+using the notation of the lemma, with the supremum over $\bp$ ranging over all joint distributions on $\delta=(\delta_1,\ldots,\delta_n)$ satisfying $\En[\delta_t\mid{}\delta_{1:t-1}]=0$ for all $t\in[n]$. The non-positivity of the latter quantity is therefore sufficient to ensure the existence of a prediction strategy satisfying \pref{eq:def_phi_regret}.
+\end{proof}
+
+\begin{proof}[\pfref{lem:equivalence_burkholder}]
+We first establish existence of $\burk$ under the premise of the lemma. The construction is given by
+\begin{equation}
+\label{eq:u_construction}
+\burk(\tau) = \sup_{\bz,  \bp} \En_{\delta \sim \bp}\left[ V\left(\tau + \sum_{t\geq 1} \suff(\bz_t,\delta_t) \right)\right].
+\end{equation}
+Then under the probabilistic inequality that is the premise of the lemma, it holds that
+\[
+\burk(0) = \sup_{\bz,  \bp} \En_{\delta \sim \bp}\left[ V\left(\sum_{t\geq 1} \suff(\bz_t,\delta_t) \right)\right] \le 0.
+\]
+ Next, by our assumption, $\exists z^0 $ s.t. $\suff(z^0,0) = 0$, we can lower bound the supremum in \pref{eq:u_construction} by considering a particular $\bz$ that is constant $\bz_t\ldef z^0$ for all $t$, and a distribution for $\delta_t$ that only places mass on the singleton $0$. This yields a lower bound
+$$
+\burk(\tau) \ge V(\tau).
+$$
+To verify the third condition, observe that for any zero-mean random variable $\alpha$ with distribution $p$ supported on $[-L,L]$,
+\begin{align*}
+\En_{\alpha}\left[\burk(\tau + \suff(z,\alpha))\right] &=  \En_{\alpha}\left[ \sup_{\bz, \bp} \En_{\delta \sim \bp}\left[ V\left(\tau + \suff(z,\alpha) + \sum_t \suff(\mathbf{z}_t, \delta_t) \right)\right] \right]\\
+ &\le   \sup_{\bz, \bp} \En_{\delta \sim \bp}\left[ V\left(\tau  + \sum_t \suff(\bz_t, \delta_t) \right)\right] \\
+ & = \burk(\tau).
+\end{align*}
+For the converse, assume we have a function $\burk$ satisfying the three properties. Fix any $\bz$ and $\bp$ of length $n$. In this case, by property \proptwo, the following inequality holds deterministically:
+\begin{align*}
+ V\left(\sum_{t=1}^n \suff(\bz_t,\delta_t)\right)  & \le \burk\left(\sum_{t=1}^n \suff(\bz_t,\delta_t)\right).
+\end{align*}
+By property \propthree, we have that for any time $s$,
+\begin{align*}
+\En_{\delta_n} \burk\left(\sum_{t=1}^s \suff(\bz_t,\delta_t)\right) \le   \burk\left(\sum_{t=1}^{s-1} \suff(\bz_t,\delta_t)\right).
+\end{align*}
+Continuing this argument all the way to $t=0$ and using property \propone,
+\begin{align*}
+\sup_{\bz, \bp} \En_{\delta \sim \bp}\left[  V\left(\sum_{t=1}^n \suff(\bz_t,\delta_t)\right) \right] \le \burk(0) \le 0.
+\end{align*}
+\end{proof}
+
+
+

@@ -1,0 +1,287 @@
+%
+% !TEX root = Main.tex
+\section{A simple robust parameter-free algorithm for stochastic \& adversarial rewards}
+\label{s:UpperBOB}
+%
+In this section, we present a new learner 
+and analyze its theoretical performance against any i.i.d.\, stochastic 
+problem or any adversarially designed rewards.
+
+We call the algorithm \ProbabilityONE{}, denote it by \Pone{}, %\todovout{is this english?, 'denote it'?},
+and detail it in Figure~\ref{fig:probaoneAlgo}.
+Intuitively,  \Pone{} pulls the estimated best arm with 
+``probability'' one, the estimated second best arm with ``probability'' 
+one half, the estimated third best arm with ``probability'' one 
+third, and so on until pulling the estimated worst arm with ``probability'' one over $\nArms$.\textsuperscript{\ref{foot:break}} 
+In order to get proper probabilities, we need to normalize  
+them by the $\nArms$-th harmonic number %$\bar\log(\nArms)$ where %\todo{the algorithm could be defined so that the two best arm are pulled equally to make a bit more sense but I guess it doesn't really matter}
+$\bar\log \nArms =\sum_{k=1}^\nArms (1/k)$, where $\bar\log \nArms\leq \log\nArms+1$ for all positive integers $\nArms$.
+% \todov{the relation between $\bar\log(\nArms)$ and $\log(\nArms)$ should be written somewhere}
+% \todovout{michal, no? figure[H] for this algo? :) MV: like this?}
+\begin{figure}[H]
+	\centering
+	\framebox{
+		~~~~~~~~~    \begin{minipage}{.9\textwidth}
+			%    Given: the number of arms $\nArms$ \\[.05cm]
+			\vspace{.15cm}
+			\textbf{For} $t=1,2, \ldots$\vspace{.1cm}
+			
+			$\qquad$\raisebox{.02cm}{\textcolor{bull}{$\blacktriangleright$}}~  Sort and rank the arms by decreasing 
+			order of $\estCumulGainVector_{\cdot,t-1}$: Rank arm $k$ as $\tilde{\langle k \rangle}_t\in[K]$\footnote{Equalities between arms
+				or comparisons with arms that have not been pulled 
+				yet are broken arbitrarily.\label{foot:break}}.\vspace{.2cm}
+			
+			$\qquad$\raisebox{.02cm}{\textcolor{bull}{$\blacktriangleright$}}~  Select arm $\pulledArm_t\in [\nArms]$ with 
+			$\learnerDist_{k,t}\triangleq\Pro\left(\pulledArm_t=k\right) 
+			\triangleq \displaystyle \frac{1}{~\tilde{\langle k \rangle}^{\vphantom{X}}_t~\bar\log\nArms~}$ 
+			for all $k\in\setArms$.\vspace{.2cm}
+			
+			\textbf{Recommend}, at any given round $t$,  $\recomArm_t \triangleq  \argmax_{k\in\setArms}~ 
+			\estCumulGainVector_{k,t}$.
+		\end{minipage}
+	}
+	\caption{The \ProbabilityONE{} (\Pone{}) algorithm}\label{fig:probaoneAlgo}
+\end{figure}
+\noindent
+The estimate used in \Pone{} is 
+$\estCumulGainVector_{k,t-1}$ for arm $k$ at round $t$. 
+\Pone{} is heavily inspired  by Successive Rejects (\SR{}) of~\citet{Audibert10BA}, as both are somehow ranking the 
+arms and attempt to allocate to arm~$k$ a number of pulls 
+$\tcO\left( \timeHorizon/\langle k\rangle\right)$ according to its true rank $\langle k\rangle$. 
+Our new learner is parameter-free and naturally anytime 
+(agnostic of $\timeHorizon$).
+% It only needs to know  $\nArms$. 
+As \SR{}, it does not need any knowledge 
+of any complexity nor it is trying to estimate any. 
+However, contrarily to \SR{}, it does not divide the game into different 
+sampling phases. The same rudimentary sampling procedure 
+is repeated at all rounds $t$ in \ae ternum. %Therefore \Pone{} is a natural 
+%anytime algorithm not needing to know the time horizon 
+%$\timeHorizon$. 
+%Additionally it makes the sampling sub-routine very 
+%versatile and adaptive to other potential applications and settings. 
+
+
+
+%\todom{if it is anytime, we remove $n$ from the algo\\ Victor: I removed it, but now  Is it confusing with the return $J_n$?}
+As discussed in Section~\ref{s:FormuBOB}, in order to minimize the misidentification error in the stochastic case, it is crucial 
+to limit 
+the variance of the estimators for the best arms.
+Therefore  \Pone{},  from
+its very first pull, pulls more (i.e., with higher probability) the arms that are 
+estimated to be among the best. 
+First, this comes with almost no cost: Indeed, pulling 
+the estimated best arm with probability 
+$1/\bar\log\nArms$ does not prevent from pulling 
+all the arms almost uniformly and more precisely with probability at 
+least  $1/(\nArms\bar\log\nArms).$
+Therefore, no suboptimal arm is actually left out in 
+the early chase for  the best arm and the variances of the estimators 
+can only increase by a factor of $\bar\log\nArms$ with respect 
+to the uniform strategy.
+Second, it gives the learner the flexibility to adapt 
+to different types of stochastic problems with 
+different gap regimes.   If in a setup,  some arms 
+are clearly suboptimal, it is helpful to pull the clearly best 
+arm more and right from the beginning. This is a more flexible behavior than the one of algorithms that  are fixing the number of pulls for each arm during a fixed period  in advance. 
+Additionally, compared to a fixed-phase algorithm,  our
+analysis is also more flexible:
+We can analyze, for instance, the quality of the estimated ranking $\tilde{\langle\cdot\rangle}$ and therefore the adaptive sampling procedure of the arms 
+at any round.
+Actually, these rounds called \emph{comparison rounds}, 
+can be chosen in a problem-dependent manner, in order to 
+minimize the final probability of error. This is conspicuous in the complexity measure  present in the upper bound 
+as it is defined as a minimum complexity among complexities 
+defined for any set of comparison rounds.
+Note again that this optimization procedure is only for 
+the analysis of the learner while the learner itself is 
+utterly agnostic of the optimal `virtual' phases and 
+just follows its simple routine. We now define this 
+new notion of complexity. First, we define  the proportion of rounds for 
+comparison $\propTimeVec$  in a space~$\propTimeVecSpa.$
+%
+Let $\propTimeVecSpa\triangleq\left\{\propTimeVec
+\in[0,1]^\nArms
+: %\sum_{i=2}^\nArms \propTime_i \leq 1,
+\timeHorizon\propTime_i\in\Integer ,  \forall i \in[\nArms],
+1=\propTime_1=\propTime_2\geq\propTime_3\geq\ldots
+\geq\propTime_{\nArms}>\propTime_{\nArms+1}=0
+\right\}$. The complexity associated with the \Pone{} 
+learner is $\complexityProOne$ and is defined 
+first as
+%\todov{explain what this is!}
+%
+%\todomi{the constants in the complexity term do not seem to match the one in the proof of Lemma 11}
+\[
+\complexityProOne(\propTimeVec)
+\triangleq
+\max_{k\in\setArms}
+\frac{
+	\sum_{i=\langle k \rangle}^{\nArms}
+	(\propTime_{i}-\propTime_{i+1})
+	i
+	+
+	\frac{1}{24}\nArms\propTime_{\langle k \rangle}\gap_{k}}
+{\propTime^2_{\langle k \rangle}\gap^2_{k}}\bar\log\nArms
+\quad\text{and then,}\quad
+\complexityProOne
+\triangleq
+\min_{\propTimeVec\in\propTimeVecSpa}
+\complexityProOne(\propTimeVec).
+%
+\]
+%
+%$\complexityProOne(\propTimeVec)$ has a similar shape to the variance complexity in~\cite{Gabillon11MB} (See a detailed discussion there). 
+In  $\complexityProOne(\propTimeVec)$, for  arm $k$,  the term
+$    \sum_{i=\langle k \rangle}^{\nArms}
+(\propTime_{i}-\propTime_{i+1})
+i$  corresponds to the sum of 
+variances $\tcO(i)$, for $i\in[\langle k \rangle:\nArms]$,  during a proportion of time %\todom{this does not give a complete intuition of $\complexityProOne$}\todom{what is the variance of order $i$? may you mean by magnitude $i$? }
+$\propTime_{i}-\propTime_{i+1}$ between the comparison 
+rounds $i+1$ and~$i$. Indeed, 
+%as discussed 
+%later in the sketch of proof, 
+we expect the estimated ranking 
+of  arm $k$, $\tilde{\langle k \rangle}_t$, for 
+$t\in[\timeHorizon\propTime_{i+1}:\timeHorizon\propTime_{i}]$, 
+to be smaller than~$i$, which corresponds to its true ranking as $\langle k\rangle\leq i$.
+This leads, for 
+$t\geq\timeHorizon\propTime_{i+1}$, to
+$\learnerDist_{k,t}\geq\ 1/(i\bar\log\nArms)$
+% $\gainVector_{k,t}= \frac{\gainVector_{k,t}\indicator{\pulledArm_t = k}}
+%{\learnerDist_{k,t}}\geq\frac{1}{1/i}$
+and therefore, as  
+$\estGainVector_{k,t} = \frac{\gainVector_{k,t}}
+{\learnerDist_{k,t}}\indicator{\pulledArm_t = k},$ %\CommaBin$
+to a variance of $\estGainVector_{k,t} $   smaller than $i\bar\log\nArms$.
+In the denominator,  the term $\propTime_{\langle k \rangle}$ is proportional to  the amount of pulls,  $\propTime_{\langle k \rangle}\timeHorizon$,  allocated to arm~$k$.
+%
+\begin{restatable}[\textcolor{titleTh}{Upper bounds for \Pone{}}]{theorem}{lightres}    \label{th:UpBOB}
+	For any stochastic  problem \stoPro{}
+	with  complexity $\complexityProOne$
+	and for any $\gainVector$ fixed by an oblivious adversary 
+	with  complexity $\complexityUnif(\gainVector)$,
+	%with $\gainVector_{k,t}\in [0,1]$ for all 
+	%$t\in[\timeHorizon]$ and for all $k\in\setArms$,
+	the  probabilities of error of~\Pone{}, denoted 
+	$\ProErr_{\stoPro}(\timeHorizon)$ and $\ProErr_{\advPro(\gainVector)}(\timeHorizon)$
+	in their respective environment, for any~$\timeHorizon$, simultaneously verify  	 
+	%
+	\[
+	\ProErr_{\stoPro}(\timeHorizon)
+	\leq
+	2K^3n\exp\left(-\frac{\timeHorizon}{128\complexityProOne}\right)\quad \text{and}
+	\quad
+	\ProErr_{\advPro(\gainVector)}(\timeHorizon)
+	\leq
+	\nArms\exp\left(-\frac{3\timeHorizon}
+	{40\bar\log(\nArms)\complexityUnif(\gainVector)}\right)\!\cdot
+	\]
+	%
+\end{restatable}
+%
+%\todomi{on this page variance of the arms is used ambiguously or not clearly to describe the variance of the estimates }
+\noindent\textbf{Sketch of the proof} 
+\textit{(full proof in 
+	Appendix~\ref{app:proofupBOB})}:
+For the \textit{adversarial case}, it is enough that the learner pulls 
+each arm with a probability larger than $1/(\nArms\bar\log\nArms)$ to obtain
+the same complexity $\complexityUnif$ as \RULE,  up to a factor $\log\nArms$.
+For the \textit{stochastic case},
+we consider $\nArms-1$  arbitrary `virtual' 
+phases that each  ends at round 
+$\timeHorizon_i=\timeHorizon\propTime_i$, that will be chosen in hindsight 
+to minimize the upper bound. Note that \Pone{} is oblivious to these values.
+The phases are following a countdown from phase $\nArms$ to 
+phase~$2$ that is the last one.
+Intuitively, $n_i$ is a round after which we expect the 
+following event~$\eventbob_i$ to happen with  
+high probability: 
+%$\cO\left(\exp(-\timeHorizon/\complexityProOne)\right)$
+For all $t>\phaseTime_i$, \Pone{} has 
+well estimated the rank of any arm $k$ with a significantly smaller 
+gap than the $i$-th gap, in particular, $\tilde{\langle k \rangle}_t\leq i-1< i$, 
+if $ \mean_{(1)}-\mean_k\leq\gap_{(i)}/2.$
+The important consequence  is that any such arm $k$, for $t>\phaseTime_i$, will be pulled with $\learnerDist_{k,t}\geq 1/(i-1)$ leading to a 
+smaller variance (of order $i-1$) in their estimates 
+$\estGainVector_{k,t}$ for $t>\phaseTime_i$. 
+Reducing these variances leads 
+in turn to  better estimates in the 
+rest of the game.
+The proof works iteratively over the phases. We 
+consider that an error has occurred as soon as the 
+estimated ranking is wrong at the end of a phase~$i$, i.e., 
+that $\eventbob_i$ does not hold. We bound the  probability 
+of making such a mistake at the end of phase $i$, give 
+the fact that no mistakes were made in previous phases.
+Indeed, with no past mistake before phase $i$, the 
+learner is guaranteed to have sharp estimates.
+Summing all the errors gives a bound on the probability 
+of not ranking well the best 
+arm at the end of the last phase $\timeHorizon_2=\timeHorizon$.
+
+To bound $\ProErr_{\stoPro}(\timeHorizon)$,
+we use the Bernstein inequality for martingale  differences. This inequality takes into account the 
+variances and holds despite the dependencies of the random 
+variables $\estGainVector_{k,t}$.
+
+When minimizing $\complexityProOne$ by choosing $\propTime_k$, for $k\in\setArms$, we need to trade off between
+short phases, possibly meaning not enough samples 
+to discriminate the suboptimal arms (the denominator term of the suboptimal arms is small) and long phases,
+which means that in early stages, the best arms are considered as badly 
+ranked for a long time and the variance of their mean estimators is increasing 
+with the length of the early phases (the numerator term for the best arms is larger).
+%\todov{this previous paragraph should be written better}
+%
+\begin{restatable}{corollary}{cocores}\label{coco} %\todom{we have HBOB and HSTOBOB, aren't they the same? \\ Victor : Yes! Hbob is for stochastic setting \\ BUT WHY in THM 4 there is additionl superscript STO }
+	The complexity $\complexityProOne$ of \Pone{} matches the  complexity $\complexityBoth$
+	from the lower bound of Theorem~\ref{th:lowBOB}
+	of up to log factors,
+	\[\complexityProOne = \cO\left(\complexityBoth\log^2\nArms\right)\!.\]
+\end{restatable}
+%\todom{this setting of a minimizes P1}
+\noindent The result of Corollary~\ref{coco} is obtained by setting  $\propTime_k =   \gap_{(1)}/\gap_{(k)},$ $\forall k \in\setArms$.\footnote{To ease the exposition, we assume without 
+	loss of generality that 
+	$    \timeHorizon\propTime_i\in\Integer,~ \forall i \in[\nArms].$}  Notice that the same values  were also 
+used in the lower bound in Theorem~\ref{th:lowBOB}. The full proof  of Corollary~\ref{coco}
+is in Appendix~\ref{s:moreOnRem}, 
+where we also discuss the relation between 
+$\complexityProOne$ and $\complexitySR$ and 
+$\complexityBoth$ for different regimes of the 
+gaps.
+Corollary~\ref{coco} demonstrates that \Pone{} achieves the best that can be wished 
+for in the two worlds, up to log factors.
+%
+%
+%\todov{Michal, do you agree with the following remark 8?}
+% \todomi{Let's discuss the detail.
+% First, what happens to the STO part? 
+%Second, why in the ADV 1/2 of P1 and 1/2 of RULE, gives you this?}
+\begin{remark}
+	In the adversarial case, a  modification to $\Pone{}$ leads to similar upper bound as for \RULE{},  where  $\complexityUnif(\gainVector)$ appears instead of $\complexityUnif(\gainVector)\bar\log \nArms$.
+	Indeed, with probability one half we can play according to \RULE{} and otherwise use \Pone{}. We keep the  recommendation $\recomArm_\timeHorizon=\argmax_{k\in\setArms}~ 
+	\estCumulGainVector_{k,\timeHorizon}$.
+\end{remark}
+%
+%\todov{we will probably have to remove the following remark}
+\begin{remark}
+	We studied the hard (adversarial) and easy data (stochastic) settings. 
+	However, as discussed by~\cite{Seldin14OP}~and~\cite{Allesiardo17NS}, we can consider intermediate settings of difficulty.
+	First, quite simply, the result in the stochastic case would still hold up
+	to constants when the gaps of the arms do not change by more than the 
+	same numerical factor during the game.
+	More generally, we could design variants of $\complexityProOne$ under 
+	the assumption that after some round $t'$ the (ground-truth) ranks of all the 
+	arms are upper bounded each by a constant. %\todom{I changed to upper bounded each by a constant. OK victor ?}
+	Indeed, soon after~$t'$, \Pone{} will itself rank every arm at most according to its 
+	maximum rank.  Such results would even hold in 
+	a case of a change of the identity of the best arm in the game.
+	%
+	%Then a careful reader will se that one can easily  redefine the notion of gaps and have a notion of maximal ranking to extend our results. 
+	%We look at a version of the problem where the best arm is define as in the stochastic problem, just not necessarily stochastic.
+	%So we have a distribution at each time and arm $\nu_{k,t}$ and a best arm at each time step $\bestArm_{t}=\argmax_{k\in\setArms}\Exp\left[\sum_{t'=1}^t \mean_{k}(t)\right]$
+	%\todov{is this well defined?}
+	%If there exist a time $t_s$, maximal rankings $r_{k,s}$ and minimal gaps such that for all times $t$, $t\geq t_s=\propTime_s\timeHorizon$, $\propTime_s\in[0,1]$ we have that for all $k\in\setArms$ both $\langle k \rangle_t \leq r_{k,s}$ and
+	%$\langle k \rangle_t \leq r_{k,s}$  
+	%
+\end{remark}%

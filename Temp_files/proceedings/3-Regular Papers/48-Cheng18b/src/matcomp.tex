@@ -1,0 +1,87 @@
+% !TEX root = main.tex
+
+\section{Application to Matrix Completion}
+\label{sec:matcomp}
+Most analysis of matrix completion relies on the fact that the observed entries are sampled uniformly at random. Let $W_{i,j} = 1/p$ if entry $(i,j)$ is observed. This assumption is mostly used to prove {\em concentration inequalities} related to the norm of low-rank matrices $\|M\|_W^2$.  In particular, the following two lemmas are used in most papers.
+
+Lemma~\ref{lem:tangent} shows that for an $M$ that is in the ``tangent space'' (the linear space of $\Us X^\top + Y(\Vs)^\top$), the norm of $Z$ is preserved after we restrict to the observed entries. 
+Lemma~\ref{lem:Delta_mc} shows that the norm is preserved for every incoherent matrix $XY^\top$.
+
+\begin{lemma}[\cite{recht2011simpler}]
+\label{lem:tangent}
+Suppose $\Ms = \Us\Sigs(\Vs)^\top$. Suppose entries are revealed with probability $p$ independently, weight matrix $W_{i,j} = 1/p$ if $(i,j)$ is revealed and $0$ otherwise. 
+For any $0 < \delta < 1$, when $p \ge \Omega(\frac{\mu r}{\delta^2 n} \log n)$, with high probability over the randomness of $W$ we have
+\[
+|\|M\|_W - \|M\|_F| \le \delta \|M\|_F,
+\]
+for any matrix $M\in \R^{n_1\times n_2}$ of the form $M = \Us X^\top + Y(\Vs)^\top$.
+\end{lemma}
+
+\begin{lemma}
+\label{lem:Delta_mc}
+% Let set $A \subset [d]\times[d]$, and $\bar{\Omega}$ be the random set so that every element of $A$ is in $\bar{\Omega}$ with probability $p$. 
+% Then,
+Let $W$ be a random matrix where $W_{i,j} = 1/p$ with probability $p$, and $W_{i,j} = 0$ otherwise.
+There exist universal constants $c_1$ and $c_2$, so that for any $\delta>0$, if $p \ge c_1  \frac{\log n}{\delta^2 n_1}$, then with probability at least $1-\frac{1}{2}n^{-4}$, we have for any matrices $X \in \R^{n_1\times r}, Y\in\R^{n_2\times r}$:
+\begin{equation*}
+\norm{XY^\top}^2_{W}  \le (1+\delta) \norm{X}_F^2\norm{Y}_F^2 + c_2 \sqrt{\tfrac{n}{p}}\norm{X}_F\norm{Y}_F\cdot \max_i\norm{X_i} \cdot \max_j\norm{Y_j}.
+\end{equation*}
+\end{lemma}
+
+However, neither of these lemmas is applicable in our semi-random setting, because the weight matrix $W$ is no longer chosen randomly by nature.
+
+Lemma~\ref{lem:tangent} is used in both the convex analysis (e.g.,~\citep{recht2011simpler}) and many local analyses for the non-convex methods (e.g.,~\citep{sun2015guaranteed}). Deterministic versions of Lemma~\ref{lem:tangent} include Assumption A2 in \citep{BhojanapalliJ14} and Assumption A3 in \citep{LiLR16}. Unfortunately, we do not know whether Assumption A2 in \citep{BhojanapalliJ14} is true even for random matrices, and we cannot guarantee Assumption A3 in \citep{LiLR16} because it is a condition that depends on the (unknown) ground truth.
+
+Since we do not know how to obtain a deterministic version of Lemma~\ref{lem:tangent}, we turn our attention to Lemma~\ref{lem:Delta_mc}.
+Lemma~\ref{lem:Delta_mc} is only used in more recent non-convex analyses (e.g.,~\citep{sun2015guaranteed, GeJZ17}).
+We replace Lemma~\ref{lem:Delta_mc} with the following (stronger version of the) lemma, which states that if $W$ is close to the all ones matrix $J$ (which is guaranteed by our preprocessing algorithm), then the norm of $\|XY^\top\|_F$ is preserved after we weight the entries by $W$.
+Recently, \citep{chen2017memory} has independently obtained a deterministic inequality similar to Lemma~\ref{lem:deterministc_main}.
+
+\begin{lemma}[Preserving the Norm via Spectral Properties]
+\label{lem:deterministc_main}
+For any matrices $X\in \R^{n_1\times r}$, $Y \in \R^{n_2\times r}$, and $W \in \R^{n_1 \times n_2}$, we have
+\[
+|\|XY^\top\|_W^2 - \|XY^\top\|_F^2| \le \|W-J\| \|X\|_F\|Y\|_F\max_{i}\|X_i\|\max_{i}\|Y_i\|.
+\]
+\end{lemma}
+
+\begin{proof}
+Recall that $X_i$ is the $i$-th row of $X$, and $X\odot X \in \R^{n_1 \times r^2}$ is the Katri-Rao product.
+% Similarly define $Y\odot Y$.
+We have 
+\[\inner{(X\odot X)_i, (Y\odot Y)_j} = \inner{X_i\otimes X_i, Y_j\otimes Y_j} = (X_i^\top Y_j)^2 = (X Y^\top)_{i,j}^2.\]
+
+As a result, we know $\|XY^\top\|_W^2 = \inner{XY^\top, XY^\top}_W = \tr((X\odot X)^\top W (Y\odot Y))$, and $\|XY^\top\|_F^2 = \inner{XY^\top, XY^\top} = \tr((X\odot X)^\top J (Y\odot Y))$.
+
+We can also bound the Frobenius norm of the two product by: $\|X\odot X\|_F \le \|X\|_F\max_{i}\|X_i\|$, $\|Y\odot Y\|_F \le \|Y\|_F\max_{i}\|Y_i\|$. Therefore,
+\begin{align*}
+|\inner{XY^\top, XY^\top}_W - \inner{XY^\top, XY^\top}|
+& = |\tr((X\odot X)^\top (W-J) (Y\odot Y))| \\
+& \le \|X\odot X\|_F \|(W-J) (Y\odot Y)\|_F \\
+& \le \|W-J\| \|X\odot X\|_F \|(Y\odot Y)\|_F  \\
+& \le \|W-J\| \|X\|_F\|Y\|_F\max_{i}\|X_i\|\max_{i}\|Y_i\|. \tag*{\jmlrQED} %\qedhere
+\end{align*}
+\renewcommand{\jmlrQED}{}
+\end{proof}
+
+Using this lemma, as well as techniques in \citep{GeJZ17}, we can prove the following theorem (see Appendix~\ref{app:matrix} for its proof):
+%\begin{theorem} \label{thm:symmetric}
+%For the asymmetric Objective~\eqref{eqn:symmetricobj}, if we choose $\alpha^2 = \frac{C\mu r\sigs_1}{n}$ and $\lambda = \frac{C^2 n}{\mu r\kappa^\star}$ where $C$ is a large enough universal constant. Assume the weight matrix satisfies $\normone{W_i} \le 2n$ for all rows $i$, and $\|W-J\| \le \epsilon \frac{cn}{\mu^2 r^2 (\kappa^\star)^2}$ where $\epsilon < 1$ and $c>0$ is a small enough universal constant, then for any local minimum of $f(U)$ we have $\|UU^\top-\Ms\|_F^2 \le \epsilon \|\Ms\|_F^2$. 
+%\end{theorem}
+%
+%The theorem can be generalized to asymmetric case:
+\begin{theorem} \label{thm:asymmetric_local}
+For matrix completion problem with ground truth $\Ms \in \R^{n_1 \times n_2}$, let $\mu, r, \sigs_1, \kappa^\star$ be the incoherence parameter, rank, largest singular value and condition number of $\Ms$.
+Fix any error parameter $0 < \eps < 1$.
+Suppose the weight matrix $W \in \R^{n_1 \times n_2}$ satisfies $\norminf{W} \le n_2$, $\normone{W} \le n_1$, and $\|W-J\| \le \frac{\eps c\sqrt{n_1n_2}}{\mu^3 r^3 (\kappa^\star)^3}$ for a small enough universal constant $c$.
+Let $\alpha_1^2 = \frac{C\mu r\sigs_1}{n_1},\alpha_2^2 = \frac{C\mu r\sigs_1}{n_2}$, $\lambda_1 = \frac{C^2 n_1}{\mu r\kappa^\star}$, and $\lambda_2 = \frac{C^2 n_1}{\mu r\kappa^\star}$ for some large enough universal constant $C$. Then, any local minimum $(U, V)$ of the asymmetric Objective~\eqref{eqn:asymmetricobj} satisfies $\|UV^\top-\Ms\|_F^2 \le \epsilon \|\Ms\|_F^2$. 
+\end{theorem}
+
+%Our main Theorem (Theorem~\ref{thm:main}) follows immediately by combining this theorem with Theorem~\ref{???}.
+
+Our main result (Theorem~\ref{thm:main}) follows immediately from Corollary~\ref{cor:preprocess} and Theorem~\ref{thm:asymmetric_local}.
+
+We can choose $\beta = O(\eps / (\mu^3 r^3 (\kappa^\star)^3))$ in Corollary~\ref{cor:preprocess} so that our preprocessing algorithm produces a weight matrix $W$ that satisfies the requirements of Theorem~\ref{thm:asymmetric_local}.
+%Therefore, $W$ satisfies the conditions in Theorem~\ref{thm:asymmetric_local} if we set $\beta = O(\eps / (\mu^3 r^3 (\kappa^\star)^3))$.
+By Theorem~\ref{thm:asymmetric_local}, the non-convex objective with weight matrix $W$ has no bad local optima.
+The pre-processing time is $\tilde O(m / \beta^{O(1)}) = \tilde O(m \cdot \mathrm{poly}(\mu, r, \kappa^\star, \eps^{-1}))$.%, which is nearly linear in $m$.

@@ -1,0 +1,107 @@
+
+Stochastic gradient descent is the workhorse algorithm for
+optimization in machine learning and stochastic approximation
+problems; improving its runtime dependencies is a central issue in
+large scale stochastic optimization, where we can only resort to
+streaming algorithms. With regards to batch optimization (and with
+oracle access to exact gradients), there are a number of improvements
+possible over naive gradient descent, including Nesterov's
+acceleration, conjugate gradient, and BFGS.  This work seeks to
+address the question: can we accelerate stochastic approximation?
+
+%Unfortunately, the folklore is that it is not possible to utilize fast gradient methods for stochastic optimization due to their instability and error accumulation.  This work strongly refutes this folklore showing, in very strong sense, that acceleration is robust to \emph{statistical} errors. In particular, we provide an accelerated stochastic gradient descent algorithm that enjoys minimax optimal statistical estimation at rate that is provably faster than stochastic gradient descent.
+
+\iffalse
+Learning with streaming data is an important machine learning paradigm with applications in several domains. In particular, for modern big-data problems where the entire dataset cannot be loaded in memory, it is critical to design streaming algorithms that are able to generalize well after making just one/few passes over the data. %While complicated deep learning optimization algorithms are routinely modeled as streaming and stochastic algorithms, even problems as simple as linear regression for large-scale datasets require design of fast and statistically optimal streaming algorithms. 
+
+%SGD
+Stochastic gradient descent (SGD) is a popular algorithm for solving optimization problems over streaming data where the model parameters are updated using noisy unbiased estimates of gradient. SGD and similar stochastic methods such as SVRG have been studied extensively in the literature in the statistical setting~\cite{ RobbinsM51,PolyakJ92,DefossezB15,FrostigGKS15,JainKKNS16}, especially for the case of linear regression.
+\fi
+
+We consider stochstic approximation in the linear regression setting,
+where we observe samples $(\a,\b)$ drawn from a distribution $\D$ over
+$\R^d\times \R$ and our goal is to
+$\min_{\x \in \R^d} \Eover{\distr}{\left(\iprod{\a}{\x}-b\right)^2}$.
+All existing results (such as SGD~\cite{DefossezB15} and
+SVRG~\cite{FrostigGKS15}) obtain error that can be decomposed into two
+parts: i) bias term, which depends on the excess error of the initial
+iterate $\xt[0]$, and ii) variance term, which depends on the noise
+level of the problem (both of these will be made precise later in the
+paper). %$\sigma^2=\E{(\iprod{\a}{\x^*}-b)^2}$ and is sort of penalty for observing only one point at a time rather than observing the entire dataset simultaneously.
+It is known that, for both SGD~\cite{JainKKNS16} and
+SVRG~\cite{FrostigGKS15}, while the variance term is optimal, the bias
+term decreases geometrically at a rate of $1-\frac{1}{\cnH}$, where
+$\cnH$ is a problem dependent condition number. %\rahul{Talk of CG?}
+%Recently, \cite{JainKKNS16} showed that using a tail-averaging variant of SGD, the bias term decreases at a linear rate of $(1-\frac{1}{\kappa})^t$ where $\kappa$ is a computational condition number (see Assumption~\ref{as:condition}) and $n$ is the number of observed points. The variance can be bounded by $O(\sigma^2 \frac{d}{n})$. While the variance bound is optimal, an open question is to design algorithms which can decrease bias at a faster rate. 
+
+%Acceleration
+In the offline setting, on the other hand, while gradient descent based algorithms for the linear regression problem (where the entire dataset is available beforehand) also exhibit a similar geometric error decay rate of $1-\frac{1}{\cnH}$, it is indeed possible to do better. Conjugate gradient method and heavy ball method are known to obtain a convergence rate of $1-\frac{1}{\sqrt{\cnH}}$ for solving system of linear equations~\cite{HestenesS52,Polyak64}. In a seminal result, Nesterov~\cite{Nesterov83} designed an ``accelerated" gradient descent algorithm which obtains that rate for all strongly convex functions, including linear regression. We will use AGD to denote all the above algorithms that obtain $1-\frac{1}{\sqrt{\cnH}}$ rate for linear regression.
+
+%Difficulty of acceleration over streaming data
+Designing an accelerated SGD algorithm in the streaming setting, which obtains similar benefits as AGD does in the offline setting, has been a long-standing open question. % has been to design a similar accelerated algorithm for the {\em streaming} regression problem that has better dependence on the condition number $\kappa$.
+A big roadblock to designing such an algorithm is that our understanding of accelerated gradient methods is quite limited compared to that of gradient descent. For instance, as mentioned above, there are various versions of AGD in the offline/batch setting, with many of them being equivalent. On the other hand, in the streaming setting, these update equations are not equivalent and it is not obvious a priori which set of update equations should be used. Moreover, it is known that AGD is not robust to deterministic noise~\cite{dAspremont08,DevolderGN14} raising a question over whether acceleration is even possible in the stochastic streaming setting.
+
+
+%Moreover, owing to the ``fragile" analysis of AGD in the presence of noise~\cite{Nesterovnoise}, it is widely believed that stochastic AGD methods are not effective.
+This question was partially settled by the recent result of~\cite{DieuleveutFB16} which shows that the stochastic version of AGD with additive noise indeed achieves a geometric decay of the bias at a rate of $1-\frac{1}{\sqrt{\cnH}}$. However, this result applies only in the presence of additive noise in the gradient, while the streaming setting has both additive and multiplicative noise, which makes analysis significantly more challenging. In fact, it is not possible to obtain a rate of $1-\frac{1}{\sqrt{\cnH}}$ in the streaming setting since in cases where $\cnH = o(d^2)$, this would mean that we obtain non-trivial reduction in the error after observing only $\sqrt{\cnH} = o(d)$ samples. Let us elaborate a bit on this.
+
+\textbf{Is acceleration possible in the streaming setting?} Consider the distribution $\D$ where $\a$ is the $i^{\textrm{th}}$ standard basis vector with probability $p_i$. The covariance of $\a$ in this case is a diagonal matrix with diagonal entries $p_i$. The condition number of this distribution is $\cnH = \frac{1}{\min_i p_{i}}$. In this case, it is impossible to make non-trivial reduction in error by observing $o(\cnH)$ samples since with high probability, we would not have seen the vector corresponding to the smallest probability. This holds true even for offline algorithms. \rahul{is it not $\sqrt(\cnH)$?}\praneeth{It should be $\order{\sqrt{n\cnH}}$. and here $n > \cnS =\cnH$. Right?}
+
+Consider on the other hand, a case where the distribution $\D$ is Gaussian with high condition number. Matrix concentration tells us that (irrespective of the condition number) after observing $d$ samples, the empirical covariance matrix is a spectral approximation to the true covariance matrix. In this case, there are accelerated algorithms in the offline setting such as accelerated SVRG~\cite{FrostigGKS15b} and Katyusha~\cite{Zhu16}, which can decay the error at a rate of ${1-\frac{1}{\sqrt{d{\cnH}}}}$. \rahul{I think the rate is $n+\min\{d\cnH,\sqrt{n\cnH}\}$}\praneeth{In general yes. In this case, i substituted $n = d$.}.
+
+We conclude that whether or not acceleration is possible depends on the distribution: while in some cases acceleration is not possible, there are other cases where acceleration is possible. The improvement possible by acceleration depends on how many samples are required to spectrally approximate the covariance of the distribution. A notion of this is the statistical condition number, $\cnS$ (see Section~\ref{sec:prob} for precise definition), which is a natural quantity arising in matrix concentration inequalities, such as the matrix Bernstein inequality~\cite{HsuKZ14}. $\cnS$ is an (often tight) upper bound on the number of samples required so that the empirical covariance is a spectral approximation to the true covariance with high probability. Given $\cnS$ samples, the best offline accelerated algorithms such as accelerated SVRG and Katyusha obtain a geometric decay of the bias at a rate of $1-\frac{1}{\sqrt{\cnH\cnS}}$. \rahul{I think it is restart based. This seems to indicate a per-step contraction which I believe is not true}\praneeth{We can add in a sentence about restarts if that is the case.}
+
+\textbf{Contributions}:
+%Algorithm
+This paper considers an accelerated gradient descent scheme proposed in the context of coordinate descent (ACDM)~\cite{Nesterov12} and extends it to the streaming stochastic setting. The main contributions of this paper are as follows.
+\begin{itemize}
+	\item	This paper shows that the stochastic version of ACDM obtains a geometric decay of bias at a rate of $1-\frac{1}{\sqrt{\cnH\cnS}}$, where $\cnH$ is the condition number and $\cnS$ is the statistical condition number (See Section~\ref{sec:prob} for definitions). This matches the best known rates of bias decay even among offline algorithms. As mentioned above, while $\cnH$ indicates the computational difficulty of the problem, $\cnS$ indicates the statistical difficulty of the problem. %In particular, $\cnS$ characterizes the number of samples required so that the empirical covariance matrix is a spectral approximation of the population covariance matrix, and appears in matrix concentration inequalities (such as Matrix Bernstein inequality~\cite{HsuKZ14}).
+	\item	Doing tail-averaging in the above scheme retains the rate of decay of bias while obtaining optimal variance.
+	\item	Combining the above results with those of~\cite{JainKKNS16}, yields a highly parallelizable streaming algorithm for the linear regression problem. In particular, we obtain a single-pass streaming algorithm which has a depth (or serial runtime) of $\Otilde{\sqrt{\kappa(\Cov)}}$, where $\kappa(\Cov)$ denotes the condition number of covariance matrix $\Cov$ and $\Otilde{\cdot}$ hides $\log$ factors. Note that this matches the depth achieved by offline AGD up to $\log$ factors.
+\end{itemize}
+See Table~\ref{tab:comp} for a precise description of the above results and comparison to existing results.
+\begin{table*}[t]
+	\begin{center}
+		\begin{tabular}{| c | c | c | c | c |}
+			\hline
+			Algorithm & Final error & Runtime & Depth & Streaming \\ \hline
+			\begin{tabular}{@{}c@{}} \TASGD \\ Algorithm~\ref{algo:TAASGD} \end{tabular}& $O\left(\exp\left(\frac{-n}{\sqrt{\cnH\cnS}}\right)L(\xt[0]) + \frac{\sigma^2 d}{n}\right)$ & ${nd}$ & $n$ & $\checkmark$\\
+			\hline
+			\begin{tabular}{@{}c@{}} \MTASGD \\ Algorithm~\ref{algo:PASGD} \end{tabular}&\begin{tabular}{@{}c@{}} $O\left(\exp\left(\frac{-n}{\sqrt{\kappa(\Cov)}}\cdot \min\left(\frac{\twonorm{\Cov}}{\infbound},\frac{1}{\cnS}\right)\right)L(\xt[0])\right.$ \\ $\left. + \frac{\sigma^2 d}{n}\right)$ \end{tabular} & ${nd}$ & \begin{tabular}{@{}c@{}} $O\left(\sqrt{\kappa(\Cov)}\right.$ \\  $\left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & $\checkmark$\\
+			\hline
+			\begin{tabular}{@{}c@{}} Streaming SVRG \\ \cite{FrostigGKS15} \\ 	SGD \\ \cite{JainKKNS16} \end{tabular} & $O\left(\exp\left(\frac{-n}{\cnH}\right)L(\xt[0]) + \frac{\sigma^2 d}{n}\right)$ & ${nd}$ & \begin{tabular}{@{}c@{}} $O\left({\kappa(\Cov)}\right.$ \\  $\left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & $\checkmark$\\
+			\hline
+			\begin{tabular}{@{}c@{}} GD \\ \cite{Bubeck14} \end{tabular} & $O\left(\frac{\sigma^2 d}{n}\right)$ & \begin{tabular}{@{}c@{}} $O\left(nd\kappa(\Cov)\right.$ \\ $\qquad \left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & \begin{tabular}{@{}c@{}} $O\left({\kappa(\Cov)}\right.$ \\  $\left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & $\times$\\
+			\hline
+			\begin{tabular}{@{}c@{}} AGD \\ \cite{Nesterov83} \end{tabular} & $O\left(\frac{\sigma^2 d}{n}\right)$ & \begin{tabular}{@{}c@{}} $O\left(nd\sqrt{\kappa(\Cov)}\right.$ \\ $\qquad \left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & \begin{tabular}{@{}c@{}} $O\left(\sqrt{\kappa(\Cov)}\right.$ \\  $\left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & $\times$\\
+			\hline
+			\begin{tabular}{@{}c@{}} Accelerated SVRG \\ \cite{FrostigGKS15b} \\ Katyusha \\ \cite{Zhu16} \end{tabular} & $O\left(\frac{\sigma^2 d}{n}\right)$ & \begin{tabular}{@{}c@{}} $O\left((nd + \sqrt{n\cnH}d)\right.$ \\ $\qquad \left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & \begin{tabular}{@{}c@{}} $O\left(\sqrt{n\cnH}\right.$ \\  $\left. \log \frac{n L(\xt[0])}{\sigma^2 d}\right)$ \end{tabular} & $\times$ \\
+			\hline
+		\end{tabular} \\
+		\caption{Comparison of this paper's results with existing ones. Here, $d$ is the underlying dimension, $n$ is the number of samples, $\cnH$ and $\cnS$ denote the condition number and statistical condition number of the distribution respectively, $L(\xt[0])$ denotes the initial loss, $\kappa(\Cov)$ denotes the condition number of the covariance matrix $\Cov$, $\infbound$ denotes fourth moment upper bound, and $\sigma^2$ denotes the noise level. Please see Section~\ref{sec:prob} for precise definitions of all these quantities. The first two rows correspond to Algorithms~\ref{algo:TAASGD} and~\ref{algo:PASGD} of this paper. Note that the algorithms in the first three rows are streaming algorithms and take a single pass over the data, with a runtime of $nd$, while the last three rows correspond to non-streaming algorithms which take several passes over the data, with a runtime that is larger by factors depending on the condition number. Prior to this result, the best known rate of decay on the initial error $L(\xt[0])$ in the streaming setting was due to~\cite{FrostigGKS15} and~\cite{JainKKNS16}, which was $\exp\left(\frac{-n}{\cnH}\right)$. Algorithm~\ref{algo:TAASGD} improves upon this rate by obtaining a rate of $\exp\left(\frac{-n}{\sqrt{\cnH\cnS}}\right)$ for the initial error. Note that this is indeed an improvement since $\cnS \leq \cnH$. Finally, depth indicates the serial runtime of the algorithm when implemented in a multiprocessor-shared memory framework, and is a proxy for parallelizability. Lesser the depth, the more parallelizable the algorithm is. Prior to this paper, the best depth for a streaming least squares regression was $\order{\kappa(\Cov)\log \frac{n L(\xt[0])}{\sigma^2 d}}$, which matches the depth of offline gradient descent. Algorithm~\ref{algo:PASGD} of this paper improves upon this and achieves a depth of $\order{\sqrt{\kappa(\Cov)}\log \frac{n L(\xt[0])}{\sigma^2 d}}$, which matches the depth of accelerated gradient descent. However this parallelization might come at some cost to the rate of initial error decay since $\frac{1}{\sqrt{\kappa(\Cov)}}\cdot \min\left(\frac{\twonorm{\Cov}}{\infbound},\frac{1}{\cnS}\right) = \frac{1}{\sqrt{\cnH\cnS}}\cdot \left(\sqrt{\frac{\infbound}{\twonorm{\Cov}} \cnS} \min\left(\frac{\twonorm{\Cov}}{\infbound}, \frac{1}{\cnS}\right)\right) \leq \frac{1}{\sqrt{\cnH\cnS}}$.}
+		\label{tab:comp}
+	\end{center}
+\end{table*}
+%In this paper, we have designed a novel streaming AGD algorithm that uses update equations based on a more "explicit" set of accelerated gradient updates. Our algorithm updates $\x$ and a few other variables in each step using a combination of gradient at the observed data-point as well as a certain momentum 
+%term. Moreover, to average out the error accumulated due to the variance in streaming data, we propose a simple tail averaging scheme.
+ 
+%%REsult
+%Furthermore, we provide first analysis of a streaming AGD algorithm and show that the bias term  has only $\sqrt{\kappa}$ dependency on the condition number $\kappa$. However, in general, this result seems too good to be true, because in $\sqrt{\kappa}$ data points we might not even observe certain critical directions of the data, so we cannot estimate $\x^*$ along those directions. We avoid such an issue by introducing another problem dependent condition number $\cnS$, which is "statistical" condition number and intuitively bounds the number of points we need to obtain a good estimate of the data covariance itself. Note that for several distributions, $\cnS\ll \cnH$ hence getting improved error w.r.t. $\cnH$ accelerates the algorithm significantly. 
+%
+%Concretely, we show that the bias term of our algorithm decreases at $(1-\frac{1}{\sqrt{\cnH\cnS}})^n$ rate while the while the variance term can be bounded by the optimal $O(\sigma^2 \frac{d}{n})$ error (which is same as SGD) as long as $n\geq \cnH \cnS$. Note that the optimal burn-in period of $n$ is  $n\geq \sqrt{\cnH\cnS}$ indicating room for improvement. Our simulations also indicate that $\sqrt{\cnH\cnS}$ dependency is correct (see Figure~\ref{fig:bias}); note that for small $\cnS$ our method is significantly better than SGD. 
+
+%\begin{figure}[t]
+%	\includegraphics{}
+%\end{figure}
+\textbf{Challenges and techniques}:
+As mentioned above, since AGD itself has not been well understood, analyzing a streaming version of AGD is particularly challenging. There are two key challenges:
+\begin{itemize}
+	\item	While there are quite a few (related) potential functions to analyze AGD in the offline setting, applying them to the streaming setting do not seem to yield tight rates and loose condition number factors. A key technical contribution of this work is to discover the right potential function for streaming AGD in order to bound the bias.
+	\item	The operators defining the update rules of AGD are asymmetric and do not commute with the covariance matrix of the distribution. Understanding the variance term resulting from these operators is extremely challenging. Among other things, this paper employs direct moment computations in each subspace~\cite{ODonoghueC15} and obtains positive semidefinite upperbounds on the variance matrix.
+\end{itemize}  
+
+%Simulations
+
+%Paper Outline
+\FloatBarrier
+{\bf Paper Outline}: The paper is organized as follows. We review some related work in the next section. In Section~\ref{sec:prob}, we formally present the problem and define all relevant quantities. We then present the algorithms and state results in Section~\ref{sec:results}. In Section~\ref{sec:proofoutline}, we present some key lemmas in order to prove the main results. We present some empirical results comparing the accelerated algorithm of this paper with SGD in Section~\ref{sec:simulations}. We conclude in Section~\ref{sec:conclusion} with some discussion and future work.

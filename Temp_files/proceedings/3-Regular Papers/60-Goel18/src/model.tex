@@ -1,0 +1,53 @@
+%!TEX root = LookingGlass.tex
+
+We study online convex optimization problems with switching costs, a class of problems often termed \emph{Smoothed Online Convex Optimization (SOCO)}. An instance of SOCO consists of a fixed convex decision/action space $\mathcal{X} \subset \mathbb{R}^d$, a norm $\|\cdot \|$ on $\mathbb{R}^d$, and a sequence of non-negative convex cost functions $f_t$, where $t = 1 \ldots T$ and $f_t(x) = +\infty$ for all $x \notin \mathcal{X}$. 
+
+At each time $t$, an online learner observes the cost function $f_t$ and chooses a point $x_t$ in $\mathcal{X}$, incurring a \emph{hitting cost} $f_t(x_t)$ and a \emph{switching cost} $\|x_t - x_{t-1}\|$. The total cost incurred is thus 
+\begin{equation}
+\cost(ALG)=\sumt f_t(x_t) + \norm{x_t - x_{t-1}},
+\end{equation}
+where $x_t$ are the decisions of online algorithm $ALG$.  While we state this as unconstrained, constraints are incorporated via the decision space $\mathcal{X}$. Note that the decision variable could be taken to be matrix-valued instead of vector valued; similarly the switching cost could be any matrix norm.
+
+Importantly, we have allowed the learner to see the current cost function when deciding on an action, i.e., the online algorithm observes $f_t$ before picking $x_t$.  This is standard when studying switching costs due to the added complexity created by the coupling of the actions $x_t$ due to the switching cost term, e.g., \cite{andrew2013,bansal2015}, but it is different than the standard assumption in the OCO literature. While allowing the algorithm to see $f_t$ in the standard OCO setting would make the problem trivial, in the SOCO setting considerable complexity remains -- the choice in round $t$ of the offline optimal depends on $f_s$ for all $s>t$.  Giving the algorithm complete information about $f_t$ isolates the difficulty of the problem, eliminating the performance loss that comes from not knowing $f_t$ and focusing on the performance loss due to the coupling created by the switching costs. This is natural since it is easy to bound the extra cost incurred due to lack of knowledge of $f_t$.  In particular, as done in \cite{Blum2000} and \cite{buchbinder2012unified}, the penalty due to not knowing $f_t$ is 
+$$ f_t(x_t) - f_{t}(x_{t+1}) \leq \nabla \langle f_t(x_t), x_t - x_{t+1}\rangle \leq \norm{\nabla f_t(x_t)}_2 \norm{x_t - x_{t+1}}_2.$$
+Since cost functions are typically assumed to have a bounded gradient in the the OCO literature, this equation gives a translation of the results in this paper to the setting where $f_t$ is not known.  
+
+Note that the SOCO model is closely related to the Metrical Task System (MTS) literature.  In MTS, the cost functions $f_t$ can be arbitrary, the feasible set $\mathcal{X}$ is discrete, and the movement cost can be any metric distance. Due to the generality of the MTS setting, the results are typically pessimistic. For example, \cite{borodin1992} shows that the competitive ratio of any deterministic algorithm must be $\Omega(n)$ where $n$ is the size of $\mathcal{X}$, and \cite{blum1992} shows an $\Omega(\sqrt{\log(n)/\log\log(n)})$ lower bound for randomized algorithms. In comparison, SOCO restricts both the cost functions and the feasible space to be convex, though the decision space is continuous rather than discrete.
+
+\paragraph{Performance Metrics.}
+The performance of online learning algorithms in this setting is evaluated by comparing the cost of the algorithm to the cost achievable by the \textit{offline optimal}, which makes decisions with advance knowledge of the cost functions. The cost incurred by the offline optimal is  
+\begin{equation}
+\cost(OPT) = \min_{x \in \mathcal{X}^T} \sumt f_t(x_t) + \norm{x_t - x_{t-1}}.
+\label{eqn: offline-cost}
+\end{equation}
+
+Sometimes, it is desirable to constrain the power of the offline optimal when performing comparisons.  One common approach for this, which we adopt in this paper, is to constrain the movement the offline optimal is allowed \citep{blum1992,buchbinder2012unified,Blum2000}. This is natural for our setting, given the switching costs incurred by the learner. Specifically, define the $L$-constrained offline optimal as the offline optimal solution with switching cost upper bounded by $L$, i.e., the minimizer of the following (offline) problem:
+\begin{align*}
+OPT(L) = \min_{x \in \mathcal{X}^T}\quad \sumt f_t(x_t) + \norm{x_t - x_{t-1}} \qquad
+ \text{subject to} \quad \sumt \norm{x_t - x_{t-1}} \le L.  
+\end{align*}
+For large enough $L$, $OPT(L)=OPT$.  Specifically, $L = \sumt \norm{x_t^* - x_{t-1}^*}$ guarantees that $\cost(OPT(L)) = \cost(OPT)$. Further, for small enough $L$, $OPT(L)$ corresponds to the \emph{static optimal}, $OPT^{STA}$, i.e., the optimal static choice such that $x_t=x_1$. Since the movement cost of the static optimal (assuming it takes one step from $x_0$) is $\norm{x^{STA}- x_0} \le D$, $\cost(OPT(D)) \le \cost(OPT^{STA})$. Therefore $\cost(OPT(L))$ interpolates between the cost of the dynamic offline optimal to the static offline optimal as $L$ varies.  
+
+When comparing an online algorithm to the (constrained) offline optimal cost, two different approaches are common.  The first, most typically used in the online algorithms community, is to use a multiplicative comparison. This yields the following definition of the \emph{competitive ratio}.
+
+\begin{definition}
+An online algorithm $ALG$ is \textbf{$C$-competitive} if, for all sequences of cost functions $f_1, \ldots, f_T$, we have $\cost(ALG) \le C \cdot \cost(OPT). $
+\end{definition}
+
+As discussed in the introduction, there has been considerable work focused on designing algorithms that have a competitive $C$ that is constant with respect to the dimension of the decision space, $d$.  In contrast to the multiplicative comparison with the offline optimal cost in the competitive ratio, an additive comparison is most common in the online learning community.  This yields the following definition of \emph{dynamic regret}.
+
+\begin{definition}
+The \textbf{$L$-(constrained) dynamic regret} of an online algorithm $ALG$ is $\rho_L(T)$ if for all sequences of cost functions $f_t, \ldots, f_T$, we have 
+$\cost(ALG) - \cost(OPT(L)) \le \rho_L(T).$ $ALG$ is said to be \textbf{no-regret} against OPT(L) if $\rho_L(T)$ is sublinear.
+\end{definition}
+
+As discussed above, $OPT(L)$ interpolates between the offline optimal $OPT$ and the offline static optimal $OPT^{STA}$.  There are many algorithms that are known to achieve $O(\sqrt{T})$ static regret, the best possible given general convex cost functions, e.g., online gradient descent \cite{zinkevich2003} and follow the regularized leader \cite{xiao2010}. While these results were proven initially for OCO, \cite{andrew2013} shows that the same bounds hold for SOCO. In contrast, prior work on dynamic regret has focused primarily on OCO, e.g., \cite{herbster2001, bianchi2012,hall2013dynamical}.  For SOCO, the only positive results for SOCO consider algorithms that have access to predictions of future workloads, e.g., \cite{lin2012, chen2015, chen2016}.
+
+For both competitive ratio and dynamic regret, it is natural to ask what performance guarantees are achievable.  The following lower bounds (proven in the appendix) follow from connections to Convex Body Chasing first observed by \cite{antoniadis2016}. 
+
+\begin{proposition} \label{prop: lowerbound}
+The competitive ratio of any online algorithm for SOCO is $\Omega(\sqrt{d})$ with $\ell_2$ switching costs and $\Omega(d)$ with $\ell_\infty$ switching costs. The dynamic regret is $\Omega(d)$ in both settings.
+\end{proposition}
+
+
+

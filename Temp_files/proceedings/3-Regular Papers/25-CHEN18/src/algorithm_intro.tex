@@ -1,0 +1,121 @@
+\section{Main Algorithm and Analysis}
+\label{sec:ub}
+The algorithm achieving the bounds of
+Theorems~\ref{rst:budget} and~\ref{rst:regret} is simple.
+It mostly allows agents to exploit, but when an arm is sufficiently
+unlikely to be pulled,
+it incentivizes this arm with a payment high enough
+to guarantee that the next agent pulls it.
+This way, the algorithm ensures that each arm is pulled often enough.
+
+More precisely, the algorithm divides time into \emph{phases}
+$s = 1, 2, 3, \ldots$.
+Phase $s$ starts when each arm has been pulled at least $s$ times.
+We indicate the start time of phase $s$ by $t_s$. An arm $i$ is \emph{payment-eligible} at time $t$ (in phase $s$)
+if both of the following hold:
+
+\begin{itemize}
+\item $i$ has been pulled at most%
+\footnote{in fact: exactly, since the algorithm entered phase $s$}
+$s$ times up to time $t$, i.e., $\NumPull{t}{i} \leq s$.
+\item 
+The conditional probability of pulling arm $i$ is less than
+$1/\log(s)$ given the current estimates \ArmEV{t}{i'} of the arms'
+attribute vectors.  In other words, we require
+$\PullProb{t}{i} < 1/\log(s)$ where 
+$\PullProb{t}{i} = \Prob[\AgV \sim \AgentDist]{\AgV \cdot \ArmEV{t}{i} > \AgV
+\cdot \ArmEV{t}{i'} \mbox{ for all } i' \neq i \mid \ArmEV{t}{i'}\ \forall i'}$
+is the probability that arm $i$ will be pulled
+by the next (random) agent based on the current estimates. 
+Our assumption of a continuous noise distribution and one free pull
+ensure that ties in $\AgV \cdot \ArmEV{t}{i}$ between arms occur with
+probability $0$.
+\end{itemize}
+
+
+When multiple arms are payment-eligible, the algorithm picks one arbitrarily to incentivize.
+When the algorithm decides to incentivize an arm $i$,
+it offers ``whatever it takes,'' i.e., offers a payment of
+$\Pay{t}{i} = \max_{\AgV,i'} \AgV \cdot (\ArmEV{t}{i'} - \ArmEV{t}{i})$.
+The maximum for \AgV is taken over the support of \AgentDist;
+recall that we assumed this support to be compact.
+The payment \Pay{t}{i} may appear unnecessarily high.
+Indeed, it suffices to
+incentivize only a $1/\log(s)$ fraction of the agents,
+and our bounds also hold for an alternate version of our algorithm that 
+offers payment
+$\Pay{t}{i} = \sup \Set{c \geq 0}{%
+\Prob[\AgV \sim \AgentDist]{c + \AgV \cdot \ArmEV{t}{i} \geq \max_{i'\ne i} \AgV \cdot \ArmEV{t}{i'}} \leq 1/\log(s)}$.
+(This definition ensures that \Pay{t}{i} is well-defined
+and incentivizes at least a $1/\log(s)$ measure of agents,
+even if $f$ has discrete points.)
+However, we focus on the higher payments for simplicity of presentation.
+
+Notice that \PullProb{t}{i} depends on the estimates for \emph{all}
+arms; thus, by pulling another arm $i'$, an arm $i$ may become
+payment-eligible, or cease to be so.
+Algorithm~\ref{alg:basic-incentivizing} gives the full details.
+
+
+\begin{algorithm}
+\caption{Algorithm: Incentivizing Exploration \label{alg:basic-incentivizing}}
+\begin{algorithmic}
+\STATE Set the current phase number $s = 1$.
+\COMMENT{Each arm is pulled once initially ``for free.''}
+\FOR{time steps $t = 1, 2, 3, \ldots$}
+\IF{$\NumPull{t}{i} \geq s+1$ for all arms $i$}
+\STATE Increment the phase $s = s + 1$.
+\ENDIF
+\IF{there is a payment-eligible arm $i$}
+\STATE Let $i$ be an arbitrary payment-eligible arm.
+\STATE Offer payment
+$\Pay{t}{i} = \max_{\AgV,i'} \AgV \cdot (\ArmEV{t}{i'} - \ArmEV{t}{i})$
+for pulling arm $i$
+(and payment 0 for all other arms).
+\ELSE
+\STATE Let agent $t$ play myopically, i.e., offer payments 0 for all arms.
+\ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+The high-level idea in the proofs of our main results, Theorems~\ref{rst:budget} and~\ref{rst:regret},
+is the following.
+Because the algorithm ensures that each arm is pulled
+``frequently enough,''
+the estimates \ArmEV{t}{i} become gradually more accurate in the
+phase number $s$.
+Thus, the fraction of agents who misidentify their best arm decreases.
+Because each arm has enough agents that would prefer it based
+  on its true attribute vector, 
+once the arms' attribute vectors are learned well enough,
+the algorithm will not need to incentivize any more,
+resulting in a payment bound independent of $T$.
+Similarly, instantaneous regret will decrease, and mostly accrue
+due to ``problematic'' agents who are nearly tied in their preferences
+between their top two arms.
+The detailed analysis following this outline is complicated by
+dependence between the agents' arm pulls and the
+estimates which in turn are based on past arm pulls.
+We begin with several technical lemmas that are used for both the
+payment and regret bounds.
+
+To formally reason about the event that the estimates of arms'
+attributes vectors are accurate enough --- or fail to be so ---
+we define the events
+$\AccE{t}{i}{j}{x} := [|\ArmE{t}{i}{j} - \Arm{i}{j}| \leq x]$
+that attribute $j$ of arm $i$ at time $t$ is estimated to
+within accuracy $x$ or better.
+Then, 
+$\AccEU{t}{x} = \bigcap_{i,j} \AccE{t}{i}{j}{x}$
+is the event that at time $t$, all arm attribute
+estimates are accurate to within $x$ simultaneously.
+We will show that for suitable choices of $t, x$,
+the events \AccE{t}{i}{j}{x}
+(and hence, by a union bound, \AccEU{t}{x})
+have high probability,
+and that when they do, myopic agents do not make large mistakes.
+
+%We now prove our main results, Theorems~\ref{rst:budget} and~\ref{rst:regret}.
+
+

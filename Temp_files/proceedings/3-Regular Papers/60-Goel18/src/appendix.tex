@@ -1,0 +1,308 @@
+%!TEX root = LookingGlass.tex
+
+\section{Lower bounds on competitive ratio and regret}
+
+ To provide insight as to the difficulty of SOCO, here we give an explicit example that yields lower bounds on the competitive ratio an regret achievable in SOCO. Our example is based on the lower bound example for Convex Body Chasing in \cite{Friedman1993}; it was observed in \cite{antoniadis2016} that Convex Body Chasing is a special case of SOCO. Starting from the origin, in each round, the adversary examines the $i$-th coordinate of the algorithm's current action. If this coordinate is negative, the adversary picks the cost function which is the indicator of the hyperplane $x_i = 1$; similarly, if the coordinate is non-negative, the adversary picks the indicator corresponding to the hyperplane $x_i = -1$. Hence our online algorithm is forced to move by at least 1 unit each step, paying a total of at least $d$ cost. The offline optimal, on the other hand, simply moves to the intersection of all these hyperplanes in round 1, paying switching cost $\| (1, 1, \ldots 1) \|$, which is $\sqrt{d}$ when the underlying norm is $\ell_2$ and $1$ when the norm is $\ell_{\infty}$. Hence the competitive ratio is at least $\sqrt{d}$ in the $\ell_2$ setting and $d$ in the $\ell_{\infty}$ setting. Further, the regret is at least $\Omega(d)$ for both the $\ell_2$ and $\ell_{\infty}$ settings. 
+Note that while it may appear at first glance that our example requires an adaptive adversary, the same example applies for an oblivious adversary because the online algorithm may be assumed to be deterministic.\footnote{\cite{bansal2015} proves that randomization provides no benefit for SOCO.}
+
+
+\section{Proof of Lemma \ref{lem: continuity-distance}}
+\label{sec: proofs}
+Recall the following Pythagorean inequality satisfied by projection onto convex sets using Bregman divergence as measure of distance given by \citet[Lemma 4.1]{bubeck2015}.
+\begin{proposition} 
+\label{prop: convex-proj-ineq}
+For $x_t, x_{t-1}, K_l$ in step \ref{alg: gradient-step} of Algorithm \ref{alg: online-projection}, for any $y \in K_l$, we have 
+\[D_{\Phi} (x_t , x_{t-1} ) + D_\Phi ( y, x_t )\le D_\Phi(y, x_{t-1}).\]
+\end{proposition} 
+%
+In particular, note that when $\Phi$ is the 2-norm squared $\norm{\cdot}_2^2$, $x_t$, $x_{t-1}$ and $y$ form an obtuse triangle. 
+
+	Let $h(l) = D_{\Phi}(x(l), x_{t-1})$, we first show that $h(l)$ is convex, hence continuous in $l$, and from there we show that $g(l)$ is continuous in $l$. To begin, we can equivalently write the variational form 
+	\[ h(l)= \min_x \max_{\lambda\ge 0} D_\Phi(x, x_{t-1}) + \lambda(f(x) - l).\]
+	Let $H(x, \lambda, l ) = D_\Phi(x, x_{t-1}) + \lambda(f(x) - l)$, $H$ is affine hence convex in $l$ for any given $x$ and $\lambda$. Since maximization preserves convexity, and because $H$ is jointly convex in $(x, l)$, minimization over $x$ also preserves convexity in $l$, hence $h(l) = \min_x \max_{\lambda \ge 0} H(x, \lambda, l)$ is convex hence continuous in $l$. 
+	To show $g(l)$ is continuous at $l$, given any $\epsilon >0$, let $\delta>0$ such that $|h(l) - h(l+\delta) | < \epsilon^2 m / 2$ (this can be done as $h$ is continuous in $l$), then 
+	\begin{align*}
+	 | g(l) - g(l+\delta) | & \le \norm{x(l) - x(l+\delta)} \\
+	 & \le \sqrt{ \frac{2}{m} \cdot D_\Phi(x(l+\delta), x(l))} \\
+	 & \le \sqrt{ \frac{2}{m} \cdot (D_{\Phi}(x(l), x_{t-1}) - D_\Phi(x(l+\delta), x_{t-1})) } \\
+	 & = \sqrt{ \frac{2}{m} \cdot | h(l) - h(l+\delta)| } < \epsilon,
+	 \end{align*}
+	 where the first inequality is due to triangle inequality, and the second inequality is due to the definition of Bregman divergence and $\Phi$ being $m$ strongly convex in $\norm{\cdot}$, the third inequality is due to the fact that $x(l) \in K_{l+\delta}$ and Proposition \ref{prop: convex-proj-ineq}. Therefore $g$ is a continuous function in $l$.
+
+
+%
+%\begin{proof}[Lemma \ref{lem: convexity-distance}]
+%	Let $P = x_{t-1}$, note that by convexity of $f$, we have for $\lambda_1 + \lambda_2 =1$:
+%	\begin{equation} 
+%		\lambda_1 K_{m_1} + \lambda_2 K_{m_2} \subset K_{\lambda_1 m_1 + \lambda_2 m_2}, 
+%		\label{eqn: f-convex}
+%	\end{equation}
+%	this is because all members of $\lambda_1 K_{m_1} + \lambda_2 K_{m_2}$ can be expressed as $\lambda_1 x + \lambda_2 y$ where $x \in K_{m_1}$ and $y \in K_{M_2}$, but 
+%	\[ f(\lambda_1 x + \lambda_2 y) \le \lambda_1 f(x) + \lambda_2 f(y) \le \lambda_1 m_1 + \lambda_2 m_2. \]
+%Furthermore, using the fact that $Q \rightarrow d(P,Q)$ is convex, we have 
+%\begin{equation} 
+%		d(P, \lambda_1 K_{m_1} + \lambda_2 K_{m_2}) \le \lambda_1 d(P, K_{m_1}) + \lambda_2 d(P, K_{m_2}).
+%		\label{eqn: d-convex}
+%\end{equation}
+%To show \eqref{eqn: d-convex}, we can let $x \in K_{m_1}, y \in K_{m_2}$ be the points such that 
+%\[d(P, K_{m_1}) = d(P, x), \quad d(P, K_{m_2}) = d(P, y)\] 
+%By convexity of the distance function, we have 
+%\[ d(P, \lambda_1 x + \lambda_2 y) \le \lambda_1 d(P, x) + \lambda_2 d(P, y) = \lambda_1 d(P, K_{m_1}) + \lambda_2 d(P, K_{m_2}).\]
+%At the same time, $\lambda_1 x + \lambda_2 y \in \lambda_1 K_{m_1} + \lambda_2 K_{m_2},$ hence,
+%\[ d(P, \lambda_1 K_{m_1} + \lambda_2 K_{m_2}) \le d(P, \lambda_1 x + \lambda_2 y). \]
+%
+%
+%By \eqref{eqn: f-convex} and \eqref{eqn: d-convex}, $g(\lambda_1 m_1 + \lambda_2 m_2) \le \lambda_1 g(m_1) + \lambda_2 g(m_2)$, which shows that $g$ is convex. 
+%
+%Finally, for $l_1 \le l_2$, the sublevel sets satisfies $K_{l_1} \subset K_{l_2}$, and the distances satisfies $d(P, K_{l_1}) \ge d(P, K_{l_2}),$
+%hence $g(l_1) \ge g(l_2)$, hence $g(l)$ is a decreasing function in $l$. 
+%\end{proof}
+
+
+\section{Proof of Lemma \ref{lem: continuity-ratio}}
+First, we will show that $h_1(l) = \norm{\nabla \Phi(x_{t-1})- \nabla\Phi(x(l))}_*$ is continuous in $l$. For any $l_1, l_2$, $ |h_1(l_1) - h_1(l_2)| \le \norm{\nabla \Phi(x(l_1)) - \nabla \Phi(x(l_2)) }_*$ by the triangle inequality, as $\Phi$ is continuously differentiable, we only need to show that for any $l$, given any $\epsilon>0$, we can find $\delta>0$, such that for all $l'$, such that $|l - l'|<\delta$, $\norm{\nabla \Phi (x(l)) - \nabla \Phi (x(l'))}_* <\epsilon$. By Lipschitz smoothness of $\Phi$, we have:
+\begin{equation}
+D_\Phi(x, y) \ge \frac{1}{2M} \norm{\nabla \Phi(x) - \nabla \Phi(y) }_*^2. 
+\label{eqn: smoothness-ineq}
+\end{equation}
+
+To show \eqref{eqn: smoothness-ineq}, note that by \cite[Theorem 1]{kakade2009}
+ $\Phi$ is $M$-Lipschitz smooth w.r.t $\norm{\cdot}$ if and only if $\Phi^*$ is $\frac{1}{M}$-smooth w.r.t $\norm{\cdot}_*$. Let $u = \nabla \Phi(x), v = \nabla \Phi(y)$, then by strong convexity, 
+ \begin{equation}
+  \Phi^*(v) - \Phi^*(u) - \langle \nabla \Phi^*(u), v - u \rangle \ge \frac{1}{2M} \norm{ v - u}_*^2.
+  \label{eqn: strong-convex-ineq}
+  \end{equation}
+ By the Fenchel inequality and the definition of $u, v$, we have $\Phi^*(v) = \langle v, y \rangle - \Phi(y)$ and $\Phi^*(u) = \langle u, x \rangle - \Phi(x)$. Furthermore, $\nabla \Phi^*(u) = \nabla \Phi^* (\nabla \Phi(x)) = x$, substituting these into \eqref{eqn: strong-convex-ineq} gives \eqref{eqn: smoothness-ineq}.
+  
+ % \niangjun{The Euclidean norm case of \eqref{eqn: smoothness-ineq} can be found in \cite[Lemma 3.5]{bubeck2015}, I have yet to find a source I can cite for the non-Euclidean case. A potential problem here is that \cite{kakade2009} is unpublished, which may be problematic, but the authors are quite established though. I wonder if there is a sleeker proof out there...}
+
+Using \eqref{eqn: smoothness-ineq} and Proposition \ref{prop: convex-proj-ineq}, we can upper bound $ \norm{\nabla \Phi(x(l) - \nabla \Phi(x(l')}_*$ by 
+\begin{align*}
+	\norm{\nabla \Phi(x(l)) - \nabla \Phi(x(l'))}_* &\le \sqrt{2M D_\Phi(x(l), x(l'))} \\
+	&\le \sqrt{2M }\sqrt{ D_\Phi(x(l), x_{t-1} ) - D_\Phi(x(l'), x_{t-1}) }.
+\end{align*}
+However, since we have already shown that $D_\Phi(x(l), x_{t-1})$ is continuous in $l$ in the proof of Lemma \ref{lem: continuity-distance}, we can choose $l'$ sufficiently close to $l$ to make the right hand side smaller than $\epsilon$. Therefore $h_1(l) = \norm{\nabla \Phi(x_{t-1})- \nabla\Phi(x(l))}_*$ is continuous in $l$. Second, since $f_t$ is also continuously differentiable, and by the continuity of $x(l)$ in $\norm{\cdot}$, $h_2(l) = \norm{\nabla f_t(x(l))}_*$ is also continuous in $l$. Thus, the ratio $h(l) = \frac{h_1(l)}{h_2(l)}$ is continuous in $l$.
+
+
+
+\section{Proof of Theorem \ref{threeCR}}
+%\begin{proof}{\textbf{of Theorem \ref{threeCR}.}}
+We first consider the case when the switching cost is the $\ell_2$ norm. We define $H_t = f_t(x_t), M_t =\norm{x_t - x_{t-1}}$, and define $H_t^*$ and $M_t^*$ analogously. We use the potential function $\phi(x_t, x_t^*) = C \norm{x_t - x_t^*}$; $C$ will end up being the competitive ratio of Algorithm \ref{alg: online-projection-CR}. To show Algorithm \ref{alg: online-projection-CR} is $C$-competitive, we need to show that for all $t$, 
+\begin{equation}
+ 	H_t + M_t + \phi(x_t, x_t^*) - \phi(x_{t-1}, x_{t-1}^*) \le C(H_t^* + M_t^*),
+    \label{eqn: potential-ineq}
+\end{equation}
+then summing up the inequality over $t$ implies the result. 
+To begin, applying the triangle inequality, we see  
+
+\begin{align}
+	\phi(x_t, x_t^*) - \phi(x_{t-1}, x_{t-1}^*) &\le C  (\norm{x_t^* - x_t} - \norm{x_t^* - x_{t-1}}) + C M_t^*.
+    \label{eqn: potential-change}
+\end{align}
+
+% \begin{align}
+% 	\phi(x_t, x_t^*) - \phi(x_{t-1}, x_{t-1}^*) &= C (\norm{x_t - x_t^*} - \norm{x_{t-1} - x_{t-1}^*}) \notag \\
+% 	&= C ( \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}} + \norm{x_t^* - x_{t-1}} -  \norm{x_{t-1} - x_{t-1}^*}) \notag \\
+% 	&\le C  (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) + C M_t^*
+%     \label{eqn: potential-change}
+% \end{align}
+
+\noindent Combining \eqref{eqn: potential-change} and \eqref{eqn: potential-ineq}, we see that, to show Algorithm \ref{alg: online-projection-CR} is $C$-competitive, it suffices to show 
+\begin{align}
+	H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \le C H_t^*, \label{eqn: proofgoal}
+\end{align}
+Notice that we always have $M_t \leq \beta H_t$.  We divide our analysis into the following two cases:
+\begin{enumerate}
+	\item $H_t \le H_t^*$: Since $M_t \le \beta H_t$, by the triangle inequality we have
+	\begin{align*} 
+		&H_t + M_t + C (\norm{x_t^* - x_t} - \norm{x_t^* - x_{t-1}}) \\
+		\le & H_t + (1+C) M_t \le (1 + \beta(1+C))H_t \le CH_t \le CH_t^*,
+	\end{align*}
+	where in the penultimate step we assumed that $\beta$ was picked so that $ 1+\beta( 1 + C) \le C$. 
+	\item $H_t > H_t^*$: In this case, it must true that $M_t = \beta H_t$, since $H_t^*$ is strictly smaller than $H_t$, implying that our algorithm did not reach the minimizer $v_t$.  We use the following Lemma, proved in the Appendix, which shows that the change in potential must actually be negative in this case.
+% \begin{lemma}
+% 	For Algorithm \ref{alg: online-projection-CR}, when $H_t > H_t^*$ and $f_t(x) \ge \alpha\norm{x - v_t}$, we have 
+% 	\[ \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1} } \le -\gamma \norm{x_t - x_{t-1}}, \]
+% 	where $\gamma = \frac{1}{\sqrt{\kappa}}\sqrt{1 + \left( \frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$, and $\gamma>0$ when $\beta > \frac{2\sqrt{\kappa - 1}}{\alpha}$.
+% 	\label{lem: potential-change}
+% \end{lemma}
+
+\begin{lemma}
+	For Algorithm \ref{alg: online-projection-CR}, when $H_t > H_t^*$ and $f_t(x) \ge \alpha\norm{x - v_t}$, we have 
+	\[ \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1} } \le -\gamma \norm{x_t - x_{t-1}}, \]
+	where $\gamma = \sqrt{1 + \left( \frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$.
+	\label{lem: potential-change}
+\end{lemma}
+
+\noindent Using Lemma \ref{lem: potential-change}, we have 
+\begin{align*} 
+	&H_t + M_t + C (\norm{x_t^* - x_t} - \norm{x_t^* - x_{t-1}}) 
+	\le & H_t + M_t - C \gamma M_t = (1 + \beta(1 - C \gamma)) H_t
+\end{align*}
+To show \eqref{eqn: proofgoal}, it suffices to pick $\beta$ such that $ 1 + \beta \left (1 - C \gamma \right) \le 0$.
+%which is equivalent to $C \ge \frac{1+\beta}{\beta} \cdot \frac{1}{\gamma}$, and $\gamma = \frac{1}{\sqrt{\kappa}}\sqrt{ 1 + \left(\frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$ from Lemma \ref{lem: potential-change}, 
+%$(\dagger)$ holds in this case if 
+%\[
+%C \ge \frac{1+\beta}{\beta} \left(\sqrt{\left(\frac{2}{\alpha\beta}\right)^2+1}+\frac{2}{\alpha\beta}\right),
+%\]
+\end{enumerate}
+Combining the inequalities obtained in cases 1 and 2, we conclude that for any $\beta \in (0, 1)$, Algorithm \ref{alg: online-projection-CR} is $C$-competitive, where $$C = \max{ \left( \frac{1 +\beta}{1 - \beta}, \frac{1 +\beta}{\beta}\frac{1}{\gamma} \right). }$$ Note that the first term is increasing in $\beta$ and tends to $+\infty$ as $\beta \rightarrow 1$, and the second is decreasing in $\beta$ and tends to $+\infty$ as $\beta \rightarrow 0_+$; hence to minimize $C$ we should pick $\beta$ so that both terms are equal. We easily obtain $\beta = \frac{1}{2} + \frac{1}{\alpha + 2}$, and $C = 3 + 8/\alpha$.
+
+
+
+%increasing in $\eta$ and use the constraint to obtain $\eta = \frac{1 + \beta}{\beta}\frac{1}{\gamma}$. The minimization problem thus becomes $\min_{\beta \geq 0} \max{\left( \frac{1 + \beta}{\beta}\frac{1}{\gamma}, (1 + \beta)(1 + \frac{1}{\gamma}) \right)} $. We observe that the first term is decreasing in $\beta$ and the second is increasing \niangjun{second one is not necessarily increasing, need to revisit}; hence the minimum is attained when the two terms are equal. Solving for $\beta$, we obtain $\beta = \frac{1}{2} + \frac{1}{\alpha + 2}$ which immediately gives  $C = 3 + 8/\alpha$.
+
+This result easily extends to the case when the switching cost is an arbitrary norm $\| \cdot \|_a$. Since in finite dimensions all norms are equivalent, we know that there exist some $k_1, k_2 > 0$ such that $k_1\norm{x} \le \norm{x}_2 \le k_2\norm{x}$ . We immediately obtain
+\begin{align}
+\label{eqn: norm1}
+\sumt f_t(x_t) + \norm{x_t - x_{t-1}} &\ge \min\{1, k_1\} \left(\sumt f_t(x_t) + \norm{x_t - x_{t-1}}_a\right) \\
+\label{eqn: norm2}
+\sumt f_t(x_t^*) + \norm{x_t^* - x_{t-1}^*} &\le \max\{1, k_2\} \left(\sumt f_t(x_t^*) + \norm{x_t^* - x_{t-1}^*}_a\right) 
+\end{align}
+Combining \eqref{eqn: norm1} and \eqref{eqn: norm2} with the previous observation that the online cost is at most $C$ times the offline cost finishes the proof.
+%\end{proof}
+
+
+\section{Proof of Lemma \ref{lem: potential-change}}
+In this section, we actually prove a more general statement, from which Lemma \ref{lem: potential-change} follows.  This more general statement is not needed to prove Theorem \ref{threeCR}, but is needed in our proof of Theorem \ref{generalconstant}. 
+
+\begin{lemma} \label{lem: general}
+Let $\| \cdot \|$ be any norm such that the corresponding mirror map $\Phi$ has Bregman divergence satisfying $\frac{m}{2}\norm{x-y}^2 \le D_{\Phi}(x,y) \le \frac{M}{2}\norm{x-y}^2.$
+Let $\kappa = M/m$. For Algorithm \ref{alg: online-projection-CR}, when $H_t > H_t^*$ and $f_t(x) \ge \alpha\norm{x - v_t}$, we have $ \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1} } \le -\gamma \norm{x_t - x_{t-1}},$	where $\gamma = \frac{1}{\sqrt{\kappa}}\sqrt{1 + \left( \frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$.
+\end{lemma}
+
+\noindent Before turning to the proof, we note that $\kappa = 1$ when the norm is $\ell_2$, recovering Lemma \ref{lem: potential-change} used in the proof of Theorem \ref{threeCR}. 
+
+\begin{proof}{\textbf{of Lemma \ref{lem: general}.}} By the triangle inequality, $\norm{x_t - x_t^*} \le \norm{x_t - v_t} + \norm{x_t^* - v_t}$. To upper bound $\norm{x_t - x_t^*},$ we separately bound each term on the right hand side.  By the assumption that $f_t$ is polyhedral, $\norm{x_t - v_t} \le \frac{1}{\alpha} f_t(x_t) = \frac{1}{\alpha}H_t$. Also, when $H_t^* < H_t$, we must have $M_t = \beta H_t$, hence $\norm{x_t - v_t} \le \frac{1}{\alpha\beta} M_t.$ Using similar argument together with the fact that $H_t^* < H_t,$ we have $\norm{x_t^* - v_t} \le \frac{1}{\alpha\beta} M_t$. 
+Hence 
+\begin{equation}
+	\norm{x_t - x_t^*} \le \norm{x_t - v_t} + \norm{x_t^* - v_t} \le \frac{2}{\alpha\beta}M_t.
+	\label{eqn: dist1}
+\end{equation}
+
+\noindent Since $x_t$ is the projection of $x_{t-1}$ onto the sublevel set $\{x \mid f(x) \le H_t\}$, this set must contain $x_t^*$ since by assumption $H_t^* \le H_t$. Therefore by Proposition \ref{prop: convex-proj-ineq} we have 
+\[
+ D_\Phi( x_t^*, x_t) + D_\Phi(x_t, x_{t-1}) \le D_\Phi(x_t^*, x_{t-1}), 
+ \]
+ since $\Phi$ is $m$-strongly convex and $M$ strongly smooth in  $\norm{\cdot}$, 
+$\frac{m}{2}\norm{x-y}^2 \le D_{\Phi}(x,y) \le \frac{M}{2}\norm{x-y}^2,$ hence
+ \begin{align*}
+ \norm{x_t - x_t^*}^2 + \norm{x_t - x_{t-1}}^2 \le \kappa \norm{x_t^* - x_{t-1}}^2.
+ \end{align*}
+ Let $\norm{x_t - x_t^*} = r M_t$; note that by \eqref{eqn: dist1}, $r \le \frac{2}{\alpha\beta}$. We have, 
+\begin{equation}
+	\norm{x_t^* - x_{t-1}} \ge \frac{1}{\sqrt{\kappa}} \sqrt{ 1 + r^2} M_t.
+	\label{eqn: dist2}
+\end{equation} 
+Hence 
+\begin{equation}
+\norm{x_t^* - x_{t-1}} -  \norm{x_t - x^*_t} \ge \left (\frac{1}{\sqrt{\kappa}} \sqrt{ 1 + r^2}  - r\right) M_t.
+\end{equation} Since $\frac{1}{\sqrt{\kappa}} \le 1$, $\frac{1}{\sqrt{\kappa}}\sqrt{ 1 + r^2}  - r$ is a decreasing function in $r$; this can seen by taking the derivative with respect to $r$. Combining this together with the fact that $r \le \frac{2}{\alpha\beta}$ we have $$\norm{x_t - x^*_t} - \norm{x_t^* - x_{t-1}} \le -\gamma M_t$$ for $\gamma = \frac{1}{\sqrt{\kappa}}\sqrt{ 1 + \left(\frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$. Note that $\gamma>0$ when $\beta > \frac{2\sqrt{\kappa-1}}{\alpha}$. 
+\end{proof}
+
+
+
+
+
+\section{Proof of Theorem \ref{thm: online-projection-regret}}
+%\begin{proof}{\textbf{of Theorem \ref{thm: online-projection-regret}.}} 
+Recall that we can write the update rule as: 
+\[ \nabla \Phi(x_t) = \nabla \Phi(x_{t-1}) - \eta \nabla f_t(x_t),\] 
+Let $\{x_t^L\}_{t=1}^T$ denote a $L$-constrained offline optimal solution. By convexity of $f_t$, we have 
+\begin{align} 
+f_t(x_t) &- f_t(x_t^L) \le \langle \nabla f_t(x_t), x_t - x_t^L\rangle = \frac{1}{\eta} \langle \nabla \Phi(x_{t-1}) - \nabla \Phi(x_t) , x_t - x_t^L\rangle\notag \\
+  = & \frac{1}{\eta}\Big(\langle \nabla \Phi(x_{t-1}) - \nabla \Phi(x_t), x_{t-1} - x_t^L \rangle - \langle \nabla \Phi(x_t) - \nabla\Phi(x_{t-1}), x_t - x_{t-1} \rangle \Big) 
+  \label{eqn: expansion}
+\end{align}
+Recall that the Bregman divergence satisfies the equality
+\[
+\langle \nabla f(x) - \nabla f(y), x-z\rangle = D_f(x,y) + D_f(z, x) - D_f(z, y),
+\]
+for all $x, y, z \in \mathbb{R}^d$. We use this identity in each of the inner products in \eqref{eqn: expansion} to obtain
+\begin{align*}
+f_t(x_t) - f_t(x_t^L) 
+\leq & \frac{1}{\eta} \Big(  D_\Phi(x_{t-1}, x_t) + D_\Phi(x_t^L, x_{t-1}) \quad - D_\Phi(x_t^L, x_t)  \\
+& - D_\Phi(x_t, x_{t-1}) - D_\Phi(x_{t-1}, x_t) + D_\Phi(x_{t-1}, x_{t-1})     \Big) \\
+= & \frac{1}{\eta} \Big( D_\Phi(x_t^L, x_{t-1}) - D_\Phi(x_t^L, x_t) \Big) - \frac{1}{\eta} (D_\Phi(x_t, x_{t-1})).
+\end{align*}
+Notice that 
+\begin{align*}
+  & D_\Phi(x_t^L, x_{t-1}) - D_\Phi(x_t^L, x_t) \\
+= &\Phi(x_t^L) - \Phi(x_{t-1}) - \langle \nabla \Phi(x_{t-1}), x_t^L - x_{t-1}\rangle -\Phi(x_t^L) + \Phi(x_t) +  \langle \nabla\Phi(x_t) , x_t^L-x_t \rangle \\
+= & (\Phi(x_t) - \langle \nabla \Phi(x_t), x_t \rangle) - (\Phi(x_{t-1}) - \langle \nabla \Phi(x_{t-1}),  x_{t-1} \rangle) + \langle \nabla \Phi(x_t) - \nabla \Phi(x_{t-1}), x_t^L \rangle \\
+= & D_\Phi(0, x_{t-1}) - D_\Phi(0, x_t) + \langle \nabla \Phi(x_t) - \nabla \Phi(x_{t-1}), x_t^L \rangle
+\end{align*}
+Summing over $t$, we have 
+\begin{align*}
+& \sumt  D_\Phi(x_t^L, x_{t-1}) - D_\Phi(x_t^L, x_t) \\
+= &D_{\Phi}(0, x_0) - D_\Phi(0, x_T) + \sum_{t=1}^{T-1} \langle\nabla \Phi(x_t), x_t^L - x_{t+1}^L \rangle - \langle \nabla \Phi(x_0), x_1^L \rangle + \langle \nabla \Phi(x_T), x_T^L\rangle \\
+\le & \sumt \norm{ \nabla \Phi(x_t)}_* \norm{ x_t^L - x_{t+1}^L} \le G \sumt \norm{x_t^L - x_{t+1}^L }= GL,
+\end{align*}
+where in the penultimate inequality we used the fact that $x_0 = 0$, $\nabla \Phi(0) = 0$, and $x_{T+1}^L = x_0^L = 0$. Putting it all together, we obtain 
+\begin{align*}
+&\cost(\ourack) - \cost(OPT(L)) \\
+= &\sumt \left(f_t(x_t) - f_t(x_t^L)\right) + \sumt \left( \norm{x_t - x_{t-1}} - \norm{x_t^L - x_{t-1}^L}\right) \\
+\le &\frac{GL}{\eta}  + \sumt \left(\norm{x_t - x_{t-1}} - \frac{1}{\eta} D_\Phi(x_t, x_{t-1}) \right) - L \\
+\le &\frac{GL }{\eta}  + \sumt \left(\norm{x_t - x_{t-1}} - \frac{m}{2\eta} \norm{x_t - x_{t-1}}^2 \right) 
+\le \frac{ GL }{\eta} + \frac{\eta T}{2m}, 
+\end{align*}
+where the last inequality is due to completing the square and throwing away the negative terms.
+
+
+
+
+% \section{Proof of Theorem \ref{generalconstant}}
+% %\begin{proof}[Proof of Theorem \ref{generalconstant}]
+% Let $H_t = f_t(x_t), M_t=\norm{x_t - x_{t-1}}$. Using potential function $\phi_t = C \norm{x_t - x_{t-1}}$, where $\phi_0 = 0$. To show Algorithm \ref{alg: online-projection-CR} is $C$-competitive, we just need to show that for all $t$,
+% \begin{equation}
+%  	H_t + M_t + \phi_t - \phi_{t-1} \le C(H_t^* + M_t^*),
+%     \label{eqn: potential-ineq1}
+% \end{equation}
+% then summing up the inequality over $t$ implies the result.
+
+% Firstly, since 
+% \begin{align}
+% 	\phi_t - \phi_{t-1} &= C (\norm{x_t - x_t^*} - \norm{x_{t-1} - x_{t-1}^*}) \notag \\
+% 	&= C ( \norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}} + \norm{x_t^* - x_{t-1}} -  \norm{x_{t-1} - x_{t-1}^*}) \notag \\
+% 	&\le C  (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) + C M_t^*
+%     \label{eqn: potential-change1}
+% \end{align}
+% Combining \eqref{eqn: potential-change1} and \eqref{eqn: potential-ineq1}, we can show Algorithm \ref{alg: online-projection-CR} is $C$-competitive by show that 
+% \[
+% 	H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \le C H_t^*, \tag{$\dagger$}
+% \]
+% We divide our analysis to the following two cases:
+
+% \begin{enumerate}
+% 	\item $H_t \le H_t^*$: in this case, $M_t \le \beta H_t$, by the triangle inequality,
+% 	\begin{align*} 
+% 		&H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \\
+% 		\le & H_t + (1+C) M_t \le (1 + \beta(1+C))H_t \le CH_t^*,
+% 	\end{align*}
+% 	the last inequality sign holds when $C \ge\frac{1+\beta}{1 - \beta}$, and $\beta < 1$. 
+% 	\item $H_t > H_t^*$: in this case, $M_t = \beta H_t$,  using Lemma \ref{lem: general}, we have 
+% \begin{align*} 
+% 	&H_t + M_t + C (\norm{x_t - x_t^*} - \norm{x_t^* - x_{t-1}}) \\
+% 	\le & H_t + M_t - C (\gamma M_t) = (1 + \beta(1 - C\gamma)) H_t
+% \end{align*}
+% To show $(\dagger)$, we just need $ 1 + \beta \left (1 - C \gamma \right) \le 0, $
+% which is equivalent to $C \ge \frac{1+\beta}{\beta} \cdot \frac{1}{\gamma}$, and $\gamma = \frac{1}{\sqrt{\kappa}}\sqrt{ 1 + \left(\frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}$ from Lemma \ref{lem: general}, 
+% %$(\dagger)$ holds in this case if 
+% %\[
+% %C \ge \frac{1+\beta}{\beta} \left(\sqrt{\left(\frac{2}{\alpha\beta}\right)^2+1}+\frac{2}{\alpha\beta}\right),
+% %\]
+% \end{enumerate}
+% Combining case 1 and 2, we conclude that Algorithm \ref{alg: online-projection-CR} is $C$-competitive for 
+% \[C = \max \left \{ \frac{1+\beta}{1-\beta} , \frac{1+\beta}{\beta} \frac{1}{\gamma}\right\}, \text{ where } \gamma = \frac{1}{\sqrt{\kappa}}\sqrt{ 1 + \left(\frac{2}{\alpha\beta}\right)^2} - \frac{2}{\alpha\beta}, \] 
+% and we need $\beta \in \left(\frac{2\sqrt{\kappa - 1}}{\alpha}, 1\right)$, such $\beta$ exists when $\alpha > 2\sqrt{\kappa - 1}$.
+% %\end{proof}
+% In particular, note that $g(\beta) = \frac{1+\beta}{1-\beta}$ is an increasing function in $\beta$, and tends to $+\infty$ as $\beta \rightarrow 1$, and $h(\beta) =  \frac{1+\beta}{\beta} \frac{1}{\gamma} $ is a decreasing function in $\beta$, and tends to $+\infty$ when $\beta \rightarrow \frac{2\sqrt{\kappa-1}}{\alpha}$, hence the value of $C = \max\{ g(\beta), h(\beta) \}$ is minimized when $\beta$ takes value such that $g(\beta) = h(\beta).$ Solving for $\beta$ and substituting into the expression of $C$, we have the following result:
+
+% When $\kappa = 1$,  $C = 3+8/\alpha$, $\beta = \frac{1}{2} + \frac{1}{\alpha+2},$ which recovers the result of Theorem \ref{threeCR}, when $\kappa > 1$, 
+% \[
+% C = \frac{2 \alpha \sqrt{(\alpha^2 + 4\alpha  + 8) \kappa - 4} + \alpha^2 + 4 \alpha \kappa + 4 \kappa - 4}{\alpha^2 - 4 \kappa + 4} = 3 + O\left(\frac{1}{\alpha}\right),
+% \]
+% where
+% \[ \beta =  \frac{(\alpha+2)\kappa - \sqrt{ (\alpha^2+4\alpha+8)\kappa-4  } }{\alpha(\kappa-1)}. 
+% \]
+

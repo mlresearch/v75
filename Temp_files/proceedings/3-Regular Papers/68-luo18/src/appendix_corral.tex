@@ -1,0 +1,167 @@
+\section{Omitted Details for Corralling \bistro}\label{app:BISTRO+}
+
+\LinesNumbered
+\SetAlgoVlined
+\setcounter{AlgoLine}{0}
+\begin{algorithm}[H]
+\DontPrintSemicolon
+\caption{Corralling \bistro}
+\label{alg:corralling_BISTRO+}
+\nl {\bf Input}: Contexts $x_1, \ldots, x_T$ and parameter $L$ \\
+\nl Define $\gamma = 1/T, \beta = e^{\frac{1}{\ln T}},  \eta = \min\{ \frac{1}{810}, \sqrt{T/\ln N}/(LK)\}, M = \ceil{T\eta} $\\
+\nl Initialize $m=1$, $\eta_{1}(i) = \eta$, $\scale_{1}(i) = 2M$ for all $i \in [M]$, $w_1 = \bar{w}_1 = \frac{\one}{M}$,
+$q_1 \in \Delta^M$ s.t. $q_1(1) = 1 $ \\
+\nl Initialize $\base{1}$, a new copy of \bistro
+
+\nl \For{$t=1$ \KwTo $T$} {
+\nl    Receive suggested action $a_t^{i}$ from base algorithm $\base{i}$	 for each $i \in [m]$ \\
+\nl    Sample $i_t \sim q_t$, play $a_t = a_t^{i_t}$, receive reward $r_t(a_t)$  \\
+\nl    Construct estimated losses $\ell_t(i) = \frac{1-r_t(a_t)}{q_t(i_t)}\one\{i=i_t\} + (1-r_t(a_t))\one\{i > m\},\; \forall i \in [M]$  \label{line:virtual_costs}\\
+\nl    Send feedback $\ell_t(i)$ to $\base{i}$ for each $i \in [m]$ \\
+\nl    Compute $w_{t+1} \in \Delta^M$ s.t. \[\frac{1}{w_{t+1}(i)} = \frac{1}{w_{t}(i)} + \eta_{t}(i) (\ell_{t}(i) + z_t(i) - \lambda)\] 
+      where $\lambda$ is a normalization factor and $z_t(i) = 6\eta_t(i)w_t(i)(\ell_t(i) - (1-r_t(a_t)))^2$ \label{line:LB-OMD} \label{line:Broad-OMD}\\
+\nl    Set $\bar{w}_{t+1} = (1 - \gamma) w_{t+1} + \gamma \frac{\one}{M}$   \\
+\nl    \For{$i=1$ \KwTo $M$} {
+\nl        \lIf{$\frac{1}{\bar{w}_{t+1}(i)} > \scale_{t}(i)$} {set $\scale_{t+1}(i) = \frac{2}{\bar{w}_{t+1}(i)}$, $\eta_{t+1}(i) = \beta\eta_{t}(i)$}
+\nl        \lElse{set $\scale_{t+1}(i) = \scale_{t}(i)$, $\eta_{t+1}(i) = \eta_{t}(i)$  \label{line:threshold}}  
+    }
+\nl    \If{$t$ {\normalfont  is a multiple of} $\lceil T/M\rceil $  \label{line:new_copy}} {
+\nl        Update $m \leftarrow m + 1$ \\
+\nl        Initialize $\base{m}$, a new copy of \bistro
+    }
+\nl    Set $q_{t+1}(i) = \frac{\bar{w}_{t+1}(i)}{\sum_{j=1}^m \bar{w}_{t+1}(j)}, \; \forall i \in [m]$
+}
+\end{algorithm}
+
+We describe the idea of using \corral with \bistro as base algorithms
+(see Algorithm~\ref{alg:corralling_BISTRO+} for the pseudocode).
+Conceptually we always maintain $M$ base algorithms,
+and use \corral almost in a black-box manner as in~\citep{AgarwalLuNeSc17}.
+However, crucially the $i$-th copy of the base algorithm only starts
+after the end of round $(i-1) \lceil T/M\rceil$, in order to provide regret guarantee
+starting from that round (or close to that round).
+Therefore, the extra work here is to make sure \corral does not pick algorithms
+that have not started, and also to come up with ``virtual rewards'' for algorithms
+before they start.
+
+More concretely, at each time we maintain $m \leq M$ copies of the base algorithm 
+and a distribution $q_t$ over them
+(note that although $q_t$ is in the simplex $\Delta^M \coloneqq \{q \in \fR^M_+: \sum_{i=1}^M q(i)=1 \}$, 
+the algorithm always ensure $q_t(i) = 0, \;\forall i > m$). 
+First we receive suggested actions $a_t^i$ from each base algorithm $\base{i}$.
+Then we sample a base algorithm $i_t \sim q_t$ and play according to its action, that is, $a_t = a_t^{i_t}$.
+After receiving its reward $r_t(a_t)$ (or equivalently its cost $1-r_t(a_t)$), 
+we construct estimated loss for each of the $M$ algorithms:
+for algorithms that have started, this is simply the importance weighted loss;
+for algorithms that have not started, this is the actual loss of the picked action (see Line~\ref{line:virtual_costs}).
+Next, we send the estimated losses to the $m$ algorithms that have started,
+and update several variables that \corral itself maintains, 
+including the distributions $w_t$ and $\bar{w}_t$ and the thresholds $\rho_t$ (Line~\ref{line:LB-OMD} to~\ref{line:threshold}).
+Finally, we re-normalize the weights $\bar{w}_{t+1}$ over the started algorithms
+(including possibly a newly started one) to obtain $q_{t+1}$ and proceed to the next round.
+
+Another additional difference from the original \corral is the way we update $w_t$ (Line~\ref{line:Broad-OMD}).
+Here we follow the improved version proposed by~\citet{wei2018more} and incorporate an extra correction term $z_t$ into the loss vector $\ell_t$.
+In the original \corral $z_t$ is simply the zero vector.
+However, with this more carefully chosen $z_t$ we can eventually improve the bound, replacing some dependence on $T$ by $L$,
+as shown in our proof.
+%We now prove Theorem~\ref{thm:corralling_BISTRO+}.
+
+~
+
+\begin{proof}[Proof of Theorem \ref{thm:corralling_BISTRO+}]
+For any time interval $\calI = [s, t]$ with $|\calI| \leq L$, if $|\calI| \leq T/M$ then the regret bound holds trivially.
+Otherwise, there must be a round $s' \in \calI$ such that $s' - s \leq T/M$,
+and there is a new copy of \bistro added to the pool at round $s'$.
+Denote this new copy by $\base{i^\star}$.
+The interval regret on $\calI$ is then clearly bounded by $T/M$ plus the interval regret on $[s', t]$.
+
+Let $c_t(a) = 1 - r_t(a), \;\forall a\in [K]$ and $m_\tau$ be the value of $m$ at round $\tau$ before Line~\ref{line:new_copy}.
+Then for any policy $\pi$, we rewrite the interval regret on $[s', t]$ as:
+\begin{align*}
+\E\left[ \sum_{\tau = s'}^t r_\tau(\pi(x_\tau)) - r_\tau(a_\tau) \right] 
+&= \E\left[ \sum_{\tau = s'}^t c_\tau(a_\tau) -\ell_\tau(i^\star) + \ell_\tau(i^\star) - c_\tau(\pi(x_\tau))  \right]  \\
+&= \E\left[ \sum_{\tau = 1}^t c_\tau(a_\tau) -\ell_\tau(i^\star) \right] + \E\left[\sum_{\tau = s'}^t c_\tau(a_\tau^{i^\star}) - c_\tau(\pi(x_\tau))  \right]  \\
+&= \E\left[ \sum_{\tau = 1}^t \sum_{i=1}^{m_\tau} q_\tau(i) \ell_\tau(i) -\ell_\tau(i^\star) \right] + \E\left[\sum_{\tau = s'}^t c_\tau(a_\tau^{i^\star}) - c_\tau(\pi(x_\tau))  \right]  \\
+&= \E\left[ \sum_{\tau = 1}^t \sum_{i=1}^{M} \bar{w}_\tau(i) \ell_\tau(i) -\ell_\tau(i^\star) \right] + \E\left[\sum_{\tau = s'}^t c_\tau(a_\tau^{i^\star}) - c_\tau(\pi(x_\tau))  \right]  \tag{$*$}
+\end{align*}
+where the second equality uses the fact $c_\tau(a_\tau) = \ell_\tau(i^\star)$ for $\tau < s'$ 
+and $\E_{i_\tau \sim q_\tau}[\ell_\tau(i^\star) ] = c_\tau(a_\tau^{i^\star})$ for $\tau \geq s'$,
+and the last equality holds because
+\begin{align*}
+\sum_{i=1}^{M} \bar{w}_\tau(i) \ell_\tau(i) &= 
+\left(\sum_{i=1}^{m_\tau} \bar{w}_\tau(i)  \right)  \sum_{i=1}^{m_\tau} q_\tau(i) \ell_\tau(i) + 
+\left(\sum_{i=m_\tau+1}^{M} \bar{w}_\tau(i) \right)  \sum_{i=1}^{m_\tau} q_\tau(i) \ell_\tau(i) 
+= \sum_{i=1}^{m_\tau} q_\tau(i) \ell_\tau(i).
+\end{align*}
+Here the first equality follows since $q_\tau(i)\left(\sum_{j=1}^{m_\tau}
+\bar{w}_\tau(j) \right) = \bar{w}_\tau(i)$ for $i \leq m_\tau$ and
+$\ell_\tau(i) = \sum_{j=1}^{m_\tau} q_\tau(j) \ell_\tau(j) $ for $i >
+m_\tau$ by definitions.  
+
+Next we bound the two terms in $(*)$. 
+The first term is essentially the regret of the master, corresponding to the update in Line~\ref{line:Broad-OMD}.
+Using results from~\citep{wei2018more},\footnote{
+This is not explicitly given in~\citep{wei2018more}, but is a direct application of their Theorem~2
+with $m_{t,i} = \ell_{t,i_t}$ in their notation. 
+}
+we obtain
+\begin{align*}
+&\E\left[ \sum_{\tau = 1}^t \sum_{i=1}^{M} \bar{w}_\tau(i) \ell_\tau(i) -\ell_\tau(i^\star) \right] \\
+&\leq \otil\left(\frac{M}{\eta} + \eta\sum_{\tau=1}^t \E\left[w_\tau(i^\star)(\ell_\tau(i^\star) - (1-r_\tau(a_\tau)))^2 \right]  \right) - \E\left[\frac{\rho_{t,i^\star}}{40\eta\ln T}\right] \\
+&= \otil\left(\frac{M}{\eta} + \eta\sum_{\tau=s'}^t \E\left[w_\tau(i^\star)(\ell_\tau(i^\star) - (1-r_\tau(a_\tau)))^2 \right]  \right) - \E\left[\frac{\rho_{t,i^\star}}{40\eta\ln T}\right] \\
+&\leq \otil\left(\frac{M}{\eta} +  L\eta  \right) - \E\left[\frac{\rho_{t,i^\star}}{40\eta\ln T}\right] 
+\end{align*}
+where the equality holds because by construction $\ell_\tau(i^\star) = (1-r_\tau(a_\tau))$ for all $\tau < s'$.\footnote{
+This is the exact place where we obtain some improvement over the original \corral by using results of~\citep{wei2018more}.
+}
+For the second term in $(*)$, we apply Lemma~17 of~\citep{AgarwalLuNeSc17} to obtain
+\[
+\E\left[\sum_{\tau = s'}^t c_\tau(a_\tau^{i^\star}) - c_\tau(\pi(x_\tau))  \right] = \E\left[\rho_{t,i^\star}^{1/3}\right] (LK)^\frac{2}{3}(\ln N)^\frac{1}{3}.
+\]
+Combining and proceeding similarly as the proof of Theorem~7 of~\citep{AgarwalLuNeSc17}
+we have
+\begin{align*}
+\E\left[ \sum_{\tau = s'}^t r_\tau(\pi(x_\tau)) - r_\tau(a_\tau) \right] 
+&\leq \otil\left(\frac{M}{\eta} +  L\eta\right) - \E\left[\frac{\rho_{t,i^\star}}{40\eta\ln T}\right] + 
+\E\left[\rho_{t,i^\star}^{1/3}\right] (LK)^\frac{2}{3}(\ln N)^\frac{1}{3}  \\
+&\leq \otil\left(\frac{M}{\eta} + L\eta + LK\sqrt{\eta\ln N} \right).
+\end{align*}
+Adding back the extra $T/M$ term discussed above and plugging in the value of $\eta$ and $M$
+lead to $\otil(T^{\frac{1}{4}}(LK)^{\frac{1}{2}}(\ln N)^{\frac{1}{4}} + \sqrt{T})$.
+Note that the term $\sqrt{T}$ is dominant only when $L \leq \sqrt{T}$, in which case even the first term is superlinear in $L$ and becomes vacuous.
+We can therefore drop the second term and obtain the claimed bound.
+\end{proof}
+
+We finally include the dynamic regret guarantee for this algorithm,
+which is again a direct application of Lemma~\ref{lem:dynamic2interval} combined with Theorem~\ref{thm:corralling_BISTRO+},
+similar to Corollary~\ref{thm:Exp4.S_dynamic}.
+
+\begin{cor}\label{cor:BISTRO+_dynamic}
+In the transductive setting, Algorithm~\ref{alg:corralling_BISTRO+} guarantees
+\[
+\E\left[ \sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \right]  = 
+\otil\left( \min_{0\leq L' \leq L}\left\{ \frac{T}{L'}\left( T^{\frac{1}{4}}(LK)^{\frac{1}{2}}(\ln N)^{\frac{1}{4}}\right) + \var L' \right\} \right).
+\]
+%\otil\left( T^{\frac{7}{8}} \var^{\frac{1}{2}} K^{\frac{1}{4}}(\ln N)^{\frac{1}{8}} +
+%T^{\frac{3}{4}}K^{\frac{1}{2}}(\ln N)^{\frac{1}{4}}   \right).
+If $\var$ is known, optimally setting $L=\min\{ T^{\frac{5}{6}}K^{\frac{1}{3}}(\ln N)^{\frac{1}{6}}/\Delta^{\frac{2}{3}},T\}$ gives
+$\otil(\var^\frac{1}{3}T^\frac{5}{6}K^{\frac{1}{3}}(\ln N)^{\frac{1}{6}} + T^{\frac{3}{4}}K^{\frac{1}{2}}(\ln N)^{\frac{1}{4}})$; otherwise, setting $L = T^\frac{5}{6}$
+gives $\otil((\sqrt{\var}+1) T^\frac{5}{6}K^\frac{1}{2}(\ln N)^{\frac{1}{4}})$.
+\end{cor}
+
+\begin{proof}{\textbf{sketch.}}
+The proof follows the same procedure as in Corollary~\ref{thm:Exp4.S_dynamic}: partition $[1,T]$ into $\frac{T}{L'}$ intervals each of length $L'$, plug in the interval regret guarantee for each interval (Theorem~\ref{thm:corralling_BISTRO+}), and then apply Lemma~\ref{lem:dynamic2interval} to obtain the claimed dynamic regret. 
+\end{proof}
+
+%\begin{proof}
+%For any $L \leq T$, by partitioning $[1,T]$ evenly into $T/L$ intervals and 
+%applying Theorem~\ref{thm:corralling_BISTRO+} and Lemma~\ref{lem:dynamic2interval},
+%we have
+%\[
+%\E\left[ \sum_{t=1}^T r_t(\pi_t^\star(x_t)) - r_t(a_t) \right]  = 
+%\otil\left(\frac{T}{L} \cdot T^{\frac{3}{4}}K^{\frac{1}{2}}(\ln N)^{\frac{1}{4}} + L \var\right).
+%\]
+%Setting $L = \min\{T, T^{\frac{7}{8}}\var^{-\frac{1}{2}}K^{\frac{1}{4}}(\ln N)^\frac{1}{8}\}$ completes the proof.
+%\end{proof}
+

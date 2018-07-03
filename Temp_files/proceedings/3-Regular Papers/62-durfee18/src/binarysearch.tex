@@ -1,0 +1,53 @@
+\section{Secondary technical details for our main results}\label{sec:minor_details}
+
+In this section, we address a couple assumptions that were made in the proofs of our main results. These assumptions were minor details, but we now include proofs for completeness.
+First, we always assumed that our row dimension after preprocessing was $O(\min(n,d\epsilon^{-2}\log n))$, and we will address this in \Cref{subsec:simulatedSplitting}. Second, we required a constant factor approximation of the optimal objective value for which we give the procedure in \Cref{subsec:binarySearch}.
+%\todo{intro these}
+\input{simulated_sampling}
+
+\subsection{Approximating the Optimal Objective Value}\label{subsec:binarySearch}
+
+For ease of notation, we let $f^* = \min_{\xx} \norm{\AA\xx - \bb}_1$ and $f_2^* = \min_{\xx} \norme{\AA\xx - \bb}$ in this section.
+In our proof of both Theorem~\ref{thm:ourSGD} and ~\ref{thm:applyKatyusha}, we assumed access to a constant approximation of $f^*$ with a runtime overhead of $\log{n}$.
+We will obtain access to this value by giving polynomially approximate upper and lower bounds on $f^*$ and using our primary algorithm on $\log{n}$ guesses for $f^*$ within this range.
+We start with the following lemma that gives upper and lower bounds on $f^*$:
+
+\begin{lemma}\label{lem:approxOfObjectiveVal}
+	Given a matrix $\AA \in \R^{n \times d}$ and a vector $\bb \in \R^n$, if $\xx_2^*$ minimizes $\norme{\AA\xx-\bb}$ then
+	\[ 
+	\norme{\AA\xx_2^* - \bb} \leq \norm{\AA\xx^* - \bb}_1 \leq \sqrt{n}\norme{\AA\xx_2^* - \bb}.
+	\]
+\end{lemma}
+
+\begin{proof}
+	By known properties of $\ell_1$ and $\ell_2$, for any $\xx \in \R^n$, we have $\norm{\xx}_2 \leq \norm{\xx}_1 \leq \sqrt{n}\norm{\xx}_2$.
+	Accordingly, we must have 
+	\[
+	\norme{\AA\xx_2^* - \bb} \leq \norme{\AA\xx^* - \bb} \leq \norm{\AA\xx^* - \bb}_1,
+	\]
+	where the first inequality follows from $\xx_2^*$ being the $\ell_2$-minimizer. Similarly, we also have 
+	\[
+	\norm{\AA\xx^* - \bb}_1 \leq \norm{\AA\xx_2^* - \bb}_1 \leq \sqrt{n}\norme{\AA\xx_2^* - \bb},
+	\]
+	where the first inequality follows from $\xx^*$ being the $\ell_1$-minimizer.
+\end{proof}
+
+Since $\AA^T \AA = \II$, our initialization of $\AA^T b$ is equal to $\xx_2^*$. Then we can compute $\norme{\AA\xx_2^* - \bb}$ in $O(Nd)$ time.\footnote{Note that our sampled and rotated $\tilde{\AA}\UU$ from Lemma~\ref{lem:lewisAndRotate} loses any sparsity guarantees that $\AA$ may have had.} Consequently, if we let $f_2^*$ be the minimized objective function $\norme{\AA\xx - \bb}$, we can compute polynomially close upper and lower bounds, $f_2^*$ and $\sqrt{n}f_2^*$ respectively, for $f^*$.
+
+\begin{lemma}\label{lem:binarySearch}
+	In both variants of our primary algorithm for Theorem~\ref{thm:ourSGD} and ~\ref{thm:applyKatyusha}, we can run the respective algorithms with a constant approximation of $f^*$ by running them $\log{n}$ times using different approximations of $f^*$, which we will denote by $\tilde{f}^*$.
+	Furthermore, the runtime of each is independent of the choice of $\tilde{f}^*$.
+\end{lemma}
+
+\begin{proof}
+	We first examine the latter claim and note that the gradient descent portion of both algorithms take upper bounds on $\norme{\xx_0 - \xx^*}$ as inputs.
+	Therefore, given a certain $\tilde{f}^*$ we can input the upper bound $O(\sqrt{d/n})\tilde{f}^*$ and following the analysis of the proofs in Theorems~\ref{thm:ourSGD} and ~\ref{thm:applyKatyusha},
+	in runtime $O(d^3\epsilon^{-2})$ and $O\left(d^{2.5}\epsilon^{-2} \sqrt{\log{n}}\right)$ respectively,
+	we are guaranteed that we achieve $\tilde{\xx}$ such that $f(\tilde{\xx}) - f^* \leq \epsilon \tilde{f}^*$ with high probability.
+	However, note that this is only true if $f^* \leq \tilde{f}^*$.
+	Otherwise, we are given no guarantee on the closeness of $f(\tilde{\xx})$ to $f^*$.
+	
+	The runtime of each algorithm is then not affected by our approximation of $\tilde{f}^*$, however, the closeness guarantees are affected.
+	Accordingly, we will run the gradient descent procedure in each respective algorithm $\log {n}$ times with $\tilde{f}^* = f_2^* \cdot 2^i$ for $i = 0$ to $\log {n}$, and whichever iteration produces $\tilde{\xx}$ that minimizes $f(\cdot)$ will be output. Lemma~\ref{lem:approxOfObjectiveVal} implies that there must exist some $i$ such that $f_2^* \cdot 2^i \leq  f^* \leq f_2^* \cdot 2^{i+1}$. Therefore, when we run our algorithm with $\tilde{f}^* = f_2^* \cdot 2^{i+1}$, the algorithm will succeed with high probability. Thus, the overall success probability is at least as high as any individual run of the algorithm. Moreover, the output $\tilde{\xx}$ is guaranteed to have $f(\tilde{\xx}) - f^* \leq 2\epsilon {f}^*$.
+\end{proof}
+

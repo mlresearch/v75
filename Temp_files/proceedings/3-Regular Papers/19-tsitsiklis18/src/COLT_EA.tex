@@ -1,0 +1,485 @@
+\documentclass[final,12pt]{colt2018} 
+%\documentclass[12pt]{colt2018} %
+
+
+
+% Anonymized submission
+ %\documentclass{colt2018} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Private Sequential Learning]{Private Sequential Learning \\ (Extended Abstract)}
+\usepackage{times}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm,float}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and 
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+\def\bydef{\stackrel{\triangle}{=}}
+\def\eqdis{\stackrel{d}{=}}
+\def\zp{\mathbb{Z}_{+}}
+\def\N{\mathbb{N}}
+\def\R{\mathbb{R}}
+\def\rp{\mathbb{R}_+}
+\def\pb{\mathbb{P}}
+\def\E{\mathbb{E}}
+\def\blw{\mathbf{w}}
+\def\blv{\mathbf{v}}
+\def\blx{\mathbf{x}}
+\def\bly{\mathbf{y}}
+\def\blu{\mathbf{u}}
+\def\bls{\mathbf{s}}
+\def\calA{\mathcal{A}}
+\def\calB{\mathcal{B}}
+\def\calC{\mathcal{C}}
+\def\calE{\mathcal{E}}
+\def\calF{\mathcal{F}}
+\def\calG{\mathcal{G}}
+\def\calH{\mathcal{H}}
+\def\calJ{\mathcal{J}}
+\def\calI{\mathcal{I}}
+\def\calL{\mathcal{L}}
+\def\calN{\mathcal{N}}
+\def\calR{\mathcal{R}}
+\def\calQ{\mathcal{Q}}
+\def\calX{\mathcal{X}}
+\def\calY{\mathcal{Y}}
+\def\calF{\mathcal{F}}
+\def\calK{\mathcal{K}}
+\def\calS{\mathcal{S}}
+\def\calP{\mathcal{P}}
+
+\def\calX{\mathcal{X}}
+
+\def\sk#1#2{\stackrel{(#1)}{#2}}
+\def\nln{\nonumber\\}
+
+\def\what{\widehat}
+\def\bbar{\, \big| \,}
+\def\Bbar{\, \Big| \,}
+
+\def\l2#1{\left\|#1\right\|_2}
+\def\bsl{|}
+
+\def\bpf{\proof}
+
+\def\red#1{{\color{red} #1}}
+\def\ed#1{{\color{Brown} #1}}
+\def\tr#1{\red{[Comments: #1 ]}}
+\def\jnt#1{{\color{black} #1}}
+\def\jc#1{{\color{black} [Comment: #1]}}
+
+
+
+\newcommand{\mcal}{\mathcal}
+\newcommand{\mb}{\mathbb}
+\newcommand{\mbf}{\mathbf}
+\def\lsim{\lesssim}
+\def\gsim{\gtrsim}
+
+
+\newcommand{\lt}{\left}
+\newcommand{\rt}{\right}
+\newcommand{\nnb}{\nonumber}
+\newcommand{\algorithmicbreak}{\textbf{break}}
+\newcommand{\BREAK}{\STATE \algorithmicbreak}
+
+%\theoremstyle{plain}
+\newtheorem{claim}[theorem]{Claim}
+
+
+
+%\def\dl#1{{\color{blue} \sout{#1}}}
+\def\dl#1{{}}
+\def\xk#1{{\color{black} #1}}
+%\def\comm#1{{\color{red} (KX: #1)}}
+\def\zx#1{{\color{black} #1}}
+\def\zxone#1{{\color{black} #1}}
+\def\zxtwo#1{{\color{black} #1}}
+
+\def\qed{$\hfill\blacksquare$}
+
+ % Authors with different addresses:
+ \coltauthor{\Name{John N. Tsitsiklis} \Email{jnt@mit.edu}\\
+ \addr LIDS, Massachusetts Institute of Technology, Cambridge, MA 02139
+ \AND
+ \Name{Kuang Xu} \Email{kuangxu@stanford.edu}\\
+ \addr Graduate School of Business, Stanford University, Stanford, CA 94305
+ \AND
+ \Name{Zhi Xu} \Email{zhixu@mit.edu}\\
+ \addr LIDS, Massachusetts Institute of Technology, Cambridge, MA 02139
+ }
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+
+{We {formulate} a private {learning} model to study an intrinsic tradeoff between privacy and query complexity in {sequential learning}. Our model involves a {learner} who aims to determine a scalar value, $v^*$, {by} sequentially querying an external database and receiving binary responses. {In the meantime, an adversary observes the {learner}'s queries, though not 
+%their 
+{the} responses, and tries to infer from them the value of $v^*$.} {The objective of the {learner} is to obtain an accurate estimate of $v^*$ using only a small number of queries, while simultaneously protecting her privacy by making $v^*$ provably difficult to learn for the adversary.}} {Our main results} provide tight upper and lower bounds on the {learner}'s {query complexity} as a function of desired levels of privacy and {estimation accuracy}. We also construct explicit query strategies whose complexity is optimal up to an additive constant.\footnote{Extended abstract. Full version appears as [\href{https://arxiv.org/abs/1805.02136}{arXiv:1805.02136, v2}].}
+
+\end{abstract}
+
+\begin{keywords}
+sequential learning, privacy, {bisection algorithm}.
+\end{keywords}
+
+
+\section{Introduction}
+
+Organizations and individuals often rely on relevant data to solve decision problems. Sometimes, such data are beyond the immediate reach of a decision maker and must be acquired %via 
+{by}
+interacting with an external entity or environment. However, these interactions may be monitored by a third-party adversary and subject the decision maker to potential privacy breaches, a possibility that has become increasingly prominent as information technologies and tools for data analytics advance. 
+
+The present paper studies a decision maker, henceforth referred to as the {{learner}}, who acquires data from an external entity in an {interactive} fashion by submitting sequential queries. The \emph{interactivity} benefits the {learner} by enabling her to tailor future queries based on past responses and thus reduce the number of queries needed, while, at the same time, exposes the {learner} to substantial privacy risk: the more her queries depend on past responses, the easier it might be for an {adversary} to use the observed queries to infer those past responses. 
+Our main objective is to articulate and understand an intrinsic \emph{privacy versus query complexity tradeoff} in the context of such a {Private Sequential Learning} model. 
+
+
+
+% We begin with an informal description of {the} model. A \emph{{learner}} would like to determine the value of a scalar, $v^*$, referred to as the \emph{true value}, which lies in a bounded subset of $\mathbb{R}$. To search for $v^*$, she must interact with an external database, through sequentially submitted queries: at step $k$, the {learner} submits a query, $q_k \in \R$, and receives a binary response, $r_k$, where $r_k=1$ if $v^*\geq q_k$, and $r_k=0$, otherwise. The interaction is sequential in the sense that the {learner} may choose a query  depending on the responses to all previous queries. {Meanwhile}, there is an \emph{adversary} who eavesdrops on the {learner}'s actions: she observes all of the {learner}'s queries, $q_k$, but not %their 
+% {the} 
+% responses, and tries to use these queries to estimate the true value, $v^*$. The {learner}'s goal is to submit queries in such a way that she can learn $v^*$ within a prescribed error tolerance, while $v^*$ cannot be accurately estimated by the adversary with high confidence. {The learner's goal is easily attained by submitting} an unlimited number of queries, in which case the queries need not depend on the past responses and hence reveal no information to the adversary. Our quest is, however, to understand the \emph{least number of queries} that the {learner} needs to submit in order for her to successfully retain privacy. Is the query complexity significantly different from the case where privacy constraints are absent? How does it vary as a function of the levels of accuracy and  privacy? Is there a simple and yet efficient query strategy that the {learner} can adopt?  Our main results address these questions. 
+
+
+% \subsection{Motivating Examples}\label{sec:motivating_examples}
+% We discuss two examples that provide some context for our model. 
+
+% \emph{Example 1 - learning an optimal price.} A firm is to release a new product and would like to identify a revenue maximizing price, $p^*$, prior to the product launch. The firm believes that the revenue function, $f(p)$, is strictly concave and differentiable as a function of the price, $p$, but has otherwise little additional information. A sequential {learning} process is employed to identify $p^*$ over a series of epochs: in epoch $k$, the firm assesses how the market responds to a test price, $p_k$, and receives a binary feedback as to whether $f'(p_k)\geq0$ or  $f'(p_k)< 0$. This may be achieved, for instance, by contracting a consulting firm to conduct market surveys on the price sensitivity around $p_k$. The firm would like to estimate $p^*$ with reasonable accuracy over a small number of epochs, but is wary that a competitor might be able to observe the surveys and deduce from them the value of $p^*$ ahead of the product launch. In the context of Private Sequential {Learning}, the firm is the {learner}, the competitor is the adversary, the revenue-maximizing price is the true value, and the test prices are the queries. The binary response on the revenue's price sensitivity indicates whether the revenue-maximizing price is less than the current test price. 
+
+% \emph{Example 2 - online optimization with private weights.} In the previous example, the adversary is a third-party that does not observe the responses to the queries. We now provide a different example in which the adversary is the database to which queries are submitted, and thus has partial knowledge of the responses. 
+
+% Consider a {learner} who wishes to identify the maximizer, $x^*$, of a function $f(x) = \sum_{i=1}^m \alpha_i f_i(x)$ over some bounded interval $\calX \subset \R$, where $\{f_i(\cdot)\}_{1\leq i \leq m}$ is a collection of strictly concave differentiable constituent functions, and $\{\alpha_i\}_{1\leq i \leq m}$ are positive (private) weights representing the importance that the {learner} associates with each constituent function. The {learner} knows the weights but does not have information about the constituent functions; such knowledge is to be acquired by querying an external database. During epoch $k$, the {learner} submits a test value, $x_k$, and receives from the database the derivatives of all constituent functions at $x_k$, $\{f'_i(x_k)\}_{1\leq i \leq m}$. Using the weights, the {learner} can then compute the derivative $f'(x_k)$, whose sign serves as a binary indicator of the position of the maximizer $x^*$ relative to the current test value. The database, which possesses complete information about the constituent functions but does not know the weights, would like to infer from the {learner}'s querying pattern the maximizing value $x^*$ or possibly the weights themselves. The query strategies that we develop for {Private Sequential Learning} can also be applied to this setting. The connection between the two is made precise in \cite{zhi}.
+
+% \subsection{Preview of the Main Result}
+
+% We now 
+% %give an overview 
+% {preview} our main result. Let us begin by introducing some additional notation. Recall that both the {learner} and the adversary aim to obtain estimates that are close to a true value $v^*$. We denote by $\epsilon$ and $\delta$ the {absolute estimation error} that the {learner} and the adversary is willing to tolerate, respectively. {We will employ a privacy parameter $L\in\mathbb{N}$ to quantify the {learner}'s level of privacy at the end of the {learning} process: the {learner}'s privacy level is $L$ if the adversary {can} successfully approximate the true value within an  error of $\delta$ with probability at most $1/L$}. A private query strategy for the {learner} must be able to produce an estimate of the {true value within an error of at most} $\epsilon$, while simultaneously guaranteeing that the desired privacy level $L$ holds against the adversary.  
+
+% {Our main objective is to quantify the \emph{query complexity} of private sequential learning, $N^*(\epsilon,\delta,L)$, defined as the minimum number of queries needed for a private {learner} strategy, under a given set of parameters, $\epsilon, \delta$ and $L$. {Specifically, we} will focus on the regime where $2\epsilon<\delta\leq 1/L$. The reason %of 
+% {for} this choice will become clear after a formal introduction of the model, and we will revisit it at the beginning of Section \ref{sec:complex_results}.\footnote{Intuitively, this regime is interesting because of two factors. On the one hand, a smaller $\delta$ (relative to the {learner}'s accuracy $\epsilon$) is effectively impossible for the adversary, as the adversary has less information available than the {learner}. On the other hand, a larger $\delta$ (relative to $1/L$) makes the adversary's problem trivial because a random guess in $[0,1]$ will then have roughly at least $1/L$ probability to be {within $1/L$ of} the true value.} In this regime, we have the following upper and lower bounds on the query complexity.
+
+% %\footnote{Intuitively, this regime is interesting because of two factors. On the one hand, a smaller $\delta$ (relative to the {learner}'s accuracy $\epsilon$) is effectively impossible for the adversary, as the adversary has less information available than the {learner}. On the other hand, a larger $\delta$ (relative to $1/L$) makes the adversary's problem trivial because a random guess in $[0,1]$ will then have roughly at least $1/L$ probability to be {within $1/L$ of} the true value.}
+
+% \begin{enumerate}
+% \item We establish an upper bound\footnote{All logarithms are taken with respect to base 2. To reduce clutter, non-integer numbers are to be understood as  rounded upwards. 
+% For example, the lower bound should be understood as $\lceil\log(1/L\epsilon)\rceil+2L$, where $\lceil\cdot\rceil$ represents the ceiling function.
+% } of $\log(1/L\epsilon)+2L$ by explicitly constructing a private {learner} strategy, which applies for any $\delta$ in the range $(2\epsilon, 1/L]$. 
+% 	\item We establish a lower bound of $\log(\delta/\epsilon)+2L-4$ by characterizing the amount of  information available to the adversary.
+% \end{enumerate}
+% %Combining the two bounds, we 
+% {We} {note} that {our bounds are tight in the sense that when the adversary's accuracy requirement is as loose as possible, i.e., $\delta=1/L$}, the upper bound {matches the lower bound, up to} an additive constant. 
+
+%\xk{We now give an overview of our main results. We begin by introduce some additional notation. }
+
+
+
+%Hence, the private {learner} strategy we constructed to prove the upper bound achieves the optimal query complexity. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Related Work}
+
+
+% In the absence of a privacy constraint, the problem of identifying a value within a compact interval through (possibly noisy)  binary feedback is a classical problem arising in domains such as coding theory (\cite{horstein1963sequential}) and root finding (\cite{waeber2013bisection}). It is well known that the bisection algorithm achieves the optimal query complexity of $\log(1/%\delta
+% {\epsilon})$ (cf.~\cite{waeber2013bisection}),
+% {where $\epsilon>0$ is the error tolerance.} In contrast, to the best of our knowledge, the question of how to preserve a {learner}'s privacy when her actions are fully observed by an adversary and what the resulting query complexity would be has received relatively little attention in the literature. 
+
+% {Related to our work, in spirit, is the body of literature on differential privacy (\cite{dwork2006calibrating,dwork2014algorithmic}), {a concept {that} has been applied in statistics (\cite{wasserman2010statistical,smith2011privacy,duchi2016minimax}) and learning theory (\cite{raskhodnikova2008can,chaudhuri2011sample,blum2013learning,feldman2014sample}).}  Differential privacy mandates that the output distribution of an algorithm be insensitive under 
+% %\emph{any} perturbation
+% {certain perturbations}
+%  of the input data. For instance, \cite{jain2012differentially} 
+% {study}
+% % studies  
+% regret minimization in an online optimization problem while ensuring differential privacy, 
+% %which requires 
+% {in the sense that} the distribution of the sequence of solutions remains nearly identical when any {one} of the functions being optimized is perturbed.
+% %\jc{Delete: [at any location] because the word location is vague.}
+% In contrast, our definition of privacy measures the adversary's ability to perform a \emph{specific} inference task. }
+% %\jc{[Delete so as not to invite any controversy] As such differential privacy is a fundamentally more restrictive form of privacy, and thus necessarily leads to overly conservative and inefficient algorithms in a problem-specific setting.}}
+
+% %\footnote{The sequence of queries produced by the Opportunistic Bisection strategy employed in the proof of our query-complexity upper bound is in fact \emph{not} insensitive to the location of the true value, as the distribution of queries can change abruptly when the true value is perturbed by a small amount as it moves from a ``guess'' to a ``sub-interval''. Yet, the Opportunistic Strategy will be shown to be private under our criteria. This suggests that while differential privacy might be sufficient to ensure privacy in our setting, it is by no means necessary. }
+
+% In a different model, \cite{kuang} {study} the issue of privacy in a sequential decision problem, where an agent attempts to reach a particular node in a graph, {traversing it} in a way that obfuscates her intended destination against an adversary who observes her past trajectory. The authors show that the probability of a correct prediction by the adversary is inversely proportional to the time it takes for the {agent} to reach her destination. Similar to the setting of \cite{kuang}, the {learner} in our model also plays against a powerful adversary who observes all past actions. However, a major new element  is that the {learner} in our model strives to \emph{learn} a piece of information of which she herself has no prior knowledge, in contrast to the {agent} in \cite{kuang} who tries to conceal private information already in her possession. In a way, the central conflict of trying to learn something while preventing others from learning the same information sets our work apart from the extant literature. 
+
+
+
+% Similarly, our model  
+% %some high-level similarities 
+% {is close in spirit} to private information retrieval problems in  the field of cryptography (\cite{kushilevitz1997replication,chor1998private,gasarch2004survey}).  In these problems, a {learner} wishes to retrieve an item from some location $i$ in a database, in such a manner that the database obtains no information on the value of $i$, where the latter requirement can be either information theoretic or based on computational hardness assumptions. Compared to this line of literature, our privacy requirement is substantially weaker: the adversary  may still obtain \emph{some} information on the true value. This relaxation of the privacy requirement allows the {learner} to deploy richer and more sample-efficient query strategies. 
+
+
+
+%Another related subfield of cryptography is secure multi-party computation (\cite{Canetti:1996:ASM:888604,du2001secure,lindell2009secure}), in which the goal is to create protocols for parties to keep their inputs private while jointly computing a function value based on inputs from all parties. The detailed requirements vary for different models of adversarial power, such as whether the adversarial parties follow or deviate from the protocol specification and whether the computational power is bounded or not. However, there are at least two common requirements (\cite{lindell2009secure}) that are significantly different from our model: privacy requires that the only information about other parties' input that one can learn is what can be derived from the output itself, and correctness requires that each party is guaranteed to receive the correct output. As such, the setting of the secure multi-party computation is fundamentally different from ours. In the model we consider, only the {learner} directly learns an approximate result of the true value at the end of the process. %and the adversary must infer this information from the {learner}'s past actions.  As no correct (or even approximately correct) final output is sent to the adversary, the privacy we seek is against the adversary's ability to observe and infer based on the \emph{sequential} decisions the {learner} makes. Finally, our model has a prescribed type of interaction: the forms of queries and the responses are fixed, and the database only participates passively in the sense that it can only honestly answer the queries, but no more.  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Organization}
+% The remainder of the paper is organized as follows. We formally introduce the {Private Sequential {Learning} model in Section \ref{sec:model}. In Section \ref{sec:privatestrategycomplex}, we motivate and discuss private {learner} strategies. Our main results are stated in Section \ref{sec:complex_results}. Before delving into the proofs, we examine in Section \ref{sec:example_strategy} three  examples of {learner} strategies that provide further insight into the structure of the problem. Sections \ref{sec:upperbound} and \ref{sec:lowerbound} are devoted to the proof of the upper and lower bounds in our main theorem, respectively. We conclude in Section \ref{sec:conclusion}, where we also describe some interesting variations of our model. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Private Sequential Learning Model}
+\label{sec:model}
+
+The Private Sequential {Learning} model involves a \emph{{learner}} who aims to determine a particular \emph{true value}, $v^*$. The true value is a scalar in some bounded subset of $\mathbb{R}$. Without loss of generality, we assume that $v^*$ belongs to the interval\footnote{We consider a half-open interval here, which allows for a cleaner presentation, but the essence is not changed if the interval is closed.} $[0,  1)$ and that the {learner} knows that this is the case. The {true value} is stored in an external database. In order to learn the true value, the {learner} interacts with the database by submitting queries as follows. At each step $k$, the {learner} submits a \emph{query} $q_k\in[0,1)$, {and receives from the database a \emph{response}, $r_k$, indicating whether $v^*$ is greater than or equal to the query value}, i.e., 
+\begin{equation*}
+r_k = \mathbb{I}(v^*\geq q_k),%\in\{0,1\}%, \quad i \in [ N]. 
+\end{equation*}
+where $\mathbb{I}(\cdot)$ stands for the indicator function. 
+%where $[N]=\{1,2,\dots,N\}$. 
+Furthermore, each query is allowed to depend on the responses to previous queries, through a {learner} strategy, to be defined shortly. 
+
+Denote by $N$ the total number of learner queries, and by $\epsilon>0$ the learner's desired accuracy. After receiving the responses to $N$ queries, the {learner} aims to produce an estimate ${\hat{x}}$, for $v^*$, that satisfies
+\begin{equation*}
+|{\hat{x}}-v^*|\leq\frac{\epsilon}{2}.
+\end{equation*}  
+
+In the meantime, there is an \emph{adversary} who is also interested in learning the {true value}, $v^*$. The adversary has no access to the database, and hence  seeks to estimate $v^*$ by free-riding on observations of the learner queries. Let $\delta>0$ be an accuracy parameter for the adversary. We assume that the adversary can observe the values of the queries but not the responses, and knows the {learner}'s query strategy.  %The precise definition of {learner} strategy will be presented shortly.
+Based on this information, and after observing all of the queries submitted by the {learner}, the adversary aims to generate an estimate, $\hat{x}^a$, for $v^*$, that satisfies
+\begin{equation*}
+|\hat{x}^a-v^*|\leq\frac{\delta}{2}.
+\end{equation*}  
+
+%\comm{I'm removing the last paragraph since it's already been elaborated on in Introduction.}
+%In summary, $\epsilon$ measures the desired accuracy of the {learner} and $\delta$ that of the adversary. Our model abstracts from situations where one has to collaborate with others to achieve a certain goal. Because of the interactions with the external database and the worries about possible information leakage, the {learner} is not just interested in approximating the true value $v^*$, but also would like to employ an intelligent strategy that guarantees the desired privacy through making $v^*$ hard to infer by the adversary. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{{Learner} Strategy} 
+\label{sec:user_strategy}
+%\tr{One cannot talk about a term before it is defined. If you want to refer to something as a ``{learner} strategy'', you must first define it by saying ``A {learner} strategy is XXXX''. Stylistically, I like using Italics (emph) to introduce a new concept (but be sure that Italics are not abused). } 
+The queries that the {learner} submits to the database are generated by a (possibly randomized) \emph{{learner} strategy}, in a sequential manner: the query at step $k$ depends on the queries and their responses up until step $k-1$, as well as {on} a discrete random variable $Y$. In particular, the random variable $Y$ allows the {learner} to randomize if needed, and we will refer to $Y$ as the \emph{random seed}. Without loss of generality, we assume that $Y$ is uniformly distributed {over} $\{1,2,\dots,\mathcal{Y}\}$, where $\mathcal{Y}$ is a large integer. Formally, fixing $N\in\mathbb{N}$,
+a {learner} strategy $\phi$ of length $N$ is comprised of two parts: 
+\begin{enumerate}
+ 	\item A finite sequence of $N$ query functions, $(\phi_1, \dots, \phi_N)$, where each $\phi_k$ is a mapping that takes as input the values of the first $k-1$ queries submitted, the corresponding responses, as well as the realized value of $Y$, and outputs the $k$th query $q_k$.
+ 	\item An estimation function $\phi^{E}$, which takes as input the $N$ queries submitted, the corresponding responses, and the realized value of $Y$, and outputs the final estimate ${\hat{x}}$ for the true value $v^*$. 
+ \end{enumerate} 
+
+%Observe that the above definition can be simplified: knowing the value of the random seed $Y$ and the responses to the queries is sufficient for reconstructing the values of the queries. Formally, this leads to an alternative, simpler definition of learner strategies:
+% \begin{enumerate}
+% 	\item If $k=1$, then $\phi_1\::\:{\{1,2,\dots,\mathcal{Y}\}}\rightarrow [0,1)$, and $q_1=\phi_1(Y)$;
+% 	\item[] If $k=2,3,\dots,N$, then $\phi_k\::\{0,1\}^{k-1}\times {\{1,2,\dots,\mathcal{Y}\}}\rightarrow [0,1)$, and 
+% 	$q_k=\phi_k(r_1,r_2,\dots,r_{k-1},Y)$;
+% 	\item %After submitting $N$ queries, 
+% 	$\phi^{E}\::\{0,1\}^{N}\times {\{1,2,\dots,\mathcal{Y}\}}\rightarrow [0,1)$, and $\hat{x}=\phi^{E}(r_1,r_2,\dots,r_N,Y)$.
+% \end{enumerate} 
+%
+%In the sequel, we adopt the latter, simpler definition. In addition, we will consider {learner} strategies that submit distinct queries, as repeated queries do not provide additional information to the {learner}.  
+
+We will denote by $\Phi_N$  the set of all {learner} strategies of length $N$, defined as above.
+
+%Fix a {learner} strategy $\phi \in \Phi_N$. To clarify the dependence on the random seed, {for any $x\in[0,1)$ and $y\in \{1,2,\dots,\mathcal{Y}\}$}, we will use $\overline{q}(x,y)$ to denote the realization of the sequence of  queries, {$(q_1,q_2, \ldots,q_N)$}, 
+%when the true value $v^*$ is $x$ and the {learner}'s random seed $Y$ is $y$. Similarly, we will denote by ${\hat{x}}(x,y)$ the {learner}'s estimate of the true value when $v^*=x$ and $Y=y$.  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Weights $\alpha$ and Member Functions $f$}\label{sec:para}
+% In this section, we specify some constraints on the weights, $\alpha$, and the member functions, $f$, so that our problem is valid and meaningful. In the sequel, we shall consider weights and member functions in the following sets:
+% % Generally, we would like the optimization problem Eq.~\eqref{eqn:optimization} to have a unique minimizer, in order to work with a clean formulation. \tr{State the assumption first and see if justification is needed.}
+% % Additionally, in the beginning, the information regarding the minimizer $x^*$ should be shared between the {learner} and the adversary \tr{What do you mean by shared? This has to be spelled out to the reader.}. These criteria lead us to consider $\alpha_i$ and $f_i$ in the following sets, where for simplicity \tr{``for simplicity'' gives an impression that one is cutting corners, and should be used very sparingly and ideally not at all. In this case, we are introducing some notation, so no need for the phrase. Just say something along the line of ``Fix $m\in \N$. Denote by $\alpha$ a vector of weights, $\alpha = (\alpha_1,\alpha_2,\ldots, \alpha_m)$, and by $f$ a vector of member functions, ....''}, we denote $\alpha=(\alpha_1,\alpha_2,\dots,\alpha_m)$  and $f=(f_1,f_2,\dots,f_m)$:
+% % \begin{equation}\label{assumptio_alpha}
+% % \mathcal{A}=\{\alpha\:|\:\alpha_i>0,\:\text{for every }i\in[m]\}
+% % \end{equation}
+% \begin{equation} \label{assumption_f}
+% \begin{split}
+% \mathcal{A}=&\{\alpha\:|\:\alpha_i>0,\:\text{for every }i\in[m]\},\\
+% \mathcal{F}=&\{f\:|\:f_i:\mathbb{R}\rightarrow\mathbb{R},\text{ is differentiable and strictly convex {for every $i\in [m]$},}\:\:\\
+% &\text{and}\:\exists \:k\in[m],\:j\in[m],\:\text{with }k\neq j,  \:\:\:\text{s.t.}\:\: f_k'(0)>0,\: f_j'(1)<0\}.
+% \end{split}
+% \end{equation}
+
+% Generally, we would like the optimization problem Eq.~\eqref{eqn:optimization} to have a unique minimizer, in order to work with a clean formulation. This is guaranteed by the positivity of the weights and the strict convexity of the member functions in Eq.~\eqref{assumption_f}. In principle, we could just require each member function $f_i$ to be convex and at least one to be strictly convex. Such a relaxation does not change our subsequent sections, but we will work with Eq.~\eqref{assumption_f}, which results in a more streamlined presentation. %\tr{I mentioned strict convexity in the modeling section so as to streamline the description the {learner}'s objective. We can leave out this paragraph altogether. Thoughts?}
+
+% %\tr{Be more direct and less round-about. The main point to explain here is that the condition amounts to ensuring that the minimizer can lie anywhere in $[0,1]$. So, state this upfront, and then go into the necessary details to show why the condition in the equation ensures this property.} 
+
+% In addition, the conditions Eq.~\eqref{assumption_f} ensures that the minimizer $x^*$ can lie anywhere in $[0,1]$, and hence, the initial information regarding the minimizer is the same between the {learner} and the provider. Notice that each member function $f_i$ is strictly convex, and hence its first derivative is strictly increasing. Therefore, Eq.~\eqref{assumption_f} indeed assumes the existence of two member functions $f_k$ and $f_j$ such that $f'_k(x)>0$ and $f'_j(x)<0$ for every $x\in[0,1]$. Then, for every $f\in\mathcal{F}$, by adjusting the weights $\alpha_k$ and $\alpha_j$ properly, the minimizer $x^*(\alpha,f)$ can be designed to be anywhere in the interval $[0,1]$. Conversely, for every $\alpha\in\mathcal{A}$, by appropriately choosing how positive $f'_k(x)$ is and how negative $f'_j(x)$ is, the minimizer $x^*(\alpha,f)$ can also be placed anywhere in the interval $[0,1]$. To see why such a condition is necessary, suppose that $f_i=(x-0.5)^2$ for every $i\in[m]$. Then, trivially, the provider knows $x^*(\alpha,f)=0.5$, independent of the value of $\alpha$. As another example, if $m=2$, $f_1=(x+1)^2$ and $f_2=(x+2)^2$, then again for every $\alpha\in\mathcal{A}$, the provider is certain that $x^*(\alpha,f)=0$.%These make sure that the prior knowledge for the {learner} and the adversary is the same, namely, any point belonging to $[0,1]$ could possibly be a minimizer. 
+% % To summarize, 
+% % \begin{enumerate}
+% %   	\item for every $\alpha\in\mathcal{A}$, we have that for every $x\in[0,1]$, there exist infinitely many $f\in\mathcal{F}$ such that $x^*(\alpha,f)=x$;
+% %   	\item for every $f\in\mathcal{F}$, we have that for every $x\in[0,1]$, there exist infinitely many $\alpha\in\mathcal{A}$ such that $x^*(\alpha,f)=x$;
+% %   \end{enumerate}  
+% %The statements that there exist infinitely many $f$ or $\alpha$ come from the facts that we can freely scale $\alpha$ or $f$ up and down , respectively.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Information Available to the Adversary}
+\label{sec:adv_info}
+We summarize in this subsection the information available to the adversary. First, the adversary is aware that the true value $v^*$ belongs to $[0,1)$. Second, we assume that the adversary can observe the values of the queries but not the corresponding responses, and that the {learner} strategy $\phi$ is known to the adversary. In particular, the adversary observes the value of each query $q_k${,} for $k=1,\dots,N$, and knows the $N$ mappings, $\phi_1,\phi_2,\dots,\phi_N$. This means that if the adversary had access to the values $r_1,r_2,\dots,r_{k-1}$ and the realized value of $Y$, she would know exactly what $q_k$ is for step $k$. While it may seem that an adversary who sees both the {learner} strategy and her actions is too powerful to defend against, we will see in the sequel that the {learner} will still be able to implement effective and efficient obfuscation by exploiting the randomness of $Y$.  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Private {Learner} Strategies}\label{sec:privatestrategycomplex}
+In this section, we introduce and formally define private learning strategies, the central concept of this paper. 
+%While we will briefly discuss the underlying intuition, a more detailed interpretation is relegated to {Appendix \ref{sec:privacy_and_winning}}.  
+%As was mentioned in {the Introduction}, 
+A private {learner} strategy must always make sure that its estimate is close to the true value $v^*$, while keeping the {adversary}'s probability of correct detection of $v^*$  sufficiently small. Our goal in this section is to formalize those ideas. 
+%To this end, we first introduce  in Section 3.1 {ways of quantifying} the amount of information acquired by  the adversary, as a function of the {learner}'s queries. This then leads to a precise privacy constraint presented in Section 3.2.
+
+%colt version:We now introduce and formally define private learning strategies, the central concept of this paper. As was mentioned in {the Introduction}, a private {learner} strategy must always make sure that its estimate is close to the true value $v^*$, while keeping the  the {adversary}'s probability of correct detection of $v^*$  sufficiently small. Our goal in this section is to formalize {these} ideas by {introducing the notions} of information set and cover number. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Information Set} \label{sec:infoconfiset}
+Recall from Section \ref{sec:adv_info} that the adversary knows the values of the queries and the {learner} strategy. We will now convert this knowledge into a succinct representation: the \emph{information set} of the adversary. Fix a {learner} strategy, $\phi$. Denote by $\calQ(x)$ the set of query sequences that have a positive probability of appearing under $\phi$, when the true value $v^*$ is equal to $x$: 
+\begin{equation}
+\calQ(x)  =\{{\overline{q}} \in [0,1)^N: \pb_\phi(Q = {\overline{q}}) >0 \},
+\label{eq:calQx}
+\end{equation}
+{where $Q$ is a vector-valued random variable representing the sequence of learner queries, whereas $\overline{q}$ stands for a typical realization;
+{the probability is measured with respect to the randomness in the learner's random seed, $Y$.}}
+%Note that $Q$ is a vector-valued random variable, whereas $\overline{q}$ stands for a typical realization.
+%Let $\calQ = \cup_{x\in [0,1)} \calQ(x)$.  
+\begin{definition} \label{def:infoset}
+Fix $\phi\in\Phi_N$. %Let $Q$ be the {random} sequence of {learner} queries. 
+The information set for the adversary, $\mathcal{I}({\overline{q}})$, is defined by: 
+\begin{equation}
+\mathcal{I}({\overline{q}}) = \Big\{x\in [0 , 1): {\overline{q}} \in \calQ(x) \Big\}, {\quad\overline{q}\in[0,1)^N.}
+\end{equation}
+%where the probability is measured with respect to the randomness in the learner's random seed, $Y$.}
+\end{definition}
+From the viewpoint of the adversary, the {information set} represents all possible {true values} {that are consistent with the queries observed}. As such, it captures the amount of information that the {learner} reveals to the adversary. 
+
+\subsection{$(\epsilon,\delta,L)-$Private Strategies}\label{sec:stronger_privacy}
+ 
+A private {learner} strategy should achieve two aims: accuracy and privacy. Accuracy can be captured in a relatively straightforward manner, by measuring the absolute distance between the {learner}'s estimate and the true value. An effective measure of the {learner}'s privacy, on the other hand, is more subtle, as it depends on what the adversary is able to infer. To this end, we develop in this subsection a privacy metric by quantifying the ``effective size'' of the information set $\calI({\overline{q}}) $ described in Definition \ref{def:infoset}. Intuitively, since the information set contains all possible realizations of the true value, $v^*$, the larger the information set, the more difficult it is for the adversary to pin down the true value. 
+
+%\red{[Delete: the discussion on why diameter and lebesgue measure are not good]}
+%To this end, we will use set coverability to measure the size of the information set, defined as follows.  
+
+%The choice of such a metric requires care. As a first attempt, the diameter of the information set, $\sup_{y_1,y_2\in \calI({\overline{q}})}{|y_1-y_2|}$, may appear to be a natural candidate. Since the adversary has an accuracy parameter of $\delta$, we could require that the diameter of  $\calI({\overline{q}})$ be greater than $\delta$. The diameter, however, is not a good metric, as it paints an overly optimistic picture for the {learner}. Consider the example where the information set is the union of two intervals of length $\delta$ each, placed far apart from each other. By  setting her estimate to be the center of one of the two intervals, chosen at random with equal probabilities, the adversary will have probability $1/2$ of correctly predicting the true value, even though the diameter of the information set could be large. The Lebesgue measure of the information set appears to be another plausible candidate. However, it also fails to accurately  describe the {learner}'s privacy. Consider again the example where the information set consists of many distantly placed but very small intervals. It is not difficult to see that the adversary would not be able to correctly estimate the true value with high certainty, even if the Lebesgue measure of the set is arbitrarily small. 
+
+%The shortcomings {of} the above metrics motivate a more refined notion of ``effective size,'' and in particular, one that {would be appropriate for disconnected information sets}. 
+%To this end, we will use set coverability to measure the size of the information set, defined as follows.  
+
+
+\begin{definition}
+\label{def:coverable}
+Fix $\delta>0$, $L\in\mathbb{N}$, and a set $\calE\subset \R$. We say that a collection of $L$ closed intervals $[a_1,b_1]$, $[a_2,b_2]$, $\dots$, $[a_L,b_L]$, is a $(\delta,L)$ cover for $\calE$ if  $\mathcal{E}\subset\bigcup_{1\leq j\leq L}[a_j,b_j]$,  and $b_j - a_j \leq \delta$ for all $j.$ 
+
+We say that a set $\calE$ is {\bf $(\delta,L)$-coverable} if it admits {a} $(\delta,L)$ cover. {In addition, we define the {\bf $\delta$-cover number} of a set $\mathcal{E}$, $C_\delta(\mathcal{E})$, as
+\begin{equation}
+C_\delta(\mathcal{E})\triangleq\min\: \{L\in\mathbb{N}: \textrm{ $\mathcal{E}$ is $(\delta,L)$-coverable}\}.
+\end{equation}}
+\end{definition}
+
+We are now ready to define $(\epsilon,\delta,L)$-private {learner} strategies.
+\begin{definition}[Private {Learner} Strategy]
+\label{def:private_strategy}
+Fix $\epsilon>0$, $\delta>0$, $L\geq 2$, with $L\in\mathbb{N}$. A {learner} strategy $\phi\in\Phi_N$ is $(\epsilon,\delta, L)$-private if it satisfies the following: 
+%almost surely with respect to the randomness in $X$, 
+\begin{enumerate}
+\item Accuracy constraint: the {learner} estimate accurately recovers the true value, with probability one:
+\begin{equation*}
+\mathbb{P}\Big( \big|\hat{x}(x,Y)-x\big| \leq {\epsilon}/{2}\Big)=1, \quad \forall\: x\in[0,1), 
+\end{equation*}
+where the probability is measured with respect to the randomness in $Y$. 
+	\item Privacy constraint: for every $x\in[0,1)$ and every possible sequence of queries $\overline{q} \in \calQ(x)$, {the $\delta$-cover number of the {information set} for the adversary, $C_\delta\big(\calI(\overline{q})\big)$, is 
+	at least $L$, i.e., 
+	\begin{equation}
+	C_\delta\big(\calI(\overline{q})\big)\geq L,\quad\forall\: \overline{q}\in\mathcal{Q}(x).
+	\end{equation} } 
+\end{enumerate}
+\end{definition}
+
+The accuracy constraint requires that a private {learner} strategy always produce an accurate estimate within the error tolerance $\epsilon$, for any possible true value in $[0,1)$. The privacy constraint controls the size of the information set induced by the sequence of queries generated, and the parameter $L$ can be interpreted as the {learner}'s privacy level: since the intervals used to cover the information set are of length at most $\delta$, each interval can be thought of as representing a plausible guess for the adversary. Therefore, the probability of the adversary successfully estimating the location of $v^*$ is essentially inversely proportional to the number of intervals needed to cover the information set, which is at most $1/L$.  
+%We  make the link between $1/L$ and the adversary's probability of correct estimation precise in Appendix \ref{sec:privacy_and_winning}.
+
+
+\subsection{{Example Applications} }
+We examine two illustrative example applications of our model. 
+
+\emph{Example 1 - learning an optimal price.} A firm is to release a new product and would like to identify a revenue maximizing price, $p^*$, prior to the product launch. The firm believes that the revenue function, $f(p)$, is strictly concave and differentiable as a function of the price, $p$, but has otherwise little additional information. A sequential {learning} process is employed to identify $p^*$ over a series of epochs: in epoch $k$, the firm assesses how the market responds to a test price, $p_k$, and receives a binary feedback as to whether $f'(p_k)\geq0$ or  $f'(p_k)< 0$. This may be achieved, for instance, by contracting a consulting firm to conduct market surveys on the price sensitivity around $p_k$. The firm would like to estimate $p^*$ with reasonable accuracy over a small number of epochs, but is wary that a competitor might be able to observe the surveys and deduce from them the value of $p^*$ ahead of the product launch. In the context of Private Sequential {Learning}, the firm is the {learner}, the competitor is the adversary, the revenue-maximizing price is the true value, and the test prices are the queries. The binary response on the revenue's price sensitivity indicates whether the revenue-maximizing price is less than the current test price. 
+
+\emph{Example 2 - online optimization with private weights.} In the previous example, the adversary is a third-party entity who does not observe the responses to the queries. We now illustrate in this example that the {Private Sequential Learning} model can also describe a situation where the adversary is the database to which queries are submitted, and thus has partial knowledge of the responses; {the connection is made precise in \cite{zhi}.}
+
+Consider a {learner} who wishes to identify the maximizer, $x^*$, of a function $f(x) = \sum_{i=1}^m \alpha_i f_i(x)$ over some bounded interval $\calX \subset \R$, where $\{f_i(\cdot)\}_{1\leq i \leq m}$ is a collection of strictly concave differentiable constituent functions, and $\{\alpha_i\}_{1\leq i \leq m}$ are positive (private) weights representing the importance that the {learner} associates with each constituent function. The {learner} knows the weights but does not have information about the constituent functions; such knowledge is to be acquired by querying an external database. During epoch $k$, the {learner} submits a test value, $x_k$, and receives from the database the derivatives of all constituent functions at $x_k$, $\{f'_i(x_k)\}_{1\leq i \leq m}$. Using the weights, the {learner} can then compute the derivative $f'(x_k)$, whose sign serves as a binary indicator of the position of the maximizer $x^*$ relative to the current test value. The database, which possesses complete information about the constituent functions but does not know the weights, would like to infer from the {learner}'s querying pattern the maximizing value $x^*$ or possibly the weights themselves. The query strategies we develop for {Private Sequential Learning} can also be applied in this setting.
+
+
+\subsection{Related Work}
+{Our work is related in spirit to differential privacy \citep{dwork2008differential,dwork2014algorithmic} and the private information retrieval problem in cryptography \citep{kushilevitz1997replication,chor1998private,gasarch2004survey}. However, in contrast to differential privacy, our definition of privacy measures the adversary's ability to perform a \emph{specific} inference task. It is also substantially weaker than the ones studied in private information retrieval: the adversary may still obtain \emph{some} information on the value the learner is searching for. This relaxation of the privacy requirement allows the {learner} to deploy richer and more sample-efficient query strategies. In a different model, \cite{kuang} study the issue of privacy in a sequential decision problem, where an agent attempts to reach a particular node in a graph, traversing it in a way that obfuscates her intended destination against an adversary who observes her past trajectories. However, a major new element in our model is that the {learner} strives to \emph{learn} a piece of information of which she herself has no prior knowledge. The central conflict of trying to learn something while preventing others from learning the same information sets our work apart from the extant literature. }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Main Result}\label{sec:complex_results}
+The {learner}'s overall objective is to employ the minimum number of queries while satisfying the accuracy and privacy requirements. We state our main theorem in this section, which establishes lower and upper bounds for the query complexity of a private {learner} strategy, as a function of the adversary accuracy $\delta$, {learner} accuracy $\epsilon$, and {learner} privacy level, $L$. Recall that $\Phi_N$ is the set of {learner} strategies of length $N$. Define $N^*(\epsilon,\delta,L)$ to be the minimum number of queries needed across all $(\epsilon,\delta,L)$-private {learner} strategies, 
+\begin{equation}
+\label{eqn:definition of N2}
+N^*(\epsilon,\delta,L)=\min\big\{N\in\mathbb{N}: \text{$\Phi_N$ contains at least one $(\epsilon,\delta,L)$-private strategy}\big\}. 
+\end{equation}
+
+Our result will focus on the regime of parameters where 
+\begin{equation}
+0<2\epsilon<\delta\leq1/L. 
+\end{equation}
+Having $2\epsilon<\delta $ corresponds to a scenario where the {learner} would like to identify the true value with high accuracy, while the adversary is aiming for a coarse estimate.  Note that the regime where $\delta<\epsilon$ is arguably much less interesting, because  it is not natural to expect the adversary, who is not engaged in the querying process, to have a higher accuracy requirement than the {learner}. The requirement that $\delta\leq1/L$ stems 
+{from the 
+following argument. If $\delta\geq 1/(L-1)$, then 
+the entire interval $[0,1)$ is trivially $(\delta,L-1)$-coverable, and  $C_\delta\big(\calI(\overline{q})\big)
+\leq C_\delta\big([0,1)\big)\leq L-1 <L$. Thus, the privacy constraint is automatically  violated, and no private {learner} strategy exists. 
+To obtain a nontrivial problem, we therefore only need to consider the case where $\delta< 1/(L-1)$, which is only sightly broader than the regime $\delta\leq 1/L$ that we consider. 
+}
+%\jc{OLD/CHANGED from the observation that $\delta$ must be less than $1/(L-1)$, since otherwise the entire interval $[0,1)$ would be trivially $(\delta,L-1)$-coverable. In other words, no private {learner} strategy exists if $\delta\geq 1/(L-1)$. }
+The following theorem is the main result of this paper\footnote{All logarithms are taken with respect to base 2. To reduce clutter, non-integer numbers are to be understood as  rounded upwards.}.
+% For example, the lower bound should be understood as $\lceil\log(1/L\epsilon)\rceil+2L$, where $\lceil\cdot\rceil$ represents the ceiling function.
+% }.
+
+\begin{theorem}[Query Complexity of Private Sequential Learning]
+\label{thm:1}
+Fix $\epsilon>0$, $\delta>0$, and a positive integer $L\geq 2$, such that $2\epsilon< \delta\leq{1}/{L}$. Then,
+\begin{equation} 
+\max\Big\{\log\frac{1}{\epsilon},\:\log\frac{\delta}{\epsilon}+2L-4\Big\} \leq N^*(\epsilon,\delta,L)\leq \log\frac{1}{L\epsilon}+2L.
+\end{equation}
+\end{theorem} 
+
+The proof of  the upper bound in Theorem \ref{thm:1} is constructive, providing a specific {learner} strategy that satisfies the bound. 
+If we set $\delta={1}/{L}$, which corresponds to the worst case where the adversary's accuracy requirement is essentially as loose as possible, then Theorem \ref{thm:1} leads to the following  corollary. It yields upper and lower bounds that are tight up to an additive constant of $4$. In other words, the private {learner} strategy that we construct  achieves essentially the optimal query-complexity in this scenario. 
+
+\begin{corollary} \label{cor:1}
+Fix $\epsilon>0$ and a positive integer $L\geq 2$ such that $2\epsilon< 1/L$. The following holds. 
+\begin{enumerate}
+	\item If $L=2$, we have
+	\begin{equation}
+\begin{split}
+\log\frac{1}{\epsilon} \leq N^*\Big(\epsilon,\frac{1}{L},L\Big)\leq \log\frac{1}{\epsilon}+4.
+\end{split}
+\end{equation}
+\item If $L\geq 3$, we have
+\begin{equation} \label{theorem_bound_L}
+\begin{split}
+\log\frac{1}{L\epsilon}+2L-4 \leq N^*\Big(\epsilon,\frac{1}{L},L\Big)\leq \log\frac{1}{L\epsilon}+2L.
+\end{split}
+\end{equation}
+\end{enumerate}
+\end{corollary} 
+A main take-away from the above results is about the price of privacy: it is not difficult to see that in the absence of a privacy constraint, the most efficient {strategy, using a bisection search,} can locate the true value with $\log({1}/{\epsilon})$ queries. Our results thus demonstrate that the {price of privacy is at most an \emph{additive} factor of $2L$.} 
+
+{The proof of Theorem \ref{thm:1} is given in \cite{tsitsiklis2018private}. For the upper bound, we construct a certain Opportunistic Bisection (OB) query strategy, where the learner augments a bisection search with $2L$ additional ``opportunistic'' queries in a randomized and symmetric manner, such the adversary cannot be certain whether the true value is discovered by the bisection search, or the opportunistic queries. For the lower bound, one may ask whether the additional $2L$ queries need to be \emph{distinct} from the $\log(1/\epsilon)$ queries used by the bisection search, {or essentially, whether} the query complexity could be further reduced by ``blending'' the queries for obfuscation with those for identifying the true value in a more effective manner. However, we show that  such ``blending'' is not possible. }
+
+
+
+\bibliographystyle{apalike}
+\bibliography{Private2017.bib}
+
+\end{document}

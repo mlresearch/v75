@@ -1,0 +1,835 @@
+
+\documentclass[final,12pt]{colt2018}
+% \documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+
+
+
+% Private macros here (check that there is no clash with the style)
+\usepackage{amsmath}
+\usepackage{xspace}
+
+\usepackage{dsfont}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{tabulary}
+
+\usepackage{diagbox}
+\usepackage{graphicx}
+%\usepackage{algpseudocode,algorithm,algorithmicx}
+%\usepackage[linesnumbered,ruled]{algorithm2e}
+
+\usepackage{thmtools}
+\usepackage{thm-restate}
+
+
+
+
+%%%%%%%%%%%% My definitions %%%%%%%%%%%%
+
+% Parenthethis
+\newcommand{\prn}[1]{\left( #1 \right)}
+\newcommand{\brc}[1]{\left\lbrace #1 \right\rbrace}
+\newcommand{\brk}[1]{\left\lbrack #1 \right\rbrack}
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\MyUndBrace}[2]{\underset{#2}{\underbrace{#1}}}
+
+% Functions
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\innProd}[2]{\langle #1,#2 \rangle}
+\newcommand{\ceil}[1]{\lceil #1 \rceil}
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+\newcommand{\indEvent}[1]{\mathds{1}{\brc{#1}}}
+\newcommand{\indFunc}[2][\infty]{\mathds{I}_{\brk{#2,#1}}}
+\newcommand{\indFuncAt}[3][\infty]{\indFunc[#1]{#2}\prn{#3}}
+
+% Standard Math Notations
+\newcommand{\EE}[2][]{\mathbb{E}_{#1}{#2}}
+\newcommand{\EEBrk}[2][]{\mathbb{E}_{#1}\brk{#2}}
+\newcommand{\RR}[1][]{\mathds{R}^{#1}}
+\newcommand{\PP}[1]{\mathbb{P}\prn{#1}}
+
+% Math operators
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% Definitions
+\DeclarePairedDelimiterX\setDef[1]\lbrace\rbrace{\def\given{\;\delimsize\vert\;}#1}
+\newcommand{\seqDef}[3]{\brc{#1}_{#2}^{#3}}
+
+% General
+\def\noi{\noindent}
+
+
+
+%%%%%%%%%%%%%%%% Macros %%%%%%%%%%%%%%%%
+\newcommand{\simple}{simple}
+\newcommand{\Simple}{Simple}
+\newcommand{\simpleRand}{simple stochastic}
+\newcommand{\SimpleRand}{Simple stochastic}
+\newcommand{\simpleDet}{deterministic simple}
+\newcommand{\SimpleDet}{Deterministic simple}
+
+
+\newcommand{\CVAR}[1][\alpha]{CVaR_{#1}}
+\newcommand{\VAR}[1][\alpha]{VaR_{#1}}
+\newcommand{\EDRMabbrv}{EDPM}
+\newcommand{\UUCB}{\RHat-UCB}
+
+
+\newcommand{\XtPi}[1][t]{X_{#1}^{\policy}}
+\newcommand{\Xti}[2][i]{X_{#2}^{(#1)}}
+
+
+\newcommand{\policiesSet}{\Pi}
+\newcommand{\statPoliciesSet}{\Pi^s}
+\newcommand{\policy}[1][]{\pi^{#1}}
+\newcommand{\policyAt}[2][]{\policy[#1]_{#2}}
+\newcommand{\statPolicy}[1][p]{\pi^{#1}}
+\newcommand{\statPolicyAt}[2][p]{\statPolicy[#1]_{#2}}
+\newcommand{\optPolicyAt}[1]{\policyAt[*]{#1}\prn{\infty}}
+\newcommand{\optPolicy}{\policy[*]\prn{\infty}}
+\newcommand{\optPolicyTAt}[1]{\policyAt[*]{#1}\prn{T}}
+\newcommand{\optPolicyT}{\policy[*]\prn{T}}
+
+\newcommand{\Rbase}[1][]{\tilde{U}^{#1}}
+\newcommand{\Rt}[1][]{\Rbase[#1]_{t}}
+\newcommand{\RtFunc}[2][]{\Rt[#1]\prn{#2}}
+\newcommand{\RPi}[1][\policy]{{U}_{#1}}
+\newcommand{\RPiNamed}[2][\policy]{\RPi[{#1}]^{#2}}
+\newcommand{\RHat}[1][]{{U}^{#1}}
+\newcommand{\RHatFunc}[2][]{\RHat[{#1}] \prn{#2}}
+\newcommand{\DRHat}[1][]{D \RHat[{#1}]}
+\newcommand{\DRHatAt}[2][]{\DRHat[{#1}] \prn{#2}}
+\newcommand{\DRHatAtOn}[3][]{\DRHatAt[{#1}]{#2} \cdot {#3}}
+\newcommand{\DRbound}{d_1}
+\newcommand{\DDRHat}[1][]{D^2 \RHat[{#1}]}
+\newcommand{\DDRHatAt}[2][]{\DDRHat[{#1}] \prn{#2}}
+\newcommand{\DDRHatAtOn}[3][]{\DDRHatAt[{#1}]{#2} \cdot {#3}^2}
+\newcommand{\DDRbound}{d_2}
+\newcommand{\FHatt}[1][t]{\hat{F}_{#1}}
+\newcommand{\FHattFunc}[2][t]{\hat{F}_{#1} \prn{#2}}
+\newcommand{\FHatPi}[2][\policy]{\hat{F}_{#2}^{#1}}
+\newcommand{\FProxPi}[2][\policy]{{F}_{#2}^{#1}}
+\newcommand{\Fp}[1][p]{F_{#1}}
+\newcommand{\FpOpt}{F_{p^*}}
+\newcommand{\Fi}[1][i]{F^{\prn{{#1}}}}
+\newcommand{\FiOpt}{F^{(i^*)}}
+
+
+\newcommand{\simplex}{\Delta_{K-1}}
+\newcommand{\LInf}{L_{\infty}}
+\newcommand{\baseFuncSpace}{\LInf}
+\newcommand{\funcSpace}{L_{\norm{\cdot}}}
+\newcommand{\DistSet}{\mathcal{D}}
+\newcommand{\DistSetDelta}{\DistSet^{\Delta}}
+\newcommand{\EmpDistSet}{\hat{\DistSet}}
+\newcommand{\EmpDistSetT}{\hat{\DistSet}_t}
+\newcommand{\EmpDistBallM}[2][M]{\hat{\mathds{B}}_{#1}\prn{#2}}
+%\newcommand{\DistBallM}[2][M]{\mathds{B}_{#1}\prn{#2}}
+\newcommand{\aDeltaM}[1][M]{B^{\Delta}_{#1}}
+\newcommand{\Filtration}{\mathcal{H}}
+\newcommand{\FiltrationAt}[1]{\Filtration_{#1}}
+\newcommand{\actionSet}{\mathds{K}}
+
+
+\newcommand{\piAt}[2][i]{\hat{p}_{#1}\prn{#2}}
+\newcommand{\piT}[1][i]{\piAt[#1]{T}}
+
+
+\newcommand{\tauIAt}[2][i]{\tau_{#1} \prn{#2}}
+\newcommand{\tauI}[1][i]{\tauIAt[#1]{T}}
+\newcommand{\tauIPrev}[1][i]{\tauIAt[#1]{T-1}}
+\newcommand{\regret}[1][\policy]{R_{#1}\prn{T}}
+\newcommand{\pseudoRegret}[1][\policy]{\bar{R}_{#1}\prn{T}}
+\newcommand{\horzGap}[1][\policy]{\mathcal{E}_{h}^{#1} \prn{T}}
+\newcommand{\horzGapVar}{v}
+\newcommand{\horzGapPartialBound}[3][\policy]{E_{#2}^{#1} \prn{#3}}
+\newcommand{\taylorResidual}{\mathcal{E}_{1}}
+\newcommand{\taylorResidualFunc}[2][\linApprox]{\mathcal{E}_{#1}\prn{#2}}
+
+
+\newcommand{\contMod}{\omega}
+\newcommand{\contModFunc}[1]{\contMod \prn{#1}}
+\newcommand{\polyContModCoeff}{b}
+\newcommand{\polyContModDeg}{q}
+\newcommand{\lipConst}{L}
+\newcommand{\concentrationConst}{a}
+\newcommand{\levelSet}[2][\alpha]{L_{#1}\prn{#2}}
+
+\newcommand{\phiFunc}{\phi}
+\newcommand{\phiFuncAt}[1]{\phiFunc\prn{#1}}
+\newcommand{\phiInvFunc}{\phi^{-1}}
+\newcommand{\phiInvFuncAt}[1]{\phiInvFunc\prn{#1}}
+\newcommand{\Di}{\Delta_i}
+
+\newcommand{\linApprox}{A}
+\newcommand{\linApproxAt}[1]{A\prn{#1}}
+\newcommand{\linApproxAtOn}[2]{\linApproxAt{#1} \cdot {#2}}
+\newcommand{\linFunctionals}{L\prn{\funcSpace,\RR}}
+
+\newcommand{\varExchange}{B}
+\newcommand{\varExchangeAt}[1]{\varExchange \prn{#1}}
+\newcommand{\varExchangeL}[1][l]{\varExchange_{#1}}
+\newcommand{\varExchangeLat}[2][l]{\varExchange_{#1}\prn{#2}}
+
+\newcommand{\varBa}{b_{\alpha}}
+\newcommand{\varMa}{M_{\alpha}}
+
+\newcommand{\ucbEvent}[2]{V_{#1}^{#2}}
+\newcommand{\ucbEventInv}[2]{\overline{V_{#1}^{#2}}}
+% End of DEFINITIONS%
+
+
+
+
+
+
+
+\title[Risk Criteria in Multi-Armed Bandits]{A General Approach to Multi-Armed Bandits Under Risk Criteria}
+\usepackage{times}
+% Use \Name{Author Name} to specify the name.
+% If the surname contains spaces, enclose the surname
+% in braces, e.g. \Name{John {Smith Jones}} similarly
+% if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+% If the first letter in the forenames is a diacritic
+% enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+% Two authors with the same address
+% \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+%  \Name{Author Name2} \Email{xyz@sample.com}\\
+%  \addr Address}
+
+% Three or more authors with the same address:
+% \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+%  \Name{Author Name2} \Email{an2@sample.com}\\
+%  \Name{Author Name3} \Email{an3@sample.com}\\
+%  \addr Address}
+
+
+% Authors with different addresses:
+\coltauthor{\Name{Asaf Cassel} \Email{sasafca@campus.technion.ac.il}\\
+	\addr Faculty of Electrical Engineering, Technion, Israel Institute of Technology.
+	\AND
+	\Name{Shie Mannor} \Email{shie@ee.technion.ac.il}\\
+	\addr Faculty of Electrical Engineering, Technion, Israel Institute of Technology.
+	\AND
+	\Name{Assaf  Zeevi} \Email{assaf@gsb.columbia.edu}\\
+	\addr Graduate School of Business, Columbia University 
+}
+
+
+
+%%%%%%%%%%%%%%%%
+\begin{document}
+	%%%%%%%%%%%%%%%%
+	
+	\maketitle
+	
+	\begin{abstract}
+		Different risk-related criteria have received recent interest in learning problems, where typically each case is  treated in a customized manner. In this paper we provide a more systematic approach to analyzing  such risk criteria within a stochastic multi-armed bandit (MAB) formulation. We identify a set of general conditions that yield a simple characterization of the oracle rule (which serves as the regret benchmark), and facilitate the design of upper confidence bound (UCB) learning policies. The conditions are derived from problem primitives, primarily focusing on the relation between the arm reward distributions and the (risk criteria) performance metric. Among other things, the work highlights some (possibly non-intuitive) subtleties that differentiate various criteria in conjunction with statistical properties of the arms. Our main findings are illustrated on several widely used objectives such as conditional value-at-risk, mean-variance, Sharpe-ratio, and more.
+	\end{abstract}
+	
+	
+	
+	% Sample
+	%\KEYWORDS{deterministic inventory theory; infinite linear programming duality;
+	%  existence of optimal policies; semi-Markov decision process; cyclic schedule}
+	
+	% Fill in data. If unknown, outcomment the field
+	\begin{keywords}
+		Multi-Armed Bandit, risk, planning, reinforcement learning, Upper Confidence Bound
+	\end{keywords}
+	
+	\footnotetext[1]{Extended abstract. Full version appears as [arXiv reference, 1806.01380]}
+	\section{Introduction} \label{sec:intro}
+	
+	\textbf{Background and motivation.} Consider a sequential decision making problem where at each stage  one of  $K$ independent alternatives is to be selected. When choosing alternative $i$ at stage $t$ (also referred to as time $t$), the decision maker receives a reward $X_t$ that is distributed according to some \emph{unknown} distribution $\Fi$, $i=1,\ldots,K$ and is independent of $t$. (To ease notation, we avoid indexing $X_t$ with $i$, and leave that implicit; the information will be encoded in the policy that governs said choices, which will be detailed in what follows.) At time $t$, the decision maker has accumulated a vector of rewards $(X_1,\ldots,X_t)$. In our setting, performance criteria are defined by a function $\Rbase$ that maps the reward vector to a real-valued number. As $\Rbase(X_1,\ldots,X_t)$ is a random quantity, we consider the accepted notion of expected performance, i.e., $\EE{\Rbase(X_1,\ldots,X_t)}$.  An oracle, with full knowledge of the arms' distributions, will make a sequence of selections based on this information so as to maximize the expected performance criterion. This serves as a benchmark for any other policy which does not have such information a priori, and hence needs to learn it on the fly. The gap between the former (performance of the oracle) and the latter represents the usual notion of regret in the learning problem.   
+	
+	The most widely used performance criterion in the literature concerns the long run average reward, which involves the empirical mean, $\Rbase[ave](X_1, \ldots, X_t) = \frac{1}{t}\sum_{s=1}^{t}X_s$. In this case, the oracle rule, that maximizes the expected value of the above, just samples from the distribution with the highest mean value, namely, it selects $i^* \in \argmax \{\int x d\Fi(x)\}$. Learning algorithms for such problems date back to Robbins' paper \cite{robbins1952some} and were extensively studied subsequent to that. In particular, the seminal work of \cite{lai1985asymptotically} establishes that the regret in this problem cannot be made smaller than $\mathcal{O}(\log T)$ and there exist learning algorithms that achieve this regret by maximizing a confidence bound modification of the empirical mean (since then, this class of policies has been come to known as UCB, or upper confidence bound policies); some strands of literature that have emerged from this include \cite{auer2002finite} (non-asymptotic analysis of  UCB-policies), \cite{maillard2011finite} (empirical confidence bounds or KL-UCB), \cite{agrawal2012analysis} (Thompson sampling based algorithms), and various works which consider an adversarial formulation (see, e.g., \cite{auer1995gambling}).
+	
+	In  this paper we are interested in studying the above problem for more general {\it path dependent} criteria that are of interest beyond the average. Many of these objectives bear an interpretation as ``risk criteria'' insofar as they focus on a finer probabilistic nature of the primitive distributions than the mean, such as viewed through the lens of the observations collected from the arms,  and typically  relate to the spread or tail behavior. Examples include: the so-called \emph{Sharpe ratio}, which is the ratio between the mean and standard deviation; {\em  value-at-risk} ($\VAR$) which focuses on the $\alpha$ percentile of the distribution (with $\alpha$ small); or a close counterpart that integrates (averages) the values out in the tail beyond that point known as the {\em expected shortfall} (or conditional value at risk; $\CVAR$). The last  example is of further interest as it belongs to the class of \emph{coherent} risk measures which has various attractive properties from the risk theory perspective; a discussion thereof is beyond the scope of this paper. (cf.  \cite{artzner1999coherent} for further details.) In our problem setting, the above criteria are applied via the function $\Rbase$ to the empirical observations, and then the decision maker seeks, as before, to optimize the expected value. A typical example where such criteria may be of interest is that of medical trials. More specifically, suppose several new drugs are sequentially tested on individuals who share similar characteristics. If we consider average performance, we may conclude that the best choice is a drug with a non-negligible fatality rate but a high success rate. If we wish to control the fatality rate then using $\CVAR$ for example may be appropriate.
+	
+	While some of the above mentioned criteria have been examined in the decision making and learning literature (see  references and more precise discussion below), the analysis tends to be driven by very case-specific properties of the criterion in question. Unlike the standard mean criterion, various subtleties may arise. To see this, consider the $\CVAR$ example, which we will reference repeatedly to communicate salient features of our analysis. In terms of $\Rbase$, it is given by $\Rbase[\CVAR](X_1,\ldots, X_t) = \frac{1}{\ceil{t\alpha}} \sum_{s=1}^{\ceil{t\alpha}}X_s^*$, where $X_s^*$ is the $s^{th}$ order statistic of $(X_1,\ldots,X_t)$. Now, for horizon $t=2$ and $\alpha < 0.5$, an oracle will at first select the arm that maximizes the mean value, just as it would under the traditional mean-criterion. But in step 2 it would seek the arm that maximizes the expected value of the minimum of the first two observations, namely, $\EE{\min\brc{X_1,X_2}}$. It is easy to see that this results in a rule that need not select the same arm throughout the horizon of the problem. This presents a further obstacle in characterizing a learning policy that seeks to minimize regret by mimicking the oracle rule. However, as our analysis will flesh out, the oracle policy can be approximated asymptotically by a {\it \simple\space policy}, that is, one that does select a single arm throughout the horizon. This simplification can be leveraged to address the  {\it learning problem} which becomes much more tractable. It is therefore of interest to understand in what instances  does  this simplified structure exist. This is one of the main thrusts of the paper. 
+	
+	\textbf{Main contributions of this paper.}
+	In this paper we consider a general approach to the analysis of performance criteria of the type outlined above. We identify the aforementioned examples, as well as others, as part of a wider class that we term \emph{Empirical Distribution Performance Measures} (\EDRMabbrv). In particular, let $\hat{F}$ be the \emph{empirical distribution} of the vector $(X_1,\ldots,X_t)$, i.e., $\hat{F}(y)$ is the fraction of rewards less or equal to real valued $y$. An \EDRMabbrv\space evaluates performance by means of a function $\RHat$, which maps $\hat{F}$ to $\RR$, i.e., $\RHat(\hat{F}) = \Rbase(X_1,\ldots,X_t)$. Alternatively, $\RHat$ may also serve to evaluate the distributions of the random variables $X_s$ ($s=1,\ldots,t$). These evaluations may be aggregated to form a different type of performance criteria that we term proxy regret and consider as an intermediate learning goal. The construct $\RHat$ plays a central role in the framework we develop, and while it may seem somewhat vague at this stage, it will be illustrated shortly by revisiting the $\CVAR$ example. 
+	%We note that, \EDRMabbrv s are the sub-class of the general criteria $U$ that are invariant to permutations of the reward sequence.
+	
+	Our main results provide easy to verify explicit conditions which characterize the asymptotic behavior of the oracle rule, and culminate in a $UCB$-type learning algorithm with $\mathcal{O}(\log T)$ regret. To make matters more concrete, we summarize our results for $\CVAR$. First, its form as an \EDRMabbrv\space is essentially given by  $\RHatFunc[\CVAR]{{F}} \approx \frac{1}{\alpha} \int_{-\infty}^{F^{-1}(\alpha)}x dF(x)$ (see (\ref{eq:cvarDef}) for exact definition). Our framework will establish that for arm distributions with integrable lower tails, choosing a single arm (\simple\space policies) is asymptotically optimal. This, together with the above characterization of $\CVAR$ yield the desired simplification in identifying its oracle rule, and subsequently this is leveraged and incorporated in a $UCB$-type learning algorithm that emulates the oracle policy. More concretely, if $c_{i,t} \propto \sqrt{\frac{\log t}{\tauI}}$ is the typical $UCB$ upper confidence bound, then a $\CVAR$ version of $UCB$ requires $\max \{c_{i,t},c_{i,t}^2\}$ upper confidence bounds for $i=1,\ldots,K$ and all $t$, where the power of $2$ is a criterion dependent parameter. The implication for learning is that more exploration is required in the initial problem stages. Assuming sub-Gaussian arm distributions, the algorithm obtains $\mathcal{O}(\sqrt{T})$ regret, and under a further mild assumption yields the familiar $\mathcal{O}(\log T)$ regret which, in the traditional MAB objective, corresponds to the case where the means of the arms are ``well separated.'' Our framework allows for this analysis, and the results just mentioned for $\CVAR$, to be easily derived for any admissible \EDRMabbrv.
+	
+	\textbf{Previous works on bandits that concern path-dependent and risk criteria}.
+	To the best of our knowledge, the only works that consider path dependent criteria of the form presented here are \cite{sani2012risk}, which consider the mean-variance criterion and present the MV-UCB, and MV-DSEE algorithms, and \cite{vakili2016risk}, which complete the regret analysis of said algorithms. Other works consider criteria which are more in line with our intermediate learning goal (proxy regret), and lead to a different notion of regret. \cite{galichet2013exploration} present the MaRaB algorithm which uses $\CVAR$ in its implementation, however, they analyze the average reward performance, and do so under the assumptions that $\alpha = 0$, and the $\CVAR$ and average optimal arms coincide. \cite{maillard2013robust} presents and analyzes the RA-UCB algorithm which considers the measure of \textit{entropic risk} with a parameter $\lambda$. \cite{zimin2014generalized} consider criteria based on the mean and variance of distributions, and present and analyze the $\varphi-LCB$ algorithm. We note that these criteria correspond to a much narrower class of problems than the ones considered here.
+	
+	
+%The emphasis in these works is on learning the best arm under some particular risk criterion for either pure exploration or for minimizing some notion of regret. {\tt [ I'm not sure what you want to say here... those are pretty much the only measures we typically use in bandit problems....also, please expand a bit more on the relevant work and what are the main results insofar as oracle and learning algorithms and in explain in what way does our work differ]}  
+	
+%	Or, more interestingly, one can look at the minimal partial sum (i.e., $R^{DD}(x_1,\ldots,x_n) = \min_{i\le n}\min_{j<i} \sum_{\ell=j}^i x_i$), also known as the {\em max drawdown}. 
+%	There are many other risk measures that have been used in economics, finance, and related fields. We consider some of them below.
+%	
+%	%Risk is natural
+%	One approach to solving this problem is to formulate the decision problem as a Markov decision process (MDP). 
+%	The state space in an MDP problem should be augmented (e.g, \cite{bertsekas1995dynamic}) to include auxiliary variables that keep track of additional statistics such as the cumulative past reward, the maximal cumulative reward, etc. Some risk criteria are amenable to such an approach, however, the resulting problem is often intractable (e.g., \cite{mannor2011mean}).
+%	Another approach is to try searching for index policies (\cite{gittins1979bandit,whittle1988restless}) that would indicate which alternative to choose (perhaps conditioned on a certain state variable). We are not aware of index policies that work for a risk measure other than the average reward.
+	
+	\textbf{Paper structure}.
+	For brevity, all proofs are deferred to the full version of the paper. In Section \ref{sec:formulation} we formulate the problem setting, oracle, and regret. In Section \ref{sec:infHorizonOracle} characterize the asymptotic behavior of the oracle rule. In Sections \ref{sec:proxyRegret} we provide the flavor main results deferring rigorous statements to the full version of the paper, and in Section \ref{sec:examples} we demonstrate them on well-known risk criteria.
+	
+%Where it is instructive, we provide a sketch or some form of intuition in the front matter in lieu of a full proof.
+%The former, presents an  and analyzes $\UUCB$ which is a $UCB$ adaptation that optimizes a \emph{proxy} of the regret. The latter closes the gap by providing conditions under which the \emph{proxy} regret and regret are close.
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	\section{Problem Formulation} \label{sec:formulation}
+	\paragraph{Model and admissible policies.} Consider a standard MAB with $\actionSet = \brc{1, \ldots, K}$, the set of arms. Arm $i \in \actionSet$ is associated with a sequence $\Xti{t}$ ($t \ge 1$) of $i.i.d$ random variables with distribution $\Fi \in \DistSet$, the set of all distributions on the real line. When pulling arm $i$ for the $t^{th}$ time, the decision maker receives reward $\Xti{t}$, which is independent of the remaining arms, i.e., the variables $\Xti{t}$ (for all $i \in \actionSet, t \ge 1$) are mutually independent. 
+	
+	We define the set of \textit{admissible} policies (strategies) of the decision maker in the following way. Let $\tauIAt{t}$ be the number of times arm $i$ was pulled up to time $t$. Let $V$ be a random variable over a probability space $\prn{\mathbb{V}, \mathcal{V}, P_v}$ which is independent of the rewards. An \textit{admissible} policy $\policy = \prn{\policyAt{1}, \policyAt{2}, \ldots}$ is a random process recursively defined by
+	\begin{align}
+	&\policyAt{t} := \policyAt{t} \prn{V, \policyAt{1}, \ldots, \policyAt{t-1}, \XtPi[1], \ldots, \XtPi[t-1]} \\
+	&\tauIAt{t} = \sum_{s=1}^{t} \indEvent{\policyAt{s} = i} \label{eq:tauIDef}\\
+	&\XtPi := \Xti[i]{\tauIAt{t}} \text{, given the event } \brc{\policyAt{t} = i}.
+	\end{align}
+	We denote the set of \textit{admissible} policies by $\policiesSet$, and note that \textit{admissible} policies $\policy$ are non anticipating, i.e.,  depend only on the past history of actions and observations, and allow for randomized strategies via their dependence on $V$. Formally, let $\seqDef{\FiltrationAt{t}}{t=0}{\infty}$ be the filtration defined by $\FiltrationAt{t} = \sigma \prn{V, \policyAt{1},  \XtPi[1], \ldots, \policyAt{t}, \XtPi[t]}$, then  $\policyAt{t}$ is $\FiltrationAt{t-1}$ measurable.
+	
+	
+	
+	
+	\paragraph{Empirical Distribution Performance Measures (\EDRMabbrv).} The classical bandit optimization criterion centers on the \textit{empirical mean} i.e. $\frac{1}{t}\sum_{s=1}^{t}\XtPi[s]$. We generalize this by considering criteria that are based on the \textit{empirical distribution}. Formally, the \textit{empirical distribution} of a real number sequence $x_1, \ldots, x_t$ is obtained through the mapping ${\FHatt : \RR[t] \rightarrow \DistSet}$, given by,
+	\begin{equation} \label{eq:empDistMap}
+	\FHattFunc{x_1,\ldots,x_t ; \cdot} = \frac{1}{t}\sum_{s=1}^{t}\indFunc{x_s} (\cdot),
+	\end{equation}
+	where $\indFunc[b]{a}(\cdot)$ is the indicator function of the interval $\brk{a,b}$ defined on the extended real line, i.e.
+	\begin{equation*}
+	\indFuncAt[b]{a}{y} = \begin{cases}
+	1 \qquad, y \in [a,b] \\
+	0 \qquad, y \notin [a,b].
+	\end{cases}
+	\end{equation*}
+	Of particular interest to this work are the empirical distributions of the reward sequence under policy $\policy$, and of arm $i$. We denote these respectively by,
+	\begin{align}
+	&\FHatPi{t}(\cdot) ~:= \FHattFunc{\XtPi[1], \ldots, \XtPi[t]; \cdot}  \label{eq:FhatPiAbbrv}\\
+	&\FHatPi[(i)]{t}(\cdot) := \FHattFunc{\Xti{1}, \ldots, \Xti{t}; \cdot}.  \label{eq:FhatiAbbrv}
+	\end{align}
+	The decision maker possesses a function $\RHat : \DistSet \to \RR$, which measures the ``quality'' of a distribution. The resulting criterion is called \EDRMabbrv, and the decision maker aims to maximize $\EE{\RHatFunc{\FHatPi{T}}}$. In section \ref{sec:examples} we provide further examples (including the classic empirical mean), but for now, we continue to consider the $\CVAR$ (\cite{rockafellar2000optimization}) as our canonical example. This criterion measures the average reward below percentile level $\alpha \in \prn{0,1}$, and for distribution $F$ is given by
+	\begin{equation} \label{eq:cvarDef}
+	\RHatFunc[\CVAR]{F} = \RHatFunc[\VAR]{F} - \frac{1}{\alpha} \int_{-\infty}^{\RHatFunc[\VAR]{F}} F(y) dy,
+	\end{equation}
+	where $\RHatFunc[\VAR]{F} = \inf_{y \in \RR}\brc{y ~\big|~ F(y) \ge \alpha}$, is the reward at percentile level $\alpha \in \prn{0,1}$, which is also known as Value at Risk.
+	For further motivation regarding \EDRMabbrv s and their relation to permutation invariant criteria we refer the reader to the full version of the paper.
+	
+	When defining an objective, it was sufficient to consider $\RHat$ as a mapping from $\DistSet$ (a \textit{set}) to $\RR$. Moving forward, our analysis relies on properties such as continuity and differentiability, which require that we consider $\RHat$ as a mapping between Banach spaces. To that end $\DistSet$ is a subset of an infinite dimensional vector space for which norm equivalence does not hold. This hints at the importance of using the ``correct'' norm for each $\RHat$. As a result, our analysis is done with respect to a general norm $\norm{\cdot}$ and its matching Banach space $\funcSpace$, which will always be a subspace of $\baseFuncSpace$, the space of all bounded functions $f : \RR \to \RR$, (i.e., $\sup_{x \in \RR}\abs{f(x)}< \infty$). We therefore consider \EDRMabbrv s as mappings $\RHat : \funcSpace \to \RR$.
+	
+	
+	
+	
+	\paragraph{Oracle and regret.} For given horizon $T$, the oracle policy $\optPolicyT = (\optPolicyTAt{1}, \optPolicyTAt{2}, \ldots)$ is one that achieves optimal performance given full knowledge of the arm distributions $\Fi$ ($i \in \actionSet$). Formally, it satisfies
+	\begin{equation} \label{eq:oracleDef}
+	\optPolicyT \in \argmax_{\policy \in \policiesSet} \EEBrk{\RHatFunc{\FHatPi{T}}}.
+	\end{equation}
+	Similarly to the classic bandit setting, we define a notion of regret that compares the performance of policy $\policy$ to that of $\optPolicyT$. The expected regret of policy $\policy \in \policiesSet$ at time $T$ is given by,
+	\begin{equation} \label{eq:regretDef}
+	\regret := \EEBrk{\RHatFunc{\FHatPi[\optPolicyT]{T}} - \RHatFunc{\FHatPi{T}}},
+	\end{equation}
+	where we note that this definition is normalized with respect to the horizon $T$, thus transforming familiar regret bounds such as $\mathcal{O}(\log T)$ into $\mathcal{O}(\frac{\log T}{T})$.
+	The goal of this work is to provide a generic analysis of this regret, similar to that of the classic bandit setting. However, unlike the latter, the oracle policy $\optPolicyT$ here need not choose a single arm. Since the typical learning algorithms are structured to emulate the oracle rule, we need to first understand the structure of the oracle policy before we can analyze $\regret$.
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	\section{The Infinite Horizon Oracle}
+	\label{sec:infHorizonOracle}
+	\paragraph{Infinite horizon oracle.} The oracle problem in (\ref{eq:oracleDef}) does not admit a tractable solution, in the absence of further structural assumptions. In this section we consider a \textit{relaxation} of the oracle problem which examines asymptotic behavior. We provide conditions under which this behavior is ``simple'' thus suggesting it as a proxy for the finite time performance. More concretely, let $\RPi = \liminf_{t \to \infty} \RHatFunc{\FHatPi{t}}$ be the \textit{worst case} asymptotic performance of policy $\policy$, then the infinite horizon oracle $\optPolicy = (\optPolicyAt{1}, \optPolicyAt{2}, \ldots)$ satisfies
+	\begin{equation} \label{eq:infOracleDef}
+		\optPolicy \in \argmax_{\policy \in \policiesSet} \EEBrk{\RPi}.
+	\end{equation}
+	Note that $\RPi$ is well defined as the limit inferior of a sequence of random variables, however we require that its expectation exist for (\ref{eq:infOracleDef}) to be well defined. 
+	
+	\paragraph{\Simple\space policies.} In the traditional Multi-Armed Bandit problem, the oracle policy, which selects a single arm throughout the horizon, is clearly \simple. In this work, we consider ``\simple" to mean stationary policies whose actions are mutually independent and independent of the observed rewards. Such policies may differ from the single arm policy in that they allow for a specific type of randomization. The following defines this notion formally. 
+	\begin{definition}[\Simple\space policy]
+		A policy $\policy \in \policiesSet$ is \simple\space if $\prn{\policyAt{1}, \policyAt{2},\ldots}$ are $\sigma\prn{V}$ measurable $i.i.d$ random variables. Such policies satisfy
+		\begin{equation*}
+		\PP{\policyAt{t} = i}
+		= \PP{\policyAt{1} = i}
+		, \quad \forall t \ge 1,i \in \actionSet.
+		\end{equation*}
+		A \simpleDet\space policy further satisfies that $\PP{\policyAt{1} = i} =1$ for some $i \in \actionSet$.
+	\end{definition}
+	Denote the set of all \simple\space policies by $\statPoliciesSet \subset \policiesSet$, and the $K-1$ dimensional simplex by,
+	\begin{equation*}
+	\simplex = \setDef[\bigg]{p = \prn{p_1, \ldots, p_K} \in \RR[K] \given 		\sum_{i=1}^{K}p_i = 1 ,~ p_i \ge 0 ~ \forall i \in \actionSet}.
+	\end{equation*}
+	Note that there is a one to one correspondence between $\statPoliciesSet$ and $\simplex$, we thus associate each $p \in \simplex$ with the \simple\space policy $\statPolicy$ defined by,	$\PP{\statPolicyAt{1} = i} = p_i,$ for $i = 1,\ldots,K$.
+	
+	\paragraph{Stability.} It may seem intuitive that \EDRMabbrv s always admit a \simple\space infinite horizon oracle policy. In the full version of the paper we provide counter examples to this claim, however, these are fabricated edge cases that exploit certain forms of discontinuity that are still allowed by this objective. The following condition is sufficient for capturing the ``good behavior'' exhibited by typical \EDRMabbrv s. We denote the convex combinations of the arms' reward distributions by
+	\begin{equation} \label{eq:distSetDeltaDef}
+		\DistSetDelta = \setDef[\bigg]{\Fp = \sum_{i=1}^{K}{p_{i} \Fi} \given p \in \simplex},
+	\end{equation}
+	and use this in the following definition.
+	
+	\begin{definition}[Stable \EDRMabbrv] \label{definition:StableEDRM}
+		We say that $\RHat : \funcSpace \to \RR$ is a stable \EDRMabbrv\space if:
+		\begin{enumerate}
+			\item \label{item:StableEDRMCond1} $\RHat$ is continuous on $\DistSetDelta$;
+			\item \label{item:StableEDRMCond2} $\lim_{t \to \infty} \norm{\FHatPi[(i)]{t} - \Fi} = 0$~~almost surely $\mbox{for all }  i \in \actionSet$.
+		\end{enumerate}
+	\end{definition}
+	Note that stability depends not only on $\RHat$ but also on the given distributions $\Fi$. Meaning, a given $\RHat$ could possibly be stable for some distributions and not stable for others. Moreover, the choice of a norm is important in order to get sharp conditions on the viable reward distributions. For example, consider the supremum norm given by $\norm{f}_\infty = \sup_{x \in \RR}\abs{f(x)}$. By the Glivenko-Cantelli theorem (\cite{van2000asymptotic}), it satisfies requirement \ref{item:StableEDRMCond2} for any given distributions $\Fi$, $i \in \actionSet$. However, in most cases, requirement \ref{item:StableEDRMCond1} holds only if the distributions have bounded support.
+	\begin{remark}
+		Stability has the advantage of being relatively easy to verify. This is due in part to the fact that \textit{continuity} is preserved by composition. This facilitates the analysis and creation of complicated rewards by representing them as a composition of simpler ones.	
+	\end{remark}	
+	\begin{restatable}[Stable \EDRMabbrv\space admits a \simple\space oracle policy]{theorem}{theoremStableEDRMoptPolicy} \label{theorem:StableEDRMoptPolicy}
+		A stable \EDRMabbrv\space has a \simple\space infinite horizon oracle policy $\optPolicy$. Further assuming that $\RHat$ is quasiconvex, a \simpleDet\space $\optPolicy$ exists, i.e., choosing a single arm throughout the horizon is asymptotically optimal.
+	\end{restatable}
+	\noi The main proof idea of Theorem \ref{theorem:StableEDRMoptPolicy} is as follows. We use requirement \ref{item:StableEDRMCond2} of stability to show that with probability one and regardless of policy, any subsequence of the empirical distribution has a further subsequence that converges to an element of $\DistSetDelta$. Applying the continuity of $\RHat$, we conclude that asymptotic empirical performance is (\textit{almost surely}) equivalent to that of elements in $\DistSetDelta$. However, similar claims show that such performance can also be achieved by a \simple\space policy. \endproof
+
+	
+	
+	\paragraph{Example ($\mathbf{\CVAR}$).} We summarize how the presented framework applies to $\CVAR$. First and foremost, we need to define the ``correct" norm. We notice that $\CVAR$, as defined in (\ref{eq:cvarDef}), integrates only the lower tail of the distribution. This leads us to define the following norm
+	\begin{equation} \label{eq:inftyMuNormDef}
+		\norm{F} = \max \brc{\norm{F}_\infty, \abs{\int_{-\infty}^0 x dF}}.
+	\end{equation}
+	Verifying requirement \ref{item:StableEDRMCond1} (continuity) of stability is a simple technical task. As for requirement \ref{item:StableEDRMCond2}, using the Glivenko-Cantelli theorem (\cite{van2000asymptotic}), and the Strong Law of Large Numbers (\cite{Simonnet1996}), it holds when $\abs{\int_{-\infty}^{0}x d\Fi} < \infty$ ($\forall i \in \actionSet$). Further noticing that $\RHat$ is convex over $\DistSet$, we may use Theorem \ref{theorem:StableEDRMoptPolicy} to conclude that the single arm solution is asymptotically optimal.
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	\section{Proxy Regret and Regret}
+	\label{sec:proxyRegret}
+	\paragraph{Preliminaries.} Having gained some understanding of the infinite horizon oracle, we consider an intermediate learning goal that uses the infinite horizon performance as a benchmark. We refer to this goal as the \textit{proxy regret} and dedicate this section to the design and analysis of a learning algorithm that seeks to minimize it. Formally, let
+	\begin{equation}\label{eq:FProxDef}
+	\FProxPi{T} = \frac{1}{T}\sum_{t=1}^{T} \Fi[\policyAt{t}] = \frac{1}{T}\sum_{i=1}^{K} \tauI \Fi,
+	\end{equation}
+	be the proxy distribution, where we recall that $\Fi$ is the distribution associated with arm $i \in \actionSet$. The proxy regret is then defined as,
+	\begin{equation} \label{eq:proxyRegretDef}
+	\pseudoRegret := \EEBrk{\RHatFunc{\FpOpt} - \RHatFunc{\FProxPi{T}}},
+	\end{equation}
+	where $\Fp$ is defined in (\ref{eq:distSetDeltaDef}), and $p^* \in \argmax_{p \in \simplex} \RHatFunc{\Fp}$.
+	
+	Section \ref{sec:infHorizonOracle} presented stability as a means of understanding the asymptotic behavior of performance. As we now seek a finite time analysis (of the proxy regret), it stands to reason to employ a stronger notion of stability which quantifies the rate of convergence. For that purpose, denote the set of \textit{empirical distributions} created from sequences of any length $t \ge 1$ by
+	\begin{equation*}
+		\EmpDistSet = \setDef[\big]{\FHattFunc{x_1,\ldots,x_t; \cdot} \given x_1,\ldots,x_t \in \RR, \text{for all } t \ge 1}.
+	\end{equation*}
+	\begin{definition}[Strongly stable \EDRMabbrv] \label{definition:StrongEDRM}
+		We say that $\RHat: \funcSpace \to \RR$ is a strongly stable \EDRMabbrv\space if:
+		\begin{enumerate}
+			\item \label{item:StrongEDRMCond1}
+			There exist $\polyContModCoeff > 0, \polyContModDeg \ge 1$ such that the restriction of $\RHat$ to $\DistSetDelta \cup \EmpDistSet$ admits $\contModFunc{x} = \polyContModCoeff\prn{x + x^\polyContModDeg}$ as a local modulus of continuity for all $F \in \DistSetDelta$, i.e.,
+			\begin{equation*}
+			\abs{\RHatFunc{F} - \RHatFunc{G}} \le \contModFunc{\norm{F-G}}, \qquad \forall F \in \DistSetDelta, G \in \DistSetDelta \cup \EmpDistSet.
+			\end{equation*}
+			\item \label{item:StrongEDRMCond2}
+			There exists a constant $\concentrationConst > 0$ (which depends only on $\Fi$), such that for all $i \in \actionSet$,
+			\begin{equation*}
+			\PP{\norm{\FHatPi[(i)]{t} - \Fi} \ge x} \le 2 \exp \prn{- \concentrationConst t x^2}, \qquad \forall x>0 ,t \ge 1.
+			\end{equation*}
+		\end{enumerate}
+	\end{definition}
+	One can easily verify that a strongly stable \EDRMabbrv\space is indeed a stable \EDRMabbrv. The first requirement quantifies the continuity of $\RHat$, and the second gives a rate of concentration for $\norm{\FHatPi[(i)]{t} - \Fi}$, thus refining Definition \ref{definition:StableEDRM}.
+	
+	
+	
+	
+	
+	\paragraph{Proxy regret decomposition.} In the traditional bandit setting, which considers the average reward, the analysis of the regret is well understood. The same analysis extends to any linear \EDRMabbrv, i.e., when $\RHat$ is linear. This follows straightforwardly as such rewards can be formulated as the usual average criterion with augmented arm distributions. Linearity facilitates the regret analysis by providing a decomposition of contributions from each sub-optimal arm. Let
+	\begin{equation*}
+	\Di = \RHatFunc{\FpOpt} - \RHatFunc{\Fi},
+	\end{equation*}
+	be the performance gap for arm $i \in \actionSet$. Defining $i^* \in \argmax \RHatFunc{\Fi}$, we have that the regret of a linear \EDRMabbrv\space is given by, $\regret = \frac{1}{T}\sum_{i \neq i^*}\EEBrk{\tauI} \Di$.
+	Departing from the pleasant realm of linearity, we seek a similar decomposition of the proxy regret. Indeed, provided that $\RHat$ is quasiconvex and strongly stable, we have that		\begin{equation}\label{eq:proxyRegretDecomp}
+		\pseudoRegret \le \frac{\lipConst}{T} \sum_{i \neq i^*} \EEBrk{\tauI} \norm{\FiOpt - \Fi},
+	\end{equation}
+	where $\lipConst$ is a problem dependent parameter. The proof of this argument as well as an explicit expression for $\lipConst$ appear in the full version of the paper.
+	
+
+%	We believe that this line of inquiry could lead to interesting results if non-quasiconvex risk measures are found. As we have encountered no such risk measures, this is beyond the scope of this work.
+%	
+	
+	
+	
+	
+	
+	\paragraph{Learning algorithm.} We present $\UUCB$, a natural adaptation of $\prn{\alpha,\psi}-UCB$ (see \cite{bubeck2012regret}) to a strongly stable \EDRMabbrv. Let,
+	\begin{align*}
+	&\phiFuncAt{y}
+	= \min \brc{\concentrationConst \prn{\frac{y}{2 \polyContModCoeff}}^2, \concentrationConst \prn{\frac{y}{2 \polyContModCoeff}}^{2 / \polyContModDeg}} \\
+	&\phiInvFuncAt{x}
+	= \max \brc{2\polyContModCoeff \prn{\frac{x}{\concentrationConst}}^{1/2}, 2\polyContModCoeff \prn{\frac{x}{\concentrationConst}}^{\polyContModDeg / 2}},
+	\end{align*}
+	where $\concentrationConst, \polyContModCoeff, \polyContModDeg$ are the parameters of Definition \ref{definition:StrongEDRM}. The $\UUCB$ policy is given by,
+	\begin{equation}
+	\policyAt[\UUCB]{t} \in \argmax_{i \in \actionSet} \brk{\RHatFunc{\FHatPi[(i)]{\tauIAt{t-1}}} + \phiInvFuncAt{\frac{\alpha \log t}{\tauIAt{t-1}}}}, \quad t \ge K+1,
+	\end{equation}
+	where for $1 \le t \le K$, it samples each arm once as initialization.
+	
+	\begin{restatable}[$\mathbf{\UUCB}$ Proxy Regret]{theorem}{theoremUUCB} \label{theorem:UUCB}
+		Suppose that $\Di > 0$ for all $i \neq i^*$, and $\RHat$ is a quasiconvex and strongly stable \EDRMabbrv. Then for $\alpha > 2$ and $\lipConst$ taken from (\ref{eq:proxyRegretDecomp}) we have that
+		\begin{equation*}
+		\pseudoRegret[{\UUCB}]
+		\le \frac{\lipConst}{T} \sum_{i \neq i^*} \prn{\frac{\alpha \log T}{\phiFuncAt{\Di / 2}} + \frac{\alpha + 6}{\alpha - 2}} \norm{\FiOpt - \Fi}.
+		\end{equation*}
+	\end{restatable}
+	
+	
+	
+	
+	
+	\paragraph{Example ($\mathbf{\CVAR}$).} Unlike stability, strong stability of $\CVAR$, requires control of both upper and lower tails of the distribution. This leads us to consider the norm 
+	\begin{equation*}
+		\norm{F} = \max\brc{\norm{F}_{\infty}, \abs{\int_{-\infty}^{0}x dF}, \abs{\int_{0}^{\infty} x dF}}.
+	\end{equation*}
+	Similarly to stability, verifying requirement \ref{item:StrongEDRMCond1} becomes mostly technical, and results with $\polyContModDeg = 2$, and a value of $\polyContModCoeff$ which depends on an upper bound of the $\CVAR$ and $\VAR$ values of the arm distributions. Requirement \ref{item:StrongEDRMCond2} then follows by Dvoretzky-Kiefer-Wolfowitz (\cite{massart1990tight}), and a sub-Gaussian assumption on the arm distributions ($\Fi$, $i \in \actionSet$). We conclude that, for sub-Gaussian arms, $\CVAR$ incurs $\mathcal{O}(\frac{\log T}{T})$ proxy regret.
+	
+	\paragraph{Discussion: from proxy regret to regret}
+	The proxy regret is a relatively easy metric to analyze but leaves open the question of its relationship to the regret. We refer to the difference between regret and proxy regret as ``the gap,'' and by analyzing it we obtain regret bounds. The framework developed thus far plays a major role in quantifying the gap. More specifically, we find that a strongly stable \EDRMabbrv\space has a gap of $\mathcal{O}(\frac{1}{\sqrt{T}})$ (up to logarithmic factors). As seen in Theorem \ref{theorem:UUCB} and its application to $\CVAR$, the proxy regret is of order  $\mathcal{O}(\frac{\log T}{T})$, and as such we obtain $\mathcal{O}(\frac{1}{\sqrt{T}})$ as the regret upper bound. Thus it is not clear whether this analysis is tight. For example, consider the classic bandit average reward which is essentially equivalent to a linear \EDRMabbrv, i.e., when $\RHat$ is linear. In this case the definitions of regret and proxy regret coincide and the gap is clearly zero.
+	
+	In light of the above, we pursue the needed structural assumptions for obtaining a smaller gap. The salient structural element here is  \emph{smoothness}, and it essentially requires that \EDRMabbrv\space $\RHat$ have a good (local) linear approximation. When satisfied this additional requirement provides a gap of $\mathcal{O}(\frac{\log T}{T})$, and as an immediate consequence, a similar regret bound. Finally, we note that \emph{smoothness} typically imposes little to no constraints on admissible arm distributions. This implies that strongly stable \EDRMabbrv s are typically smooth and as such enjoy logarithmic regret. 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		
+	
+	\section{Illustrative Examples} \label{sec:examples}
+	The purpose of this section, first and foremost, is to illustrate how various performance criteria can be analyzed within the framework developed in the previous sections. To make the exposition more accessible, we forego detailed introductions of the various criteria as well as various other technical details. We refer the interested reader to the full version of the paper for the complete details.
+	
+	\paragraph{Differentiable \EDRMabbrv s.}
+	Assuming that the ``correct'' norm is chosen, typical \EDRMabbrv s are differentiable, a fact that essentially implies smoothness. Table \ref{table:1} introduces some well-known criteria that are compositions of linear functionals, and as such differentiable. Table \ref{table:2} presents the associated choice of norm and the constraints on arm distributions ($\Fi$) under which our framework yields logarithmic regret. As the emerging pattern in Table \ref{table:2} suggests, ``well behaved'' \EDRMabbrv s only require sub-Gaussian type assumptions to satisfy our framework. Furthermore, it is worth noting that we did not find any known examples of risk criteria that are not either linear, convex, or quasiconvex.
+	\begin{table}[t!]
+		%\footnotesize
+		\scriptsize
+		\centering
+		\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}  p{0.13\linewidth} || p{0.37\linewidth} | p{0.4\linewidth} }
+			\vspace*{0.1ex}Empirical reward\vspace*{0.1ex} & \vspace*{0.1ex}\EDRMabbrv\space Definition \vspace*{0.1ex} & \vspace*{0.1ex}Description\vspace*{0.1ex} \\ 
+			\hline
+			\hline
+			\textit{Mean} & $\RHatFunc[ave]{F} = \int_{-\infty}^{\infty}x dF$ & The traditional MAB average reward.  \\ 
+			\hline
+			\textit{Second moment} & $\RHatFunc[E^2]{F} = \int_{-\infty}^{\infty}x^2 dF$ & An average of the squared reward. \\ 
+			\hline
+			\textit{\mbox{Below target} semi-variance} & $\mbox{$\RHatFunc[-{TSV}_r]{F} =$} -\int_{-\infty}^{\infty}\prn{x - r}^2 \indEvent{x \le r} dF$ & Measures the negative variation from a threshold $r \in \RR$. \\
+			\hline
+			\textit{Entropic Risk} & $\RHatFunc[ent]{F} = -\frac{1}{\theta} \log \prn{\int_{-\infty}^{\infty}\exp\prn{-\theta x} dF}$ & A risk assessment using an exponential utility function with risk aversion parameter $\theta > 0$. \\
+			\hline
+			\textit{Negative \mbox{variance}} &  $\RHatFunc[-\sigma^2]{F} = -\brk{\RHatFunc[E^2]{F} - \brk{\RHatFunc[ave]{F}}^2}$ & Empirical variance of the reward.\\
+			\hline
+			\textit{Mean-variance (Markowitz)} & $\RHatFunc[MV]{F} = \RHatFunc[ave]{F} + \rho \RHatFunc[-\sigma^2]{F}$ & A weighted sum (using $\rho \ge 0$) of the empirical mean and variance. \\
+			\hline
+			\textit{Sharpe ratio} & $\RHatFunc[{Sh}_r]{F} = \frac{\RHatFunc[ave]{F} - r}{\sqrt{{\varepsilon_\sigma}-\RHatFunc[-\sigma^2]{F}}}$ & A ratio between the empirical mean and variance, where $r$ is a minimum average reward, and $\varepsilon_\sigma > 0$ is a regularization factor. \\
+			\hline
+			\textit{Sortino ratio} & $\RHatFunc[{So}_r]{F} = \frac{\RHatFunc[ave]{F} - r}{\sqrt{{\varepsilon_\sigma}-\RHatFunc[-{TSV}_r]{F}}}$ & Sharpe ratio with variance replaced by the below target semi-variance measure.
+		\end{tabular*}
+		\caption{Differentiable \EDRMabbrv s}
+		\label{table:1}
+	\end{table}
+
+	\begin{table}[t!]
+		%\footnotesize
+		\scriptsize
+		\centering
+		\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}  p{0.13\linewidth} || p{0.28\linewidth} | p{0.37\linewidth} | p{0.07\linewidth} }
+			Empirical reward & \begin{tabular*}{\linewidth}{p{\linewidth}}
+				The function $g\prn{F}$ in \\
+				$\norm{F} = \max \brc{\norm{F}_{\baseFuncSpace}, \abs{g\prn{F}}}$\\
+			\end{tabular*} &
+			Constraints on the random rewards $X^{(i)} \sim \Fi$ for all $i \in \actionSet$ &
+			\begin{tabular*}{\textwidth}{p{\textwidth}}
+				linear/\\convex/\\quasi\\-convex \\ 
+			\end{tabular*} \\
+			\hline
+			\hline
+			\textit{Mean} & $\RHatFunc[ave]{F}$ & $X^{(i)}$ are sub-Gaussian & linear \\ 
+			\hline
+			\textit{Second moment} & $\RHatFunc[E^2]{F}$ & ${X^{(i)}}^2$ are sub-Gaussian & linear\\ 
+			\hline
+			\textit{\mbox{Below target} semi\-variance} & $\RHatFunc[{TSV}_r]{F}$ & $\max\brc{0,-X^{(i)}}^2$ are sub-Gaussian & linear\\
+			\hline
+			\textit{Entropic Risk} & $\theta \exp \prn{\RHatFunc[ent]{F}}$ & $\exp\prn{-\theta X^{(i)}}$ are sub-Gaussian & convex \\
+			\hline
+			\textit{Variance} & $\max\brc{\abs{\RHatFunc[ave]{F}}, \abs{\RHatFunc[E^2]{F}}}$ & ${X^{(i)}}^2$ are sub-Gaussian & convex\\
+			\hline
+			\textit{Mean-variance (Markowitz)} & $\max\brc{\abs{\RHatFunc[ave]{F}}, \abs{\RHatFunc[E^2]{F}}}$ & ${X^{(i)}}^2$ are sub-Gaussian & convex\\
+			\hline
+			\textit{Sharpe ratio} & $\max\brc{\abs{\RHatFunc[ave]{F}}, \abs{\RHatFunc[E^2]{F}}}$ & ${X^{(i)}}^2$ are sub-Gaussian & quasi\-convex\\
+			\hline
+			\textit{Sortino ratio} & $\max\brc{\abs{\RHatFunc[ave]{F}}, \abs{\RHatFunc[-{TSV}_r]{F}}}$ & $X^{(i)}$ and $\max\brc{0,-X^{(i)}}^2$ are sub-Gaussian & quasi\-convex
+		\end{tabular*}
+		\caption{\EDRMabbrv\space properties}
+		\label{table:2}
+	\end{table}
+	
+	\paragraph{Non-differentiable \EDRMabbrv s.}
+	We conclude with two examples of non-differentiable criteria. The first, $\CVAR$, is found to be smooth and strongly stable under appropriate conditions. The second, $\VAR$, is strongly stable but appears to be non-smooth. In both cases, our analysis yields particular conditions that are beyond the sub-Gaussian requirements observed thus far. In particular, these relate to the behavior of the arm distributions around the $\alpha$ percentile. 
+	Focusing our attention on $\CVAR$, we observe two types of behavior. First, unlike previous examples, requiring only sub-Gaussian arm distributions may lead to $\CVAR$ being strongly stable yet non-smooth. In such a case our framework predicts that the gap between regret and proxy regret is of $\mathcal{O}(\frac{1}{\sqrt{T}})$. This  is further supported by a simulation result. This observation indicates the necessity of the smoothness condition to achieve a logarithmic gap. Second, further requiring that all $F \in \DistSetDelta$ have positive density around their $\alpha$ percentile, we obtain smoothness and thus logarithmic regret.
+	
+	
+	
+	
+
+	
+	
+	
+	\section{Open Problems and Future Directions} \label{sec:summary}
+	One main question that we leave open is the dependence of the regret on problem parameters such as the number of arms $K$, and the sub-optimality gaps $\Di$. As our regret analysis passes through the proxy regret, the optimal order of the regret remains open as well. This will likely be resolved by means of a matching lower bound. Future directions may include a more complete taxonomy of performance criteria, or an extension of this framework to different settings (e.g., adversarial or contextual). Additionally, we note that the majority of our proof techniques also apply to non-quasiconvex criteria. If such criteria are found to be of interest then extending the framework to this case may be appealing.
+	
+	
+	
+	% Acknowledgments here
+	\acks{We thank Ron Amit, Guy Tennenholtz, Nir Baram and Nadav Merlis for helpful discussions of this work, and the anonymous reviewers for their helpful comments.
+	This work was partially funded by the Israel Science Foundation under contract 1380/16 and by the European Community’s Seventh Framework Programme (FP7/2007-2013) under grant agreement 306638 (SUPREL).}
+	
+	%%%%%%%%%%
+	\bibliography{mybib} % if more than one, comma separated
+	
+	
+
+	
+	
+	
+	
+	
+
+	%%%%%%%%%%%%%%%%%
+\end{document}
+%%%%%%%%%%%%%%%%%
+
+
+
+

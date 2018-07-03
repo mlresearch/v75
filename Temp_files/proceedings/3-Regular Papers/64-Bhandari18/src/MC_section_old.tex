@@ -1,0 +1,589 @@
+% \documentclass[anon,12pt]{colt2018} % Anonymized submission
+\documentclass{colt2018} % Include author names
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{physics}
+\usepackage[ruled]{algorithm2e}
+\usepackage{tikz}
+\usepackage{breqn}
+\usepackage{soul}
+\usepackage{mwe}
+\usepackage{caption}
+\usepackage{cancel}
+\usepackage{algpseudocode}
+\usepackage{thmtools}
+\usepackage{thm-restate}
+\usepackage{cleveref}
+\usepackage{mathtools}
+\usepackage{bbm}
+\usepackage{enumitem}
+
+\declaretheorem[name=Theorem]{thm}
+\declaretheorem[name=Lemma]{lem}
+% \newtheorem*{remark}{Remark}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\mix}{mix}
+% \newlength{\commentWidth}
+% \setlength{\commentWidth}{4cm}
+% \newcommand{\atcp}[1]{\tcp*[r]{\makebox[\commentWidth]{#1\hfill}}}
+% \makeatletter
+% \renewcommand{\@algocf@capt@plain}{above}% formerly {bottom}
+% \makeatother
+\newcommand{\nosemic}{\SetEndCharOfAlgoLine{\relax}}
+\newtheorem{assumption}{Assumption}
+\newcommand{\at}[2][]{#1|_{#2}}
+\newcommand{\ghatthetat}{ \bar{g}(\theta_t) }
+\newcommand{\normghatthetat}{ \norm{\bar{g}(\theta_t)} }
+\newcommand{\Vt}{V_{\theta_t}}
+\newcommand{\Phitrans}{\Phi^\top}
+\newcommand{\PhiD}{\Phi^\top D}
+\newcommand{\Vstar}{V_{\theta^*}}
+\newcommand{\PiP}{\Pi_{\perp}}
+\newcommand{\Vdiff}{V_{\theta_t} - V_{\theta^*}}
+\newcommand{\Dpi}{D}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\newcommand{\E}{\mathbb{E}}
+
+
+\newcommand{\Xc}{\mathcal{X}}
+\newcommand{\Yc}{\mathcal{Y}}
+\newcommand{\Zc}{\mathcal{Z}}
+\newcommand{\Pc}{\mathcal{P}}
+\newcommand{\Qc}{\mathcal{Q}}
+\newcommand{\Oc}{\mathcal{O}}
+\newcommand{\Fc}{\mathcal{F}}
+\newcommand{\Gc}{\mathcal{G}}
+\newcommand{\Rc}{\mathcal{R}}
+\newcommand{\Sc}{\mathcal{S}}
+\newcommand{\Ac}{\mathcal{A}}
+\newcommand{\Mc}{\mathcal{M}}
+\newcommand{\Tc}{\mathcal{T}}
+\newcommand{\Ic}{\mathcal{I}}
+\newcommand{\Vc}{\mathcal{V}}
+\newcommand{\Dc}{\mathcal{D}}
+\newcommand{\Bc}{\mathcal{B}}
+\newcommand{\Hc}{\mathcal{H}}
+\newcommand{\Prob}{\mathbb{P}}
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Finite Time Analysis of TD]{A Finite Time Analysis of Temporal Difference Learning With Linear Function Approximation}
+\usepackage{times}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'\mathbb{E}}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \\mathbb{E}mail{abc@sample.com}\and
+  %  \Name{Author Name2} \\mathbb{E}mail{xyz@sample.com}\\
+  %  \addr Address}
+
+%  Three or more authors with the same address:
+%  \coltauthor{\Name{Jalaj Bhandari} \\{jb3618@columbia.edu}\\
+%  \\
+%   \Name{Daniel Russo} \\{dan.joseph.russo@gmail.com}\\
+%   \\
+%   \Name{Raghav Singal} \\{rs3566@columbia.edu}\\
+%   \addr Columbia University, NYC}
+
+%  \coltauthor{\Name{Jalaj Bhandari} \\
+%   \Name{Daniel Russo} \\
+%   \Name{Raghav Singal} \\
+%   \addr Columbia University, NYC}
+  
+ % Authors with different addresses:
+ \coltauthor{\Name{Jalaj Bhandari} \Email{jb3618@columbia.edu}\\
+ \addr Industrial Engineering and Operations Research, Columbia University
+ \AND
+ \Name{Daniel Russo} \Email{dan.joseph.russo@gmail.com}\\
+ \addr Decision Risk and Operations, Columbia Business School
+ \AND
+ \Name{Raghav Singal} \Email{rs3566@columbia.edu}\\
+ \addr Industrial Engineering and Operations Research, Columbia University
+ }
+
+\def\dr#1{\textbf{\color{green}#1}}
+\def\jb#1{\textbf{\color{red}#1}}
+\def\rs#1{\textbf{\color{blue}#1}}
+
+\begin{document}
+
+\maketitle
+
+%-------------------------------------------------------------------
+\section{Markov Chain observation model: Projected TD algorithm} \label{sec:markov_chain_analyis}
+%-------------------------------------------------------------------
+\textcolor{red}{Add assumption of uniform bounded features, stationarity of states.}
+\jb{Done, add stationarity earlier?}
+
+In Section \ref{sec:iid_sampling}, we developed a method for analyzing TD under an i.i.d.\,sampling model with the tuples being drawn independently from the stationary distribution of the underlying MDP. But a more realistic setting is one in which the observed tuples used by TD are gathered from a single trajectory of the Markov chain.  In particular, if for a given sample path the Markov chain visits states $(s_1, s_2,\ldots s_t, \ldots)$ then these are processed into tuples $O_t= (s_t, \Rc(s_t, s_{t+1}), s_{t+1})$ which are fed into the TD algorithm. As the tuples used by the algorithm can be highly correlated with each other, there are \emph{two key challenges} under the Markov observation model which we outline below.
+%--------------------- Gradient bias ------------------%
+
+First, unlike the i.i.d\, case we no longer have \emph{Martingale noise} here due to coupling between tuples. Recall the basic expression of the negative gradient $g_t(\theta)$,
+\begin{eqnarray*}
+g_t(\theta) = \Big( r_t + \gamma \phi(s_{t+1})^\top \theta - \phi(s_t)^\top \theta \Big) \phi(s_t).
+\end{eqnarray*}
+Under the i.i.d.\,observation model, the tuple $O_t=(s_t, r_t, s'_t)$ influencing the gradient $g_{t}(\theta_t)$ is independent of the current iterate $\theta_t$, and hence
+\begin{eqnarray*}
+\bar{g}(\theta_t) = \Phi^\top D (T_{\mu}\Phi\theta - \Phi \theta) = \mathbb{E} \left[ g_t(\theta_t) | \mathcal{H}_{t-1} \right] \quad \forall \,\, \theta_t.
+\end{eqnarray*}
+where $\{\mathcal{H}_t\}_{t \geq 0}$ denotes the natural filtration. To see this, note that the iterate $\theta_t$ is $\mathcal{H}_{t-1}$ measurable i.e. $\theta_t$ is a deterministic function of the tuples $\{O_1, \ldots, O_{t-1}\}$, which are independent of $O_t$ under the i.i.d.\,model. This is no longer the case as the tuples $O_{t-1}$ and $O_t$ can be strongly correlated under the Markov model. Therefore $\bar{g}(\theta_t) \neq \mathbb{E} \left[ g_t(\theta_t)|\mathcal{H}_{t-1} \right]$ and we need to account for this \emph{gradient bias}: $\mathbb{E} \left[ g_t(\theta_t)|\mathcal{H}_{t-1} \right] - \bar{g}(\theta_t)$. Our analysis in this Section uncovers key insights to upper bound it. Essentially, our result in Theorem \ref{thrm:mc_ana} shows that this gradient bias leads to an additional factor in the convergence bounds relative to those shown in Theorem \ref{thrm_iid}.
+
+Another challenge for analyzing the Markov sampling model is to bound the variance of the stochastic gradient analogous to Lemma \ref{lemma:norm_bd_grad}, which shows an upper bound to the variance under the i.i.d\, sampling model. However, recall that the claim: $\E[\xi^2] = \| V_{\theta^*} - V_{\theta}\|_D^2$ which is used to prove Lemma \ref{lemma:norm_bd_grad} only holds when the tuples are sampled from the steady state distribution. To overcome this challenge under the Markov model, we modify the TD algorithm itself with an additional projection step.  The boundedness of iterates, $\norm{\theta_t} \leq R \,\, \forall \,\, t$, enables a uniform bound on the norm of the gradient, as shown in Lemma \ref{lemma:mc_norm_grad} which is important to our analysis. 
+
+In the Projected TD algorithm, the next iterate, $\theta_{t+1}$ is computed by taking a gradient step followed by a projection step onto a norm ball. We denote this projection by
+\begin{eqnarray*}
+\Pi_{2,R}(\theta) = \argmin_{\theta': \norm{\theta'}_2 \leq R} \, \norm{\theta - \theta'}_2.
+\end{eqnarray*}
+The subscript $2$ on the operator indicates that the projection is with respect the unweighted Euclidean norm, in contrast to the weighted norm $\Pi_{D}$ used earlier.
+
+%----------------------------------------------------------------------------------------%
+\subsection{Outline of the analysis}
+\label{subsec:MC_intuition}
+Before presenting our main result and analysis, we sketch out our approach to overcome the two challenges presented above. First, to give a uniform bound on the norm of the gradient, we make a structural assumption on the MDP. 
+\begin{assumption}\label{as:0}
+The feature vectors and the rewards are uniformly bounded such that
+\begin{eqnarray*}
+\norm{\phi(s)}_2 \leq 1 \,\, \text{and} \,\, \abs{\Rc(s,s')} \leq r_{\max} \,\, \forall \,\, (s,s') \in \mathcal{S}.
+\end{eqnarray*}
+\end{assumption}
+% In particular, we assume that the feature vectors and the rewards are uniformly bounded such that $\norm{\phi(s)}_2 \leq 1$ and $\abs{\Rc(s,s')} \leq r_{\max}$ for all $(s,s') \in \mathcal{S}$. 
+Assumption \ref{as:0}, along with the boundedness of the iterates, which we impose via the projection step suffices to prove Lemma \ref{lemma:mc_norm_grad}. Next, to control for the noise due to the gradient bias we assume that the Markov chain mixes at a uniform geometric rate, as stated below.
+\begin{assumption}\label{as:6}
+There are constants $m > 0$ and $\rho \in (0,1)$ such that
+\begin{eqnarray*}
+\sup_{s \in \mathcal{S}} \,\, \text{d}_{\text{TV}} \left(\mathbb{P}(s_t \in \cdot | s_0 = s), \pi\right) \leq m \rho^t \quad \forall \,\, t \in \mathbb{N}_0 = \{0,1,2,\ldots\},
+\end{eqnarray*}
+where $\text{d}_{\text{TV}}(P,Q)$ denotes the total variation distance between probability measures $P$ and $Q$.
+\end{assumption}
+This always holds for irreducible and aperiodic Markov chains \citep{levin2017markov}. Another useful quantity for our analysis is the mixing time which we define as
+\begin{eqnarray}
+\label{eq:tau_mix}
+\tau^{\mix}(\epsilon) = \min \{ t \in \mathbb{N}_0 \,\, | \,\, m \rho^t \leq \epsilon \}.
+\end{eqnarray}
+% Note that as $\epsilon \rightarrow 0$, $\tau^{\mix}(\epsilon) \approx \frac{\log(1/\epsilon)}{\log(1/\rho)}$.
+Assumption \ref{as:6} is critical to our analysis here and we us it in conjunction with some information theory inequalities. In particular, we use a data processing inequality, which relates the mutual information between random variables to the total variation distance between the corresponding probability measures. For unfamiliar readers, we first give a brief outline of some relevant ideas about different distance measures between distributions below.
+
+\subsubsection{Information theory background}
+\label{sec:info_back}
+The total variation distance between two probability measures is a special case of the more general $f$-divergence defined as
+\[
+d_f(P||Q) = \int f(\frac{dP}{dQ}) dP.
+\]
+where $f$ is a convex function such that $f(1)=0$. This also yields a generalization of the mutual information between two random variables $X$ and $Y$. The $f$-information between $X$ and $Y$ is the $f$-divergence between their joint distribution and the product of their marginals.
+\begin{eqnarray*}
+I_f(X,Y) = d_f(\mathbb{P}(X=\cdot, y=\cdot), \mathbb{P}(X=\cdot) \otimes \mathbb{P}(Y=\cdot)).
+\end{eqnarray*}
+Alternatively, using conditional expectations we have
+\begin{eqnarray}
+I_f(X,Y) &=& \sum_x \mathbb{P}(X=x) d_f(\mathbb{P}(Y=\cdot|X=x), \mathbb{P}(Y=\cdot)) \nonumber \\
+&\leq& \max_{x} d_f(\mathbb{P}(Y=\cdot|X=x), \mathbb{P}(Y=\cdot)). \label{eq:If_vs_df}
+\end{eqnarray}
+The $f$-information enables the following data processing inequality which we use in our analysis. Consider random variables $X,Y,Z$ such that $X$ is independent of $Z$ conditioned on $Y$ i.e. $(X \indep Z)|Y$. Then,
+\begin{eqnarray}
+\label{eq:data_proc_ineq}
+I_f(X,Z) \leq I_f(Y,Z) \quad \text{and} \quad I_f(X,Z) \leq I_f(X,Y).
+\end{eqnarray}
+To use these results in conjunction with Assumption \ref{as:6}, we can specialize to total variation distance $(d_{\text{TV}})$ and total variation mutual information $(I_{\text{TV}})$ using $f(x) = \abs{x-1}/2$.
+
+\subsubsection{Controlling the gradient bias}
+While the exact mechanics are detailed in the proof of Theorem \ref{thrm:mc_ana}, we sketch out the some important ideas in the proof of Lemma \ref{lemma:mc_exp_bd}. The arguments used to prove Lemma \ref{lemma:mc_exp_bd} reveal important insights which combine Assumption \ref{as:6} and some information theory inequalities, Equation \eqref{eq:data_proc_ineq} and \eqref{eq:If_vs_df}. 
+\begin{restatable}[]{lem}{}
+\label{lemma:mc_exp_bd}
+Consider a function $v: \mathcal{S} \times \mathcal{S} \rightarrow \mathbb{R}$ on the state space of the MRP, bounded between $[-k,k]$. Let the states $(s_1, \ldots, s_t)$ be sampled from a Markov chain under Assumption \ref{as:6}. Define $b_t$ to be some bounded function $h(\cdot)$ of the entire history of states: $b_t = h_t(s_1,\ldots,s_t)$. Let $P = \mathbb{P}(b_t = \cdot, s_1 \cdot)$ denote the joint distribution of $(s_1,b_t)$ and $Q = b_t(\cdot) \otimes s_1(\cdot)$ denote the product distribution.
+Then, we can show the following result.
+\begin{eqnarray*}
+\label{eq:grad_bias_toy}
+\abs{\mathbb{E}_{P} [v(s_1,b_t)] - \mathbb{E}_{Q} [v(s_1,b_t)] } \leq 2k m \rho^t. 
+\end{eqnarray*}
+\end{restatable}
+\begin{proof}
+Consider any two probability measures, $P$ and $Q$ and a function $v: \mathcal{S} \times \mathcal{S} \rightarrow \mathbb{R}$ bounded between $[-k,k]$. By definition of the total variation distance, we have
+\begin{eqnarray*}
+d_{\text{TV}}\left( P,Q \right) = \frac{1}{2} \int \abs{\frac{dP}{d\mu} - \frac{dQ}{d\mu}} d\mu &\geq& \frac{1}{2k} \int \abs{\frac{dP}{d\mu} - \frac{dQ}{d\mu}} \abs{v} d\mu \\
+&\geq& \frac{1}{2k} \abs{ \int v \frac{dP}{d\mu} d\mu - \int v \frac{dQ}{d\mu} d\mu } \\
+&=& \frac{1}{2k} \abs{ \int v dP - \int v dQ }. 
+\end{eqnarray*}
+Therefore,
+\begin{eqnarray*}
+\abs{\mathbb{E}_{P} [v(s_1,b_t)] - \mathbb{E}_{Q} [v(s_1,b_t)] } &\leq& 2 k \,\, d_{\text{TV}}\left( P, Q \right) \\
+&=& 2 k \,\, I_{\text{TV}}\left( s_1,b_t \right) \\
+&\leq& 2 k \,\, I_{\text{TV}}\left( s_1,s_t \right) \\
+&=& 2 k \,\, \int_{s} \pi(s) d_{\text{TV}}\left( \mathbb{P}(s_t=\cdot, s_1 = s), \pi \right) \\
+&\leq& 2 k \,\, \sup_{s \in \mathcal{S}} \,\, d_{\text{TV}}\left( \mathbb{P}(s_t=\cdot, s_1 = s), \pi \right) \\
+&\leq& 2 k m \rho^{\tau}, 
+\end{eqnarray*}
+where we used the data processing inequality, Equation \eqref{eq:data_proc_ineq} in the third step, Equation \eqref{eq:If_vs_df} in the second last step and Assumption \ref{as:6} in the last step.
+\end{proof}
+% This enables the following Lemma which upper bounds the error due to coupling between states under the Markov chain sampling model. 
+% \begin{restatable}[]{lem}{lemmafifth}
+% \label{lemma:mc_exp_bd}
+% Consider a function $v: \mathcal{S} \times \mathcal{S} \rightarrow \mathbb{R}$ on the state space of the MRP, bounded between $[-k,k]$. For states $(s_1, \ldots, s_t)$ sampled from a Markov chain under Assumption \ref{as:6},
+% \begin{eqnarray*} \label{eq:mc_exp_bd}
+% \abs{\mathbb{E} [v(s_1,s_t)] - \int_{s,s'} v(s,s') \pi(ds) \pi(ds') } \leq 2k m \rho^t. 
+% \end{eqnarray*}
+% \end{restatable}
+% \noindent We do not use Lemma \ref{lemma:mc_exp_bd} directly but present it to illustrate how critical Assumption \ref{as:6} will be. Essentially, coupling between tuples in the Markov setting introduces an additional noise term unlike the i.i.d.\ setting. Proof of Lemma \ref{lemma:mc_exp_bd} provides key insights to upper bound this error term. In fact, as part of the proof of our main result in Theorem \ref{thrm:mc_ana}, we will prove Lemma \ref{lemma:mc_exp_bd}. For completeness, a standalone proof is provided in Appendix \ref{appendix:a1}.
+
+\subsubsection{Summary}
+We summarize the intuition of our analysis before presenting the main result in Section \ref{sec:mc_analysis}. Let us define the constant $G^2 := (r_{\max} + 2R)^2$ which will serve as a worst-case bound on gradient norm, $\norm{g_t(\theta)}^2_2 \leq G^2$.  Recall, that under the i.i.d\, sampling model, we have $\forall \,\, t\in \mathbb{N}_0$
+\begin{eqnarray*}
+\mathbb{E} \left[ \|\theta^*-\theta_{t+1} \|_2^2 \right] \leq \mathbb{E} \left[ \| \theta^* -\theta_t \|_2^2 \right] - 2\alpha_t \bar{g}(\theta_t)^\top \left(\theta^* - \theta_t\right) + \alpha_t^2 \mathbb{E} \left[ \| g_{t}(\theta_t) \|_2^2 \right].
+\end{eqnarray*}
+Under the Markov model, the recursion changes to
+\begin{eqnarray*}
+\mathbb{E} \left[ \|\theta^*-\theta_{t+1} \|_2^2 \right] &\leq& \mathbb{E} \left[ \| \theta^* -\theta_t \|_2^2 \right] - 2\alpha_t \bar{g}(\theta_t)^\top \left(\theta^* - \theta_t\right) + 2\alpha_t \mathbb{E}\left[ \zeta_t(\theta_t) \right] + \alpha_t^2 \mathbb{E} \left[ \| g_{t}(\theta_t) \|_2^2 \right] \\
+&\leq& \mathbb{E} \left[ \| \theta^* -\theta_t \|_2^2 \right] - 2\alpha_t \bar{g}(\theta_t)^\top \left(\theta^* - \theta_t\right) + 2\alpha_t \mathbb{E}\left[ \zeta_t(\theta_t) \right] + \alpha_t^2 G^2.
+\end{eqnarray*}
+where we define $\mathbb{E}\left[ \zeta_t(\theta_t) \right] := \mathbb{E} \left[ \left(g_t(\theta) - \bar{g}(\theta)\right)^\top(\theta - \theta^*) \right]$ as the additional noise in the system due to gradient bias. By adapting the proof ideas illustrated in Lemma \ref{lemma:mc_exp_bd}, we are essentially able to show that $\mathbb{E}\left[ \zeta_t(\theta_t) \right] \approx \mathcal{O}(\alpha_{t-\tau_{mix}(\epsilon)} \cdot \tau_{mix}(\epsilon) G^2)$. Thus the gradient bias approximately contributes only as a scaling factor to the stochastic noise in the system.
+
+\subsection{Analysis}
+\label{sec:mc_analysis}
+Following Section \ref{sec:iid_sampling}, we establish two bounds on the expected distance between the estimated value function of TD after $T$ iterations and its limiting value. Treating $R$, the projection radius and $r_{\max}$ as constants, the two bounds correspond to different step-size choices. Robust, aggressive step-size of $1/\sqrt{T}$ lead to $\mathcal{O}(1/\sqrt{T})$ convergence rate while an improved rate of $\tilde{\mathcal{O}}(1/T)$ can be shown with step-sizes that depend on the minimum eigenvalue of the matrix $\Sigma = \Phi^\top D \Phi$. 
+% Before presenting our main result in Theorem \ref{thrm:mc_ana}, we remark on a key challenge under the Markov chain observation model. Unlike the i.i.d\, case we no longer have \emph{Martingale noise} due to coupling between tuples. Recall the basic expression of the negative gradient $g_t(\theta)$,
+% \begin{eqnarray*}
+% g_t(\theta) = \Big( r_t + \gamma \phi(s_{t+1})^\top \theta - \phi(s_t)^\top \theta \Big) \phi(s_t).
+% \end{eqnarray*}
+% Under the i.i.d.\,observation model, the tuple $O_t=(s_t, r_t, s'_t)$ influencing the gradient $g_{t}(\theta_t)$ is independent of the current iterate $\theta_t$, and hence
+% \begin{eqnarray*}
+% \bar{g}(\theta_t) = \Phi^\top D (T_{\mu}\Phi\theta - \Phi \theta) = \mathbb{E}_{(s_t,r_t,s'_t)} \left[ g_t(\theta_t) \right] \quad \forall \,\, \theta_t.
+% \end{eqnarray*}
+% To see this, note that the iterate $\theta_t$ is a function of $\{O_1, \ldots, O_{t-1}\}$, which are independent of $O_t$ in the i.i.d.\,model. This is no longer the case as the tuples $O_{t-1}$ and $O_t$ are strongly correlated under the Markov chain model. Therefore $\bar{g}(\theta_t) \neq \mathbb{E}_{(s_t,r_t,s'_t)} \left[ g_t(\theta_t) \right]$ and we need control for the additional residual noise $\mathbb{E}_{(s_t,r_t,s'_t)} \left[ g_t(\theta_t) \right] - \bar{g}(\theta_t)$; our proof of Theorem \ref{thrm:mc_ana} gives insights to upper bound it. We show that this extra error term leads to an additional factor in our bounds relative to those shown in Theorem \ref{thrm_iid}.
+
+
+
+% \begin{restatable}[]{thm}{thrmmc}
+% \label{thrm:mc_ana}
+% Suppose the projected TD algorithm is applied with parameter $R \geq \| \theta^*\|_2$ under the Markov chain observation model with Assumption \ref{as:6}. Then,
+% \begin{enumerate}[label=(\alph*)]
+% \item With a constant stepsize $\alpha_t = 1/\sqrt{T}$,
+% \begin{eqnarray*}
+% \mathbb{E} \left[ \norm{V_{\bar{\theta}_T} - V_{\theta^*}}^2_{D} \right] \leq \frac{R^2 + G^2}{2\sqrt{T}(1-\gamma)} + \frac{4GR}{T(1-\gamma)} + \frac{\log(Tm)}{\log(1/\rho)} \frac{2G^2}{\sqrt{T} (1-\gamma)}. 
+% \end{eqnarray*}
+% \item Assume $\omega = \lambda_{\min}(\Phi^\top D \Phi) > 0$. With a decaying stepsize $\alpha_t = 1/\omega t (1-\gamma)$,
+% \begin{eqnarray*}
+% \mathbb{E}\left[\norm{V_{\bar{\theta}_T} - V_{\theta^*}}^2_{D}\right] \leq \frac{G^2}{\omega T (1-\gamma)^2} (1+\log T) + \frac{8GR}{T(1-\gamma)} + \frac{ \log(Tm)}{\log(1/\rho)} \frac{4G^2 \beta}{\omega T (1-\gamma)^2}.
+% \end{eqnarray*}
+% \end{enumerate}
+% where we define the constants as $G^2 := (r_{\max} + 2R)^2$ and $\beta := \left( 1 + \log (T-\tau) \right)$ 
+% \end{restatable}
+
+\begin{restatable}[]{thm}{}
+\label{thrm:mc_ana}
+Suppose the projected TD algorithm is applied with parameter $R \geq \| \theta^*\|_2$ under the Markov chain observation model with Assumption \ref{as:6}. Then,
+\begin{enumerate}[label=(\alph*)]
+\item With a constant stepsize $\alpha_t = \alpha_0 = 1/\sqrt{T}$,
+\begin{eqnarray*}
+\mathbb{E}\left[\norm{V_{\theta^*} - V_{\bar{\theta}_T}}^2_{D}\right] \leq \frac{\norm{\theta^* - \theta_0}_2^2 + G^2}{2\sqrt{T}(1-\gamma)} + \frac{2G^2 \left(1+\tau^{\mix}(1/\sqrt{T})\right)}{\sqrt{T} (1-\gamma)}.
+\end{eqnarray*}
+
+\item With a constant stepsize $\alpha_t = \alpha_0 < 1/(2 \omega \sqrt{T} (1-\gamma))$, we have a bound on the iterates
+\begin{eqnarray*}
+\mathbb{E} \left[\norm{\theta^*-\theta_{T}}_2^2\right] &\leq& \left(\exp^{-2\alpha_0(1-\gamma)\omega T}\right) \norm{\theta^*-\theta_0}_2^2 + \frac{\alpha_0 G^2 \left(1 + 4 (1+\tau^{\mix}(\alpha_0) \right)}{2(1-\gamma)\omega}.
+\end{eqnarray*}
+
+\item Assume $\omega = \lambda_{\min}(\Phi^\top D \Phi) > 0$. With a decaying stepsize $\alpha_t = 1/\omega (t+1) (1-\gamma)$,
+\begin{eqnarray*}
+\mathbb{E}\left[\norm{V_{\theta^*} - V_{\bar{\theta}_T}}^2_{D}\right] \leq \frac{8 G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{T(1-\gamma)^2\omega} \left(1+\log T\right) + \frac{4G^2 m \rho}{T(1-\rho)(1-\gamma)}.
+\end{eqnarray*}
+\end{enumerate}
+where $\tau^{\mix}(\alpha_T) := \tau^{\mix}\left(\frac{1}{(T+1)(1-\gamma)\omega}\right)$. 
+\end{restatable}
+\paragraph{Remark 1:} The proof of part (c) also implies a $\tilde{\mathcal{O}}(1/T)$ convergence rate for the iterate $\theta_{T}$ itself; similar to the $\mathcal{O}(1/T)$ convergence shown for the i.i.d.\ case in part (c) of Theorem \ref{thrm_iid}.
+
+\paragraph{Remark 2:} It is possible to get rid of the $\log T$ term in the numerator of part (b) to get a $\mathcal{O}(1/T)$ convergence rate. This can be done by using a different weighting of the iterates as shown in \cite{lacoste2012simpler}. For brevity and simplicity, we omit this result.
+  
+Before presenting the proof, we make some simple approximations to better understand the result presented in Theorem \ref{thrm:mc_ana}. First note that by definition (please see Equation \eqref{eq:tau_mix}), for $\epsilon \rightarrow 1$, $\tau^{\mix}(\epsilon) \approx \frac{\log (1/\epsilon)}{\log (1/\rho)}$ . For $\rho \rightarrow 1$, we have $\log(1/\rho) = \log(1+ (1-\rho)/\rho)) \approx (1-\rho)$. Thus, ignoring the constant terms, we are essentially able to establish a convergence rate of $\mathcal{O} (1/(\sqrt{T}(1-\rho)))$ for a constant stepsize of $1/\sqrt{T}$ and $\mathcal{O} (\log T /(T (1-\rho)))$ for a linearly decaying stepsize. Comparing this to the convergence result given in Theorem \ref{thrm_iid}, we see that approximately $1/(1-\rho)$ times as many samples are needed under the Markov chain sampling model as compared to the i.i.d \,observation model. This is intuitive as we only get $(1-\rho)$ fraction of the information in the Markov chain case due to correlation between tuples.
+
+It is also instructive to compare the bounds in parts (a), (b) for constant step-size sequence for the i.i.d.\ model vis-a-vis the Markov model. The gradient noise term $\sigma^2$ in Theorem \ref{thrm_iid} is replaced by $G^2$ in Theorem \ref{thrm:mc_ana}, a consequence of the projection step. The gradient bias term in the Markov model gives rise to the second term in part (a) of Theorem \ref{thrm:mc_ana} and scales the second term in part (b).
+
+% We now give the proof of Theorem \ref{thrm:mc_ana}.
+\begin{proof}
+Throughout the proof, we use $\| \cdot \|$ to denote the standard Euclidean norm. Let $\{\mathcal{H}_t\}_{t \geq 0}$ denote the natural filtration with respect to $\{\theta_t\}$. Projected TD(0) algorithm updates the parameter $\theta$ as
+\begin{eqnarray*}
+\theta_{t+1} = \Pi_{2,R} [\theta_t + \alpha_t g_t(\theta_t)].
+\end{eqnarray*}
+We follow standard proof techniques for stochastic gradient descent as outlined in \cite{lacoste2012simpler} and \cite{nemirovski2009robust}. 
+\begin{eqnarray}
+\norm{\theta^* - \theta_{t+1}}^2 &=& \norm{ \Pi_{2,R} [\theta^* - (\theta_t + \alpha_t g_t(\theta_t)) ]}^2 \label{eq:basic_rec1}\\
+&\leq& \norm{ \theta^* - \theta_t - \alpha_t g_t(\theta_t)}^2. \label{eq:basic_rec2}
+\end{eqnarray}
+Thus,
+\begin{eqnarray}
+\norm{\theta^* - \theta_{t+1}}^2 \leq \norm{\theta^* - \theta_t}^2 - 2\alpha_t g_t(\theta_t)^\top (\theta^* - \theta_t) + \alpha_t^2 \norm{g_t(\theta_t)}^2 \label{eq:basic_rec}
+\end{eqnarray}
+where in going from Equation \eqref{eq:basic_rec1} to \eqref{eq:basic_rec2}, we used that $\norm{\theta^*} \leq R$ and the fact that $\Pi_{2,R}\left[\cdot\right]$ is an orthogonal projection onto a convex set\footnote{Let $\mathcal{C} \subset \mathbb{R}^d$ be a convex set and let $\Pi_{2,\mathcal{C}}[\cdot]$ denote the orthogonal projection onto $\mathcal{C}$. Then, for any $x \in \mathbb{R}^d$, we have $\norm{y - \Pi_{2,\mathcal{C}}[x]} \leq \norm{y - x} \quad \forall \,\, y \in \mathcal{C}$.}. Define $\zeta_t(\theta) = \left(g_t(\theta) - \bar{g}(\theta)\right)^\top(\theta - \theta^*)$, the stochastic noise in the system due to gradient bias. Taking expectations on both sides in Equation \eqref{eq:basic_rec},
+\begin{eqnarray*}
+\mathbb{E} \left[ \norm{\theta^* - \theta_{t+1}}^2 \right] &=& \mathbb{E} \left[ \norm{\theta^* - \theta_t}^2 \right] - 2\alpha_t \bar{g}(\theta_t)^\top (\theta^* - \theta_t) + 2\alpha_t \mathbb{E}\left[ \zeta_t(\theta_t) \right] + \alpha_t^2 \mathbb{E} \left[ \norm{g_t(\theta_t)}^2 \right]. 
+\end{eqnarray*}
+A key ingredient to our analysis is control over the gradient norm, $\mathbb{E} \left[ \norm{g_t(\theta_t)}^2 \right]$, for which we show an upper bound in Lemma \ref{lemma:mc_norm_grad} (see Appendix \ref{appendix:a1} for the proof). This result follows from using Assumption \ref{as:0} and the boundedness of iterates, $\norm{\theta_t} \leq R \,\, \forall \,\, t$, which is a consequence of the projection step. 
+\begin{restatable}[]{lem}{lemmathird}
+\label{lemma:mc_norm_grad}
+With probability 1, $\norm{g_t(\theta_t)} \leq G \,\, \forall \,\, t$.
+\end{restatable}
+We use Lemma \ref{lemma:expected_gradient}, as shown in Section \ref{subsec: mean path properties} along with Lemma \ref{lemma:mc_norm_grad} above to get to Equation \eqref{eq:basic_rec_mc_ana} which we use as a starting point for analyzing different stepsize choices.
+\begin{eqnarray}
+\mathbb{E}\left[ \norm{\theta^* - \theta_{t+1}}^2 \right] &\leq& \mathbb{E} \left[ \norm{\theta^* - \theta_t}^2 \right] - 2 \alpha_t (1-\gamma) \mathbb{E}\left[\norm{ V_{\theta^*} - V_{\theta_t} }^2_{D} \right] + 2\alpha_t \mathbb{E}\left[ \zeta_t(\theta_t) \right] + \alpha_t^2 G^2. \nonumber \\ \label{eq:basic_rec_mc_ana}
+\end{eqnarray}
+The next part of the proof provides key insights to bound $\mathbb{E}\left[\zeta_t(\theta_t)\right]$, which is nonzero due coupling between tuples in the Markov sampling model. Recall that bounding this in a meaningful way is the main challenge of our analysis. First, observe that $\zeta_t (\cdot)$ is $L$-Lipschitz continuous and uniformly bounded as shown below in Lemma \ref{lemma:mc_noise_bd}.   
+% The next part of the proof provides some key insights to bound the additional noise term term $\sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right]$, which is nonzero due coupling between the tuples under the Markov chain sampling model. First, observe that $\zeta_t (\cdot)$ is $L$-Lipschitz continuous and uniformly bounded as shown below in Lemma \ref{lemma:mc_noise_bd}. 
+%----------------------------------------------------------------------------------------%
+\begin{restatable}[]{lem}{}
+\label{lemma:mc_noise_bd}
+Let $\zeta_t(\cdot)$ be a function defined as $\zeta_t(\theta) = \left(g_t(\theta) - \bar{g}(\theta)\right)^\top (\theta - \theta^*)$. Then, the following holds with probability 1. First, $\zeta_t(\cdot)$ is $L$-Lipschitz with $L=2G$. That is, for any pair $(\theta, \theta')$, we show $\zeta_t (\theta) - \zeta_t (\theta') \leq 2G \norm{(\theta - \theta^')}$. Second, $\zeta_t(\cdot)$ is bounded between $[-k, k]$ where $k = 2GR$ and $G = (r_{\max} + 2R)$.
+\end{restatable}
+\begin{proof}
+First, we show a uniform bound on $\zeta_t (\theta) \,\, \forall \,\, \theta$:
+\begin{eqnarray*}
+\abs{\zeta_t (\theta)} &=& \abs{ \left(g_t(\theta) - \bar{g}(\theta)\right)^\top(\theta - \theta^*)} \\
+% &\leq& \norm{g_t(\theta) - \bar{g}(\theta)} \norm{(\theta - \theta^*)} \\
+&\leq& \left(\norm{g_t(\theta)} + \norm{\bar{g}(\theta)}\right) \norm{(\theta - \theta^*)} \\
+% &\leq& 2G \norm{(\theta - \theta^*)} \\
+&\leq& 2GR,
+\end{eqnarray*}
+where we have used Lemma \ref{lemma:mc_norm_grad} for the fact that $\norm{g_t(\theta)} \leq G$ and $\norm{\bar{g}(\theta)} \leq G$ for all $t, \theta$. In addition, we also use that $\norm{(\theta - \theta^*)} \leq R \,\, \forall \,\, \theta$ which holds via the projection step. To show that $\zeta_t(\cdot)$ is $L$-Lipschitz, consider
+\begin{eqnarray*}
+\zeta_{t}(\theta) = \left(g_t(\theta) - \bar{g}(\theta)\right)^\top(\theta - \theta^*) \leq 2G\norm{\theta - \theta^*}\\
+\zeta_{t}(\theta') = \left(g_t(\theta') - \bar{g}(\theta')\right)^\top(\theta' - \theta^*) \leq 2G\norm{\theta' - \theta^*}.
+\end{eqnarray*}
+Subtracting both sides and using reverse triangle inequality, we get
+\begin{eqnarray*}
+\zeta_{t}(\theta) - \zeta_{t}(\theta') &\leq& 2G\norm{\theta - \theta^*} - 2G\norm{\theta' - \theta^*} \\
+&\leq& \abs{2G\norm{\theta - \theta^*} - 2G\norm{\theta' - \theta^*}} \\
+&\leq& 2G\norm{\theta - \theta'}.
+\end{eqnarray*}
+But since the choice of $\theta$ and $\theta'$ is arbitrary, we can similarly get $\zeta_{t}(\theta') - \zeta_{t}(\theta) \leq 2G\norm{\theta' - \theta}$ which completes the proof.
+% $$\abs{\zeta_{t}(\theta') - \zeta_{t}(\theta)} \leq 2G\norm{\theta' - \theta}.$$
+\end{proof}
+%----------------------------------------------------------------------------------------%
+Lemma \ref{lemma:mc_noise_bd} enables an upper bound on $\mathbb{E}\left[\zeta_t(\theta_t)\right]$, as shown below in Lemma \ref{lemma:grad_bias_bd} which shows that $\mathbb{E}\left[ \zeta_t(\theta_t) \right] \approx \mathcal{O}(\alpha_{t-\tau_{mix}(\epsilon)} \cdot \tau_{mix}(\epsilon) G^2)$ and only contributes by scaling the stochastic noise in the system. Our proof essentially uses the geometric ergodicity of the underlying MDP, as shown in Assumption \ref{as:6}.
+\begin{restatable}[]{lem}{}
+Consider a non-increasing step-size sequence, $\alpha_0 \geq \alpha_1 \ldots \geq \alpha_T$. Then, 
+\label{lemma:grad_bias_bd}
+\begin{enumerate}[label=(\alph*)]
+\item For $\,\,\tau^{\mix}(\alpha_T) < t \leq T$,
+\begin{eqnarray*}
+\mathbb{E}\left[\zeta_t(\theta_t)\right] \leq 2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right) \alpha_{t-\tau^{\mix}(\alpha_T)}.
+\end{eqnarray*}
+\item For $\,\, 0 \leq t \leq \tau^{\mix}(\alpha_T)$,
+\begin{eqnarray*}
+\mathbb{E}\left[\zeta_t(\theta_t)\right] \leq 4GR m \rho^t + LG \sum_{i=0}^t \alpha_i.
+\end{eqnarray*}
+\end{enumerate}
+\end{restatable}
+\begin{proof}
+Let $\tau < t < T$, for some $\tau$. We start by using the $L$-Lipschitz property of $\zeta_t(\cdot)$ as stated in Lemma \ref{lemma:mc_noise_bd}.
+\begin{eqnarray}
+\zeta_t(\theta_t) &\leq& \zeta_t(\theta_{t-\tau}) + L \norm{\theta_t - \theta_{t-\tau}} \nonumber \\
+\mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& \mathbb{E} \left[\zeta_t(\theta_{t-\tau})\right] + LG \sum_{i=t-\tau}^t \alpha_i. \label{eq:mc_noise_rec}
+\end{eqnarray}
+where we use Lemma \ref{lemma:mc_norm_grad} to simplify: $L \norm{\theta_t - \theta_{t-\tau}} = L \norm{\sum_{i=t-\tau}^t \alpha_i g_i(\theta_i)} \leq L \sum_{i=t-\tau}^t \alpha_i \norm{g_i(\theta_i)} \leq LG \sum_{i=t-\tau}^t \alpha_i$. Next, We need to upper bound $\mathbb{E} \left[\zeta_t(\theta_{t-\tau})\right]$.
+
+%---------------------------------- Key argument -----------------------------------------%
+Consider $\zeta_t(\theta) = \left(g_t(\theta) - \bar{g}(\theta)\right)^\top(\theta - \theta^*)$ which we break down into two parts. Recall that we use $O_t$ to denote the tuple $(s_t,r_t,s'_t)$ and the fact that the gradient $g_t(\cdot)$ depends on the tuple $O_t$. For any fixed $\theta$, let us define $f(\theta, O_t) := g_t(\theta)^\top(\theta - \theta^*)$ and $\bar{f}(\theta) = \mathbb{E} \left[ f(\theta, O_t) \right] := \bar{g}(\theta)^\top (\theta - \theta^*)$ where the expectation is taken under the steady state distribution of the underlying MRP. Using the above notation, we can re-write
+\[
+\mathbb{E} \left[ \zeta_t(\theta_{t-\tau}) \right] = \mathbb{E} \left[f(\theta_{t-\tau}, O_t)\right] - \mathbb{E} \left[\bar{f}(\theta_{t-\tau})\right]
+\]
+Recall, that the right hand side is non zero due to the coupling between $\theta_{t-\tau}$ and $O_t$ under the Markov chain sampling model. Our proof strategy is simple. We first relate $\mathbb{E} \left[ \zeta_t(\theta_{t-\tau}) \right]$ to the mutual information between the iterate $\theta_{t-\tau}$ and the tuple $O_t$, $I_{\text{TV}}(\theta_{t-\tau},O_{t})$. This can be done using the fact that $f(\cdot)$ is bounded between $[-k,k]$; which is easy to argue using the proof technique of Lemma \ref{lemma:mc_noise_bd}. Thus, $\| f \|_{\infty} := \sup_{ \{\theta : \norm{\theta} \leq R\} } \abs{f(\theta)} = k$. Define $P$ to be the joint distribution $P := \mathbb{P}(\theta_{t-\tau}=\cdot , O_t=\cdot)$ and $Q$ to be the product distribution $Q := \mathbb{P}(\theta_{t-\tau}=\cdot) \otimes \mathbb{P}(O_t=\cdot)$. Then,
+\begin{eqnarray*}
+\abs{\mathbb{E} \left[ \zeta_t(\theta_{t-\tau}) \right]} = \abs{\mathbb{E} \left[f(\theta_{t-\tau}, O_t)\right] - \mathbb{E} \left[\bar{f}(\theta_{t-\tau})\right]} 
+&=& \abs{ \int f(\theta_{t-\tau},O_t) dP - \int f(\theta_{t-\tau},O_t)dQ } \\
+&\leq& 2 \|f\|_{\infty} \cdot \, d_{\text{TV}}(P,Q) \\
+&=& 2 k \cdot I_{\text{TV}}(\theta_{t-\tau},O_t).
+\end{eqnarray*}
+Next, we use Assumption \ref{as:6} and the data processing inequality, Equation \eqref{eq:data_proc_ineq} shown in Section \ref{sec:info_back}. For this, note that $\theta_{t-\tau}$ is itself some function, $h(\cdot)$ of the history $\{ s_1, \ldots, s_{t-\tau} \}$. Then, we have 
+\[
+I_{\text{TV}}(\theta_{t-\tau},O_t) \leq I_{\text{TV}}(\theta_{t-\tau},s_t) = I_{\text{TV}}(h(s_1, \ldots, s_{t-\tau}),s_t) \leq I_{\text{TV}}(s_{t-\tau},s_t). 
+\]
+We use the relationship between mutual information and total variation as shown in Equation \eqref{eq:If_vs_df}, to get
+\begin{eqnarray*}
+\abs{\mathbb{E}\left[ \zeta_t(\theta_{t-\tau}) \right]} \leq 2k \cdot I_{\text{TV}}(s_{t-\tau},s_t) \leq 2k \cdot \sup_{s \in \mathcal{S}} \, d_{\text{TV}}(\mathbb{P}(s_t = \cdot|s_{t-\tau} = s), \pi) \leq 2 k m \rho^\tau.
+\end{eqnarray*}
+Plugging-in $\tau = \tau^{\mix}(\epsilon)$, the values of $k=2GR, \,L=2G$ and use Equation \eqref{eq:mc_noise_rec} to get,
+\begin{eqnarray*}
+% \mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& 2 k m \rho^\tau + LG \sum_{i=t-\tau}^t \alpha_i \\
+\mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& 4GR m \rho^\tau + 2G^2 \sum_{i=t-\tau}^t \alpha_i \\
+&\leq& 2G^2 \left(m \rho^\tau + \sum_{i=t-\tau}^t \alpha_i\right) \\
+&\leq& 2G^2 \left(\epsilon + \tau^{\mix}(\epsilon) \cdot \alpha_{t-\tau^{\mix}(\epsilon)} \right).
+\end{eqnarray*}
+We have used that $R \leq G/2$ which follows by the definition of $G$. Also, by definition $\tau = \tau^{\mix}(\epsilon)$ implies that $m \rho^\tau \leq \epsilon$ (please see Equation \eqref{eq:tau_mix}). As the step-size sequence is non-increasing, we have $\sum_{i=t-\tau^{\mix}(\epsilon)}^t \alpha_i \leq \tau^{\mix}(\epsilon) \cdot \alpha_{t-\tau^{\mix}(\epsilon)}$. Let $\epsilon = \alpha_T$. Then, 
+\begin{eqnarray*}
+\mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& 2G^2 \left(\alpha_T + \tau^{\mix}(\alpha_T) \cdot \alpha_{t-\tau^{\mix}(\alpha_T)} \right) \\
+&\leq& 2G^2 \left(1 + \tau^{\mix}(\alpha_T) \right) \alpha_{t-\tau^{\mix}(\alpha_T)}.
+\end{eqnarray*}
+where the last inequality follows as the step-sizes are non-increasing, $\alpha_T \leq \alpha_{t-\tau^{\mix}(\epsilon)} \,\, \forall \,\, t \leq T$. 
+
+We now give the proof for $0 < t \leq \tau^{\mix}(\alpha_T) $. We again start by using the $L$-Lipschitz property of $\zeta_t(\cdot)$ as stated in Lemma \ref{lemma:mc_noise_bd}.
+\begin{eqnarray*}
+\zeta_t(\theta_t) &\leq& \zeta_t(\theta_0) + L \norm{\theta_t - \theta_0} \nonumber \\
+\mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& \mathbb{E} \left[\zeta_t(\theta_0)\right] + LG \sum_{i=0}^t \alpha_i.
+\end{eqnarray*}
+We upper bound $\mathbb{E} \left[\zeta_t(\theta_0)\right]$ using exactly the same argument shown above. In particular, it is straightforward to show that  
+\begin{eqnarray*}
+\abs{\mathbb{E}\left[ \zeta_t(\theta_0) \right]} \leq 2k \cdot I_{\text{TV}}(s_0,s_t) \leq 2k \cdot \sup_{s \in \mathcal{S}} \, d_{\text{TV}}(\mathbb{P}(s_t = \cdot|s_1 = s), \pi) \leq 2 k m \rho^t.
+\end{eqnarray*}
+Therefore, 
+\begin{eqnarray*}
+\mathbb{E}\left[\zeta_t(\theta_t)\right] \leq 4GR m \rho^t + LG \sum_{i=0}^t \alpha_i.
+\end{eqnarray*}
+\end{proof}
+Lemma \ref{lemma:grad_bias_bd} completes the main challenge in proving Theorem \ref{thrm:mc_ana}. With a little algebra,  our results for different step-size choices follow.
+%--------------------------------------------------------------------------------------------%
+\paragraph{Proof of part (a):} We first show the analysis for a constant stepsize. Consider $\alpha_t = \alpha_0 = 1/\sqrt{T}$ in Equation \eqref{eq:basic_rec_mc_ana}, rearrange terms and sum from $t=0$ to $t=T-1$, we get
+\begin{eqnarray*}
+2 \alpha_0 (1-\gamma) \sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D} \right] \leq \sum_{t=0}^{T-1} \left( \mathbb{E} \left[ \norm{\theta^* - \theta_t}_2^2 \right] - \mathbb{E}\left[ \norm{\theta^* - \theta_{t+1}}_2^2 \right] \right) + G^2 
++ 2\alpha_0 \sum_{t=0}^{T-1} \mathbb{E}\left[ \zeta_t(\theta_t) \right]. 
+\end{eqnarray*}
+Using Lemma \ref{lemma:grad_bias_bd} and simplifying, 
+\begin{eqnarray*}
+% \sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D} \right] &\leq& 
+% \frac{\norm{\theta^* - \theta_0}^2 + G^2}{2\alpha (1-\gamma)} + \frac{1}{(1-\gamma)}\sum_{t=0}^{T-1} \mathbb{E}\left[ \zeta_t(\theta_t) \right] \\
+\sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D} \right] &\leq& 
+\frac{\norm{\theta^* - \theta_0}_2^2 + G^2}{2\alpha_0 (1-\gamma)} + \frac{T \cdot 2G^2 (1 + \tau^{\mix}(1/\sqrt{T})) \alpha_0}{(1-\gamma)}\\
+&=& \frac{\sqrt{T}\left(\norm{\theta^* - \theta_0}_2^2 + G^2\right)}{2(1-\gamma)} +  \frac{\sqrt{T} \cdot 2G^2 (1 + \tau^{\mix}(1/\sqrt{T}))}{(1-\gamma)}. \label{eq:mc_part_a_rec} 
+\end{eqnarray*}
+This gives us our first result. 
+\begin{eqnarray*}
+\mathbb{E}\left[\norm{V_{\theta^*} - V_{\bar{\theta}_T}}^2_{D}\right] \leq \frac{1}{T} \sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] &\leq& \frac{\norm{\theta^* - \theta_0}_2^2 + G^2}{2\sqrt{T}(1-\gamma)} + \frac{2G^2 \left(1+\tau^{\mix}(1/\sqrt{T})\right)}{\sqrt{T} (1-\gamma)}.
+\end{eqnarray*}
+\paragraph{Proof of part (b):} We show a bound on the iterates, analogous to part (b) of Theorem \ref{thrm:mc_ana} for a constant step-size of $\alpha_0 < 1/(2 \omega \sqrt{T} (1-\gamma))$. Starting with Equation \eqref{eq:basic_rec_mc_ana} and applying Lemma \ref{lemma:strong_conv}: $\mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] \geq w \mathbb{E}\left[ \norm{\theta^* - \theta_t}^2 \right]$, we get
+\begin{eqnarray}
+\mathbb{E} \left[\norm{\theta^*-\theta_{t+1}}_2^2\right] &\leq& \left(1-2\alpha_0(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_0^2 G^2 + 2\alpha_0 \mathbb{E}\left[\zeta_t(\theta_t)\right] \nonumber \\
+&\leq& \left(1-2\alpha_0)(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_0^2 G^2 \left(1 + 4 (1+\tau^{\mix}(\alpha_0)) \right) \label{eq:theta_rec}
+\end{eqnarray}
+where we used Lemma \ref{lemma:grad_bias_bd} to go to the second inequality. Note that for $\alpha_0 < 1/(2 \omega \sqrt{T} (1-\gamma))$, the above is a \emph{contraction} inequality. Iterating over this inequality gives us our final result. For any $T \in \mathbb{N}_0$,
+\begin{eqnarray*}
+\mathbb{E} \left[\norm{\theta^*-\theta_{T}}_2^2\right] &\leq& \left(1-2\alpha_0(1-\gamma)\omega \right)^T \norm{\theta^*-\theta_0}_2^2 + \alpha_0^2 G^2 \left(1 + 4 (1+\tau^{\mix}(\alpha_0) \right) \sum_{t=0}^{\infty}\left(1-2\alpha_0(1-\gamma)\omega \right)^t \\
+&\leq& \left(\exp^{-2\alpha_0(1-\gamma)\omega T}\right) \norm{\theta^*-\theta_0}_2^2 + \frac{\alpha_0 G^2 \left(1 + 4 (1+\tau^{\mix}(\alpha_0) \right)}{2(1-\gamma)\omega}.
+\end{eqnarray*}
+The second inequality follows by solving the geometric series and using the fact that $\left(1-2\alpha_0(1-\gamma)\omega \right) \leq \exp^{-2\alpha_0(1-\gamma)\omega}$.
+%--------------------------------- Induction proof -----------------------------------------%
+% \paragraph{Proof of part (b):} We start with Equation \eqref{eq:theta_rec} with a decaying step-size $\alpha_t = \frac{\beta}{\lambda + t}$.
+% \begin{eqnarray}
+% \mathbb{E} \left[\norm{\theta^*-\theta_{t+1}}_2^2\right] &\leq& \left(1-2\alpha_t(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_t^2 G^2 + 2\alpha_t \mathbb{E}\left[\zeta_t(\theta_t)\right] \nonumber \\
+% &\leq& \left(1-2\alpha_t(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_t^2  G^2 + 4 G^2 \alpha_t \left(1+\tau^{\mix}(\alpha_T)\right)  \alpha_{t-\tau^{\mix(\alpha_T)}} \nonumber \\
+% &\leq& \left(1-2\alpha_t(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_t^2  G^2 + 8 G^2 \alpha_t^2 \cdot \tau^{\mix}(\alpha_T) \left(1+\tau^{\mix}(\alpha_T)\right) \nonumber
+% \end{eqnarray}
+% \begin{eqnarray}
+% \mathbb{E} \left[\norm{\theta^*-\theta_{t+1}}_2^2\right] &\leq& \left(1-2\alpha_t(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_t^2  G^2 \left(1 + 4 (1+\tau^{\mix}(\alpha_T)\right) \nonumber \\
+% &=& \left(1-2\alpha_t(1-\gamma)\omega \right) \mathbb{E} \left[\norm{\theta^*-\theta_t}_2^2\right] + \alpha_t^2  \hat{G}^2 \label{eq:contract_ineq}
+% \end{eqnarray}
+% where in going to the second inequality we use that $\tau^{\mix}(\alpha_T) \geq \tau^{\mix}(\alpha_T)$ which follows as the step-size sequence is non-increasing. We also redefine $\hat{G}^2 := G^2 \left(1 + 4 (1+\tau^{\mix}(\alpha_T)\right)$ for notational simplicity. Note, by definition of $\alpha_t = \frac{\beta}{\lambda+t}$, we have $2\alpha_t (1-\gamma) \omega < 1$ for all $t$, so Equation \eqref{eq:contract_ineq} is a contraction inequality. By definitions of $\nu, \lambda$ and $\beta$ we have
+% \[
+% \nu = \max{\{\beta^2 \hat{G}^2, \lambda \norm{\theta^*-\theta_0}_2^2\}}.
+% \]
+% This implies $\norm{\theta^*-\theta_0}_2^2 \leq \frac{\nu}{\lambda}$. We use the induction argument similar to the proof of Theorem \ref{thrm_iid}. Suppose, $\mathbb{E} \left[ \norm{\theta^*-\theta_0}_2^2 \right] \leq \frac{\nu}{\lambda+t}$. Then, 
+%--------------------------------------------------------------------------------------%
+\paragraph{Proof of part (c):} We now show the analysis for a linearly decaying stepsize using Equation \eqref{eq:basic_rec_mc_ana} as our starting point. We use the ``strong convexity'' like condition as shown in Lemma \ref{lemma:strong_conv}: $\mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] \geq w \mathbb{E}\left[ \norm{\theta^* - \theta_t}^2 \right]$ to get,
+\begin{eqnarray*}
+\mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] \leq \frac{1}{(1-\gamma)\alpha_t} \left((1-(1-\gamma)\omega \alpha_t) \mathbb{E}\left[\norm{\theta^* - \theta_t}_2^2\right] - \mathbb{E}\left[\norm{\theta^* - \theta_{t+1}}_2^2\right] + \alpha_t^2 G^2 \right) + \\
+\frac{2}{(1-\gamma)} \mathbb{E}\left[\zeta_t(\theta_t)\right]. 
+\end{eqnarray*}
+We consider a linearly decaying stepsize $\alpha_t = 1/\omega (t+1) (1-\gamma)$, simplify and sum from $t=0$ to $T-1$.
+\begin{eqnarray}
+\sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] &\leq& \underbrace{-\omega T \mathbb{E}\left[ \norm{\theta^* - \theta_T}_2^2 \right]}_{< 0} + \frac{G^2}{\omega (1-\gamma)^2} \sum_{t=0}^{T-1} \frac{1}{t} + \frac{2}{(1-\gamma)} \sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right]. \nonumber\\ \label{eq:mc_ana_rec_partb}
+\end{eqnarray}
+We use Lemma \ref{lemma:grad_bias_bd} with a decaying stepsize $\alpha_t = 1/\omega (t+1) (1-\gamma)$ to upper bound the term $\sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right]$ which can be broken into two parts:
+\begin{eqnarray}
+\sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right] = \sum_{t=0}^{\tau^{\mix}(\alpha_T)} \mathbb{E}\left[\zeta_t(\theta_t)\right] + \sum_{t=\tau^{\mix}(\alpha_T) + 1}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right].
+\end{eqnarray}
+First note that
+\begin{eqnarray*}
+\sum_{t=0}^{\tau^{\mix}(\alpha_T)} \mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& \sum_{t=0}^{\tau^{\mix}(\alpha_T)} \left( 4GR m \rho^t + LG \sum_{i=0}^t \alpha_i \right) \\
+&\leq& \frac{4GR m \rho}{1-\rho} + \frac{LG}{\omega(1-\gamma)} \sum_{t=0}^{\tau^{\mix}(\alpha_T)} \sum_{i=0}^t \frac{1}{(i+1)} \\
+&\leq& \frac{4GR m \rho}{1-\rho} + \frac{LG \tau^{\mix}(\alpha_T)}{\omega(1-\gamma)} (1 + \log \tau^{\mix}(\alpha_T))\\
+&\leq& \frac{2G^2 m \rho}{1-\rho} + \frac{2G^2 \tau^{\mix}(\alpha_T)}{\omega(1-\gamma)} (1 + \log T).
+\end{eqnarray*}
+Next, 
+\begin{eqnarray*}
+\sum_{t=\tau^{\mix}(\alpha_T) + 1}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& 2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right) \sum_{t=\tau^{\mix}(\alpha_T) + 1}^{T-1} \alpha_{t-\tau^{\mix}(\alpha_T)} \\
+&\leq& \frac{2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{(1-\gamma)\omega} \sum_{t=\tau^{\mix}(\alpha_T) + 1}^{T-1} \frac{1}{t-\tau^{\mix}(\alpha_T)} \\
+&\leq& \frac{2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{(1-\gamma)\omega} \left(1 + \log T \right).
+\end{eqnarray*}
+Combining the two parts, we get 
+\begin{eqnarray*}
+\sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right] \leq \frac{2G^2 m \rho}{1-\rho} + \frac{2G^2 \left(1+2\tau^{\mix}(\alpha_T)\right)}{\omega(1-\gamma)} (1 + \log T).
+\end{eqnarray*}
+Using this in conjunction with Equation \eqref{eq:mc_ana_rec_partb} we give final result.
+\begin{eqnarray*}
+\mathbb{E}\left[\norm{V_{\theta^*} - V_{\bar{\theta}_T}}^2_{D}\right] \leq \frac{1}{T} \sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta_t} - V_{\theta^*}}^2_{D}\right] \leq \frac{G^2}{\omega T(1-\gamma)^2} \left(1+\log T\right) + \frac{2}{(1-\gamma)} \sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right].
+\end{eqnarray*}
+Simplifying, we get 
+\begin{eqnarray*}
+\mathbb{E}\left[\norm{V_{\theta^*} - V_{\bar{\theta}_T}}^2_{D}\right] &\leq& \frac{G^2}{\omega T(1-\gamma)^2} \left(1+\log T\right) + \frac{4G^2 m \rho}{T(1-\rho)(1-\gamma)} + \frac{4G^2 \left(1 + 2 \tau^{\mix}(\alpha_T)\right)}{\omega T(1-\gamma)^2} (1 + \log T) \\
+&\leq& \frac{8 G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{\omega T(1-\gamma)^2} \left(1+\log T\right) + \frac{4G^2 m \rho}{T(1-\rho)(1-\gamma)}.
+\end{eqnarray*}
+Additionally, we also have a convergence rate of $\mathcal{O}(\log T/T)$ for the iterate $\theta_T$ itself.
+\begin{eqnarray*}
+\label{eq:mc_theta_result}
+\mathbb{E}\left[\norm{\theta^* - \theta_T}_2^2 \right] &\leq& \frac{8 G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{\omega^2 T(1-\gamma)^2} \left(1+\log T\right) + \frac{4G^2 m \rho}{\omega T(1-\rho)(1-\gamma)}.
+\end{eqnarray*}
+%----------------------------------- Old proof ---------------------------------------------%
+% \paragraph{Proof of part (b):} We now show the analysis for a linearly decaying stepsize using Equation \eqref{eq:basic_rec_mc_ana} as our starting point. We use the ``strong convexity'' like condition as shown in Lemma \ref{lemma:strong_conv}: $\mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] \geq w \mathbb{E}\left[ \norm{\theta^* - \theta_t}^2 \right]$ to get,
+% \begin{eqnarray*}
+% \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] \leq \frac{1}{(1-\gamma)\alpha_t} \left( (1-(1-\gamma)\omega \alpha_t ) \mathbb{E}\left[ \norm{\theta^* - \theta_t}^2 \right] - \mathbb{E}\left[ \norm{\theta^* - \theta_{t+1}}^2 \right] + \alpha_t^2 G^2 \right) + \\
+% \frac{2}{(1-\gamma)} \mathbb{E}\left[\zeta_t(\theta_t)\right]. 
+% \end{eqnarray*}
+% We consider a linearly decaying stepsize $\alpha_t = 1/\omega t (1-\gamma)$, simplify and sum from $t=0$ to $T-1$.
+% \begin{eqnarray}
+% \sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta^*} - V_{\theta_t}}^2_{D}\right] &\leq& \underbrace{-\omega \mathbb{E}\left[ \norm{\theta^* - \theta_T}^2 \right]}_{< 0} + \frac{G^2}{\omega (1-\gamma)^2} \sum_{t=0}^{T-1} \frac{1}{t} + \frac{2}{(1-\gamma)} \sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right]. \nonumber\\ \label{eq:mc_ana_rec_partb}
+% \end{eqnarray}
+% We use Lemma \ref{lemma:grad_bias_bd} with a decaying stepsize $\alpha_t = 1/\omega t (1-\gamma)$ to upper bound the term $\sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right]$. 
+% \begin{eqnarray*}
+% \sum_{t=0}^{T-1} \mathbb{E}\left[\zeta_t(\theta_t)\right] &\leq& 2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right) \sum_{t=0}^{T-1} \alpha_{t-\tau^{\mix}(\alpha_T)} \\
+% &\leq& \frac{2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{(1-\gamma)\omega} \sum_{t=0}^{T-1} \frac{1}{t-\tau^{\mix}(\alpha_T)} \\
+% &\leq& \frac{2G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{(1-\gamma)\omega} \left(1 + \log(T-\tau^{\mix}(\alpha_T)) \right)
+% \end{eqnarray*}
+% Using this in conjunction with Equation \eqref{eq:mc_ana_rec_partb} we get our final result.
+% \begin{eqnarray*}
+% \mathbb{E}\left[\norm{V_{\theta^*} - V_{\bar{\theta}_T}}^2_{D}\right] \leq \frac{1}{T} \sum_{t=0}^{T-1} \mathbb{E}\left[\norm{V_{\theta_t} - V_{\theta^*}}^2_{D}\right] &\leq& \frac{G^2}{\omega T(1-\gamma)^2} \left(1+\log T\right) + \frac{4G^2 \left(1 + \tau^{\mix}(\alpha_T)\right)}{\omega T(1-\gamma)^2} 
+% \end{eqnarray*}
+% Additionally, we also have a convergence rate of $\mathcal{O}(\log T/T)$ for the iterate $\theta_T$ itself.
+% \begin{eqnarray*}
+% \mathbb{E}\left[\norm{\theta^* - \theta_T}^2 \right] &\leq& \frac{G^2}{\omega^2 T (1-\gamma)^2} (1+\log T) + \frac{8GR}{\omega T(1-\gamma)} + \frac{ \log(Tm)}{\log(1/\rho)} \frac{4G^2 \beta}{\omega^2 T (1-\gamma)^2}. \label{eq:mc_theta_result}
+% \end{eqnarray*}
+\end{proof}
+
+\subsection{Choice of the projection radius} 
+\label{sec:comment_projection}
+We briefly comment on the choice of the projection radius $R$. Note that in the analysis, we assumed that the limiting value $\theta^*$ lies within the projected ball: $\norm{\theta^*}_2 \leq R$. But we don't know $\theta^*$ and therefore $R$ is unknown. Can we estimate an upper bound on $\norm{\theta^*}_2$? It turns out that we can use Lemma \ref{lemma:BO_prop} which relates the value function at the limit of convergence $V_{\theta^*}$ to $V_{\mu}$, the optimal value function under policy $\mu$. To see this, note that for uniformly bounded rewards, 
+\begin{eqnarray*}
+V_{\mu} \leq \frac{r_{\max}}{(1-\gamma)} \mathbbm{1},
+\end{eqnarray*}
+where $V_{\mu}$ is the true value function and $\mathbbm{1}$ is the vector of ones. This implies that
+\begin{eqnarray*}
+\norm{V_{\mu}}_D \leq \frac{r_{\max}}{(1-\gamma)}.
+\end{eqnarray*}
+as $D$ is a diagonal matrix with $D \preceq I$. Lemma \ref{lemma:BO_prop} along with simple matrix inequalities enable a simple upper bound on $\norm{\theta^*}_2$. 
+\begin{eqnarray*}
+\norm{V_{\theta^*} - V_{\mu} }_{D} &\leq& \frac{1}{\sqrt{1-\gamma^2}} \norm{V_{\mu} - \Pi_{D} V_{\mu}}_{D} \\
+&\leq& \frac{1}{\sqrt{1-\gamma^2}} \norm{ V_{\mu}}_{D}.
+\end{eqnarray*}
+where $\norm{V_{\mu} - \Pi_{D} V_{\mu}}_{D} \leq \norm{ V_{\mu}}_{D}$ holds by the Pythagoras theorem. By reverse triangle inequality we have $\abs{ \norm{V_{\theta^*}}_D - \norm{V_{\mu}}_D } \leq \norm{V_{\theta^*} - V_{\mu} }_{D}$. Thus, 
+\begin{eqnarray*}
+% \abs{ \norm{V_{\theta^*}}_D - \norm{V_{\mu}}_D } &\leq& \norm{V_{\theta^*} - V_{\mu} }_{D} \\
+\norm{V_{\theta^*}}_D  &\leq& \norm{V_{\theta^*} - V_{\mu} }_{D} + \norm{V_{\mu}}_D \\
+&\leq& \frac{2}{\sqrt{1-\gamma^2}} \norm{ V_{\mu} }_{D} \\
+&\leq& \frac{2}{\sqrt{1-\gamma^2}} \frac{r_{\max}}{(1-\gamma)}.
+\end{eqnarray*}
+Note that $V_{\theta^*} = \Phi \theta^* \in \mathbb{R}^n$ with $\Phi \in \mathbb{R}^{n \times d}, \, \theta^* \in \mathbb{R}^d$. Thus $\norm{V_{\theta^*}}_D = \norm{\Phi \theta^*}_D$. We can lower bound $\norm{\Phi \theta^*}_D$ by
+\begin{eqnarray*}
+% \norm{\Phi \theta^*}_D &\geq& \sigma_{\min}(\sqrt{D}\Phi) \cdot \norm{\theta^*} \\
+\quad \norm{\Phi \theta^*}^2_D &\geq& \lambda_{\min}(\Phi^\top D \Phi) \cdot \norm{\theta^*}_2^2 \\
+&=& \omega \norm{\theta^*}_2^2 
+\end{eqnarray*}
+Therefore, 
+\begin{eqnarray*}
+% \lambda_{\min}(\Phi^\top D \Phi) \cdot \norm{\theta^*}^2 &\leq& \norm{\Phi \theta^*} \leq \frac{4}{(1-\gamma^2)} \frac{r_{\max}^2}{(1-\gamma)^2} \\
+\norm{\theta^*}_2^2 \leq \frac{\norm{V_{\mu}}_{D}^2}{\omega} \leq \frac{4}{\omega(1-\gamma^2)} \frac{r_{\max}^2}{(1-\gamma)^2} := R^2.
+\end{eqnarray*}
+It is important to remark here that this bound is \emph{problem dependent} as it depends on $\omega = \lambda_{\min}(\Phi^\top D \Phi)$, the minimum eigenvalue of the steady-state feature covariance matrix $\Sigma$. We believe that estimating $\omega$ online makes the projection step practical and easy to implement.
+
+
+\end{document}

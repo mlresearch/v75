@@ -1,0 +1,735 @@
+\section{Algorithms and Information-Theoretic Thresholds}
+
+\label{s:info}
+
+In this section, we give the algorithms and information-theoretic lower bounds necessary to prove Theorem \ref{lem:2a}. Specifically, for each problem, we give an information-theoretic lower bound, an inefficient algorithm that achieves the information-theoretic lower bound and a polynomial-time algorithm. As the computational lower bounds and reductions previously presented are the main novel contribution of the paper, the details in this section are succinctly presented only as needed for Theorem \ref{lem:2a}. 
+
+Many of the problems we consider have pre-existing algorithms and information-theoretic lower bounds. In these cases, we cite the relevant literature and state the results needed for Theorem \ref{lem:2a}. Note that we only require algorithms and lower bounds optimal up to sub-polynomial factors for Theorem \ref{lem:2a}. For some problems, we only give an information-theoretic lower bound for detection and show that this implies the recovery lower bound in the next section.
+
+%NOTE: Try to make sure all algorithms for achievability have guarantees up to the regime where $k = \Theta(n)$ as well. This will be handy for detection-recovery reductions (do the cloning and applying an algorithm once the set has been produced method). Maybe before going into particular problems, give general references to information-theoretic lower bounds papers e.g. Vershynin's paper.
+
+\subsection{Biclustering, Planted Dense Subgraph and Independent Set}
+
+\paragraph{Information-Theoretic Lower Bounds.} The information-theoretic lower bound for $\textsc{BC}_D$ was shown in \cite{butucea2013detection}. More precisely, they showed the following theorem re-written in our notation. Note that they showed a lower bound for a composite hypothesis testing version of $\textsc{BC}_D$, but took a uniform prior over the support of the hidden submatrix, matching our formulation.
+
+\begin{theorem}[Theorem 2.2 in \cite{butucea2013detection}]
+Suppose that $k, \mu$ are such that as $n \to \infty$, it holds that $k/n \to 0$ and one of the following holds
+$$\frac{\mu k^2}{n} \to 0 \quad \text{and} \quad \limsup_{n \to \infty} \frac{\mu}{2\sqrt{k^{-1} \log(n/k)}} < 1$$
+Then if $M_n$ denotes an instance of $\textsc{BC}_D(n, k, \mu)$,
+$$\TV\left( \mL_{H_0}(M_n), \mL_{H_1}(M_n) \right) \to 0 \quad \text{as} \quad n \to \infty$$
+\end{theorem}
+
+This corresponds exactly to the information-theoretic barrier of $\mu \ll \frac{1}{\sqrt{k}}$ and $\mu \ll \frac{n}{k^2}$. We remark that the information-theoretic lower bounds for biclustering can also be deduced from the information-theoretic lower bounds for planted dense subgraph with $q = 1/2$ using the reduction from Lemma \ref{lem:bcrec} and the data-processing inequality. Tight information-theoretic lower bounds for $\textsc{PDS}_D$ and $\textsc{PIS}_D$ can be deduced from a mild adaptation of \cite{hajek2015computational}. The argument from the proof of Proposition 3 in \cite{hajek2015computational} yields the following lemma.
+
+\begin{lemma}[Proposition 3 in \cite{hajek2015computational}]
+If $G$ is an instance of $\textsc{PDS}_D(n, k, p, q)$, then
+$$\TV\left( \mL_{H_0}(G), \mL_{H_1}(G) \right) \le \frac{1}{2} \sqrt{\bE \left[ \exp\left( \frac{(p - q)^2}{q(1 - q)} \cdot H^2 \right) - 1 \right]}$$
+where $H \sim \text{Hypergeometric}(n, k, k)$.
+\end{lemma}
+
+This lemma can be derived by combining the $\chi^2$ computation in the proof of Proposition 3 with Cauchy-Schwarz. In \cite{hajek2015computational}, Proposition 3 is specifically for the case when $p = cq$ where $c > 1$ and also for a mixture over $\textsc{PDS}_D(n, K, p, q)$ where $K \sim \text{Bin}(n, k/n)$. However, the first step in the proof of Proposition 3 is to condition on $K$ and prove this bound for each fixed $K$. When combined with Lemma 14 from \cite{hajek2015computational}, we obtain the desired information-theoretic lower bounds.
+
+\begin{lemma}[Lemma 14 in \cite{hajek2015computational}] \label{lem:hgm}
+There is an increasing function $\tau : \mathbb{R}^+ \to \mathbb{R}^+$ with $\lim_{x \to 0^+} \tau(x) = 1$ and
+$$\bE[\exp(\lambda H^2)] \le \tau(b)$$
+where $H \sim \text{Hypergeometric}(n, k, k)$, $\lambda = b \cdot \max \left\{ \frac{1}{k} \log \left( \frac{en}{k} \right), \frac{n^2}{k^4} \right\}$ and $0 < b < (16e)^{-1}$.
+\end{lemma}
+
+Combining these two lemmas and setting $b$ as
+$$b = \frac{(p - q)^2}{q(1 - q)} \cdot \left( \max \left\{ \frac{1}{k} \log \left( \frac{en}{k} \right), \frac{n^2}{k^4} \right\} \right)^{-1}$$
+yields the following theorem on the information-theoretic lower bound for the general regime of $\textsc{PDS}_D$.
+
+\begin{theorem}
+Suppose $p, q, k$ are such that as $n \to \infty$, it holds that $\frac{(p - q)^2}{q(1 - q)} \ll \frac{1}{k}$ and $\frac{(p - q)^2}{q(1 - q)} \ll \frac{n^2}{k^4}$. Then if $G_n$ is an instance of $\textsc{PDS}_D(n, k, p, q)$, it follows that
+$$\TV\left( \mL_{H_0}(G_n), \mL_{H_1}(G_n) \right) \to 0 \quad \text{as} \quad n \to \infty$$
+\end{theorem}
+
+Note that when $p = cq$ for some constant $c > 1$ or when $p = 0$, this barrier is $q \ll \frac{1}{k}$ and $q \ll \frac{n^2}{k^4}$. This recovers the information-theoretic lower bounds for $\textsc{PIS}_D$ and $\textsc{PDS}_D$ when $p = cq$. The information-theoretic lower bounds for the weak and strong recovery variants $\textsc{BC}_R$ and $\textsc{PDS}_R$ are derived in \cite{hajek2016information}. The following theorems of \cite{hajek2016information} characterize these lower bounds.
+
+\begin{theorem}[Corollary 2 in \cite{hajek2016information}] \label{thm:infbcrec}
+Suppose $k$ and $\mu$ are such that as $n \to \infty$,
+\begin{equation} \label{eqn:gaussweak}
+k\mu^2 \to \infty \quad \text{and} \quad \liminf_{n \to \infty} \frac{(k-1)\mu^2}{\log \frac{n}{k}} > 4
+\end{equation}
+then weak recovery in $\textsc{BC}_R(n, k, \mu)$ is possible. If weak recovery is possible, then (\ref{eqn:gaussweak}) holds as a non-strict inequality.
+\end{theorem}
+
+\begin{theorem}[Corollary 4 in \cite{hajek2016information}] \label{thm:bicexact}
+Suppose $k$ and $\mu$ are such that as $n \to \infty$, condition (\ref{eqn:gaussweak}) holds and
+\begin{equation} \label{eqn:gaussexact}
+\liminf_{n \to \infty} \frac{k\mu^2}{\left( \sqrt{2 \log n} + \sqrt{2 \log k} \right)^2} > 1
+\end{equation}
+then exact recovery in $\textsc{BC}_R(n, k, \mu)$ is possible. If exact recovery is possible, then (\ref{eqn:gaussweak}) and (\ref{eqn:gaussexact}) hold as a non-strict inequalities.
+\end{theorem}
+
+\begin{theorem}[Corollary 1 in \cite{hajek2016information}]
+Suppose $p$ and $q$ are such that the ratios $\log \frac{p}{q}$ and $\log \frac{1 - p}{1 - q}$ are bounded as $n \to \infty$. If $k$ satisfies
+\begin{equation} \label{eqn:bernweak}
+k \cdot \KL(p, q) \to \infty \quad \text{and} \quad \liminf_{n \to \infty} \frac{k \cdot \KL(p, q)}{\log \frac{n}{k}} > 2
+\end{equation}
+then there is an algorithm achieving weak recovery for $\textsc{PDS}_R(n, k, p, q)$ is possible. If weak recovery is possible, then (\ref{eqn:bernweak}) holds as a non-strict inequality.
+\end{theorem}
+
+\begin{theorem}[Corollary 3 in \cite{hajek2016information}] \label{thm:pdsexact}
+Suppose $p$ and $q$ are such that the ratios $\log \frac{p}{q}$ and $\log \frac{1 - p}{1 - q}$ are bounded as $n \to \infty$. If $k$ satisfies
+$$\tau = \frac{\log \frac{1 - q}{1 - p} + \frac{1}{k} \log \frac{n}{k}}{\log \frac{p(1 - q)}{q(1 - p)}}$$
+If (\ref{eqn:bernweak}) holds and
+\begin{equation} \label{eqn:bernexact}
+\liminf_{n \to \infty} \frac{k \cdot \KL(\tau, q)}{\log n} > 1
+\end{equation}
+then exact recovery in $\textsc{PDS}_R(n, k, p, q)$ is possible. If exact recovery is possible, then (\ref{eqn:bernweak}) and (\ref{eqn:bernexact}) hold as non-strict inequalities.
+\end{theorem}
+
+These theorems show that both weak and strong recovery for $\textsc{BC}_R(n, k, \mu)$ are information-theoretically impossible when $\mu \lesssim \frac{1}{\sqrt{k}}$ by the first condition in (\ref{eqn:gaussweak}). Now note that if $p - q = O(q)$ and $q \to 0$ as $n \to \infty$, then
+\begin{align*}
+\KL(p, q) &= p \log \left( \frac{p}{q} \right) + (1 - p) \cdot \log \left( \frac{1 - p}{1 - q} \right) \\
+&= p \cdot \left( \frac{p - q}{q} \right) - O\left( p \cdot \left( \frac{p - q}{q} \right)^2 \right) - (1 - p) \cdot \left( \frac{p - q}{1 - q} \right) - O\left( (1 - p) \cdot \left( \frac{p - q}{1 - q} \right)^2 \right) \\
+&= \frac{(p - q)^2}{q(1 - q)} + O\left( p \cdot \left( \frac{p - q}{q} \right)^2 + (p - q)^2 \right) = O\left( \frac{(p - q)^2}{q(1 - q)} \right)
+\end{align*}
+as $n \to \infty$. Therefore it follows that if $p - q = O(q)$, $q \to 0$ as $n \to \infty$ and $\log \frac{p}{q}$ and $\log \frac{1 - p}{1 - q}$ are bounded as $n \to \infty$ then both weak and strong recovery in $\textsc{PDS}_R(n, k, p, q)$ are information-theoretically impossible if $\frac{(p - q)^2}{q(1 - q)} \lesssim \frac{1}{k}$ by the first condition in (\ref{eqn:bernweak}). Note that these theorems of \cite{hajek2016information} do not imply the necessary information-theoretic lower bound for $\textsc{PIS}_R$ since $p = 0$ violates the condition that $\log \frac{p}{q}$ is bounded. However, the genie argument in the necessary part of Theorem 1 in \cite{hajek2016information} can be mildly adapted to obtain the following theorem.
+
+\begin{theorem}
+If $k \ge 2$, $q \ll \frac{1}{k}$ and $n - k = \Omega(n)$ as $n \to \infty$, then weak recovery in $\textsc{PIS}_R(n, k, q)$ is impossible.
+\end{theorem}
+
+\begin{proof}
+Let $G \sim G_I(n, k, q)$ where $S \subseteq [n]$ denotes the indices of the planted independent set in $G$ and satisfies $|S| = k$. Fix a vertex $i \in [n]$ and consider a random $J \in [n]$ where $J$ is chosen uniformly at random from $S$ if $i \not \in S$ and $J$ is chosen uniformly at random from $S^C$ if $i \in S$. Now consider the binary hypothesis testing problem with observations $(G, J, S \backslash \{i, J\})$ and the task of distinguishing between $H_0 : i \not\in S$ and $H_1 : i \in S$.
+
+Since $S$ is chosen uniformly at random, it follows that the identity of the vertex $J$ is uniformly at random chosen from $[n] \backslash \{ i\}$ and is independent of the event $\{ i \in S\}$. It also holds that conditioned on $J$ and the outcome of the event $\{ i \in S\}$, the set $S \backslash \{i, J\}$ is uniformly distributed on $(k-1)$-subsets of $[n] \backslash \{i, J\}$. Therefore for any $J \in [n] \backslash \{i\}$ and $(k-1)$ subset $S\backslash \{i, J\}$ of $[n]\backslash \{i, J\}$, it holds that
+\begin{align*}
+\frac{\bP[G, J, S \backslash \{i, J\} | i \in S]}{\bP[G, J, S \backslash \{i, J\} | i \not\in S]} &= \frac{\bP[G, S \backslash \{i, J\} | i \in S, J]}{\bP[G, S \backslash \{i, J\} | i \not\in S, J]} \\
+&= \frac{\bP[G | i \in S, J, S \backslash \{i, J\}]}{\bP[G | i \not\in S, J, S \backslash \{i, J\}]} = \prod_{k \in S \backslash \{i, J\}} \frac{(1 - A_{ik}) \cdot q^{A_{Jk}}(1 - q)^{1 - A_{Jk}}}{(1 - A_{Jk}) \cdot q^{A_{ik}}(1 - q)^{1 - A_{ik}}}
+\end{align*}
+where $A = A(G)$ is the adjacency matrix of $G$. From this factorization, it follows that the vector $v$ of values $A_{ik}$ and $A_{Jk}$ for all $k \in S\backslash \{i, J\}$ is therefore a sufficient statistic for this binary hypothesis testing problem. Furthermore, if $i \in S$ then $v$ has its first $k - 1$ coordinates equal to zero and its last $k - 1$ coordinates distributed as $\text{Bern}(q)^{\otimes (k - 1)}$. If $i \not \in S$, then $v$ has its first $k - 1$ coordinates distributed as $\text{Bern}(q)^{\otimes (k - 1)}$ and its last $k - 1$ coordinates equal to zero.  Thus the given hypothesis testing problem is equivalent to testing between these two distributions. Note that
+$$\bP_{H_0}[v = 0] = \bP_{H_1}[v = 0] = (1 - q)^{k - 1} \ge 1 - (k - 1)q \to 1 \quad \text{as } n \to \infty$$
+by Bernoulli's inequality if $k \ge 2$. Taking any coupling of $\mL_{H_0}(v)$ and $\mL_{H_1}(v)$ such that the events $\{ v = 0 \}$ under $H_0$ and $H_1$ coincide yields that
+$$\TV\left( \mL_{H_0}(v), \mL_{H_1}(v) \right) \le 1 - (1 - q)^{k-1} \to 0 \quad \text{as } n \to \infty$$
+Now let $p_{\text{E1}}$ and $p_{\text{E2}}$ be the optimal Type I and Type II error probabilities. Note that the prior on the hypotheses $H_0 : i \in S$ and $H_1 : i \not \in S$ is $\bP[i \in S] = k/n$. Let $\mathcal{E}$ be the optimal average probability of testing error under this prior. Also note that $p_{\text{E1}} + p_{\text{E2}} = 1 - \TV\left( \mL_{H_0}(v), \mL_{H_1}(v) \right) \to 1$ as $n \to \infty$.
+
+Now assume for contradiction that there is some algorithm $A : \mG_n \to \binom{[n]}{k}$ that achieves weak recovery with $\bE[|S \cap A(G)|] = k - o(k)$ as $n \to \infty$. It follows that
+\begin{align*}
+k - \bE[|S \cap A(G)|] &= \sum_{i = 1}^n \bP\left[ \mathbf{1}_{\{i \in A(G)\}} \neq \mathbf{1}_{\{i \in S\}} \right] \ge \sum_{i = 1}^n \min_{\phi_i(G)} \bP\left[ \phi_i(G) \neq \mathbf{1}_{\{i \in S\}} \right] \\
+&\ge \sum_{i = 1}^n \min_{\phi_i(G, J, S\backslash \{i, J\})} \bP\left[ \phi_i(G, J, S\backslash \{i, J\}) \neq \mathbf{1}_{\{i \in S\}} \right] = n \mathcal{E}
+\end{align*}
+The first minimum is over all functions $\phi_i : \mG_n \to \{0, 1\}$ that only observe the graph $G$, while the second minimum is over all functions $\phi_i$ that also observe $J$ and $S \backslash \{i, J\}$. From these inequalities, it must follow that $\mathcal{E} = o(k/n)$ which implies the test achieving $\mathcal{E}$ must have Type I and Type II errors that are $o(1)$ as $n \to \infty$ since $1 - \frac{k}{n} = \Omega(1)$. This implies that $p_{\text{E1}} + p_{\text{E2}} = o(1)$, which is a contradiction.
+\end{proof}
+
+\paragraph{Information-Theoretically Optimal Algorithms.} An algorithm achieving the information-theoretic lower bound for $\textsc{BC}_D$ was also shown in \cite{butucea2013detection}. Their algorithm outputs the hypothesis $H_1$ if either the maximum sum over all $k \times k$ submatrices of the input exceeds a threshold or if the total sum of the input exceeds another threshold. The guarantees of this algorithm are summarized in the following theorem.
+
+\begin{theorem}[Theorem 2.1 in \cite{butucea2013detection}]
+Suppose that $k, \mu$ are such that as $n \to \infty$, it holds that $k/n \to 0$ and one of the following holds
+$$\frac{\mu k^2}{n} \to \infty \quad \text{or} \quad \limsup_{n \to \infty} \frac{\mu}{2\sqrt{k^{-1} \log(n/k)}} > 1$$
+Then there is an algorithm solving $\textsc{BC}_D(n, k, \mu)$ with Type I$+$II error tending to zero as $n \to \infty$.
+\end{theorem}
+
+A very similar algorithm is optimal for $\textsc{PDS}_D$. Generalizing the concentration bounds in the proof of Proposition 4 in \cite{hajek2015computational} to any $p, q$ with $p - q = O(q)$ and $q \to 0$ yields the following theorem.
+
+\begin{theorem} \label{thm:pdsdet}
+Suppose that $p$, $q$ and $k$ are such that $|p - q| = O(q)$, $q \to 0$ and
+$$\frac{(p - q)^2}{q(1 - q)} = \omega\left( \frac{n^2}{k^4} \right) \quad \text{or} \quad \frac{(p - q)^2}{q(1 - q)} = \omega\left(\frac{\log(n/k)}{k}\right)$$
+as $n \to \infty$. Then there is an algorithm solving $\textsc{PDS}_D(n, k, p, q)$ with Type I$+$II error tending to zero as $n \to \infty$.
+\end{theorem}
+
+\begin{proof}
+First suppose that $p > q$. Let $G$ be an instance of $\textsc{PDS}_D(n, k, p, q)$. Note that under $H_0$, the edge count $|E(G)| \sim \text{Bin}( \binom{n}{2}, q )$ and under $H_1$, $|E(G)|$ is the independent sum of $\text{Bin}( \binom{n}{2} - \binom{k}{2}, q )$ and $\text{Bin}( \binom{k}{2}, p )$. By Bernstein's inequality, we have that
+\begin{align*}
+\bP_{H_0}\left[ |E(G)| > \binom{n}{2} q + \binom{k}{2} \cdot \frac{p - q}{2} \right] &\le \exp\left( - \frac{\binom{k}{2}^2 ( p - q)^2/4}{2\binom{n}{2} q + \binom{k}{2} \cdot (p - q)/3} \right) \\
+&= \exp\left( - \Omega\left( \frac{k^4}{n^2} \cdot \frac{(p-q)^2}{q(1 - q)} \right) \right)
+\end{align*}
+By the multiplicative Chernoff bound, it follows that
+\begin{align*}
+\bP_{H_1}\left[ |E(G)| \le \binom{n}{2} q + \binom{k}{2} \cdot \frac{p - q}{2} \right] &\le \exp\left( - \frac{\binom{k}{2}^2 (p - q)^2/4}{2\binom{n}{2} q + 2 \binom{k}{2} (p - q)}\right) \\
+&= \exp\left( - \Omega\left( \frac{k^4}{n^2} \cdot \frac{(p-q)^2}{q(1 - q)} \right) \right)
+\end{align*}
+Now let $X$ be the maximum number of edges over all subgraphs of $G$ on $k$ vertices. By a union bound and Bernstein's inequality
+\begin{align*}
+\bP_{H_0}\left[ X \ge \binom{k}{2} \cdot \frac{p + q}{2} \right] &\le \sum_{R \in \binom{[n]}{k}} \bP_{H_0} \left[ \left|E\left(G[R]\right)\right| \ge \binom{k}{2} \cdot \frac{p + q}{2} \right] \\
+&\le \left( \frac{en}{k} \right)^k \exp \left( - \frac{\binom{k}{2}^2 ( p - q)^2/4}{2\binom{k}{2} q + \binom{k}{2} \cdot (p - q)/3} \right) \\
+&= \exp\left( k \log (en/k) - \Omega\left( k^2 \cdot \frac{(p-q)^2}{q(1 - q)} \right) \right)
+\end{align*}
+where the second inequality uses the fact that for any fixed $R$, $\left|E\left(G[R]\right)\right| \sim \text{Bin}(\binom{k}{2}, q)$. Under $H_1$, it holds that if $S$ is the vertex set of the latent planted dense subgraph then $|E(G[S])| \sim \text{Bin}(\binom{k}{2}, p)$. By the multiplicative Chernoff bound, it follows that
+\begin{align*}
+\bP_{H_1}\left[X < \binom{k}{2} \cdot \frac{p + q}{2} \right] &\le \bP_{H_1}\left[|E(G[S])| < \binom{k}{2} \cdot \frac{p + q}{2} \right] \\
+&\le \exp\left( - \frac{\binom{k}{2}^2 (p - q)^2/4}{2\binom{k}{2} p} \right) \\
+&= \exp\left( - \Omega\left( k^2 \cdot \frac{(p-q)^2}{q(1 - q)} \right) \right)
+\end{align*}
+Therefore the test that outputs $H_1$ if $|E(G)| > \binom{n}{2} q + \binom{k}{2} \cdot \frac{p - q}{2}$ or $X \ge \binom{k}{2} \cdot \frac{p + q}{2}$ and $H_0$ otherwise has Type I$+$II error tending to zero as $n \to \infty$ if one of the two given conditions holds. In the case when $p < q$, this test with inequalities reversed can be shown to have Type I$+$II error tending to zero as $n \to \infty$ by analogous concentration bounds.
+\end{proof}
+
+This theorem gives the necessary algorithm matching the information-theoretic lower bound for $\textsc{PDS}_D$ in the general regime $p - q = O(q)$, including $p = cq$ for some constant $c > 1$. The algorithm needed for $\textsc{PIS}_D$ can be obtained by setting $p = 0$ in this theorem. An algorithm matching the information-theoretic lower bound for $\textsc{BC}_R$ follows from Theorem \ref{thm:bicexact}, which asserts that exact recovery is possible as long as
+$$\mu > (1 + \epsilon) \cdot \frac{\sqrt{2\log n} + \sqrt{2 \log k}}{\sqrt{k}}$$
+for some fixed $\epsilon > 0$. Specializing Corollary 2.4 in \cite{chen2016statistical} to the case of $r = 1$ clusters yields an analogous algorithm for $\textsc{PDS}_R$.
+
+\begin{theorem}[Corollary 2.4 in \cite{chen2016statistical}]
+Suppose that $p, q$ and $k$ are such that $p > q$ and
+$$\frac{(p - q)^2}{q(1 - q)} \ge \frac{C\log n}{k}, \quad q \ge \frac{C\log k}{k} \quad \text{and} \quad kq \log \frac{p}{q} \ge C \log n$$
+for some sufficiently large constant $C > 0$. Then the maximum likelihood estimator for the planted dense subgraph in $\textsc{PDS}_R(n, k, p, q)$ solves strong recovery with error probability tending to zero.
+\end{theorem}
+
+This implies that if $p > q$, $p - q = O(q)$, $q \to 0$ and $\frac{(p - q)^2}{q(1 - q)} \gtrsim \frac{1}{k}$ as $n \to \infty$, then exact recovery is possible. Specializing the result to $p = 1$ and applying this algorithm to the complement graph of a $\textsc{PIS}_R$ instance yields that there is an algorithm for $\textsc{PIS}_R$ if $q \gtrsim \frac{1}{k}$. We remark that the necessary algorithm for $\textsc{PDS}_R$ can also be deduced from Theorem \ref{thm:pdsexact}. However, the constraints that $\log \frac{p}{q}$ and $\log \frac{1 - p}{1 - q}$ must be bounded does not yield the desired algorithm for $\textsc{PIS}_R$.
+
+\paragraph{Polynomial-Time Algorithms.} The polynomial time algorithm matching our planted clique lower bound for $\textsc{BC}_D$ is another simple algorithm thresholding the maximum and sum of the input matrix. Given an instance $M$ of $\textsc{BC}_D(n, k, \mu)$, let $\max(M) = \max_{i, j \in [n]} M_{ij}$ and $\text{sum}(M) =  \sum_{i, j = 1}^n M_{ij}$. Specializing Lemma 1 of \cite{ma2015computational} to our setup yields the following lemma.
+
+\begin{lemma}[Lemma 1 in \cite{ma2015computational}]
+If $M$ is an instance of $\textsc{BC}_D(n, k, \mu)$ then
+$$\bP_{H_0} \left[ \textnormal{sum}(M) > \frac{\mu k^2}{2} \right] + \bP_{H_1} \left[ \textnormal{sum}(M) \le \frac{\mu k^2}{2} \right] \le \exp \left( - \frac{\mu^2 k^4}{8n^2} \right)$$
+If $c > 0$ is any absolute constant and $\tau = \sqrt{(4 + c) \log n}$, then
+$$\bP_{H_0} \left[ \max(M) > \tau \right] + \bP_{H_1} \left[ \max(M) \le \tau \right] \le n^{-c/2} + \exp \left( - \frac{1}{2} \left| \mu - \tau \right|_+ \right)$$
+\end{lemma}
+
+It follows that the algorithm that outputs $H_1$ if $\max(M) > \sqrt{5 \log n}$ or $\text{sum}(M) > \frac{\mu k^2}{2}$ solves $\textsc{BC}_D$ with Type I$+$II error tending to zero as $n \to \infty$ if either $\mu \ge \sqrt{6 \log n}$ or $\mu = \omega\left(\frac{n}{k^2}\right)$. By Theorem \ref{thm:pdsdet}, if $\frac{(p - q)^2}{q(1 - q)} = \omega\left( \frac{n^2}{k^4} \right)$ it follows that thresholding the number of edges of an instance $G$ of $\textsc{PDS}_D(n, k, p, q)$ has Type I$+$II error tending to zero as $n \to \infty$. Setting $p = 0$ recovers the computational barrier of $\textsc{PIS}_D$. Polynomial-time algorithms for the recovery variants of these problems were given in \cite{chen2016statistical}. The following are three theorems of \cite{chen2016statistical} written in our notation.
+
+\begin{theorem}[Theorem 2.5 in \cite{chen2016statistical}]
+A polynomial-time convex relaxation of the MLE solves exact recovery in $\textsc{PDS}_R(n, k, p, q)$ with error probability at most $n^{-10}$ if $p > q$ and
+$$k^2(p - q) \ge C\left[ p(1 - q) k \log n + q(1 - q) n \right]$$
+where $C > 0$ is a fixed constant.
+\end{theorem}
+
+\begin{theorem}[Theorem 3.3 in \cite{chen2016statistical}]
+A polynomial-time convex relaxation of the MLE solves exact recovery in $\textsc{BC}_R(n, k, \mu)$ with error probability at most $n^{-10}$ if
+$$\mu^2 \ge C\left[ \frac{\log n}{k} + \frac{n}{k^2} \right]$$
+where $C > 0$ is a fixed constant.
+\end{theorem}
+
+\begin{theorem}[Theorem 3.3 in \cite{chen2016statistical}]
+A polynomial-time element-wise thresholding algorithm solves exact recovery in $\textsc{BC}_R(n, k, \mu)$ with error probability at most $n^{-3}$ if $\mu^2 \ge C \log n$ where $C > 0$ is a fixed constant.
+\end{theorem}
+
+Since $k \log n = \tilde{O}(n)$ and $p = O(q)$ if $p - q = O(q)$, the first theorem above implies that exact recovery is possible in polynomial time for the general regime of $\textsc{PDS}_R$ if $\frac{(p - q)^2}{q(1 - q)} \gg \frac{n}{k^2}$. Taking the complement graph of the input and setting $p = 1$ and $q = 1 - \tilde{\Theta}(n^{-\alpha})$ in the first theorem yields that $\text{PIS}_R(n, k, 1 - q)$ can be solved in polynomial time if $1 - q \gg \frac{n}{k^2}$. The second and third theorems above imply that exact recovery for $\textsc{BC}_R$ is possible in polynomial time if $\mu \gg \frac{1}{\sqrt{k}}$ or $\mu \gg 1$. These polynomial-time algorithms for detection and recovery match the computational lower bounds shown in previous sections.
+
+\subsection{Rank-1 Submatrix, Sparse Spiked Wigner and Subgraph SBM}
+
+\paragraph{Information-Theoretic Lower Bounds.} Applying a similar $\chi^2$ computation as in information-theoretic lower bounds for sparse PCA and planted dense subgraph, we can reduce showing an information-theoretic lower bound for $\textsc{SROS}_D$ to bounding an MGF. In the case of $\textsc{SROS}_D$, this MGF turns out to be that of the square of a symmetric random walk on $\mathbb{Z}$ terminated after a hypergeometric number of steps. An asymptotically tight upper bound on this MGF was obtained in \cite{cai2015optimal} through the following lemma.
+
+\begin{lemma} [Lemma 1 in \cite{cai2015optimal}] \label{lem:hgmw}
+Suppose that $d \in \mathbb{N}$ and $k \in [p]$. Let $B_1, B_2, \dots, B_k$ be independent Rademacher random variables. Let the symmetric random walk on $\mathbb{Z}$ stopped at the $m$th step be
+$$G_m = \sum_{i = 1}^m B_i$$
+If $H \sim \text{Hypergeometric}(d, k, k)$ then there is an increasing function $g : (0, 1/36) \to (1, \infty)$ such that $\lim_{x \to 0^+} g(x) = 1$ and for any $a \in (0, 1/36)$, it holds that
+$$\bE\left[ \exp\left( G_H^2 \cdot \frac{a}{k} \log \frac{ed}{k} \right) \right] \le g(a)$$
+\end{lemma}
+
+With this bound, we obtain the following information-theoretic lower bound for $\textsc{SROS}_D$, which matches Theorem \ref{lem:2a}.
+
+\begin{theorem} \label{thm:sswinf}
+Suppose that $M$ is an instance of $\textsc{SROS}_D(n, k, \mu)$ where under $H_1$, the planted vector $v$ is chosen uniformly at random from all $k$-sparse unit vectors in $\mathbb{R}^n$ with nonzero coordinates equal to $\pm \frac{1}{\sqrt{k}}$. Suppose it holds that $\mu \le \sqrt{\beta_0 k \log \frac{en}{k}}$ for some $0 < \beta_0 < (16e)^{-1}$. Then there is a function $w : (0, 1) \to (0, 1)$ satisfying that $\lim_{\beta_0 \to 0^+} w(\beta_0) = 0$ and
+$$\TV\left( \mL_{H_0}(M), \mL_{H_1}(M) \right) \le w(\beta_0)$$
+\end{theorem}
+
+\begin{proof}
+Let $\bP_0$ denote $\mL_{H_0}(M) = N(0, 1)^{\otimes n \times n}$ and $\bP_u$ denote $\mL\left( \mu \cdot uu^\top + N(0, 1)^{\otimes n \times n} \right)$ where $u$ is in the set $S$ of $k$-sparse unit vectors $u$ with nonzero entries equal to $\pm 1/\sqrt{k}$. Now let $\mP_1$ denote $\mL_{H_1}(M)$ which can also be written as
+$$\bP_1 = \frac{1}{|S|} \sum_{u \in S} \bP_u$$
+Given two matrices $A, B \in \mathbb{R}^{n \times n}$, let $\langle A, B \rangle = \sum_{i, j = 1}^n A_{ij} B_{ij}$ denote their inner product. Now note that for any $X \in \mathbb{R}^{n \times n}$,
+\begin{align*}
+\frac{d\bP_u}{d\bP_0}(X) &= \exp\left( - \frac{1}{2} \sum_{i, j = 1}^n (X_{ij} - \mu \cdot u_i u_j)^2 + \frac{1}{2} \sum_{i, j = 1}^n X_{ij}^2 \right) \\
+&= \exp\left( \mu \cdot \langle X, uu^\top \rangle - \frac{\mu^2}{2} \| u \|_2^4 \right) = \exp\left( \mu \cdot \langle X, uu^\top \rangle - \frac{\mu^2}{2} \right)
+\end{align*}
+since $\| u \|_2 = 1$. Now observe that
+\begin{align*}
+\chi^2(\bP_1, \bP_0) &= \bE_{X \sim \bP_0} \left[ \left( \frac{d\bP_1}{d\bP_0}(X) - 1 \right)^2 \right] = -1 + \frac{1}{|S|^2} \sum_{u, v \in S} \bE_{X \sim \bP_0} \left[ \frac{d\bP_u}{d\bP_0}(X) \cdot \frac{d\bP_v}{d\bP_0}(X) \right] \\
+&= -1 + \frac{1}{|S|^2} \sum_{u, v \in S} \bE_{X \sim \bP_0} \left[ \exp\left( \mu \cdot \langle X, uu^\top + vv^\top \rangle - \mu^2 \right) \right] \\
+&= -1 + \frac{1}{|S|^2} \sum_{u, v \in S} \exp\left( \frac{\mu^2}{2} \left\| uu^\top + vv^\top \right\|_F^2 - \mu^2 \right) \\
+&= -1 + \frac{1}{|S|^2} \sum_{u, v \in S} \exp\left( \frac{\mu^2}{2} \langle uu^\top, uu^\top \rangle + \mu^2 \langle uu^\top, vv^\top \rangle + \frac{\mu^2}{2} \langle vv^\top, vv^\top \rangle - \mu^2 \right) \\
+&= -1 + \frac{1}{|S|^2} \sum_{u, v \in S} \exp\left( \mu^2 \langle u, v \rangle^2 \right) = -1 + \bE_{u, v \sim \text{Unif}[S]}\left[ \exp\left( \mu^2 \langle u, v \rangle^2 \right) \right]
+\end{align*}
+where the third inequality follows since $\bE[\exp\left(\langle t, X\rangle \right)] = \exp\left(\frac{1}{2} \| t \|_2^2\right)$ and the last inequality follows since $\langle uu^\top, uu^\top \rangle = \| u\|_2^4 = \langle vv^\top, vv^\top \rangle = \| v \|_2^4 = 1$ and $\langle uu^\top, vv^\top \rangle = \langle u, v \rangle^2$. Let $G_m$ denote a symmetric random walk on $\mathbb{Z}$ stopped at the $m$th step and $H \sim \text{Hypergeometric}(n, k, k)$ as in Lemma \ref{lem:hgmw}. Now note that if $u, v \sim \text{Unif}[S]$ are independent, then $\langle u, v\rangle$ is distributed as $G_H/k$. Now let $a = \mu^2 \left( k \log \frac{en}{k} \right)^{-1} \le \beta_0$ and note that Lemma \ref{lem:hgmw} along with Cauchy-Schwarz implies that
+$$\TV(\bP_0, \bP_1) \le \frac{1}{2} \sqrt{\chi^2(\bP_1, \bP_0)} \le \frac{1}{2} \sqrt{g(\beta_0) - 1}$$
+where $g$ is the function from Lemma \ref{lem:hgmw}. Setting $w(\beta_0) = \frac{1}{2} \sqrt{g(\beta_0) - 1}$ proves the theorem.
+\end{proof}
+
+Note that any instance of $\textsc{SROS}_D$ is also an instance of $\textsc{ROS}_D$ and thus the information theoretic lower bound in Theorem \ref{thm:sswinf} also holds for $\textsc{ROS}_D$. Symmetrizing $\textsc{SROS}_D$ as in Appendix~\ref{s:pds} yields that the same information-theoretic lower bound holds for $\textsc{SSW}_D$. Now consider the function $\tau : \mathbb{R}^{n \times n} \to \mG_n$ that such that if $\tau(M) = G$ then $\{i, j\} \in E(G)$ if and only if $M_{ij} > 0$ for all $i < j$. In other words, $\tau$ thresholds the above-diagonal entries of $M$ as in Step 3 of $\textsc{SSBM-Reduction}$ from Lemma \ref{lem:ssbm}. Note that $\tau$ maps $N(0, 1)^{\otimes n \times n}$ to $G(n, 1/2)$ and takes $\mL_{H_1}(M)$ from Theorem \ref{thm:sswinf} to a distribution in $\mL_{\text{SSBM}} \in G_B(n, k, 1/2, \rho)$ where
+$$\rho = \Phi\left(\frac{\mu}{k} \right) - \frac{1}{2} = \frac{1}{\sqrt{2\pi}} \cdot \frac{\mu}{k}$$
+As in the proof of Theorem \ref{thm:SSBMguar} there is a method $e : \mG_n \to \mG_n$ that either adds or removes edges with a fixed probability mapping $G(n, 1/2)$ to $G(n, q)$ and $\mL_{\text{SSBM}}$ to $e(\mL_{\text{SSBM}}) \in G_B(n, k, 1/2, \rho')$ where $\rho' = \Theta(\rho)$ as long as $q = \Theta(1)$. By the data processing inequality, we now have that
+$$\TV\left( G(n, 1/2), \mL_{\text{SSBM}}'\right) \le \TV\left( \mL_{H_0}(M), \mL_{H_1}(M) \right) \to 0 \quad \text{as } n \to \infty$$
+if $\mu \ll \sqrt{k}$ which corresponds to $\rho \ll 1/\sqrt{k}$, establishing the information theoretic lower bound for $\textsc{SSBM}_D$ in the regime $q = \Theta(1)$ matching Theorem \ref{lem:2a}.
+
+Corresponding recovery lower bounds for these problems follow from information-theoretic lower bounds for biclustering. Observe that an instance of $\textsc{BC}_{WR}(n, k, \mu)$ is also an instance of $\textsc{ROS}_{WR}(n, k, \mu/k)$. By Theorem \ref{thm:infbcrec}, $\textsc{ROS}_{WR}(n, k, \mu)$ is therefore information-theoretically impossible if $\mu \le 2\sqrt{k \log \frac{n}{k}}$. An analogous information-theoretic lower bound is given for a symmetric variant of $\textsc{BC}_{WR}$ in \cite{hajek2016information}, which implies the corresponding lower bounds for $\textsc{SROS}_{WR}$ and $\textsc{SSW}_{WR}$.
+
+\paragraph{Information-Theoretically Optimal Algorithms.} Unlike existing maximum likelihood estimators for recovery such as those for $\textsc{BC}_R$ in \cite{chen2016statistical} and \cite{cai2015computational}, the definition of $\mathcal{V}_{n, k}$ requires that algorithms solving $\textsc{ROS}_R$ are adaptive to the sparsity level $k$. We introduce a modified exhaustive search algorithm $\textsc{ROS-Search}$ that searches over all possible sparsity levels and checks whether each resulting output is reasonable using an independent copy $B$ of the data matrix.
+
+We first establish the notation that will be used in this section. Given some $v \in \mathbb{R}^n$, let $\text{supp}_+(v)$ denote the set of $i$ with $v_i > 0$ and $\text{supp}_-(v)$ denote the set of $i$ with $v_i < 0$. If $A, B \in \mathbb{R}^{n \times n}$, let $\langle A, B \rangle = \text{Tr}(A^\top B)$. Let $S_t$ be the set of $v \in \mathbb{R}^n$ with exactly $t$ nonzero entries each in $\{-1, 1\}$. In order to show that $\textsc{ROS-Search}$ succeeds at solving $\textsc{ROS}_R$ asymptotically down to its information-theoretic limit, we begin by showing the following lemma.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} $\textsc{ROS-Search}$
+\vspace{2mm}
+
+\textit{Inputs}: Matrix $M \in \mathbb{R}^{n \times n}$, sparsity upper bound $k$, threshold $\rho > 0$, constant $c_1 \in (0, 1)$
+\begin{enumerate}
+\item Sample $G \sim N(0, 1)^{\otimes n \times n}$ and form $A = \frac{1}{\sqrt{2}} (M + G)$ and $B = \frac{1}{\sqrt{2}} (M - G)$
+\item For each pair $k_1, k_2 \in [c_1 k, k]$ do:
+\begin{enumerate}
+\item[a.] Let $S_t$ be the set of $v \in \mathbb{R}^n$ with exactly $t$ nonzero entries each in $\{-1, 1\}$ and compute 
+$$(u, v) = \text{argmax}_{(u, v) \in S_{k_1} \times S_{k_2}} \left\{ u^\top A v \right\}$$
+\item[b.] Mark the pair $(u, v)$ if it satisfies that
+\begin{itemize}
+\item The set of $i$ with $\sum_{j = 1}^n u_i v_j B_{ij} \ge \frac{1}{2} k_2 \rho$ is exactly $\text{supp}(u)$
+\item The set of $j$ with $\sum_{i = 1}^n u_i v_j B_{ij} \ge \frac{1}{2} k_1 \rho$ is exactly $\text{supp}(v)$
+\end{itemize}
+\end{enumerate}
+\item Output $\text{supp}(u)$, $\text{supp}(v)$ where $(u, v)$ is the marked pair maximizing $|\text{supp}(u)| + |\text{supp}(v)|$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Exhaustive search algorithm for sparse rank-1 submatrix recovery in Theorem \ref{lem:rossearch}.}
+\end{figure}
+
+\begin{lemma} \label{lem:rossearch}
+Let $R$ and $C$ be subsets of $[n]$ such that $|R| = k_1$ and $|C| = k_2$ where $k_1, k_2 \in [c_1 k, k]$ for some constant $c_1 \in (0, 1)$. Let $\rho > 0$ and $M \in \mathbb{R}^{n \times n}$ be a random matrix and with independent sub-Gaussian entries with sub-Gaussian norm at most $1$ such that:
+\begin{itemize}
+\item $\bE[M_{ij}] \ge \rho$ if $(i, j) \in R \times C$; and
+\item $\bE[M_{ij}] = 0$ if $(i, j) \not \in R \times C$.
+\end{itemize}
+There is an absolute constant $c_2 > 0$ such that if $k\rho^2 \ge c_2 \log n$, then
+$$\textnormal{argmax}_{(u, v) \in S_{k_1} \times S_{k_2}} \left\{ u^\top M v \right\}$$
+is either $(\mathbf{1}_R, \mathbf{1}_C)$ and $(-\mathbf{1}_R, -\mathbf{1}_C)$ with probability at least $1 - n^{-1}$ for sufficiently large $n$.
+\end{lemma}
+
+\begin{proof}
+For each pair $(u, v) \in S_{k_1} \times S_{k_2}$, let $A_1(u, v)$ be the set of pairs $(i, j) \in R \times C$ with $u_i v_j = -1$, let $A_2(u, v)$ be the set of pairs $(i, j) \in \text{supp}(u) \times \text{supp}(v)$ that are not in $R \times C$ and let $A_3(u, v)$ be the set of $(i, j) \in R \times C$ that are not in $\text{supp}(u) \times \text{supp}(v)$. Now observe that
+\begin{align*}
+\mathbf{1}_R^\top M \mathbf{1}_C - u^\top M v &= \langle M, \mathbf{1}_R \mathbf{1}_C^\top - uv^\top \rangle \\
+&= \sum_{(i, j) \in A_1(u, v)}  2M_{ij} - \sum_{(i, j) \in A_2(u, v)} u_i v_j M_{ij}+ \sum_{(i, j) \in A_3(u, v)} M_{ij} \\
+&\ge \rho \left( 2 |A_1(u, v)| + |A_3(u, v)| \right) + \sum_{(i, j) \in A_1(u, v)}  2\left( M_{ij} - \bE[M_{ij}] \right) \\
+&\quad \quad - \sum_{(i, j) \in A_2(u, v)} u_i v_j M_{ij} + \sum_{(i, j) \in A_3(u, v)} \left( M_{ij} - \bE[M_{ij}] \right)
+\end{align*}
+Since $R \times C$ and $\text{supp}(u) \times \text{supp}(v)$ both have size $k_1 k_2$, it follows that $|A_2(u, v)| = |A_3(u, v)|$. Note that the random variables in the sum above are independent, zero mean and sub-Gaussian with norm at most $1$. By Hoeffding's inequality for sub-Gaussian random variables as in Proposition 5.10 in \cite{vershynin2010introduction}, it follows that
+\begin{align*}
+\bP\left[ \langle M, \mathbf{1}_R \mathbf{1}_C^\top - uv^\top \rangle \le 0 \right] &\le e \cdot \exp\left( -\frac{c \rho^2 \left( 2 |A_1(u, v)| + |A_2(u, v)| \right)^2}{4 |A_1(u, v)| + |A_2(u, v)| + |A_3(u, v)|} \right) \\
+&= e \cdot \exp\left( - \frac{1}{2} c \rho^2 \left( 2|A_1(u, v)| + |A_2(u, v)| \right) \right) \\
+&\le e \cdot n^{-c_1^{-2} \cdot \frac{16}{k} \left( 2|A_1(u, v)| + |A_2(u, v)| \right)}
+\end{align*}
+for some absolute constant $c > 0$ as long as $c\rho^2 \ge 16kc_1^{-2} \log n$. Let $S(a_1, a_2, b_1, b_2)$ be the set of all pairs $(u, v)$ such that $a_1 = |\text{supp}(u) \backslash R|$, $a_2 = |\text{supp}_-(u) \cap R|$, $b_1 = |\text{supp}(v) \backslash C|$ and $b_2 = |\text{supp}_-(v) \cap C|$. Suppose that $a_2 \le \frac{1}{2}(k_1 - a_1)$. Note that for any $(u, v) \in S(a_1, a_2, b_1, b_2)$, we have
+$$|A_1(u, v)| = a_2(k_2 - b_1 - b_2) + b_2(k_1 - a_1 - a_2) \quad \text{and} \quad |A_2(u, v)| = a_1 k_2 + b_1 k_1 - a_1 b_1$$
+Note that $k_1, k_2 \ge c_1 k$, $a_1 + a_2 \le k_1$ and $b_1 + b_2 \le k_2$. Therefore we have that $\frac{1}{k} |A_2(u, v)| \ge a_1 \cdot \frac{k_2}{k} \ge c_1 a_1$ and $\frac{1}{k} |A_2(u, v)| \ge c_1 b_1$. This implies that $\frac{1}{k} |A_2(u, v)| \ge \frac{1}{2} c_1 (a_1 + b_1)$. Now note that if $b_2 \ge c_1 a_2$, then it holds that
+$$\frac{1}{k} |A_1(u, v)| \ge \frac{b_2}{k}(k_1 - a_1 - a_2) \ge \frac{1}{2k} b_2 (k_1 - a_1) \ge \frac{c_1}{2} \cdot b_2 - \frac{a_1}{2} \ge \frac{c_1^2}{4} (a_2 + b_2) - \frac{a_1}{2}$$
+Otherwise if $b_2 < c_1 a_2$ then it follows that $b_2 < c_1 a_2 \le c_1 \cdot \frac{1}{2}(k_1 - a_1) \le \frac{k_2}{2}$ since $k_2 \ge c_1 k \ge c_1 k_1$. Now we have that
+$$\frac{1}{k} |A_1(u, v)| \ge \frac{a_2}{k}(k_2 - b_1 - b_2) \ge \frac{a_2}{k}(k_2 - b_2) - b_1 \ge \frac{c_1}{2} a_2 - b_1 \ge \frac{c_1}{4} (a_2 + b_2) - b_1$$
+Therefore in either case it follows that
+$$\frac{1}{k} |A_1(u, v)| \ge \frac{c_1^2}{4}(a_2 + b_2) - a_1 - b_1$$
+Combining these inequalities and the fact that $c_1 \in (0, 1)$ yields that
+\begin{align*}
+\frac{2}{k} |A_1(u, v)| + \frac{1}{k} |A_2(u, v)| &\ge \frac{c_1}{4k} \cdot |A_1(u, v)| + \frac{1}{k} |A_2(u, v)| \\
+&\ge \frac{c_1^2}{4}(a_2 + b_2) + \frac{c_1}{4}(a_1 + b_1) \ge \frac{c_1^2}{4}(a_1 + a_2 + b_1 + b_2)
+\end{align*}
+as long as $a_2 \le \frac{1}{2}(k_1 - a_1)$. Furthermore, we have that
+$$|S(a_1, a_2, b_1, b_2)| = \binom{k_1}{a_1} \binom{n - k_1}{a_1} \binom{k_1 - a_1}{a_2} \binom{k_2}{b_1} \binom{n - k_2}{b_1} \binom{k_2 - b_1}{b_2} \le n^{2a_1 + 2b_1 + a_2 + b_2}$$
+since $\binom{n}{k} \le n^k$ and $k_1, k_2 \le n$. Let $T$ be the set of $(a_1, a_2, b_1, b_2) \neq (0, 0, 0, 0)$ such that $a_1, a_2, b_1, b_2 \ge 0$, $a_1 + a_2 \le k_1$, $b_1 + b_2 \le k_2$ and $a_2 \le \frac{1}{2}(k_1 - a_1)$. Now note for all $(u, v) \in S^2$, it holds that at least one of the pairs $(u, v)$ or $(-u, -v)$ satisfies that $a_2 \le \frac{1}{2}(k_1 - a_1)$. Since $(u, v)$ and $(-u, -v)$ yield the same value of $u^\top M v$, we can restrict to $T$ in the following union bound. Now note that
+\begin{align*}
+&\bP\left[ \text{there is } (u, v) \in S^2 \text{ with } (u, v) \neq \pm(\mathbf{1}_R, \mathbf{1}_C) \text{ and } \langle M, \mathbf{1}_R \mathbf{1}_C^\top - uv^\top \rangle \le 0 \right] \\
+&\quad \quad \quad \quad \le \sum_{(a_1, a_2, b_1, b_2) \in T} \left( \sum_{(u, v) \in S(a_1, a_2, b_1, b_2)} e \cdot n^{-c_1^{-2} \cdot \frac{16}{k} \left( 2|A_1(u, v)| + |A_2(u, v)| \right)} \right) \\
+&\quad \quad \quad \quad \le \sum_{(a_1, a_2, b_1, b_2) \in T} |S(a_1, a_2, b_1, b_2)| \cdot n^{-4(a_1 + a_2 + b_1 + b_2)} \\
+&\quad \quad \quad \quad \le \sum_{(a_1, a_2, b_1, b_2) \in T} n^{-2a_1 - 3a_2 - 2b_1 -3b_2} \\
+&\quad \quad \quad \quad \le -1 + \sum_{a_1, a_2, b_1, b_2 = 0}^\infty n^{-2a_1 - 3a_2 - 2b_1 -3b_2} \\
+&\quad \quad \quad \quad = -1 + \left( \sum_{i = 0}^\infty n^{-2i} \right)^2 \left( \sum_{j = 0}^\infty n^{-3j} \right)^2 \\
+&\quad \quad \quad \quad = -1 + (1 - n^{-2})^{-2}(1 - n^{-3})^{-2} = O(n^{-2})
+\end{align*}
+which as at most $n^{-1}$ for sufficiently large $n$, completing the proof of the lemma.
+\end{proof}
+
+We now use this lemma to prove the following theorem, which shows that $\textsc{ROS-Search}$ solves $\textsc{ROS}_R$ and $\textsc{SSW}_R$ as long as $\mu \gtrsim \sqrt{k}$, asymptotically matching their information theoretic limits.
+
+\begin{theorem}
+Suppose that $M \sim \mu \cdot rc^\top + N(0, 1)^{\otimes n \times n}$ where $r, c \in \mathcal{V}_{n, k}$. There is an an absolute constant $c > 0$ such that if $\mu \ge c \sqrt{k \log n}$, then $\textsc{ROS-Search}$ applied with $c_1 = 1/2$ and $\rho = \mu/k$ outputs $\text{supp}(r)$ and $\text{supp}(c)$ with probability at least $1 - 4n^{-1}$ for sufficiently large $n$.
+\end{theorem}
+
+\begin{proof}
+Suppose that $(u, v) \in S_{k_1} \times S_{k_2}$ where $k_1, k_2 \in [c_1 k, k]$ are random vectors that are independent of $B$ and either $\text{supp}(u) \not \subseteq \text{supp}(r)$ or $\text{supp}(v) \not \subseteq \text{supp}(c)$. Note that the definition of $\mathcal{V}_{n, k}$ is such that any fixed $c_1 \in (0, 1)$ suffices for sufficiently large $k$. We first observe that if $\rho = \mu/k$ and $\mu \ge c \sqrt{k \log n}$ then $(u, v)$ is not marked in Step 2b of $\textsc{ROS-Search}$ with probability at least $1 - n^{-3}$. If $\text{supp}(u) \not \subseteq \text{supp}(r)$, then let $i \in \text{supp}(u) \backslash \subseteq \text{supp}(r)$. It follows that $\sum_{j = 1}^n u_i v_j B_{ij} \sim N(0, k_2)$ since $\| v \|_0 = k_2$ and by Gaussian tail bounds that
+$$\bP\left[ \sum_{j = 1}^n u_i v_j B_{ij} \ge \frac{1}{2} k_2 \rho \right] \le \frac{1}{\sqrt{2\pi}} \cdot \frac{2}{\rho \sqrt{k_2}} \cdot \exp\left(- \frac{\rho^2 k_2}{8} \right) \le n^{-3}$$
+if $\mu^2 \ge \sqrt{3c_1 k \log n}$. This implies that if $\text{supp}(u) \not \subseteq \text{supp}(r)$, then $(u, v)$ is marked in Step 2b of $\textsc{ROS-Search}$ with probability at most $n^{-3}$. A symmetric argument shows that the same is true if $\text{supp}(v) \not \subseteq \text{supp}(c)$. Now for each pair $k_1, k_2 \in [c_1 k, k]$, let $u_{k_1}$ and $v_{k_2}$ be such that
+$$(u_{k_1}, v_{k_2}) = \text{argmax}_{(u, v) \in S_{k_1} \times S_{k_2}} \left\{ u^\top A v \right\}$$
+if the pair is marked and let $(u_{k_1}, v_{k_2}) = (0, 0)$ otherwise. By Lemma \ref{lem:gausscloning} in the next section, $A$ and $B$ from Step 1 of $\textsc{ROS-Search}$ are i.i.d. and distributed as $\frac{1}{\sqrt{2}} \cdot rc^\top + N(0, 1)^{\otimes n \times n}$. In particular, the pairs $(u_{k_1}, v_{k_2})$ are in the $\sigma$-algebra generated by $A$ and hence are independent of $B$. By a union bound, we have
+\begin{align*}
+&\bP\left[ \text{supp}(u_{k_1}) \subseteq \text{supp}(r) \text{ and } \text{supp}(v_{k_2}) \subseteq \text{supp}(c) \text{ for all } k_1, k_2 \in [c_1 k, k] \right] \\
+&\quad \quad \quad \quad \ge 1 - \sum_{k_1, k_2 \in [c_1 k, k]} \bP\left[ \text{supp}(u_{k_1}) \not \subseteq \text{supp}(r) \text{ or } \text{supp}(v_{k_2}) \not \subseteq \text{supp}(c) \right] \\
+&\quad \quad \quad \quad \ge 1 - k^2 \cdot n^{-3} \ge 1 - n^{-1}
+\end{align*}
+Now let $k_1' = \| r \|_0$ and $k_2' = \| c \|_0$ and let $r'$ be the vector such that $r'_i = 0$ if $v_i = 0$, $r'_i = 1$ if $v_i > 0$ and $r'_i = -1$ if $v_i < 0$. Define the map $\tau_r : \mathbb{R}^n \to \mathbb{R}^n$ such that $\tau_r$ maps $v$ to the vector with $i$th entry $r'_i v_i$. Define $c'$ and $\tau_c$ analogously. Now let $M'$ be the matrix with $(i, j)$th entry $r'_i c'_j A_{ij}$. Since the entries of $M$ are independent Gaussians, it follows that $M' \sim \mu \cdot \tau_r(r) \tau_c(c)^\top + N(0, 1)^{\otimes n \times n}$. Now observe that since $S_{k_1'}$ and $S_{k_2'}$ are preserved by $\tau_r$ and $\tau_c$, respectively, we have that $(u_{k_1'}, v_{k_2'}) = (\tau_r(u), \tau_c(v))$ where
+$$(u, v) = \text{argmax}_{(u, v) \in S_{k_1'} \times S_{k_2'}} \left\{ u^\top M' v \right\}$$
+Now note that the mean matrix $\mu \cdot \tau_r(r) \tau_c(c)^\top$ of $M'$ has all nonnegative entries. Furthermore, the entries in its support are at least $\mu \cdot \min_{(i, j) \in \text{supp}(r) \times \text{supp}(c)} |r_i c_j| \ge \frac{\mu}{k} = \rho$ by the definition of $\mathcal{V}_{n, k}$. Applying Lemma \ref{lem:rossearch} now yields that with probability at least $1 - n^{-1}$, it follows that $(u, v) = (\mathbf{1}_{\text{supp}(r)}, \mathbf{1}_{\text{supp}(c)})$ or $(u, v) = (-\mathbf{1}_{\text{supp}(r)}, -\mathbf{1}_{\text{supp}(c)})$. This implies that $u_{k_1'} = r'$ and $v_{k_2'} = c'$ and thus are supported on all of $\text{supp}(r)$ and $\text{supp}(c)$, respectively.
+
+We now will show that $r'$ and $c'$ are marked by the test in Step 2b with high probability. If $i \in \text{supp}(r)$, then $\sum_{j = 1}^n r'_i c'_j B_{ij} \sim N\left( \sum_{j = 1}^n \mu \cdot |r_i| \cdot |c_j|, k_2 \right)$. Since $\sum_{j = 1}^n \mu \cdot |r_i| \cdot |c_j| \ge \mu \cdot \frac{k_2}{k} = k_2 \rho$ by the definition of $\mathcal{V}_{n, k}$. Therefore it follows by the same Gaussian tail bound as above that
+$$\bP\left[ \sum_{j = 1}^n r'_i c'_j B_{ij} < \frac{1}{2} k_2 \rho \right] \le \bP\left[ N(0, k_2) < -\frac{1}{2} k_2 \rho \right] \le n^{-3}$$
+Furthermore, if $i \not \in \text{supp}(r)$ it follows that $\sum_{j = 1}^n r'_i c'_j B_{ij} \sim N(0, k_2)$ and thus
+$$\bP\left[ \sum_{j = 1}^n r'_i c'_j B_{ij} \ge \frac{1}{2} k_2 \rho \right] = \bP\left[ N(0, k_2) \ge \frac{1}{2} k_2 \rho \right] \le n^{-3}$$
+Now a union bound yields that
+\begin{align*}
+\bP\left[ \text{supp}(r) = \left\{ i \in [n] : \sum_{j = 1}^n r'_i c'_j B_{ij} \ge \frac{1}{2} k_2 \rho \right\} \right] &\ge 1 - \sum_{i \in \text{supp}(r)} \bP\left[ \sum_{j = 1}^n r'_i c'_j B_{ij} < \frac{1}{2} k_2 \rho \right] \\
+&\quad \quad - \sum_{i \not\in \text{supp}(r)} \bP\left[ \sum_{j = 1}^n r'_i c'_j B_{ij} \ge \frac{1}{2} k_2 \rho \right] \\
+&\ge 1 - k_1 \cdot n^{-3} - (n - k_1) n^{-3} = 1 - n^{-2}
+\end{align*}
+An identical argument yields that
+$$\bP\left[ \text{supp}(c) = \left\{ j \in [n] : \sum_{i = 1}^n r'_i c'_j B_{ij} \ge \frac{1}{2} k_2 \rho \right\} \right] \ge 1 - n^{-2}$$
+A union bound now yields that $(r', c')$ is marked by the test in Step 2b with probability at least $1 - 2n^{-2}$. A further union bound now yields that with probability at least $1 - 2n^{-1} - 2n^{-2}$, the following events all hold:
+\begin{itemize}
+\item $\text{supp}(u_{k_1}) \subseteq \text{supp}(r)$ and $\text{supp}(v_{k_2}) \subseteq \text{supp}(c)$ for all $k_1, k_2 \in [c_1 k, k]$;
+\item $(u_{k_1'}, v_{k_2'}) = (r', c')$; and
+\item $(r', c')$ is marked when input to the test in Step 2b.
+\end{itemize}
+These three events imply that that the vector $(r', c')$ is marked in $\textsc{ROS-Search}$ and hence the maximum of $|\text{supp}(u_{k_1})| + |\text{supp}(v_{k_2})|$ over marked pairs $(u_{k_1}, v_{k_2})$ is $k_1' + k_2'$. Furthermore, first event implies that any marked pair $(u_{k_1}, v_{k_2})$ with $|\text{supp}(u_{k_1})| + |\text{supp}(v_{k_2})| = k_1' + k_2'$ must satisfy that $\text{supp}(u_{k_1}) = \text{supp}(r)$ and $\text{supp}(v_{k_2}) = \text{supp}(v)$. Thus the algorithm correctly recovers the supports of $r$ and $c$ with probability at least $1 - 2n^{-1} - 2n^{-2}$, proving the theorem.
+\end{proof}
+
+The last theorem of this section gives a simple test solving the detection problems $\textsc{SSBM}_D$, $\textsc{ROS}_D$ and $\textsc{SSW}_D$ asymptotically down to their information-theoretic limits. More precisely, this test solves $\textsc{SSBM}_D$ if $\rho \gtrsim \frac{1}{\sqrt{k}}$ and by setting $\rho = \mu/k$, solves $\textsc{ROS}_D$ and $\textsc{SSW}_D$ as long as $\mu \gtrsim \sqrt{k}$.
+
+\begin{theorem}
+Suppose that $c_1 \in (0, 1)$ is a fixed constant and let $R_+$ and $R_-$ be disjoint subsets of $[n]$ with $c_1 k \le |R_+| + |R_-| \le k$. Let $C_+$ and $C_-$ be defined similarly. Let $M \in \mathbb{R}^{n \times n}$ be a random matrix with independent sub-Gaussian entries with sub-Gaussian norm at most $1$ such that:
+\begin{itemize}
+\item $\bE[M_{ij}] \ge \rho$ if $(i, j) \in R_+ \times C+$ or $(i, j) \in R_- \times C_-$;
+\item $\bE[M_{ij}] \le -\rho$ if $(i, j) \in R_+ \times C_-$ or $(i, j) \in R_- \times C_+$; and
+\item $\bE[M_{ij}] = 0$ if $(i, j) \not \in (R_+ \cup R_-) \times (C_+ \cup C_-)$.
+\end{itemize}
+There is a constant $c_2 > 0$ such that if $k \rho \ge c_2 \sqrt{\log n}$, then $\max_{(u, v) \in S_k^2} u^\top M v \ge \frac{1}{2} c_1^2 k^2 \rho$ with probability at least $1 - en^{-1}$. If $\bE[M_{ij}] = 0$ for all $(i, j) \in [n]^2$, then there is some constant $c_3 > 0$ such that if $k \rho^2 \ge c_2 \log n$ then $\max_{(u, v) \in S_k^2} u^\top M v < \frac{1}{2} c_1^2 k^2 \rho$ with probability at least $1 - en^{-1}$.
+\end{theorem}
+
+\begin{proof}
+Let $u \in S_k$ satisfy that $u_i = 1$ for each $i \in R_+$ and $u_i = - 1$ for each $i \in R_-$. Similarly let $v \in S_k$ satisfy that $v_i = 1$ for each $i \in C_+$ and $v_i = -1$ for each $i \in C_-$. It follows that
+$$\sum_{i, j = 1}^n u_i v_j \cdot \bE[M_{ij}] \ge (|R_+| + |R_-|)(|C_+| + |C_-|) \rho \ge c_1^2 k^2 \rho$$
+Now note that if $c \cdot c_1^4 k^2\rho^2 \ge 4 \log n$, then
+\begin{align*}
+\bP\left[ u^\top M v < \frac{1}{2} c_1^2 k^2 \rho \right] &= \bP\left[ \sum_{i, j = 1}^n u_i v_j \left(M_{ij} - \bE[M_{ij}] \right) < \frac{1}{2} c_1^2 k^2 \rho -\sum_{i, j = 1}^n u_i v_j \cdot \bE[M_{ij}] \right] \\
+&\le \bP\left[ \sum_{i, j = 1}^n u_i v_j \left(M_{ij} - \bE[M_{ij}] \right) < -\frac{1}{2} c_1^2 k^2 \rho \right] \\
+&\le e \cdot \exp\left( - \frac{c \cdot \left( c_1^2 k^2 \rho \right)^2}{4k^2} \right) \le en^{-1}
+\end{align*}
+for some constant $c > 0$ by Hoeffding's inequality for sub-Gaussian random variables as in Proposition 5.10 in \cite{vershynin2010introduction}. This proves the first claim of the theorem.
+
+Now suppose that $\bE[M_{ij}] = 0$ for all $(i, j) \in [n]^2$. For a fixed pair $(u, v) \in S_k^2$, we have by the same application of Hoeffding's inequality that
+$$\bP\left[ u^\top M v \ge \frac{1}{2} c_1^2 k^2 \rho \right] \le e \cdot \exp\left( - \frac{c \cdot c_1^4 k^2 \rho^2}{4} \right)$$
+Now note that $|S_k| = 2^k \binom{n}{k} \le (2n)^k$. Thus a union bound yields that
+\begin{align*}
+\bP\left[ \max_{(u, v) \in S_k^2} u^\top M v \ge \frac{1}{2} c_1^2 k^2 \rho \right] &\le |S_k| \cdot e \cdot \exp\left( - \frac{c \cdot c_1^4 k^2 \rho^2}{4} \right)\\
+&\le e \cdot \exp\left( k \log (2n) - \frac{c \cdot c_1^4 k^2 \rho^2}{4} \right)\\
+&\le en^{-1}
+\end{align*}
+if $c \cdot c_1^4 k^2 \rho^2 \ge 4k \log(2n) + 4 \log n$. This completes the proof of the theorem.
+\end{proof}
+
+\paragraph{Polynomial-Time Algorithms.} The polynomial-time algorithms achieving the tight boundary for the problems in this section are very different in the regimes $k \lesssim \sqrt{n}$ and $k \gtrsim \sqrt{n}$. When $k \lesssim \sqrt{n}$, the simple linear-time algorithm thresholding the absolute values of the entries of the data matrix matches the planted clique lower bounds in Theorem \ref{lem:2a} up to polylogarithmic factors. This is captured in the following simple theorem, which shows that if $\mu \gtrsim k$ then this algorithm solves $\textsc{ROS}_R$ and $\textsc{SSW}_R$. Setting $u = v = 0$ in the Theorem yields that the test outputting $H_1$ if $\max_{i, j \in [n]^2} |M_{ij}| > \sqrt{6 \log n}$ solves the detection variants $\textsc{ROS}_D$ and $\textsc{SSW}_D$ if $\mu \gtrsim k$.
+
+\begin{theorem}
+Let $M \sim \mu \cdot uv^\top + N(0, 1)^{\otimes n \times n}$ where $u, v \in \mathcal{V}_{n, k}$ and suppose that $\mu \ge 2k\sqrt{6\log n}$, then the set of $(i, j)$ with $|M_{ij}| > \sqrt{6\log n}$ is exactly $\text{supp}(u) \times \text{supp}(v)$ with probability at least $1 - O(n^{-1})$. 
+\end{theorem}
+
+\begin{proof}
+This theorem follows from the Gaussian tail bound $1 - \Phi(t) \le \frac{1}{\sqrt{2\pi}} \cdot t^{-1} e^{-t^2/2}$ for all $t \ge 1$ and a union bound. Now observe that if $(i, j) \not \in \text{supp}(u) \times \text{supp}(v)$, then $M_{ij} \sim N(0, 1)$ and thus
+$$\bP\left[ |M_{ij}| > \sqrt{6\log n} \right] = 2\left(1 - \Phi(\sqrt{6\log n})\right) \le \frac{2}{\sqrt{2\pi}} \cdot e^{-3\log n} = O(n^{-3})$$
+If $(i, j) \not \in \text{supp}(u) \times \text{supp}(v)$, then $M_{ij} \sim N(\mu \cdot u_i v_j, 1)$ where $|\mu \cdot u_i v_j| \ge \sqrt{6 \log n}$ since $|u_i|, |v_j| \ge 1/\sqrt{k}$ by the definition of $\mathcal{V}_{n, k}$. This implies that
+$$\bP\left[ |M_{ij}| \le \sqrt{6\log n} \right] \le \left(1 - \Phi(\sqrt{6\log n})\right) + \left(1 - \Phi(3\sqrt{6\log n})\right) \le \frac{2}{\sqrt{2\pi}} \cdot e^{-3\log n} = O(n^{-3})$$
+Now the probability that the set of $(i, j)$ with $|M_{ij}| > \sqrt{6\log n}$ is not exactly $\text{supp}(u) \times \text{supp}(v)$ is, by a union bound, at most
+$$\sum_{(i, j) \in \text{supp}(u) \times \text{supp}(v)} \bP\left[ |M_{ij}| \le \sqrt{6\log n} \right] + \sum_{(i, j) \not\in \text{supp}(u) \times \text{supp}(v)} \bP\left[ |M_{ij}| > \sqrt{6\log n} \right] = O(n^{-1})$$
+which completes the proof of the theorem.
+\end{proof}
+
+In the regime $k \gtrsim \sqrt{n}$, the spectral projection algorithm in Figure \ref{fig:rosspectral} from \cite{cai2015computational} achieves exact recovery in $\textsc{ROS}_R$ down to the planted clique lower bounds in Theorem \ref{lem:2a}. This method is described in Algorithm 1 and its guarantees established in Lemma 1 of \cite{cai2015computational}. Although it is stated as a recovery algorithm for a sub-Gaussian variant of $\textsc{BC}_R$, as indicated in Remark 2.1 in \cite{cai2015computational}, the guarantees of the algorithm extend more generally to rank one perturbations of a sub-Gaussian noise matrix. Our model of $\textsc{ROS}_R$ does not exactly fit into the extended model in Remark 2.1, but the argument in Lemma 1 can be applied to show $\textsc{ROS-Spectral-Projection}$ solves $\textsc{ROS}_R$. The details of this argument are show below. For brevity, we omit parts of the proof that are identical to \cite{cai2015computational}.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} $\textsc{ROS-Spectral-Projection}$
+\vspace{2mm}
+
+\textit{Inputs}: Matrix $M \in \mathbb{R}^{n \times n}$
+\begin{enumerate}
+\item Let $G \sim N(0, 1)^{\otimes n \times n}$ and let $A = \frac{1}{\sqrt{2}}(M + G)$ and $B = \frac{1}{\sqrt{2}}(M - G)$
+\item Compute the top left and right singular vectors $U$ and $V$ of $A$
+\item Sort the $n$ entries of $U^\top B$ in decreasing order and separate the entries into two clusters $R$ and $[n] \backslash R$ at the largest gap between consecutive values
+\item Sort the $n$ entries of $B V$ in decreasing order and separate the entries into two clusters $C$ and $[n] \backslash C$ at the largest gap between consecutive values
+\item Output $R$ and $C$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{Algorithm for sparse rank-1 submatrix recovery from \cite{cai2015computational} and in Theorem \ref{thm:rosrec}.}
+\label{fig:rosspectral}
+\end{figure}
+
+\begin{theorem} \label{thm:rosrec}
+Suppose that $M = \mu \cdot rc^\top + N(0, 1)^{\otimes n \times n}$ where $r, c \in \mathcal{V}_{n, k}$. There is a constant $C_1 > 0$ such that if $\mu \ge C_1(\sqrt{n} + \sqrt{k \log n})$ then the algorithm $\textsc{ROS-Spectral-Projection}$ correctly outputs $\text{supp}(r)$ and $\text{supp}(c)$ with probability at least $1 - 2n^{-C_2} - 2\exp(-2C_2n)$ for some constant $C_2 > 0$.
+\end{theorem}
+
+\begin{proof}
+Let $\mathcal{P}_u$ denote the projection operator onto the vector $u$ and let $\| r \|_0 = k_1$ and $\| c \|_0 = k_2$. By the definition of $\mathcal{V}_{n, k}$, it follows that
+$$k\left( 1 - \frac{1}{\log k} \right) \le k_1, k_2 \le k$$
+By the argument in Lemma 1 of \cite{cai2015computational}, there are constants $C_2, C_3 > 0$ such that
+\begin{align*}
+\| \mathcal{P}_{U} B_{\cdot j} - \mu c_j r \|_2 &\le C_3 \sqrt{\log n} + C_3\sqrt{\frac{n}{k_1}} \\
+\| \mathcal{P}_{V} B_{i \cdot}^\top - \mu r_i c \|_2 &\le C_3 \sqrt{\log n} + C_3 \sqrt{\frac{n}{k_2}}
+\end{align*}
+hold for all $1 \le i, j \le n$ with probability at least $1 - 2n^{-C_2} - 2\exp(-2C_2n)$. Now note that if $j \in \text{supp}(c)$ and $j' \not \in \text{supp}(c)$, then it follows that
+$$\| \mu c_j r - \mu c_{j'} r \|_2 = \mu \cdot |c_j| \ge \frac{\mu}{\sqrt{k}}$$
+by the definition of $\mathcal{V}_{n, k}$. Similarly, if $i \in \text{supp}(r)$ and $i' \not \in \text{supp}(r)$ then $\| \mu r_i c - \mu r_{i'} c \|_2 \ge \mu/\sqrt{k}$. Therefore if for both $i = 1, 2$
+$$\frac{\mu}{\sqrt{k}} \ge 6 C_3 \left( \sqrt{\log n} + \sqrt{\frac{n}{k_i}} \right)$$
+then it holds that
+$$2 \max_{j, j' \in \text{supp}(c)} \left\| \mathcal{P}_U B_{\cdot j} - \mathcal{P}_U B_{\cdot j'} \right\|_2 \le \max_{j\in \text{supp}(c), j' \not \in \text{supp}(c)} \left\| \mathcal{P}_U B_{\cdot j} - \mathcal{P}_U B_{\cdot j'} \right\|_2$$
+$$2 \max_{i, i' \in \text{supp}(c)} \left\| \mathcal{P}_V B_{i \cdot}^\top - \mathcal{P}_U B_{i' \cdot}^\top \right\|_2 \le \max_{i\in \text{supp}(c), i' \not \in \text{supp}(c)} \left\| \mathcal{P}_V B_{i \cdot}^\top - \mathcal{P}_U B_{i' \cdot}^\top \right\|_2$$
+and Steps 3 and 4 succeed in recovering $\text{supp}(r)$ and $\text{supp}(c)$.
+\end{proof}
+
+A simple singular value thresholding algorithm solves $\textsc{ROS}_D$ if $\mu \gtrsim \sqrt{n}$ and is comparatively simpler to analyze. As previously mentioned, this algorithm also solves $\textsc{SSW}_D$ since any instance of $\textsc{SSW}_D$ is an instance of $\textsc{ROS}_D$. Let $\sigma_1(M)$ denote the largest singular value of the matrix $M$. 
+
+\begin{theorem}
+Suppose that $M$ is an instance of $\textsc{ROS}_D(n, k, \mu)$. There is a constant $C_1 > 0$ such that if $\mu > 4 \sqrt{n} + 2 \sqrt{2 \log n}$ then the algorithm that outputs $H_1$ if $\sigma_1(M) \ge \frac{1}{2} \mu$ and $H_0$ otherwise has Type I$+$II error tending to zero as $n \to \infty$.
+\end{theorem}
+
+\begin{proof}
+Under $H_0$, it holds that $M \sim N(0, 1)^{\otimes n \times n}$. By Corollary 5.35 in \cite{vershynin2010introduction}, we have
+$$\sigma_1(M) \le 2 \sqrt{n} + \sqrt{2\log n}$$
+with probability at least $1 - 2n^{-1}$. Now consider the case of $H_1$ and suppose that $M = \mu \cdot rc^\top + Z$ where $r, c \in \mathcal{V}_{n, k}$ and $Z \sim N(0, 1)^{\otimes n \times n}$. By Weyl's interlacing inequality, it follows that
+$$|\mu - \sigma_1(M)| = |\sigma_1(\mu \cdot rc^\top) - \sigma_1(M)| \le \sigma_1(Z) \le 2\sqrt{n} + \sqrt{2\log n}$$
+with probability at least $1 - 2n^{-1}$. If $\mu > 4 \sqrt{n} + 2 \sqrt{2 \log n}$ then the Type I$+$II error of the algorithm is at most $4n^{-1}$, proving the theorem.
+\end{proof}
+
+To complete this section, we give a simple spectral thresholding algorithm for $\textsc{SSBM}_D$ if $\rho \gtrsim \frac{\sqrt{n}}{k}$. Let $\lambda_1(X)$ denote the largest eigenvalue of $X$ where $X$ is a square symmetric matrix. 
+
+\begin{theorem}
+Let $G$ be an instance of $\textsc{SSBM}_D(n, k, q, \rho)$ where $q = \Theta(1)$, $k = \Omega(\sqrt{n})$ and $\rho \ge \frac{6\sqrt{n}}{k}$. Let $A \in \mathbb{R}^{n \times n}$ be the adjacency matrix of $G$ and $J \in \mathbb{R}^{n \times n}$ be the matrix with zeros on its diagonal and ones elsewhere. Then the algorithm that outputs $H_1$ if $\lambda_1(A - qJ) \ge 2\sqrt{n}$ and $H_0$ otherwise has Type I$+$II error tending to zero as $n \to \infty$.
+\end{theorem}
+
+\begin{proof}
+Suppose that $G$ is drawn from some distribution in $H_1$ and that the two hidden communities have index sets $S_1, S_2 \subseteq [n]$ where $k_1 = |S_1|$ and $k_2 = |S_2|$. For the remainder of the analysis of $H_1$, consider $A$ and $G$ conditioned on $S_1$ and $S_2$. Now let $v$ be the vector
+$$v_i = \left\{ \begin{matrix} \frac{1}{\sqrt{k_1 + k_2}} & \text{if } i \in S_1 \\ -\frac{1}{\sqrt{k_1 + k_2}} & \text{if } i \in S_2 \\ 0 & \text{otherwise} \end{matrix} \right.$$
+for each $i \in [n]$. Now observe that
+$$v^\top (A - qJ) v = \frac{2}{k_1 + k_2} \left( \sum_{(i, j) \in S_1^2 \cup S_2^2 : i < j} \left( \mathbf{1}_{\{i, j\} \in E(G)} - q \right) + \sum_{(i, j) \in S_1 \times S_2} \left( q - \mathbf{1}_{\{i, j\} \in E(G)} \right) \right)$$
+By the definition of $H_1$ in $\textsc{SSBM}_D$, the expression above is the sum of $\binom{k_1 + k_2}{2}$ independent shifted Bernoulli random variables each with expectation at least $\rho$. Therefore it follows that
+$$\bE\left[ v^\top (A - qJ) v \right] \ge \frac{2}{k_1 + k_2} \cdot \binom{k_1 + k_2}{2} \cdot \rho = (k_1 + k_2 - 1)\rho \ge 3\sqrt{n}$$
+since $k_1 + k_2 - 1 \ge k - 2k^{1 - \delta_{\textsc{SSBM}}} - 1 \ge \frac{k}{2}$ for sufficiently large $k$, as defined in Section 2.2. Now note that each of the centered random variables $\mathbf{1}_{\{i, j\} \in E(G)} - \bE[\mathbf{1}_{\{i, j\} \in E(G)}]$ and $\bE[\mathbf{1}_{\{i, j\} \in E(G)}] - \mathbf{1}_{\{i, j\} \in E(G)}$ are bounded in $[-1, 1]$ and therefore Bernstein's inequality implies that for all $t > 0$,
+$$\bP\left[ v^\top (A - qJ) v < \bE[v^\top (A - qJ) v] - \frac{2t}{k_1 + k_2} \right] \le \exp\left( - \frac{\frac{1}{2} t^2}{n + \frac{1}{3} t} \right)$$
+Note that $v$ is a unit vector and thus $\lambda_1(A - qJ) \ge v^\top (A - qJ) v$. Setting $t = \frac{1}{2} (k_1 + k_2) \sqrt{n}$ now yields that
+$$\bP\left[ \lambda_1(A - qJ) < 2\sqrt{n} \right] \le \exp\left( - \frac{\frac{1}{8} (k_1 + k_2)^2 n}{n + \frac{1}{6} (k_1 + k_2) \sqrt{n}} \right) = \exp\left( - \Omega(n) \right)$$
+since $k_1 + k_2 \ge \frac{k}{2} = \Omega(\sqrt{n})$ for sufficiently large $k$. Now suppose that $G$ is drawn from $G(n, q)$ as in $H_0$. By Theorem 1.5 in \cite{vu2005spectral}, it follows that with probability $1 - o_n(1)$, we have that
+$$\lambda_1(A - qJ) \le 2\sqrt{q(1 - q)n} + C(q - q^2)^{1/4} n^{1/4} \log n$$
+for some constant $C > 0$. Therefore $\lambda_1(A - qJ)$ is less than $2 \sqrt{n}$ for sufficiently large values of $n$ since $q(1 - q) \le 1/4$. Therefore the Type I$+$II error of this algorithm on $\textsc{SSBM}_D$ is $o_n(1) + \exp\left( - \Omega(n) \right) = o_n(1)$ as $n \to \infty$.
+\end{proof}
+
+\subsection{Sparse PCA and Biased Sparse PCA}
+
+\paragraph{Information-Theoretic Lower Bounds.} In \cite{berthet2013optimal}, information-theoretic lower bounds for $\textsc{SPCA}_D(n, k, d, \theta)$ were considered and it was shown that if
+$$\theta \le \min\left\{\frac{1}{\sqrt{2}}, \sqrt{\frac{k \log(1 + o(d/k^2))}{n}} \right\}$$
+then the optimal Type I$+$II error of any algorithm for $\textsc{SPCA}_D$ tends to $1$ as $n \to \infty$. The proof of this information-theoretic lower bound follows a similar $\chi^2$ and MGF argument as in the previous section. If $d \ll k^2$, then this bound degrades to $\theta = o\left( \frac{d}{kn} \right)$. When $d = \Theta(n)$, there is a gap between this information-theoretic lower bound and the best known algorithm based on thresholding the $k$-sparse eigenvalue of the empirical covariance matrix, which only requires $\theta \gtrsim \sqrt{k/n}$. This information-theoretic lower bound was improved in \cite{cai2015optimal} to match the algorithmic upper bound. The following is their theorem in our notation.
+
+\begin{theorem}[Proposition 2 in \cite{cai2015optimal}] \label{thm:cmw15}
+Let $\beta_0 \in (0, 1/36)$ be a constant. Suppose that $X = (X_1, X_2, \dots, X_n)$ is an instance of $\textsc{SPCA}_D(n, k, d, \theta)$ where under $H_1$, the planted vector $v$ is chosen uniformly at random from all $k$-sparse unit vectors with nonzero coordinates equal to $\pm \frac{1}{\sqrt{k}}$. If it holds that
+$$\theta \le \min \left\{ 1, \sqrt{\frac{\beta_0 k}{n} \log \left( \frac{ed}{k} \right)} \right\}$$
+then there is a function $w : (0, 1/36) \to (0, 1)$ satisfying that $\lim_{\beta_0 \to 0^+} w(\beta_0) = 0$ and
+$$\TV\left( \mL_{H_0}(X), \mL_{H_1}(X) \right) \le w(\beta_0)$$
+\end{theorem}
+
+In particular if $\theta \ll \sqrt{k/n}$, then this inequality eventually applies for every $\beta_0 > 0$ and $\TV\left( \mL_{H_0}(X), \mL_{H_1}(X) \right) \to 0$, establishing the desired information-theoretic lower bound for $\textsc{SPCA}_D$. We now show that $\textsc{BSPCA}_D$ satisfies a weaker lower bound. The prior on the planted vector $v$ used in Theorem 5.1 of \cite{berthet2013optimal} to derive the suboptimal lower bound for $\textsc{SPCA}_D$ shown above placed entries equal to $1/\sqrt{k}$ on a random $k$-subset of the $d$ coordinates of $v$. Therefore their bound also applies to $\textsc{BSPCA}_D$. In order strengthen this to the optimal information-theoretic lower bound for $\textsc{BSPCA}_D$, we need apply Lemma \ref{lem:hgm} in place of the weaker hypergeometric squared MGF bounds used in \cite{berthet2013optimal}. To simplify the proof, we will use the following lemma from \cite{cai2015optimal}.
+
+\begin{lemma}[Lemma 7 in \cite{cai2015optimal}] \label{lem:chispca}
+Let $v$ be a distribution on $d \times d$ symmetric random matrices $M$ such that $\| M \| \le 1$ almost surely. If $\bE_v[N(0, I_d + M)^{\otimes n}] = \int N(0, I_d + M)^{\otimes n} dv(M)$, then
+$$\chi^2\left( \bE_v[N(0, I_d + M)^{\otimes n}], N(0, I_d)^{\otimes n} \right) + 1 = \bE \left[ \det(I_d - M_1 M_2)^{-n/2} \right]$$
+where $M_1$ and $M_2$ are independently drawn from $v$.
+\end{lemma}
+
+Applying this lemma with the hypergeometric squared MGF bounds in Lemma \ref{lem:hgm} yields the following information-theoretic lower bound for $\textsc{BSPCA}_D$.
+
+\begin{theorem}
+Suppose that $X = (X_1, X_2, \dots, X_n)$ is an instance of $\textsc{BSPCA}_D(n, k, d, \theta)$ where under $H_1$, the planted vector $v$ is chosen uniformly at random from all $k$-sparse unit vectors in $\mathbb{R}^d$ with nonzero coordinates equal to $\frac{1}{\sqrt{k}}$. Suppose it holds that $\theta \le 1/\sqrt{2}$ and
+$$\theta \le \min\left\{ \sqrt{\frac{\beta_0 k}{n} \log \left( \frac{ed}{k} \right)}, \sqrt{\frac{\beta_0 d^2}{nk^2}}\right\}$$
+for some $0 < \beta_0 < (16e)^{-1}$. Then there is a function $w : (0, 1) \to (0, 1)$ satisfying that $\lim_{\beta_0 \to 0^+} w(\beta_0) = 0$ and
+$$\TV\left( \mL_{H_0}(X), \mL_{H_1}(X) \right) \le w(\beta_0)$$
+\end{theorem}
+
+\begin{proof}
+Let $u_S$ denote the $d$-dimensional unit vector with entries in $S$ equal to $1/\sqrt{k}$ and all other entries equal to zero where $S$ is some $k$-subset of $d$. Let $v$ be the distribution on matrices $\theta u_Su_S^\top$ where $\theta \le 1$ and $S$ is chosen uniformly at random from the set of $k$-subsets of $[d]$. Note that $\mL_{H_0}(X) = N(0, I_d)^{\otimes n}$ and $\mL_{H_1}(X) = \bE_v[N(0, I_d + \theta u_S u_S^\top)^{\otimes n}]$. By Lemma \ref{lem:chispca}, it follows that
+\begin{align*}
+\chi^2\left( \mL_{H_1}(X), \mL_{H_0}(X) \right) &=  \bE \left[ \det\left(I_d - \theta^2 u_S u_S^\top u_T u_T^\top\right)^{-n/2} \right] - 1 \\
+&= \bE\left[ \left( 1 - \frac{\theta^2}{k^2} \cdot |S \cap T|^2 \right)^{-n/2} \right] - 1 \\
+&\le \bE\left[ \exp\left( \frac{n\theta^2}{k^2} \cdot |S \cap T|^2 \right) \right] - 1
+\end{align*}
+where $S$ and $T$ are independent random $k$-subsets of $[d]$. The last inequality above follows from the fact that $(1 - t)^{-1/2} \le e^t$ if $t \le 1/2$, $\theta^2 \le 1/2$ and $|S \cap T| \le k$. Now note that $|S \cap T| \sim \text{Hypergeometric}(d, k, k)$ and let
+$$b = \frac{n\theta^2}{k^2} \cdot \left( \max\left\{ \frac{1}{k} \log \left( \frac{ed}{k} \right), \frac{d^2}{k^4} \right\} \right)^{-1}$$
+The given condition on $\theta$ implies that $b \le \beta_0$. It follows by Lemma \ref{lem:hgm} that $\chi^2\left( \mL_{H_1}(X), \mL_{H_0}(X) \right) \le \tau(\beta_0) - 1$ and by Cauchy-Schwarz that if $w(\beta_0) = \frac{1}{2} \sqrt{\tau(\beta_0) - 1}$ then
+$$\TV\left( \mL_{H_0}(X), \mL_{H_1}(X) \right) \le \frac{1}{2}\sqrt{\chi^2\left( \mL_{H_1}(X), \mL_{H_0}(X) \right)} \le w(\beta_0)$$
+where $w(\beta_0) \to 0$ as $\beta_0 \to 0^+$, proving the theorem.
+\end{proof}
+
+We remark that this same proof technique applied to the ensemble of $k$-sparse unit vectors $v$ chosen uniformly at random from those with nonzero coordinates equal to $\pm 1/\sqrt{k}$ with Lemma \ref{lem:hgmw} proves Theorem \ref{thm:cmw15}. This difference in the lower bounds resulting from these two choices of ensembles illustrates the information-theoretic difference between $\textsc{SPCA}_D$ and $\textsc{BSPCA}_D$. We now will show information-theoretic lower bounds for the weak recovery problems $\textsc{SPCA}_{WR}$ and $\textsc{BSCPA}_{WR}$. The argument presented here is similar to the proof of Theorem 3 in \cite{wang2016statistical}. For this argument, we will need a variant of the Gilbert-Varshamov lemma and generalized Fano's lemma as in \cite{wang2016statistical}. Given two $u, v\in \mathbb{R}^d$, let $d_H(u, v)$ denote the Hamming distance between $u$ and $v$.
+
+\begin{lemma}[Gilbert-Varshamov, Lemma 4.10 in \cite{massart2007concentration}]
+Suppose that $\alpha, \beta \in (0, 1)$ and $k \le \alpha \beta d$. Let
+$$\rho = \frac{\alpha}{\log(\alpha \beta)^{-1}}\left( \beta - \log \beta - 1 \right)$$
+Then there is a subset $S$ of $\{ v \in \{0, 1\}^d : \| v \|_0 = k \}$ of size at least $\left( \frac{d}{k} \right)^{\rho k}$ such that for any two $u, v \in S$ with $u \neq v$, it holds that $d_H(u, v) \ge 2(1 - \alpha)k$. 
+\end{lemma}
+
+\begin{lemma}[Generalized Fano's Lemma, Lemma 3 in \cite{yu1997assouad}]
+Let $P_1, P_2, \dots, P_M$ be probability distributions on a measurable space $(\mathcal{X}, \mathcal{B})$ and assume that $\KL(P_i, P_j) \le \beta$ for all $i \neq j$. Any measurable function $\phi : \mathcal{X} \to \{1, 2, \dots, M\}$ satisfies that
+$$\max_{1 \le i \le M} P_i(\phi \neq i) \ge 1 - \frac{\beta + \log 2}{\log M}$$
+\end{lemma}
+
+With these two lemmas, we now will show that the weak recovery problems $\textsc{SPCA}_{WR}$ and $\textsc{BSCPA}_{WR}$ cannot be solved if $\theta \lesssim \sqrt{k/n}$, matching Theorem \ref{lem:2a}. Note that in the theorem below, $\phi(X)$ and $\text{supp}(v)$ have size $k$ for all $X \in \mathbb{R}^{d \times n}$ and $v \in S$. Therefore it holds that $|\phi(X) \Delta \textnormal{supp}(v)| = 2k - 2|\phi(X) \cap \textnormal{supp}(v)|$ for all such $X$ and $v$.
+
+\begin{theorem}
+Fix positive integers $n, k, d$ and real numbers $\theta > 0$ and a constant $\epsilon \in (0, 1)$ such that $k \le \epsilon d/4$. Let $P_v$ denote the distribution $N(0, I_d + \theta vv^\top)$ and let $S$ be the set of all $k$-sparse unit vectors with nonzero entries equal to $1/\sqrt{k}$. If
+$$\frac{n\theta^2}{2(1 + \theta)} + \log 2 \le \frac{\epsilon^2}{2\log 4\epsilon^{-1}} \cdot k \log \left( \frac{d}{k} \right)$$
+then for any function $\phi : \mathbb{R}^{d \times n} \to \binom{[n]}{k}$, it holds that
+$$\min_{v \in S} \bE_{X \sim P_v^{\otimes n}} \left[ |\phi(X) \cap \textnormal{supp}(v)| \right] \le \left( \frac{1}{2} + \epsilon \right) k$$
+\end{theorem}
+
+\begin{proof}
+Note that $\KL(N(0, \Sigma_0), N(0, \Sigma_1)) = \frac{1}{2} \left[ \text{Tr}\left( \Sigma_1^{-1} \Sigma_0 \right) - d + \ln \frac{\det(\Sigma_1)}{\det(\Sigma_0)} \right]$ for any positive semidefinite $\Sigma_0, \Sigma_1 \in \mathbb{R}^{d\times d}$. Therefore for any $\| u \|_2 = \| v \|_2 = 1$,
+\begin{align*}
+\KL(P_u^{\otimes n}, P_v^{\otimes n}) &= n \cdot \KL(P_u, P_v) = \frac{n}{2} \cdot \text{Tr}\left( \left(I_d + \theta uu^\top \right)^{-1} \left(I_d + \theta vv^\top \right) - I_d \right) \\
+&= \frac{n\theta}{2} \cdot \text{Tr}\left( \left( I_d + \theta uu^\top \right)^{-1}\left( vv^\top - uu^\top \right) \right) \\
+&= \frac{n\theta}{2} \cdot \text{Tr}\left( \left( I_d - \frac{\theta}{1 + \theta} \cdot uu^\top \right) \left( vv^\top - uu^\top \right) \right) \\
+&= \frac{n\theta}{2} \cdot \text{Tr}\left(vv^\top - uu^\top - \frac{\theta}{1 + \theta} \cdot \langle u, v \rangle \cdot uv^\top + \frac{\theta}{1 + \theta} \cdot uu^\top \right) \\
+&= \frac{n\theta^2}{4(1 + \theta)} \cdot \| u - v \|_2^2 \le \frac{n\theta^2}{2(1 + \theta)}
+\end{align*}
+since $\det(I_d + \theta uu^\top) = \det(I_d + \theta vv^\top) = 1 + \theta$. Let $S_0$ be the subset from Gilbert-Varshamov's lemma applied with $\alpha = \epsilon$ and $\beta = \frac{1}{4}$. It follows that
+$$\log |S_0| \ge \frac{\epsilon}{2\log 4\epsilon^{-1}} \cdot k \log \left( \frac{d}{k} \right)$$
+For each $u \in S$, let $\hat{u}$ be an element of $S_0$ such that $|\text{supp}(u) \cap \text{supp}(\hat{u})|$ is maximal. Let $\hat{\phi}$ denote the function that maps $X \in \mathbb{R}^{d \times n}$ to $\text{supp}(\hat{u})$ where $u = \mathbf{1}_{\phi(X)}$. Suppose that $v \in S_0$ is such that $v \neq \hat{u}$. Observe by the triangle inequality that
+$$4k - 2|\phi(X) \cap \text{supp}(v)| - 2|\hat{\phi}(X) \cap \phi(X)| = d_H(\hat{u}, u) + d_H(u, v) \ge d_H(\hat{u}, v) \ge 2(1 - \epsilon) k$$
+Rearranging and using the fact that $|\phi(X) \cap \text{supp}(v)| \le |\hat{\phi}(X) \cap \phi(X)|$ yields that
+$$k - |\phi(X) \cap \textnormal{supp}(v)| \ge \frac{1}{2} \left( 1 - \epsilon \right) k$$
+Note that $k - |\phi(X) \cap \textnormal{supp}(v)| \ge 0$ is true for all $v$. Therefore if $v \in S_0$, we have
+$$\bE_{X \sim P_v^{\otimes n}} \left[ k - |\phi(X) \cap \textnormal{supp}(v)| \right] \ge \bP_{X \sim P_{v}^{\otimes n}} \left[ \hat{\phi}(X) \neq v \right] \cdot \frac{1}{2} \left( 1 - \epsilon \right)k$$
+Now observe by generalized Fano's Lemma,
+\begin{align*}
+\max_{v \in S} \bE_{X \sim P_v^{\otimes n}} \left[ k - |\phi(X) \cap \textnormal{supp}(v)| \right] &\ge \max_{v \in S_0} \bE_{X \sim P_v^{\otimes n}} \left[ k - |\phi(X) \cap \textnormal{supp}(v)| \right] \\
+&\ge \frac{1}{2} \left( 1 - \epsilon \right)k \cdot \max_{v \in S_0} \bP_{X \sim P_{v}^{\otimes n}} \left[ \hat{\phi}(X) \neq v \right] \\
+&\ge \frac{1}{2} \left( 1 - \epsilon \right)k \cdot \left[ 1 - \frac{\frac{n\theta^2}{2(1 + \theta)} + \log 2}{\log |S_0|} \right] \\
+&\ge \frac{1}{2} \left( 1 - \epsilon \right)k \cdot \left(1 - \epsilon \right) \ge \left( \frac{1}{2} - \epsilon \right) k
+\end{align*}
+Rearranging completes the proof of the lemma.
+\end{proof}
+
+\paragraph{Information-Theoretically Optimal Algorithms.} Given a positive semidefinite matrix $M \in \mathbb{R}^{d\times d}$, let the $k$-sparse maximum eigenvalue and eigenvector be
+$$\lambda_{\max}^k(M) = \max_{\|u\|_2 = 1, \| u \|_0 = k} u^\top M u \quad \text{and} \quad v_{\max}^k(M) = \arg\max_{\| u \|_2  = 1, \| u \|_0 = k} u^\top M u$$
+Note that $\lambda_{\max}^k(M)$ and $v_{\max}^k(M)$ can be computed by searching over all principal $k \times k$ minors for the maximum eigenvalue and corresponding eigenvector. In \cite{berthet2013complexity} and \cite{wang2016statistical}, the $k$-sparse maximum eigenvalue and eigenvector of the empirical covariance matrix are shown to solve sparse PCA detection and estimation in the $\ell_2$ norm under general distributions satisfying a restricted covariance concentration condition. Specializing these results to Gaussian formulations of sparse PCA yields the following theorems. Let $L(u, v) = \sqrt{1 - \langle u, v \rangle}$ for $u, v \in \mathbb{R}^d$ with $\| u \|_2 = \| v \|_2 = 1$. The statement of Theorem 2 in \cite{berthet2013complexity} is for $k \ll \sqrt{d}$, but the same argument also shows the result for $k \ll d$. Note that the following theorem applies to $\textsc{BSPCA}_D$ since any instance of $\textsc{BSPCA}_D$ is also an instance of  $\textsc{SPCA}_D$.
+
+\begin{theorem}[Theorem 2 in \cite{berthet2013complexity}]
+Suppose that $X = (X_1, X_2, \dots, X_n)$ is an instance of $\textsc{SPCA}_D(n, k, d, \theta)$ and let $\hat{\Sigma}$ be the empirical covariance matrix of $X$. If $\theta, \delta \in (0, 1)$ are such that
+$$\theta > 15 \sqrt{\frac{k \log \left( \frac{3ed}{k\delta} \right)}{n}}$$
+then the algorithm that outputs $H_1$ if $\lambda_{\max}^k(\hat{\Sigma}) > 1 + 8 \sqrt{\frac{k \log \left( \frac{3ed}{k\delta} \right)}{n}}$ and $H_0$ otherwise has Type I$+$II error at most $\delta$.
+\end{theorem}
+
+\begin{theorem}[Theorem 2 in \cite{wang2016statistical}]
+Suppose that $k, d$ and $n$ are such that $2k \log d \le n$. Let $P_v$ denote the distribution $N(0, I_d + \theta vv^\top)$ and given some $X = (X_1, X_2, \dots, X_n) \sim P_v^{\otimes n}$, let $\hat{\Sigma}(X)$ be the empirical covariance matrix of $X$. It follows that
+$$\sup_{v \in \mathcal{V}_{d, k}} \bE_{X \sim P_v} L\left( v^k_{\max}\left(\hat{\Sigma}(X)\right), v\right) \le 7 \sqrt{\frac{k \log d}{n\theta^2}}$$
+\end{theorem}
+
+The latter result on estimation in the $\ell_2$ norm yields a weak recovery algorithm for $\textsc{SPCA}_{WR}$ and $\textsc{BSPCA}_{WR}$ by thresholding the entries of $v^k_{\max}(\hat{\Sigma})$, as in the following theorem. If $\frac{k \log d}{n\theta^2} \to 0$ then this algorithm achieves weak recovery. 
+
+\begin{theorem} \label{thm:weakrecspca}
+Suppose that $k, d$ and $n$ are such that $2k \log d \le n$. Let $S(X) \subseteq [d]$ be the set of coordinates of $v^k_{\max}\left(\hat{\Sigma}(X) \right)$ with magnitude at least $\frac{1}{2\sqrt{k}}$. It follows that
+$$\sup_{v \in \mathcal{V}_{d, k}} \bE_{X \sim P_v} \left[\frac{1}{k} \left|S(X) \Delta \textnormal{supp}(v)\right| \right] \le 56 \sqrt{\frac{2k \log d}{n\theta^2}}$$
+\end{theorem}
+
+\begin{proof}
+Let $u = v^k_{\max}\left(\hat{\Sigma}(X) \right) - v$ and note that
+$$\| u \|_2^2 = \| v \|_2^2 + \left\| v^k_{\max}\left(\hat{\Sigma}(X) \right) \right\|_2^2 - 2 \left\langle v, v^k_{\max}\left(\hat{\Sigma}(X) \right) \right\rangle = 2 \cdot L\left( v^k_{\max}\left(\hat{\Sigma}(X)\right), v\right)^2$$
+If $i \in \text{supp}(v)$ where $v \in \mathcal{V}_{d, k}$, then $|v|_i \ge \frac{1}{\sqrt{k}}$. Therefore each $i \in S(X) \Delta \textnormal{supp}(v)$ satisfies that $|u|_i \ge \frac{1}{2\sqrt{k}}$, which implies that
+$$\frac{1}{k} \left|S(X) \Delta \textnormal{supp}(v) \right| \le 4 \cdot \sum_{i \in S(X) \Delta \textnormal{supp}(v)} |u|_i^2 \le 4 \| u \|_2^2 \le 8\sqrt{2} \cdot L\left( v^k_{\max}\left(\hat{\Sigma}(X)\right), v\right)$$
+using the fact that $L(u, v) \le \sqrt{2}$ if $\| u \|_2 = \| v \|_2 = 1$. This inequality along with the previous theorem completes the proof.
+\end{proof}
+
+We next analyze an algorithm thresholding the sum of the entries of the empirical covariance matrix. For instances of $\textsc{BSPCA}_D$, this sum test solves the detection problem when $\theta \gtrsim \frac{\sqrt{n}}{k}$ in the regime $d = \Theta(n)$ and becomes optimal when $k \gtrsim n^{2/3}$. Recall that $\delta = \delta_{\text{BSPCA}} > 0$ is the constant in the definition of $\mathcal{BV}_{d, k}$.
+
+\begin{theorem} \label{thm:bspcadet}
+Suppose that $X = (X_1, X_2, \dots, X_n)$ is an instance of $\textsc{BSPCA}_D(n, k, d, \theta)$ and let $\hat{\Sigma}(X)$ be the empirical covariance matrix of $X$. Suppose that $2 \delta^2 k \theta \le d$ and $\frac{n k^2 \theta^2}{d^2} \to \infty$ as $n \to \infty$. Then the test that outputs $H_1$ if $\mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1} > d + 2\delta^2 k \theta$ and $H_0$ otherwise has Type I$+$II error tending to zero as $n \to \infty$.
+\end{theorem}
+
+\begin{proof}
+First assume that $H_0$ holds and $X \sim N(0, I_d)^{\otimes n}$. Observe that
+$$\frac{n}{d} \cdot \mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1} = \frac{1}{d}\sum_{i = 1}^n \langle \mathbf{1}, X_i \rangle^2$$
+where the values $\frac{1}{\sqrt{d}} \langle \mathbf{1}, X_i \rangle$ are independent and distributed as $N(0, 1)$. Therefore $\frac{n}{d} \cdot \mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1}$ is distributed as a $\chi^2$ distribution with $n$ degrees of freedom. Since $\frac{1}{d} \langle \mathbf{1}, X_i \rangle^2 - 1$ is zero-mean and sub-exponential with norm $1$, Bernstein's inequality implies that for all $t \ge 0$
+$$\bP\left[ \frac{n}{d} \cdot \mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1} \ge n + t \right] \le 2 \exp\left( - c \cdot \min \left( \frac{t^2}{n}, t \right) \right)$$
+for some constant $c > 0$. Substituting $t = \frac{2n \delta^2 k \theta}{d} \le n$ yields that
+\begin{align*}
+\bP\left[ \mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1} \ge d + 2\delta^2 k \theta \right] &\le 2 \exp\left( - c \cdot \min \left( \frac{4n \delta^4 k^2 \theta^2}{d^2}, \frac{2n \delta^2 k \theta}{d} \right) \right)\\
+&= 2 \exp\left( - \frac{4cn \delta^4 k^2 \theta^2}{d^2} \right)
+\end{align*}
+which tends to zero as $n \to \infty$. Now assume that $H_1$ holds and $X \sim N(0, I_d + \theta vv^\top)^{\otimes n}$ for some $v \in \mathcal{BV}_{d, k}$. Note that each $X_i$ can be written as $X_i = \sqrt{\theta} \cdot g_i v + Z_i$ where $g_1, g_2, \dots, g_n \sim_{\text{i.i.d.}} N(0, 1)$ and $Z_1, Z_2, \dots, Z_n \sim_{\text{i.i.d.}} N(0, I_d)$. If $s(v) = \sum_{j = 1}^d v_j$ is the sum of the entries of $v$, then
+$$\langle \mathbf{1}, X_i \rangle = \sqrt{\theta} \cdot g_i s(v) + \sum_{j = 1}^d Z_{ij} \sim N\left(0, d + \theta s(v)^2\right)$$
+Furthermore, these inner products are independent for $i = 1, 2, \dots, n$. Therefore $\frac{n}{d + \theta s(v)^2} \cdot \mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1}$ is also distributed as a $\chi^2$ distribution with $n$ degrees of freedom. Since $v \in \mathcal{BV}_{d, k}$, it either follows that $|\text{supp}_+(v)| \ge \left( \frac{1}{2} + \delta \right)k$ or $|\text{supp}_-(v)| \ge \left( \frac{1}{2} + \delta \right)k$. If $|\text{supp}_+(v)| \ge \left( \frac{1}{2} + \delta \right)k$, then by Cauchy-Schwarz we have that
+\begin{align*}
+s(v) &= \sum_{i \in \text{supp}_+(v)} v_i - \sum_{i \in \text{supp}_-(v)} |v_i| \ge \left( \frac{1}{2} + \delta \right)\sqrt{k} - \left( \sum_{i \in \text{supp}_-(v)} |v_i|^2 \right)^{1/2} \cdot \sqrt{|\text{supp}_-(v)|} \\
+&= \left( \frac{1}{2} + \delta \right)\sqrt{k} - \left( 1 - \sum_{i \in \text{supp}_+(v)} |v_i|^2 \right)^{1/2} \cdot \sqrt{|\text{supp}_-(v)|} \\
+&\ge \left( \frac{1}{2} + \delta \right)\sqrt{k} - \left( 1 - \frac{|\text{supp}_+(v)|}{k} \right)^{1/2} \cdot \sqrt{\left( \frac{1}{2} - \delta \right)k} \ge 2 \delta \sqrt{k}
+\end{align*}
+Bernstein's inequality with $t = \frac{2n \delta^2 k \theta}{d + \theta s(v)^2} \le n$ now implies that
+$$\bP\left[ \mathbf{1}^\top \hat{\Sigma}(X) \mathbf{1} \le d + 2\delta^2 k \theta \right] \le 2 \exp\left( - \frac{4cn \delta^4 k^2 \theta^2}{(d + \theta s(v)^2)^2} \right)$$
+which tends to zero as $n \to \infty$ since $\theta s(v)^2 \le \theta k \le \frac{d}{2\delta^2}$ by Cauchy-Schwarz. This completes the proof of the theorem.
+\end{proof}
+
+\paragraph{Polynomial-Time Algorithms.} As shown in \cite{berthet2013complexity}, $\textsc{SPCA}_D$ and $\textsc{BSPCA}_D$ can be solved with a semidefinite program in the regime $k \lesssim \sqrt{n}$. Their algorithm computes a semidefinite relaxation of the maximum $k$-sparse eigenvalue, first forming the empirical covariance matrix $\hat{\Sigma}(X)$ and solving the convex program
+\begin{align*}
+\text{SDP}(X) = \max_Z \quad &\text{Tr}\left(\hat{\Sigma}(X) Z\right) \\
+\text{s.t.} \quad &\text{Tr}(Z) = 1, |Z|_1 \le k, Z \succeq 0
+\end{align*}
+Thresholding $\text{SDP}(X)$ yields a detection algorithm for $\textsc{SPCA}_D$ with guarantees captured in the following theorem. In \cite{berthet2013complexity}, a more general model is considered with sub-Gaussian noise. We specialize the more general theorem in \cite{berthet2013complexity} to our setup.
+
+\begin{theorem}[Theorem 5 in \cite{berthet2013complexity}]
+Suppose that $\delta \in (0, 1)$. Let $X = (X_1, X_2, \dots, X_n)$ be an instance of $\textsc{SPCA}_D(n, k, d, \theta)$ and suppose that $\theta \in [0, 1]$ satisfies that
+$$\theta \ge 23 \sqrt{\frac{k^2 \log(d^2/\delta)}{n}}$$
+Then the algorithm that outputs $H_1$ if $\textnormal{SDP}(X) \ge 16 \sqrt{\frac{k^2 \log(d^2/\delta)}{n}} + \frac{1}{\sqrt{n}}$ and $H_0$ otherwise has Type I$+$II error at most $\delta$.
+\end{theorem}
+
+In \cite{wang2016statistical}, a semidefinite programming approach is shown to solve the sparse PCA estimation task under the $\ell_2$ norm. As in the proof of Theorem \ref{thm:weakrecspca}, this yields a weak recovery algorithm for $\textsc{SPCA}_{WR}$ and $\textsc{BSPCA}_{WR}$, achieving the tight barrier when $k \lesssim \sqrt{n}$. The SDP algorithm in \cite{wang2016statistical} is shown in Figure \ref{fig:spcasdp} and its guarantees specialized to the case of Gaussian data are in the following theorem.
+
+\begin{figure}[t!]
+\begin{algbox}
+\textbf{Algorithm} $\textsc{SPCA-SDP}$
+\vspace{2mm}
+
+\textit{Inputs}: $X = (X_1, X_2, \dots, X_n) \in \mathbb{R}^{d \times n}$
+\begin{enumerate}
+\item Compute the empirical covariance matrix $\hat{\Sigma} = \hat{\Sigma}(X)$ and set
+$$\epsilon = \frac{\log d}{4n} \quad \text{and} \quad \lambda = 4 \sqrt{\frac{\log d}{n}}$$
+\item Let $f : \mathbb{R}^{d \times d} \to \mathbb{R}$ be
+$$f(M) = \text{Tr}\left(\hat{\Sigma} M\right) - \lambda \| M \|_1$$
+and compute an $\epsilon$-maximizer $\hat{M}^{\epsilon}$ of $f(M)$ subject to the constraints that $M$ is symmetric, $M \succeq 0$ and $\text{Tr}(M) = 1$
+\item Output $v_{\text{SDP}} = \arg \max_{\| u \|_2 = 1} u^\top \hat{M}^\epsilon u$
+\end{enumerate}
+\vspace{1mm}
+\end{algbox}
+\caption{SDP algorithm for weak $\ell_2$ estimation in sparse PCA from \cite{wang2016statistical} and in Theorem \ref{thm:spcasdp}.}
+\label{fig:spcasdp}
+\end{figure}
+
+\begin{theorem}[Theorem 5 in \cite{wang2016statistical}] \label{thm:spcasdp}
+Suppose that $k, d$ and $n$ are such that $4 \log d \le n \le k^2 d^2 \theta^{-2} \log d$ and $0 < \theta \le k$. Let $P_v$ denote the distribution $N(0, I_d + \theta vv^\top)$ and given some $X = (X_1, X_2, \dots, X_n) \sim P_v^{\otimes n}$, let $v_{\textnormal{SDP}}(X)$ be the output of $\textsc{SPCA-SDP}$ applied to $X$. Then
+$$\sup_{v \in \mathcal{V}_{d, k}} \bE_{X \sim P_v} L\left( v_{\textnormal{SDP}}(X), v\right) \le \min\left( (16\sqrt{2} + 2) \sqrt{\frac{k^2 \log d}{n \theta^2}}, 1 \right)$$
+\end{theorem}
+
+Using an identical argument to Theorem \ref{thm:weakrecspca}, we obtain the following theorem.
+
+\begin{theorem}
+Suppose that $k, d$ and $n$ are such that $4 \log d \le n \le k^2 d^2 \theta^{-2} \log d$ and $0 < \theta \le k$. Let $S(X) \subseteq [d]$ be the set of coordinates of $v_{\textnormal{SDP}}(X)$ with magnitude at least $\frac{1}{2\sqrt{k}}$. It follows that
+$$\sup_{v \in \mathcal{V}_{d, k}} \bE_{X \sim P_v} \left[\frac{1}{k} \left|S(X) \Delta \textnormal{supp}(v)\right| \right] \le 8\sqrt{2} \cdot \min\left( (16\sqrt{2} + 2) \sqrt{\frac{k^2 \log d}{n \theta^2}}, 1 \right)$$
+\end{theorem}
+
+To establish the polynomial-time upper bounds for $\textsc{SPCA}$ and $\textsc{BSPCA}$ in Theorem \ref{lem:2a}, it now suffices to consider $k \gtrsim \sqrt{n}$. First consider the detection problems $\text{SPCA}_D$ and $\textsc{BSPCA}_D$. The following theorem establishes that a spectral algorithm directly applied to the empirical covariance matrix solves $\textsc{SPCA}_D$ when $\theta \gtrsim 1$.
+
+\begin{theorem} \label{thm:spectralspca}
+Suppose that $X = (X_1, X_2, \dots, X_n)$ is an instance of $\textsc{SPCA}_D(n, k, d, \theta)$ and let $\hat{\Sigma}(X)$ be the empirical covariance matrix of $X$. Suppose that $d \le cn$ for some constant $c > 0$, $d \to \infty$ and $n(1 + \theta)^{-2} \to \infty$ as $n \to \infty$ and it holds that $\theta > 4\sqrt{c}$. Then the test that outputs $H_1$ if $\lambda_1(\hat{\Sigma}(X)) > 1 + 2\sqrt{c}$ and $H_0$ otherwise has Type I$+$II error tending to zero as $n \to \infty$.
+\end{theorem}
+
+\begin{proof}
+First observe that $\hat{\Sigma}(X) = \frac{1}{n} XX^\top$ and thus $\lambda_1(\hat{\Sigma}(X)) = \frac{1}{n} \sigma_1(X)^2$. Under $H_0$, it follows that $X \sim N(0, 1)^{\otimes d \times n}$. By Corollary 5.35 in \cite{vershynin2010introduction}, it follows that
+$$\bP\left[ \lambda_1(\hat{\Sigma}(X)) > 1 + 2\sqrt{c} \right] \le \bP\left[ \sigma_1(X) > \sqrt{n} + 2\sqrt{d} \right] \le 2e^{-d/2}$$
+Under $H_1$, suppose that $X \sim N(0, I_d + \theta vv^\top)^{\otimes n}$ where $v \in \mathcal{V}_{d, k}$. As in the proof of Theorem \ref{thm:bspcadet}, write $X_i = \sqrt{\theta} \cdot g_i v + Z_i$ where $g_1, g_2, \dots, g_n \sim_{\text{i.i.d.}} N(0, 1)$ and $Z_1, Z_2, \dots, Z_n \sim_{\text{i.i.d.}} N(0, I_d)$. Now observe that
+$$v^\top \hat{\Sigma}(X) v = \frac{1}{n} \sum_{i = 1}^n \langle v, X_i \rangle^2 = \frac{1}{n} \sum_{i = 1}^n \left( \sqrt{\theta} \cdot g_i + \langle v, Z_i \rangle \right)^2$$
+Note that since $\| v \|_2 = 1$, it holds that $\sqrt{\theta} \cdot g_i + \langle v, Z_i \rangle \sim N(0, 1 + \theta)$ and are independent for $i = 1, 2, \dots, n$. Now note that $(1 + \theta)^{-1} \langle v, X_i \rangle^2 - 1$ is zero-mean and sub-exponential with norm $1$. Therefore Bernstein's inequality implies that
+\begin{align*}
+\bP\left[ \lambda_1(\hat{\Sigma}(X)) \le 1 + 2\sqrt{c} \right] &\le \bP\left[ v^\top \hat{\Sigma}(X) v \le 1 + 2\sqrt{c} \right] \\
+&\le \bP\left[ \sum_{i = 1}^n \left[ (1 + \theta)^{-1} \langle v, X_i \rangle^2 - 1 \right] \le - \frac{2n\sqrt{c}}{1 + \theta} \right] \\
+&\le 2 \exp \left( - c_1 \cdot \frac{4cn}{(1 + \theta)^2} \right) \to 0 \text{ as } n \to \infty
+\end{align*}
+for some constant $c_1 > 0$ and since $\frac{2n\sqrt{c}}{1 + \theta} < n$. This completes the proof of the theorem.
+\end{proof}
+
+The algorithm summing the entries of the empirical covariance matrix in Theorem \ref{thm:bspcadet} runs in polynomial time and shows that $\text{BSPCA}_D$ can be solved in polynomial time as long as $\theta \gtrsim \frac{\sqrt{n}}{k}$. Note that this algorithm gives an upper bound matching Theorem \ref{lem:2a} and can detect smaller signal levels $\theta$ in $\text{BSPCA}_D$ than the spectral algorithm.
+
+For the recovery problem when $k \gtrsim \sqrt{n}$, the spectral algorithm considered in Theorem 1.1 of \cite{krauthgamer2015semidefinite} achieves the upper bound in Theorem \ref{lem:2a} for the exact recovery problems $\text{SPCA}_R$ and $\text{BSPCA}_R$. As given in \cite{krauthgamer2015semidefinite}, this spectral algorithm is not adaptive to the support size of the planted vector and assumes that the planted sparse vector has nonzero entries of the form $\pm 1/\sqrt{k}$. We mildly adapt this algorithm to only require that the planted vector is in $\mathcal{V}_{d, k}$. The proof of its correctness follows a similar argument as Theorem 1.1 in \cite{krauthgamer2015semidefinite}. We omit details that are identical for brevity.
+
+\begin{theorem}
+Suppose that $k, d$ and $n$ are such that $k, d \to \infty$, $\frac{d}{n} \to c$ and $\frac{k \log d}{n} \to 0$ as $n \to \infty$ for some constant $c > 0$. Let $X = (X_1, X_2, \dots, X_n) \sim P_v^{\otimes n}$ and let $\hat{v}$ be the leading eigenvector of $\hat{\Sigma}(X)$. Let $S \subseteq [d]$ be the set of $i$ such that $|\hat{v}_i|^4 \ge \frac{\log d}{kd}$. If $\theta > \sqrt{c}$ is fixed then $S = \textnormal{supp}(v)$ with probability tending to one as $n \to \infty$.
+\end{theorem}
+
+\begin{proof}
+Let $\hat{v} = g \cdot v + \sqrt{1 - g^2} \cdot u$ where $u$ is the projection of $\hat{v}$ onto the space orthogonal to $v$. Also assume that $g \in [0, 1]$, negating $v$ if necessary. By Theorem 4 in \cite{paul2007asymptotics}, it follows that
+$$g \to \sqrt{\frac{\theta^2 - c}{\theta^2 + \theta c}} \quad \text{with probability } 1 - o(1) \text{ as } n \to \infty$$
+By Theorem 6 in \cite{paul2007asymptotics}, $u$ is distributed uniformly on the $(d - 1)$-dimensional unit sphere of vectors in $\mathbb{R}^d$ orthogonal to $v$. By Lemma 4.1 in \cite{krauthgamer2015semidefinite}, it holds that $|u_i| \le h \sqrt{\frac{\log d}{d}}$ for all $i \in [d]$ with probability tending to one. Condition on this event. Since $\frac{k\log d}{d} \to 0$, it follows that $\frac{\log d}{d} = o\left( \sqrt{\frac{\log d}{kd}} \right)$. Therefore with probability tending to one, each $i \not \in \text{supp}(v)$ satisfies that $|\hat{v}_i|^4 < \frac{\log d}{kd}$ for sufficiently large $n, k$ and $d$. Now note that each $i \in \text{supp}(v)$ satisfies that
+$$|v_i| \ge \frac{g}{\sqrt{k}} - \sqrt{1 - g^2} \cdot |u_i| \ge \frac{g}{\sqrt{k}} - h \sqrt{\frac{\log d}{d}} \ge \sqrt[4]{\frac{\log d}{kd}}$$
+for sufficiently large $n, k$ and $d$ with probability tending to one. This is because $g = \Omega(1)$ with probability $1 - o(1)$ and $\frac{1}{\sqrt{k}} = \omega\left( \sqrt{\frac{\log d}{kd}} \right)$. Therefore it follows that $S = \text{supp}(v)$ with probability tending to one as $n \to \infty$.
+\end{proof}
+
+Note that the theorem statement assumes that $d/n \to c$ where $c > 1$. The algorithm can more generally accommodate inputs with $d = \Theta(n)$ by padding the input $X$ with i.i.d. $N(0, 1)$ entries so that $d/n \to c$ where $c > 1$.

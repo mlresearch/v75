@@ -1,0 +1,113 @@
+% !TEX root = main.tex
+
+\section{Preliminary}
+\label{sec:prelim}
+
+\subsection{Notations}
+We use $[n]$ to denote the set $\{1, \ldots, n\}$.
+We use $e_i$ or $\chi_i$ for the $i$-th standard basis vector.
+We write $I$ for the identity matrix, and $J$ for the all ones matrix.
+
+For a vector $x$, we use $\normone{x}$, $\norm{x}$ and $\norminf{x}$ for the $\ell_1$, $\ell_2$, and $\ell_\infty$ norm of $x$ respectively.
+
+For a matrix $A$, we use $A_i$ to denote $i$-th row of $A$.
+We use $\normone{A}$, $\norm{A}$, $\norminf{A}$, $\fnorm{A}$, and $\maxnorm{A}$ for the $\ell_1$, spectral, $\ell_\infty$, Frobenius norm, and maximum absolute entry of $A$. Note that $\norminf{A}$ (and $\normone{A}$) is just the maximum $\ell_1$-norm of the rows (and columns) of $A$.
+Let $\lambda_{\min}(A)$ denote the minimum eigenvalue of $A$, and let $\sigma_i(A)$ denote the $i$-th largest singular value of $A$.
+
+A symmetric $n \times n$ matrix $A$ is said to be positive semidefinite (PSD) if $x^\top A x \ge 0$ for all $x \in \R^n$,
+and positive definite if $x^\top A x > 0$ for any $x \neq 0$.
+For two symmetric matrices $A$ and $B$ of the same dimensions, we write $A \preceq B$ (or equivalently $B \succeq A$) when $B - A$ is positive semidefinite, and $A \prec B$ when $B - A$ is positive definite.
+
+We use $\tr(A)$ for the trace of a square matrix $A$.
+Let $A*B$ be the Hadamard (entry-wise) product of two matrices (where $(A*B)_{i,j} = A_{i,j}B_{i,j}$).
+For $n_1 \times n_2$ matrices $A$ and $B$, we write $A \bullet B$ or $\inner{A, B}$ for the entry-wise inner product of $A$ and $B$: $\inner{A, B} = \tr(A^\top B) = \sum_{i,j} (A*B)_{i,j}$.
+For a subset of entries $\Omega \subseteq [n_1] \times [n_2]$, let $\inner{A,B}_\Omega = \sum_{(i,j)\in \Omega} (A*B)_{i,j}$.
+For a weight matrix $W$, let $\inner{A,B}_W = \sum_{i,j} W_{i,j} (A*B)_{i,j} = \inner{W * A, B}$.
+Let $\|A\|_\Omega^2 = \inner{A,A}_\Omega$ and $\|A\|_W^2 = \inner{A,A}_W$.
+
+Let $A \otimes B$ denote the Kronecker product of $A$ and $B$.
+If $X\in \R^{n\times r}$, define the Katri-Rao product $X\odot X$ be an $n\times r^2$ matrix whose $i$-th row is equal to $X_i\otimes X_i$.~\footnote{This is the transpose of the traditional Katri-Rao product that works on columns instead of rows.} 
+
+% We use $\tilde O(\cdot)$ to hide polylogarithmic factors.
+
+\subsection{Matrix Completion and Non-convex Formulation}
+\label{sec:matprelim}
+
+Throughout the paper, the ground-truth matrix is always denoted by $\Ms$.
+We assume the hidden low-rank matrix $\Ms\in \R^{n_1\times n_2}$ is of rank $r$ and can be decomposed as $\Ms=\Us(\Vs)^\top$, where $\Us \in \R^{n_1\times r}, \Vs\in\R^{n_2\times r}$ (or $\Ms = \Us(\Us)^\top$ in symmetric case).
+For the symmetric case, we assume $n_1 = n_2 = n$. For the asymmetric case we assume (w.l.o.g.) that $n_1\le n_2$, and let $n = n_1+n_2$.
+We also assume w.l.o.g. that $(\Us)^\top \Us=(\Vs)^\top \Vs$.~\footnote{This can be achieved by setting $\Us = XD^{1/2}$ and $\Vs = YD^{1/2}$ if $\Ms =  XDY^\top$ is the SVD of $\Ms$.}
+We use $\sigs_1$, $\sigs_r$ to denote the first and $r$-th singular values of $\Ms$ respectively. Let $\kappa^\star = \sigs_1/\sigs_r$ be the condition number of $\Ms$.
+
+\begin{definition}[Incoherence]
+The matrix $\Ms$ with SVD $\Ms = X D Y^\top$ is $\mu$-incoherent, if for all $i\in[n_1],j\in[n_2]$, $\|X_i\| \le \sqrt{\mu r/n_1}$ and $\|Y_j\| \le \sqrt{\mu r/n_2}$.
+\end{definition}
+
+In the standard matrix completion setting, each entry of the matrix is observed with probability $p$. Let $\Omega$ be the set of observed entries. %, we use the notation $\|A\|_\Omega$ to denote the norm of a matrix restricted to the entries in $\Omega$: $\|A\|_\Omega^2 = \sum_{(i,j)\in \Omega} A_{i,j}^2$. Similarly we use the notation $\inner{A,B}_{\Omega} := \sum_{(i,j)\in \Omega} A_{i,j}B_{i,j}$ to denote the inner-product of two matrices using only entries in $\Omega$. A typical non-convex approach would just try to minimize the distance between $UV^\top$ and $\Ms$ for the observed entries.
+%
+To make the notation more flexible, we define a weight matrix $W$ such that $W_{i,j} = \frac{1}{p}$ if $(i,j)\in \Omega$ (and 0 otherwise).
+%We will use $\|A\|_W$ to denote the weighted norm with weight $W$ ($\|A\|_W^2 = \sum_{i,j} A_{i,j}^2 W_{i,j}$) and $\inner{A,B}_W$ to denote the inner-product with weight $W$ ($\inner{A,B}_W = \sum_{(i,j)} W_{i,j}A_{i,j}B_{i,j}$). Under this notation our objective is
+%Recall that $\|A\|_W^2 = \sum_{i,j} W_{i,j} A_{i,j}^2$.
+We use the objective function in \citep{ge2016matrix,GeJZ17} that includes additional regularizers:
+\begin{equation}
+\min \; f(U, V) = 2\|UV^\top - \Ms\|_W^2 + \dfrac{1}{2} \|U^\top U-V^\top V\|_F^2 + Q(U,V),
+\label{eqn:asymmetricobj}
+\end{equation}
+where
+\[
+Q(U,V) = \lambda_1 \sum_{i=1}^{n_1} (\normtwo{U_i} - \alpha_1)_+^4 +\lambda_2\sum_{i=1}^{n_2} (\normtwo{V_i} - \alpha_2)_+^4.
+\]
+
+Here $\lambda_1,\lambda_2,\alpha_1,\alpha_2$ are parameters to choose. The notation $x_+$ represents $\max\{x,0\}$. Intuitively, the regularizer $Q(U,V)$ ensures $U,V$ have bounded row norms. The additional term $\frac{1}{2}\|U^\top U-V^\top V\|_F^2$ is a regularizer that is popular for asymmetric matrix completion~\citep{park2016non}. \cite{GeJZ17} showed the following result:
+
+\begin{theorem}[\cite{GeJZ17}, Informal] Under appropriate settings of parameters $\lambda, \alpha$, if \\$p \ge \mbox{poly}(r,\mu,\kappa^\star,\log n)/n$ for some fixed polynomial, then with high probability, all local minima of Equation \eqref{eqn:asymmetricobj} are globally optimal, and they satisfy $UV^\top = \Ms$.
+\end{theorem}
+
+\subsection{Graph Laplacians}
+\label{sec:laplacian}
+For a weighted undirected graph $G = (V,E,w)$ with $n$ vertices and edge weights $w_e \ge 0$, let $D$ be a diagonal matrix containing the weighted degree of each vertex ($D_{i,i} = \sum_{(i,j)\in E} w_{(i,j)}$).
+Let $A$ be the adjacency matrix of $G$ ($A_{i,j} = A_{j,i} = w_{(i,j)}$).
+The Laplacian matrix of $G$ is a symmetric $n \times n$ matrix $L$ defined as $L = D - A$.
+In other words, if we orient every edge $e = (i,j) \in E$ arbitrarily and represent it by a vector $b_e \in \R^n$ with $b_e(i) = 1$ and $b_e(j) = -1$.
+The Laplacian matrix $L$ is equal to $L = \sum_{e\in E} w_e b_e b_e^\top$.
+
+We use $L^{1/2}$ to denote the principal square root of a PSD matrix $L$.
+Abusing notation, we use $L^{-1}$ for the Moore-Penrose inverse of $L$, and $L^{-1/2}$ for $(L^{-1})^{1/2}$.
+The normalized Laplacian is the matrix $D^{-1/2} L D^{-1/2}$.
+The effective resistance of an edge $e$ in a graph with Laplacian $L$ is $b_e^\top L^{-1} b_e$.
+For any Laplacian $L$, we have $L^{-1} L = I_{\mathrm{im}(G)}$, where $I_{\mathrm{im}(G)} = I - \frac{1}{n} J$ is the identity matrix on the image space of $L$.
+We often abbreviate $I_{\mathrm{im}(G)}$ as $I$.
+
+
+We say two graphs are {\em spectrally similar} if the following holds: %their Laplacians are close:
+
+\begin{definition}[Spectral Similarity~\citep{SpielmanT11}]
+\label{def:spectral}
+Suppose $L_1, L_2$ are the Laplacians for graphs $G_1, G_2$ respectively, we say $G_1$ and $G_2$ are $\epsilon$-spectrally similar if and only if
+\[
+(1-\epsilon) L_1 \preceq  L_2 \preceq (1+\epsilon)L_1.
+\]
+\end{definition}
+
+Graph sparsification is known to be a special case of sparsifying sum of rank-one PSD matrices (see, e.g., \citep{BatsonSS12}).
+Similarly, we can reduce Problem~\ref{prob:main} to Problem~\ref{prob:identity}.
+
+\begin{problem}
+\label{prob:identity}
+For a set of $m$ vectors $\{v_i\}_{i=1}^m$, assume there exists a subset $S$ of vectors such that $(1-\beta)I\preceq \sum_{i \in S} v_i v_i^\top \preceq (1+\beta)I$. Compute a set of weights $w_i \ge 0$ such that
+%\[
+%(1-O(\beta)-\epsilon) \preceq \sum_{i} w_i v_i v_i^\top \preceq I.
+%\]
+\[
+\textstyle (1-O(\beta)-\epsilon) \preceq \sum_{i} w_i v_i v_i^\top \preceq I.
+\]
+\end{problem}
+
+To see why Problem~\ref{prob:main} can be reduced to Problem~\ref{prob:identity}, let $L_H$ be the Laplacian for the complete bipartite graph. The reduction simply sets $v_e = (L_H)^{-1/2} b_e$ for each edge $e\in E$.%\footnote{Technically we need to take pseudo-inverse of $L_H$ because the all 1's vector is in the nullspace of $L_H$.} Under this transformation, if $\sum_{i} w_i v_i v_i^\top$ is spectrally close to $I$, we also have $\sum_{i} w_i b_i b_i^\top = L_H^{1/2}[\sum_{i} w_i v_i v_i^\top] L_H^{1/2}$ is spectrally close to $L_H$.
+
+%\subsection{The Semi-Random Adversary}
+%
+%Given a matrix completion problem, the entries are first revealed with probability $p$, and then a semi-random adversary is allowed to look at $\Ms$ and the revealed entries, and possibly reveal more entries of the matrix. Intuitively, the semi-random adversary is only providing more information, and indeed the convex relaxations can still find the original matrix.
+%
+%In this paper, we also consider a (slightly weaker) version of the semi-random adversary that looks at $\Ms$,  and is allowed to increase the reveal probabilities of the entries. After the perturbation of semi-random adversary, entry $(i,j)$ is revealed with probability $p_{i,j}$ where $p_{i,j}\ge p$ for all $(i,j)$. In this case, the expected objective function is similar to a weighted low rank factorization problem. In particular, let $W$ be a matrix where $W_{i,j} = \frac{1}{p} p_{i,j}$, the expected objective function is going to be $\|UV^\top - \Ms\|_W^2$. All of the counter-examples work in this setting where the adversary is weaker; on the other hand our algorithm will work with the stronger adversary that can also look at the actual entries that are revealed.
+%

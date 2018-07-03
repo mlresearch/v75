@@ -1,0 +1,143 @@
+\section{Performance guarantees}
+
+In this section, we prove Theorem~\ref{thm:main}, the main result of this paper. %for Algorithm~\ref{alg:ae_al}.
+\begin{theorem}
+  There exist numerical constants $\mu_1, \mu_2 \in (0, \frac 1 2)$ such that the following holds.
+  Suppose $D_X$ is isotropic log-concave, and one of the following two conditions hold:
+  \begin{enumerate}
+    \item $D$ satisfies the $t$-sparse $\mu_1\epsilon$-adversarial noise condition;
+    \item $D$ satisfies the $t$-sparse $\mu_2$-bounded noise condition.
+  \end{enumerate}
+	In addition, Algorithm~\ref{alg:ae_al} is run with sparsity parameter $t$, target error $\epsilon$ and failure probability $\delta$.
+  Then, with probability $1-\delta$, the output halfspace $\hat{w}$ is such that
+  $\err(h_{\hat{w}}) - \err(h^*) \leq \epsilon$,
+  and the total number of label queries is $O( t \cdot (\ln d + \ln \frac 1 \epsilon)^3 \cdot \ln \frac 1 \epsilon )$.
+  \label{thm:main}
+\end{theorem}
+
+As the $t$-sparse realizable setting is a special case of the $t$-sparse adversarial noise setting (by setting $\nu = 0$), Theorem~\ref{thm:main} immediately implies the
+following corollary:
+\begin{corollary}
+	Suppose $D_X$ is isotropic log-concave, and the $t$-sparse realizable condition holds for $D$.
+  In addition, Algorithm~\ref{alg:ae_al} is run with sparsity parameter $t$, target error $\epsilon$ and failure probability $\delta$.
+  Then, with probability $1-\delta$, the output halfspace $\hat{w}$ is such that
+  $\err(h_{\hat{w}}) - \err(h^*) \leq \epsilon$,
+  and the total number of label queries is $O( t \cdot (\ln d + \ln \frac 1 \epsilon)^3 \cdot \ln \frac 1 \epsilon )$.
+	\label{cor:main}
+\end{corollary}
+%We remark that although the requirement of $w_0$ seems strong, we can get an algorithm with the same label complexity
+%unconditionally.
+%Indeed, consider an arbitrary $t$-sparse unit vector $w_0 \in \R^d$; we run two copies of Algorithm~\ref{alg:ae_al}, initialized with $w_0$ and $-w_0$ respectively, getting classifiers $h_+$ and $h_-$. We can then run a standard hypothesis testing procedure to identify the classifier that has error guarantee $\epsilon$.
+%This technique is well known in the literature; details can be found in (e.g.~\cite{ABL17}, Appendix B).
+
+Theorem~\ref{thm:main} and Corollary~\ref{cor:main} imply that, under the respective noise conditions defined above, Algorithm~\ref{alg:ae_al}
+has a label complexity of $O( t \polylog(d,  \frac 1 \epsilon) )$. To the best of our knowledge, this
+is the first efficient PAC active learning algorithm that has a label complexity linear in $t$, and polylogarithmic
+in $d$ and $\frac 1 \epsilon$. Previous works either need to sacrifice computational efficiency to achieve such guarantee~\citep{D05,ZC14}, or have label complexities polynomial in $d$ or $\frac 1 \epsilon$ ~\citep{ABL17, ABHZ16}. We remark that in the membership query model~\citep{A88, BB08}, efficient algorithms with $O( t \polylog(d,  \frac 1 \epsilon) )$ label complexities are implicit in the literature (e.g. by combining \cite{HB11}'s support recovery algorithm with efficient full-dimensional active halfspace learning algorithms~\citep{DKM05,ABL17,CHK17,YZ17}). In contrast, the focus of this paper is on the more challenging PAC setting, and it is unclear how to modify a membership query algorithm to make it work in the PAC setting.
+%the membership query setting is harder than in the membership query setting.
+%active learning in the PAC setting;
+
+
+\subsection{Proof of Theorem~\ref{thm:main}}
+Recall that $\delta_k = \frac{\delta}{(k+1)(k+2)}$; note that $\sum_{l=0}^{k_0} \delta_k \leq \delta$. To prove Theorem~\ref{thm:main}, we give exact settings of constants $\mu_1, \mu_2 \in (0, \frac 1 2)$ in Appendix~\ref{sec:params},
+such that under either the $t$-sparse $\mu_1\epsilon$-adversarial noise condition or the $t$-sparse
+$\mu_2$-bounded noise condition, the following lemma holds:
+\begin{lemma}
+	For every $k \in \{ 0,1,\ldots,k_0 \}$, there is an event $E_k$ with probability $1-\sum_{l=0}^k \delta_l$, on which $u$ is in $W_{k+1}$.
+	%\B_1(w_k, \rho_{k+1}) \cap \B_2(w_k, r_{k+1})
+	%$w_k$ is $t$-sparse, $\theta(w_k, u) \leq 2^{-k-3} \pi$ and $\| w_k - u \|_2 \leq 2^{-k-3} \pi$.
+  %is t-sparse and
+  %$\| w_{k-1} - u \|_2 \leq 2^{-k}$.
+  \label{lem:induct}
+\end{lemma}
+
+The proof of Lemma~\ref{lem:induct} relies on the following two supporting lemmas. The first lemma (Lemma~\ref{lem:hlm}) shows that, $w_k'$ produced in the hinge loss minimization step (line~\ref{line:hlm}) has a small angle with $u$. Specifically, the upper bound on $\theta(w_k',u)$
+is halved at each iteration $k$, with the help of constrained hinge loss minimization over a fresh set of $n_k = O(t \polylog(d,\frac1\epsilon))$ labeled examples. This relies on two ideas: first, as is standard
+in the margin-based active learning framework~\citep[See e.g.][]{BBZ07,BL13}, it suffices to let $w_k'$ achieve a constant error with respect to the sampling distribution at epoch $k$; second, to ensure that the setting of $n_k$ ensures that $w_k'$ indeed has a constant error under the sampling distribution, we use a novel uniform concentration bound of hinge losses of $W_k$ over $S_k$ tighter than all prior works~\citep{ABL17,ABHZ16}. Thanks to our construction of $W_k$, our concentration bound of hinge losses is of order $\tilde{O}(\sqrt{\frac{t\ln d}{n_k}})$, which can be substantially tighter than
+$\tilde{O}(\sqrt{\frac{d}{n_k}})$ used in~\citet{ABL17,HKY15} and $\tilde{O}(\sqrt{\frac{(t \ln d) \cdot 2^k}{n_k}})$ used in~\citet{ABHZ16}. We refer the reader to Appendix~\ref{sec:conc} for a formal statement.
+
+ %in turn uses the generic results of~\cite{KST09} on the Rademacher complexity of $\ell_1$ bounded linear predictors.
+
+%$w_{k-1}$ is t-sparse, $\theta(w_{k-1}, u) \leq 2^{-k-3} \pi$ and $\| w_{k-1} - u \|_2 \leq 2^{-k-3} \pi$
+\begin{lemma}
+For every $k \in \{ 0, 1,\ldots,k_0 \}$, if $u$ is in $W_k$, then with probability $1-\delta_k$, $\theta(w_k', u) \leq 2^{-k-8} \pi$.
+\label{lem:hlm}
+\end{lemma}
+
+The second lemma (Lemma~\ref{lem:truncate}) shows that, performing a hard thresholding operation followed by $\ell_2$ normalization on $w_k'$ (line~\ref{line:ht}) yields a $t$-sparse unit vector $w_k$ that is close to $u$ in terms of both $\ell_1$ and $\ell_2$ distances. This ensures that $W_{k+1}$, the constraint set of the optimization problem at the next epoch, contains $u$. A key fact used in the proof of the lemma is that, the hard thresholding operator $\HT_t$ is effectively a $\ell_2$-projection onto the $\ell_0$ ball $\{w \in \R^d: \| w \|_0 \leq t \}$.
+
+
+\begin{lemma}
+For every $k \in \{ 0,1,\ldots,k_0 \}$, if $\theta(w_k', u) \leq 2^{-k-8} \pi$, then $u$ is in $W_{k+1}$.
+\label{lem:truncate}
+\end{lemma}
+%then $w_k$ is $t$-sparse, $\| w_k - u \|_2 \leq 2^{-k-3} \pi$ and $\theta(w_k, u) \leq 2^{-k-3} \pi$
+
+%The analysis of the first epoch (the base case $k=0$) is slightly different from the subsequent epochs, due to the usage of a different sampling region $B_1$ and constraint set $W_1$; this is taken care of by Lemma~\ref{lem:init} in the Appendix.
+
+We are now ready to prove Lemma~\ref{lem:induct}.
+
+\begin{proof}[Proof of Lemma~\ref{lem:induct}]
+ We prove the lemma by induction.
+\paragraph{Base case.} In the case of $k = 0$, observe that as $u$ has unit $\ell_2$ norm and $u$ is $t$-sparse, by Cauchy-Schwarz, $\| u \|_1 \leq \sqrt{t} \| u\|_2 = \sqrt{t}$. Therefore, $u$ belongs to the set $W_0$ deterministically.
+Lemma~\ref{lem:hlm} with $k=0$ shows that there is an event $E_0$ with probability $1-\delta_0$, conditioned on which $\theta(w_0',u) \leq 2^{-8}\pi$. By Lemma~\ref{lem:truncate}, we get that $u$ is in $W_1$.
+%$w_0$ is $t$-sparse, $\theta(w_0, w^*) \leq 2^{-3} \pi$ and $\| w_0 - w^* \|_2 \leq 2^{-3} \pi$.
+
+% $w_{k-1}$ is $t$-sparse, $\theta(w_{k-1}, w^*) \leq 2^{-k-3} \pi$ and $\| w_{k-1} - w^* \|_2 \leq 2^{-k-3} \pi$
+\paragraph{Inductive case.} For $k \geq 1$, suppose the inductive hypothesis holds. That is, there is an event $E_{k-1}$ with probability $1-\sum_{l=0}^{k-1} \delta_l$, such that
+on $E_{k-1}$, $u$ is in $W_k$. By Lemma~\ref{lem:hlm}, there is an event $F_k$ such that $\P(F_k | E_{k-1}) \geq 1 - \delta_k$,
+conditioned on which $\theta(w_k', u) \leq 2^{-k-8} \pi$.
+
+%, with probability $1-\frac{\delta}{k(k+1)}$.
+
+Define event $E_k:= E_{k-1} \cap F_k$. Observe that $\P(E_k) = \P(E_{k-1})\P(F_k | E_{k-1}) \geq 1-\sum_{l=0}^{k} \delta_l$.
+%On event $E_k$, we have
+Now, on event $E_k$, Lemma~\ref{lem:truncate} implies that $u$ is in $W_{k+1}$.
+%$w_k$ is $t$-sparse, $\theta(w_k, w^*) \leq 2^{-k-3} \pi$ and $\| w_k - w^* \|_2 \leq 2^{-k-3} \pi$ holds.
+This completes the induction.
+\end{proof}
+
+Theorem~\ref{thm:main} is now a direct consequence of Lemma~\ref{lem:induct}; we give its proof below.
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+From Lemma~\ref{lem:induct} and the fact that the output $\hat{w}$ is $w_{k_0}$, we have that with probability $1-\sum_{l=0}^{k_0}\delta_l \geq 1-\delta$, $u$ is in $W_{k_0+1}$. By the definition of $W_k$,
+\[ \| u - w_{k_0} \|_2 \leq r_{k_0+1} = 2^{-k_0 - 4}. \]
+By Lemma~\ref{lem:distangle} in the Appendix and the fact that $\|u\|_2 = 1$, we know that
+$\theta(w_{k_0}, u) \leq \pi \| u - w_{k_0} \|_2 \leq 2^{-k_0 - 2} \leq \frac{C_1\epsilon}{2}$.
+%$ \theta(\hat{w}, u) \leq 2^{-5} C_1 \epsilon.$
+By the first inequality of Equation~\eqref{eqn:angdis}, we have that
+$ \P_D (h_{w_{k_0}}(x) \neq h_{u}(x) ) \leq \frac \epsilon 2. $
+Therefore, by triangle inequality and the fact that the output $\hat{w}$ is $w_{k_0}$,
+\[ \err(h_{\hat{w}}) - \err(h_u) \leq \frac \epsilon 2. \]
+We now consider two separate cases regarding the two different noise conditions:
+\begin{enumerate}
+\item In the $\mu_1 \epsilon$-adversarial noise setting, we know that $\err(h_u) \leq \mu_1 \epsilon \leq \frac \epsilon 2$.
+Therefore,
+\[ \err(h_{\hat{w}}) - \err(h^*) \leq \err(h_{\hat{w}}) \leq \err(h_u) + \frac \epsilon 2 \leq \frac \epsilon 2 + \frac \epsilon 2 \leq \epsilon. \]
+\item In the $\mu_2$-bounded noise setting, as $h_u$ and $h^*$ are identical,
+it immediately follows that $\err(h_{\hat{w}}) - \err(h^*) \leq \frac \epsilon 2 \leq \epsilon$.
+\end{enumerate}
+
+We now bound the label complexity of Algorithm~\ref{alg:ae_al}. The total number of labels queried is $\sum_{k=0}^{k_0} n_k$,
+where $n_k \leq c_1 \cdot t (\ln d + \ln \frac 1 \epsilon + \ln \frac{k(k+1)}{\delta})^3$, and $k_0 = O(\ln\frac1\epsilon)$.
+As a consequence, the total number of label queries is $O(t \cdot (\ln d + \ln \frac 1 \epsilon)^3 \cdot \ln \frac 1 \epsilon)$ in terms of $t, d$ and $\epsilon$.
+The theorem follows.
+\end{proof}
+
+
+%Observe that Lemma 1 can be straightforwardly
+%proved by induction in conjunction with the two claims.
+
+
+%Now, denote by $S$ the support of $u$, $\hat{S}_k$ the set of coordinates that $P_t$ keeps on $\hat{w}_k'$.
+%Additionally, for any vector $v$ and set $U \subset [d]$, denote by $v^U$ as the vector
+%that agrees with $w$ on coordinates in $U$, and are 0's otherwise.
+%We have that
+%$\| \hat{w}_k'^{S^C} \|_2 = \| \hat{w}_k'^{S^C} - u^{S^C} \|_2 \leq \| \hat{w}_k' - u \|_2  \leq 2^{-k} / 4 $.
+%By the optimality of $\hat{S}_k$,
+%\[ \| \hat{w}_k'^{\hat{S}_k^C} \|_2 \leq \| \hat{w}_k'^{S^C} \|_2 \leq 2^{-k} / 4 \]
+%Observe that $w_k = \hat{w}_k'^{\hat{S}_k^C}$, the above can be written as
+%\[ \| \hat{w}_k' - w_k \|_2 \leq 2^{-k} / 4 \]
+%Combining with Equation~\eqref{eqn:normalize_effect}, and triangle inequality, we have
+%The lemma follows.
+%\[ \| w_k - u \|_2 \leq \| \hat{w}_k' - w_k \|_2 + \| \hat{w}_k' - u \|_2 \leq 2^{-k} / 2. \]

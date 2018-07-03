@@ -1,0 +1,135 @@
+\section{Achieving Switching/Dynamic Regret with No Parameters}
+\label{sec:bin}
+
+\begin{algorithm}[t]
+\SetAlgoLined
+\setcounter{AlgoLine}{0}
+\SetAlgoVlined
+\DontPrintSemicolon
+\caption{\AdaBIN}\label{alg:AdaGreedy.bin}
+\nl {\bf Input}: allowed failure probability $\delta$ \\ 
+\nl {\bf Define}:
+$\beta_\calI= 2\sqrt{\frac{\ln(4T^2N/\delta)}{\mu_\calI \abs{\calI}}}+\frac{\ln(4T^2N/\delta)}{\mu_\calI \abs{\calI}}$, where $\displaystyle\mu_\calI\triangleq \min_{t\in\calI} \mu_t$ and $\mu_t$ is defined below, $\alpha_\calI = 2\sqrt{\frac{K\ln(4T^2N/\delta)}{\abs{\calI}}}+\frac{K\ln(4T^2N/\delta)}{\abs{\calI}}$\\
+\nl {\bf Initialize}: $t=1$, $i=1$, $T_1=0$ \Comment{$i$ indexes an epoch}\label{line:rerun_beginning2}\\
+\nl\label{line:adagreedy restart}\For(\Comment{$j$ indexes a block}){$j=1, 2, \ldots$}{ 
+\nl Compute $\hat{\pi}_{(i,j)} = \argmax_{\pi\in\Pi}\avgR_{[T_i+1, T_i+2^{j-1}-1]}(\pi)$ 
+\Comment{or arbitrary if $j=1$}\\
+\nl $H=2^{j-1}$ \Comment{$H$ is block length}\\
+%\nl $\triangleright$ {Divide block $j$, which has length $H$, into bins of length $H^\gamma$ \footnotemark{\label{same}}} \\
+\nl\label{line:forloop of bin}\For(\Comment{$b$ indexes a bin, each with length $\sqrt{H}$}){$b = 1, 2, \ldots, \sqrt{H}$}{
+\nl\label{line:exploration prob}Make bin $b$ an exploration bin with probability $1/\sqrt{b}$; otherwise an exploitation bin\\
+\nl\label{line:forloop of bin step}\For(\Comment{loop through rounds in bin $b$}){$\tau = 1, \ldots, \sqrt{H}$}{
+\nl       Let $\mu_t=\min\Big\{ \frac{1}{K}, (t-T_i)^{-\frac{1}{3}}\sqrt{\frac{\ln(N/\delta)}{K}} \Big\}$\\
+\nl       Set $p_t(a)=\begin{cases}
+             \frac{1}{K}, &\text{if bin $b$ is an exploration bin}, \\
+             \mu_t+(1-K\mu_t)\one \{ a=\hat{\pi}_{(i,j)}(x_t) \}, &\text{if bin $b$ is an exploitation bin}.
+          \end{cases}$ \\
+\nl       Play $a_t\sim p_t$ and receive $r_t(a_t)$ \\
+%\nl       $\triangleright$ {Call \test only when $b$ is an exploration bin} \\
+\nl\label{line:trigger_rerun_ada3}  \If{$j>1$ and (bin $b$ is exploration bin) and ($\test(t)=\true$)}{
+\nl                  $T_{i+1}\leftarrow t$, $t\leftarrow t+1$, $i\leftarrow i+1$ \\ 
+\nl                  \textbf{goto} Line~\ref{line:adagreedy restart}
+              }
+\nl           $t\leftarrow t+1$
+          }
+      }
+      }
+\ \\
+\textbf{Procedure\ }$\test(t)$\\
+\nl $\ell=1$ \\
+\nl \While{$[t-\ell+1, t]$ is a subset of the current bin}{
+\nl    Let $A\triangleq [t-\ell+1,t]$ and $B\triangleq [T_i+1, T_i+2^{j-1}-1]$\\
+\nl\label{eqn:ada_compare2}\lIf{$ \avgR_{A}(\hat{\pi}_{A}) > \avgR_{A}(\hat{\pi}_B) + 2(\alpha_{A}+ \beta_{B})$}{
+      \textbf{return} \true
+    }
+\nl    $\ell \leftarrow 2\ell$
+}
+\nl \textbf{return} \false
+\end{algorithm}
+
+%\footnotetext{For simplicity, we ignore the fact that $H^\gamma$ and $H^{1-\gamma}$ may not be integers.}
+
+As mentioned, when the parameter $S$ or $\var$ is unknown, our algorithms achieve regret of the form
+$\otil(S^{c_1} T^{c_2})$ or $\otil(\var^{c_1} T^{c_2})$ for some exponents $c_1$ and $c_2$ such that $c_1+c_2>1$,
+which is vacuous when $S$ or $\var$ is large.
+The hope here is to obtain a bound with $c_1+c_2=1$ as in the case when the parameters are known.
+Observe that if an algorithm was able to achieve interval regret $o(|\calI|)$ simultaneously for all intervals $\calI$,
+which is called strongly adaptive algorithm~\citep{DanielyGoSh15},
+then by similar reductions discussed in Section~\ref{sec:implications} one could derive switching/dynamic regret with $c_1+c_2=1$.
+However, it was shown by~\citet{DanielyGoSh15} that a strongly adaptive algorithm is impossible for the bandit setting.
+
+Despite this negative result, \citet{KarninAn16} developed new techniques and proposed a parameter-free algorithm for the two-armed bandit setting 
+with dynamic regret $\otil(\var^{0.18}T^{0.82})$.
+While their algorithm and analysis do not directly generalize to the multi-armed or contextual setting,
+here we extract their idea of \textit{bin-based exploration} and incorporate it into our \AdaEG algorithm,
+leading to a parameter-free algorithm called \AdaBIN with regret $\otil(\min\{S^{\frac{1}{4}}T^{\frac{3}{4}}, \var^{\frac{1}{5}}T^{\frac{4}{5}}\})$.
+This improves and generalizes the result of~\citet{KarninAn16} significantly.
+
+%The switching regret bounds achieved by \AdaEG and \AdaILTCB are of the form $\otil(S^\alpha T^\beta)$. When $S$ is known, we have $\alpha+\beta=1$ by setting the parameters correctly; when it is unknown, our analysis only gives some bound with $\alpha+\beta>1$. 
+%Same phenomenon happens in the regret bounds involving $\var$. Our hope here is to have a parameter-free algorithm that achieves a regret with $\alpha+\beta=1$. 
+%As far as we know, this kind of bound is obtained only in the previous work \citep{KarninAn16}. There, $\otil(\var^{0.18}T^{0.82})$ regret is established for the two-armed bandit problem, but the algorithm and analysis do not straightforwardly generalize to multi-armed or contextual bandit settings. 
+
+%Below we present \AdaBIN, an algorithm similar to \AdaEG but is inspired by \citet{KarninAn16}'s idea. The key inherited from their work is the \textit{bin-based exploration}, that is, there are scheduled intervals in which the learner only does pure exploration. We analyze the algorithm on both switching and drifting distributions, achieving $\otil(S^{\frac{1}{4}}T^{\frac{3}{4}})$ and $\otil(\var^{\frac{1}{5}}T^{\frac{4}{5}})$ respectively. These bounds improve and generalize \cite{KarninAn16}'s results. 
+
+Similar to \AdaEG, \AdaBIN computes the empirical best policy at the beginning of each block, and plays it throughout that block, except for some exploration steps. 
+The differences are 1) each block is further divided into {\it bins} with equal length; 
+2) in addition to the small probability of exploration $\mu_t$ at each round, some bins are randomly selected for pure exploration;
+3) the non-stationarity test is only executed in exploration bins, and only checks for intervals within the bin;
+4) parameters $L$ and $v$ are removed and the exploration probability $\mu_t$ is set adaptively.
+Clearly \AdaBIN is still oracle-efficient.
+
+Comparing the non-stationarity tests of \AdaEG and \AdaBIN, 
+one can see that the term $\beta_A = \otil(1/\sqrt{\mu\ell})$ in the former is replaced by the term $\alpha_A = \otil(\sqrt{K/\ell})$ in the latter.
+This is due to the lower variance of reward estimates from the pure exploration bin and plays a crucial role in our analysis to achieve the following bound.
+
+%{\color{red} Comparing \AdaEG and \AdaBIN, one can see that in \test, the $\beta_A$ term (Algorithm~\ref{alg:AdaGreedy2} Line~\ref{eqn:ada_compare1}) is replaced by the smaller $\alpha_A$ term (Algorithm~\ref{alg:AdaGreedy.bin} Line~\ref{eqn:ada_compare2}) in \AdaBIN. This plays a crucial role in the interval regret analysis. Basically, it suggests to trade the $(\mu, \sqrt{1/\mu})$ exploration-confidence pair with $(1/K,\sqrt{K})$ for statistical tests. This makes the interval regret of \AdaBIN free of the $\sqrt{1/\mu}$ factor, which in turn enables the tuning of $\mu$ be independent of the rate of distribution change. }
+
+%We prove the following regret guarantee for \AdaBIN. 
+
+\begin{theorem} 
+\label{thm:Ada3 regret}
+With probability at least $1-6\delta$, \AdaBIN\ with parameter $\delta$ guarantees
+\begin{align*}
+\sum_{t=1}^T r_t(\pi_t^\star(x_t))-r_t(a_t) \leq \otil\left(K\ln(N/\delta) \min\left\{S^{\frac{1}{4}}T^{\frac{3}{4}}, \var^{\frac{1}{5}}T^{\frac{4}{5}}+T^{\frac{3}{4}} \right\} \right).
+\end{align*}
+\end{theorem}
+
+This bound is sublinear as long as $S$ or $\var$ is sublinear, 
+and is stronger than those in the ``param-free'' column of Table~\ref{tab:results} if $S = \Omega(T^{1/3})$ or $\var = \Omega(T^{4/9})$ (but still sublinear).
+One might wonder whether combining the bin-based exploration idea with \AdaILTCB leads to even better results.
+The answer is unfortunately no because the dominant part of the regret is not from the $\epsilon$-greedy part of the algorithm but the bin explorations.
+We leave the question of whether better results of this kind are possible as a future direction.
+
+Due to the existence of exploration bins, \AdaBIN can have poor regret on some intervals. In fact, we can only show a loose $\otil({T^{\frac{3}{4}}})$ interval regret bound for this algorithm as shown in Table~\ref{tab:results}. For completeness, we provide a proof in Appendix~\ref{appendix:interval_adabin}. 
+%In fact from our proof one can verify that in the worse case the interval regret is $\otil(T^\frac{3}{4})$.
+%This is apparently a loose bound in light of the bound in Theorem~\ref{thm:Ada3 regret}, and is thus omitted from Table~\ref{tab:results}.
+
+\section{Conclusions}
+In this work we take the first step in studying the problem of non-stationary contextual bandit. 
+We propose several new algorithms and provide a number of achievable results under various regret notions.
+More future directions include 1) deriving algorithms with long term memory so as to identify distributions experienced before~\citep{bousquet2002tracking};
+2) designing simpler and more practical algorithms, given that our current methods have several impractical aspects such as restarting.
+
+\paragraph{Acknowledgement.}
+CYW is grateful for the support of NSF Grant \#1755781.
+
+%In this work we propose several efficient algorithms for contextual
+%bandits in non-stationary environments, under different notions of
+%regret suited to these environments. Our algorithms come from two
+%high-level recipes for robustness in such settings.  The first tests
+%for approximately i.i.d periods, while the second combines multiple
+%copies of an algorithm started at various times. The first approach
+%transforms i.i.d. assumption based methods and is particularly
+%attractive, since the bulk of the algorithmic development for contextual
+%bandits has happened in the stochastic setting. While our tests are
+%algorithm-specific, we anticipate that the framework also
+%extends to other approaches such as Thompson sampling and LinUCB-style
+%algorithms. %Such development is essential to
+%%obtain practically robust analogues of the existing algorithms. 
+%
+%We defer two main questions to future work. The first is an empirical
+%study evaluating various methods.  The second is whether it is
+%possible to obtain the exact same dynamic regret as Exp4.S using an
+%oracle-efficient algorithm under a fully adversarial setting, without
+%using more restrictive notions of variation that appears to be
+%necessary for \AdaILTCB.

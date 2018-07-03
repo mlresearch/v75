@@ -1,0 +1,1480 @@
+\documentclass[final,12pt]{colt2018} % Anonymized submission
+% \documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Polynomial Complexity for Non-Gaussian Component Analysis]{Polynomial Time and Sample Complexity for Non-Gaussian Component Analysis: Spectral Methods}
+\usepackage{times}
+\usepackage{enumerate,enumitem,mathtools,float,chngcntr,bm,algorithm, algorithmic}
+% Use \Name{Author Name} to specify the name.
+% If the surname contains spaces, enclose the surname
+% in braces, e.g. \Name{John {Smith Jones}} similarly
+% if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+% If the first letter in the forenames is a diacritic
+% enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+% Two authors with the same address
+% \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+%  \Name{Author Name2} \Email{xyz@sample.com}\\
+%  \addr Address}
+
+% Three or more authors with the same address:
+% \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+%  \Name{Author Name2} \Email{an2@sample.com}\\
+%  \Name{Author Name3} \Email{an3@sample.com}\\
+%  \addr Address}
+
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\linespread{1}
+
+\numberwithin{equation}{section}
+
+% Theorem Environments
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem*{theorem*}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem*{lemma*}{Lemma}
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{fact}[theorem]{Fact}
+
+%\theoremstyle{definition}
+%\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{remark}[theorem]{Remark}
+%\newtheorem{example}[theorem]{Example}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{assumption}[theorem]{Assumption}
+
+% Paired Macros
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\paren}{(}{)}
+\DeclarePairedDelimiter{\braces}{\lbrace}{\rbrace}
+\DeclarePairedDelimiter{\inprod}{\langle}{\rangle}
+\DeclarePairedDelimiter{\sqbracket}{[}{]}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% Boldcase Macros
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\Var}{\text{Var}}
+\newcommand{\Cov}{\text{Cov}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}[2]{\mathcal{N}\paren*{#1,#2}}
+\newcommand{\bolda}{\textbf{a}}
+\newcommand{\boldg}{\textbf{g}}
+\newcommand{\boldA}{\textbf{A}}
+\newcommand{\boldB}{\textbf{B}}
+\newcommand{\boldx}{\textbf{x}}
+\newcommand{\boldy}{\textbf{y}}
+\newcommand{\boldz}{\textbf{z}}
+\newcommand{\boldr}{\textbf{r}}
+\newcommand{\boldv}{\textbf{v}}
+\newcommand{\boldSigma}{\boldsymbol{\Sigma}}
+\newcommand{\boldPhi}{\boldsymbol{\Phi}}
+\newcommand{\boldPsi}{\boldsymbol{\Psi}}
+\newcommand{\boldomega}{\boldsymbol{\omega}}
+\newcommand{\boldtheta}{\boldsymbol{\theta}}
+\newcommand{\boldP}{\textbf{P}}
+\newcommand{\boldQ}{\textbf{Q}}
+\newcommand{\boldI}{\textbf{I}}
+\newcommand{\boldX}{\textbf{X}}
+\newcommand{\boldY}{\textbf{Y}}
+\newcommand{\boldH}{\textbf{H}}
+\newcommand{\boldM}{\textbf{M}}
+
+% Alias Macros
+\newcommand{\cross}{\times}
+\newcommand{\tensor}{\otimes}
+\newcommand{\grad}{\nabla}
+\newcommand{\dist}{\sim}
+\newcommand{\del}{\nabla}
+
+% Misc Macros
+\newlength{\dhatheight}
+\newcommand{\doublehat}[1]{%
+	\settoheight{\dhatheight}{\ensuremath{\hat{#1}}}%
+	\addtolength{\dhatheight}{-0.35ex}%
+	\hat{\vphantom{\rule{1pt}{\dhatheight}}%
+		\smash{\hat{#1}}}}
+\newcommand{\st}{\ | \ }
+\newcommand{\sign}{\textnormal{sign}}
+\newcommand{\Tr}{\textnormal{Tr}}
+\newcommand{\Unif}{\textnormal{Unif}}
+\newcommand{\avg}[2]{\frac{1}{#2}\sum_{#1=1}^{#2}}
+\newcommand{\diag}{\textnormal{diag}}
+\newcommand{\diam}{\textnormal{diam}}
+\newcommand{\ACW}{\textnormal{ACW}}
+
+% Authors with different addresses:
+\coltauthor{\Name{{Yan Shuo} Tan} \Email{yanshuo@umich.edu}\\
+	\addr Department of Mathematics, University of Michigan
+ \AND
+\Name{Roman Vershynin} \Email{rvershyn@uci.edu}\\
+\addr Department of Mathematics, University of California, Irvine
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+	The problem of Non-Gaussian Component Analysis (NGCA) is about finding a maximal low-dimensional subspace $E$ in $\R^n$ so that data points projected onto $E$ follow a non-Gaussian distribution. \cite{Vempala2011} proposed a local search algorithm, and showed that it was able to estimate $E$ accurately with polynomial time and sample complexity, if the dimension of $E$ is treated as a constant and with the assumption that all one-dimensional marginals of the non-Gaussian distribution over $E$ have non-Gaussian moments. In this paper, we propose a simple spectral algorithm called \textsc{Reweighted PCA}, and prove that it possesses the same guarantee. The principle that underlies this approach is a new characterization of multivariate Gaussian distributions.
+\end{abstract}
+
+\section{Introduction}
+
+\subsection{Non-Gaussian Component Analysis} Dimension reduction is a necessary step for much of modern data analysis, the principle being that the structure or ``interestingness'' of a collection of data points is contained in a geometric structure which has much lower dimension than the ambient vector space. We consider the case where the geometric structure in question is a linear subspace. In other words, we are in the situation where the variation of the data points within this subspace contains some information which we would like to extract, while their variation in the complementary directions constitutes mere noise.
+
+In many cases, it is reasonable to think of the noise as being Gaussian. Formally, we then have the following generative model. Let $E$ be an unknown $d$-dimensional subspace of $\R^n$, and let $E^\perp$ be the orthogonal complement of $E$. 
+Let $\boldX$ be a random vector in $\R^n$, which we can decompose into two independent components: a non-Gaussian component $\tilde{\boldX}$ that takes values in $E$, and a Gaussian component $\boldg$ that takes values in $E^\perp$. In other words, we let $\boldX = \paren{\tilde{\boldX},\boldg} \in E \oplus E^\perp$.\footnote{It is not necessary to assume that the Gaussian and non-Gaussian subspaces are perpendicular. They automatically become perpendicular if we apply a whitening transformation.}
+
+Our goal is to recover the subspace $E$ from a sample of independent realizations of $\boldX$. This is precisely the framework of the problem of Non-Gaussian Component Analysis (NGCA). We make no assumption on the relative magnitudes of $\tilde{\boldX}$ and $\boldg$. When the noise component is much smaller, which is a reasonable assumption in some real world applications, $E$ can be recovered using the standard Principal Component Analysis (PCA). However, PCA manifestly fails when the signal to noise ratio is small, i.e. when $\tilde{\boldX}$ has lower magnitude than $\boldg$.
+
+With mild distributional assumptions, applying a whitening transformation to the data points can be done efficiently with sample size linear in the dimension (see \cite{Vershynin2011b}). As such, we might as well assume that the distribution is already whitened (i.e. isotropic). In other words, for the rest of this paper, we work with the model:
+
+\begin{definition}[Isotropic NGCA model]			\label{def: NGCA model}
+	\begin{equation} \label{NGCA model}
+	\boldX = \paren{\tilde{\boldX},\boldg} \in E \oplus E^\perp, \quad  \E \boldX = 0, \quad \E \boldX\boldX^T = \boldI_n.
+	\end{equation}
+\end{definition}
+
+The NGCA problem is closely related to the problem of Independent Component Analysis (ICA), but generalizes it in a crucial way. ICA assumes the existence of a latent variable $s$ with independent coordinates, whereas in our case, the distribution of $\tilde{\boldX}$ is allowed to have any manner of dependencies amongst its entries.
+
+\subsection{Quantifying ``non-Gaussianity''}
+
+In order to provide a guarantee for an algorithm for NGCA, one needs to quantify the deviation of $\tilde{\boldX}$ from being Gaussian. We will do so in terms of its moments.
+
+\begin{definition}
+	We say that \textit{$\tilde{\boldX}$ is $(m,\eta)$-moment-identifiable} along a unit vector $\boldv \in E$ if there is some $1 \leq r \leq m$ for which
+	\begin{equation} \label{def:moment_identifiability}
+	\abs*{\E\braces{\inprod{\tilde{\boldX},\boldv}^r} - \gamma_r} \geq \eta.
+	\end{equation}
+	Here $\gamma_r$ is the $r$-th moment\footnote{One can check that $\gamma_r = (r-1)!!$ when $r$ is even, and is zero for $r$ odd.} of a $\N{0}{1}$ random variable. The $r$-th moment distance of $\tilde{\boldX}$ from a standard Gaussian is defined as the quantity
+	\begin{equation} \label{eq: D_X}
+	D_{\tilde{\boldX},r} := \sup_{\boldv \in S^{n-1}\cap E} \abs*{\E\braces{\inprod{\tilde{\boldX},\boldv}^r} - \gamma_r}.
+	\end{equation}
+\end{definition}
+
+There are two reasons why we take such an approach. First, it allows us to analyze our proposed algorithm more easily, since the algorithm is a moment method, and second, by the classical moment problem, if $D_{\tilde{\boldX},r}=0$ for all positive integers $r$, then $\tilde{\boldX}$ has the standard Gaussian distribution.
+
+Nonetheless, readers may be concerned about how the moment-identifiability condition squares with other notions of distribution distance. This was investigated somewhat by \cite{Vempala2011}, who proved the following result for log-concave distributions on $\R$.
+
+\begin{fact}[Lemma 1 in \cite{Vempala2011}]
+	Let $G$ be the density of a standard Gaussian random variable, $F$ the density of an isotropic log-concave distribution. Suppose $G$ is not $(m,\eta)$-moment-identifiable, i.e. for $r=1,\ldots,m, \abs{\E_F\braces{X^r} - \gamma_r} < \eta$. Then there is a universal constant $C$ such that
+	\begin{equation*}
+	\norm{F-G}_1 \leq C\frac{\log m}{m^{1/16}} + \eta me^m.
+	\end{equation*}
+\end{fact}
+
+We note that the log-concave assumption is simply to obtain a tail bound for the characteristic function for $F$. Hence, the result also holds for any distribution with a $C^1$ density, albeit with possibly a different constant in the bound. Furthermore, the method for proving the result can easily be generalized to multivariate distributions.
+
+\subsection{Previous work on NGCA} 
+
+As far as we know, the NGCA problem was first formulated and studied by \cite{Blanchard2006b}. They observed that whenever $\boldX$ satisfies the NGCA model \eqref{NGCA model}, then for any smooth function $h$, we have
+\begin{equation} \label{eq:Stein_identity}
+\boldsymbol{\beta}(h) := \E\braces{\boldX h(\boldX)} - \E\braces{\del h(\boldX)} \in E.
+\end{equation}
+This suggests that if we can find a rich enough collection of functions $\mathcal{H}$, then one should be able to recover $E$ as the span of $\braces{ \boldsymbol{\beta}(h) \colon h \in \mathcal{H}}$. Hence, the authors proposed first forming empirical estimates $\hat{\boldsymbol{\beta}}(h)$ using the given i.i.d. samples of $\boldX$, and then running PCA on this collection of vectors. Inspired by the FastICA algorithm of \cite{Hyvarinen1997}, they suggested picking test functions of the form $h_{a,\boldomega}(\boldx) = \tilde{h}_a(\inprod{\boldx,\boldomega})$ where $\boldomega \in S^{n-1}$ and $\braces{\tilde{h}_a \colon a \in \R}$ is a one-parameter family of smooth functions. They called this approach \emph{Multi-index Projection Pursuit}.
+
+Subsequent papers have built upon this in several ways. \cite{Kawanabe2006} investigated the situation when the contrast functions $h_i$'s are chosen to be radial kernel functions, and when these are adapted to the data in an iterative fashion. \cite{Diederichs2010b,Diederichs2013b} replaced the PCA step with a semidefinite program, thereby yielding an approach they call \textit{Sparse NGCA}.
+
+All the papers in this line of research suffer from the defect that the performance of the algorithms all depend experimentally and theoretically on some ``good'' behavior of the $\boldsymbol{\beta}(h)$'s. Clearly, how ``good'' the $\boldsymbol{\beta}(h)$'s are depends intimately on how the chosen contrast functions interact with the particular way in which $\tilde{\boldX}$ deviates from being Gaussian. None of these papers are able to quantify this dependence theoretically, and instead simply assume the ``good'' behavior (see for instance Assumption 1 in \cite{Diederichs2013b}), so their proposed algorithms cannot be said to have polynomial time and sample complexity guarantees.
+
+Indeed, prior to our work, the only algorithm with such guarantees was proposed and studied by \cite{Vempala2011}. Their strategy was to adapt \cite{Frieze1996}'s work on ICA to higher moments. For each positive integer $r$, they defined the marginal moment function $f_r(\boldv) := \E\braces{\inprod{\boldX,\boldv}^r}$, and noted that the strict local optima of $f_r$ would have to lie in $E$. Furthermore, for each $r$, the $r$-th moment tensors of $\boldX$ defining $f_r$ can be approximated up to $\epsilon$ accuracy in each of its entries with enough samples. These therefore yield empirical estimates $\hat{f}_r$ that have local optima that are close to those of $f_r$. Finally, they showed how to identify a local optima of $\hat{f}_r$ using a 2nd order local search. The samples are then projected onto the orthogonal complement of this direction, and the algorithm is applied recursively on the projection. They were able to prove that whenever $\tilde{\boldX}$ is $(m,\eta)$-moment-identifiable along all unit vectors $\boldv \in E$, then their algorithm recovers a subspace $\hat{E}$ close enough to $E$ with time and sample complexity polynomial in $n$, $\eta$, $1/\epsilon$, and $\log(1/\delta)$, where $\delta$ is the failure probability. The degree of the polynomial however grows linearly in $m$ and $d$.
+\footnote{We are of course omitting numerous details of their work. In addition, their statement of their guarantee (see Theorem 1 in their paper) is also somewhat different from how we have stated it here: they have both a slightly weaker assumption on $\tilde{\boldX}$ ($(m,\eta)$-moment-distinguishability) and a slightly weaker conclusion on $\hat{E}$ (in terms of moment distance). Nonetheless, their intermediate results are sufficient to prove the version that we have stated in the main text.}
+
+Other work on NGCA include \cite{Kawanabe2005b,Kawanabe2006,Kawanabe2006b,Sasaki2016b}. These papers have limited theoretical analysis, and we omit a discussion of these because of space constraints.
+
+\section{Main results} \label{sec: main results}
+
+The principle that underlies our approach to NGCA is a new characterization 
+of multivariate Gaussian distributions. 
+Throughout this section, $\boldX$ denotes a random vector in $\R^n$
+and $\boldg$ is a standard Gaussian random vector in $\R^n$.
+By $\boldX'$ we will always denote an independent copy of $\boldX$.
+
+\begin{theorem}[First Gaussian test] \label{thm: first Gaussian test}
+  Suppose $\boldX$ has the same radial distribution as $\boldg$, i.e. $\|\boldX\|_2$ and $\|\boldg\|_2$
+  are identically distributed. If $\inprod{\boldX,\boldX'}$ has the same distribution 
+  as $\inprod{\boldg,\boldg'}$, then $\boldX$ has the same distribution as $\boldg$, i.e. 
+  the standard Gaussian distribution.
+\end{theorem}
+
+We will prove this theorem in Section \ref{sec: proof of first Gaussian test} 
+via a decomposition of moment tensors and a resulting energy minimization property 
+of the Gaussian measure. The theorem guarantees that any non-Gaussianity of $\boldX$ is always captured by 
+either the norm $\norm{\boldX}_2$ or the dot product pairings $\inprod{\boldX,\boldX'}$. It is clear that the norm condition on its own is not sufficient to guarantee that $\boldX \stackrel{d}{=} \boldg$. For instance, let $\boldtheta$ have any non-uniform distribution on the sphere. Then $\norm{\boldg}_2\boldtheta$ has the same radial distribution as $\boldg$, but is not itself Gaussian.
+
+This result by itself does not address the NGCA problem, in which 
+we are looking for non-Gaussian {\em directions} in the distribution of $\boldX$.
+To this end, we propose a matrix version of the first Gaussian test. 
+Pick a parameter $\alpha>0$ and consider the {\em test matrices} 
+\begin{equation}		\label{eq: test matrices}
+	\boldPhi_{\boldX,\alpha} := \frac{1}{Z_{\boldPhi}} \, \E \braces{e^{-\alpha\norm{\boldX}_2^2} \boldX \boldX^T }
+	\quad \text{and} \quad
+	\boldPsi_{\boldX,\alpha} := \frac{1}{Z_{\boldPsi}} \, \E \braces{e^{-\alpha \inprod{\boldX,\boldX'}} \boldX (\boldX')^T},
+\end{equation}
+where the normalizing quantities $Z_{\boldPhi} = Z_{\boldPhi,\boldX}(\alpha):= \E\braces{e^{-\alpha\norm{\boldX}_2^2}}$ 
+and $Z_{\boldPsi} = Z_{\boldPsi,\boldX}(\alpha) := \E\braces{e^{-\alpha \inprod{\boldX,\boldX'}}}$ are the moment generating functions of $\norm{\boldX}_2^2$ and $\inprod{\boldX,\boldX'}$ respectively. We also remark that they resemble partition functions in statistical mechanics.
+
+For a standard Gaussian random vector $\boldg$, a straightforward computation (see Lemma \ref{lem: formula for Phi and Psi for Gaussian}) shows that both test matrices are multiples of the identity, namely
+\begin{equation}		\label{eq: test matrices for Gaussian}
+  \boldPhi_{\boldg,\alpha} = (2\alpha+1)^{-1} \boldI_n
+  \quad \text{and} \quad
+  \boldPsi_{\boldg,\alpha} = \alpha(\alpha^2-1)^{-1} \boldI_n.
+\end{equation}
+Our second test guarantees that the non-Gaussianity of $\boldX$ is captured by 
+one of the test matrices, and moreover that their eigenvectors reveal the non-Gaussian directions of $\boldX$.
+
+\begin{theorem}[Second Gaussian test] \label{thm: second Gaussian test}
+  Consider a random vector $\boldX$ which follows the isotropic NGCA model \eqref{NGCA model}. Then, for any $\abs*{\alpha}$ small enough, 
+  either $\boldPhi_{\boldX,\alpha}$ has an eigenvalue not equal to $(2\alpha+1)^{-1}$ 
+  or $\boldPsi_{\boldX,\alpha}$ has an eigenvalue not equal to $\alpha(\alpha^2-1)^{-1}$. 
+  Furthermore, all eigenvectors corresponding to such eigenvalues lie in $E$.\footnote{The matrix $\boldPhi_{\boldX,\alpha}$ always exists, but when $\tilde{\boldX}$ is not sub-Gaussian (i.e. can be rescaled so that marginals have tails lighter than a standard Gaussian), $\boldPsi_{\boldX,\alpha}$ may not be well-defined even for small $\alpha$. In that case, $\norm{\tilde{\boldX}}_2$ has a different distribution from $\norm{\boldg}_2$, so that $\boldPhi_{\boldX,\alpha}$ has non-Gaussian eigenvalues. We can hence think of $\boldPhi_{\boldX,\alpha}$ as the primary test matrix, and $\boldPsi_{\boldX,\alpha}$ being an auxiliary that is only required in hard (effectively adversarial) cases.}
+\end{theorem}
+
+In Section \ref{sec: proof of second Gaussian test}, we will show how to derive the second Gaussian test from the first using a block diagonalization formula for each of the matrices $\boldPhi_{\boldX,\alpha}$ and $\boldPsi_{\boldX,\alpha}$. Again, it is easy to see that $\boldPhi_{\boldX,\alpha}$ is not sufficient by itself to identify non-Gaussian directions: Take $\boldX = \norm{\boldg}_2\boldtheta$ as before, and this time that assume that $\boldtheta$ is uniform on $\braces{\pm \textbf{e}_i}_{1=1}^N$. The symmetry implies that $\boldPhi_{\boldX,\alpha}$ is a scalar matrix, and computing its trace shows that it is equal to $(2\alpha+1)^{-1} \boldI_n$.
+
+For simplicity, we stated both Gaussian tests for population rather than for finite samples;
+they involve taking expectations over the entire distribution of $\boldX$ which is typically unknown in practice.
+However, both tests are quite robust and work provably well on finite (polynomially large) samples. 
+Robust versions of Gaussian tests can be formulated in terms of our definition of moment distance (see \eqref{eq: D_X}).
+
+\begin{theorem}[First Gaussian test, robust] \label{thm: first Gaussian test, robust}
+  There is a universal constant $c>0$ such that for each positive integer $r$, 
+  we have either
+  $$
+  \abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}} \geq c \eta_r^2 /\tilde{\gamma}_r
+  \quad \text{or} \quad
+  \abs*{\E\braces{\inprod{\boldX,\boldX'}^r} - \E\braces{\inprod{\boldg,\boldg'}^r}} \geq c \eta_r^2.
+  $$
+  Here $\tilde{\gamma}_r = \E\braces{|g|^r}$ is the $r$-th absolute moment of a standard Gaussian random variable, and $\eta_r = \min\braces{D_{\boldX,r}, \tilde{\gamma}_r}$.  
+  %Furthermore, for all odd moments $r$, part (i) holds with $c=1$.
+\end{theorem}
+
+As with the non-robust version, we will prove this theorem in Section \ref{sec: proof of first Gaussian test} using a decomposition of moment tensors.
+There is a similar robust version of the second Gaussian test, which we will skip here
+but state and prove in Section \ref{sec: proof of second Gaussian test}.
+
+Robustness allows us to use finite sample averages instead
+of expectations in the Gaussian tests, which is critical for practical applications. 
+Indeed, consider a sample $\boldX_1,\ldots,\boldX_N, \boldX'_1,\ldots,\boldX'_N$ 
+of $2N$ i.i.d. realizations of a random variable $\boldX$.
+We can then define the sample versions of the test matrices in \eqref{eq: test matrices} 
+in an obvious way:
+\begin{equation}
+	\hat{\boldPhi}_{\boldX,\alpha} = \frac{1}{\hat{Z}_{\boldPhi}} \, \sum_{i=1}^N e^{-\alpha\norm{\boldX_i}_2^2} \boldX_i \boldX_i^T 
+	\quad \text{and} \quad
+	\hat{\boldPsi}_{\boldX,\alpha} = \frac{1}{\hat{Z}_{\boldPsi}} \, \sum_{i=1}^N e^{-\alpha \inprod{\boldX_i,\boldX'_i}} (\boldX_i (\boldX'_i)^T + \boldX_i'\boldX_i^T),
+\end{equation}
+with the normalizing quantities $\hat{Z}_{\boldPhi} := \sum_{i=1}^N e^{-\alpha\norm{\boldX_i}_2^2}$
+and $\hat{Z}_{\boldPsi} := 2\sum_{i=1}^N e^{-\alpha \inprod{\boldX_i,\boldX'_i}}$.
+
+The second Gaussian test leads to the following straightforward algorithm for solving NGCA problem
+based on a finite sample:
+Use the sample to compute the test matrices $\hat{\boldPhi}_{\boldX,\alpha}$ and $\hat{\boldPsi}_{\boldX,\alpha}$;
+select the eigenspaces corresponding to the eigenvalues that significantly 
+deviate from the Gaussian eigenvalues.
+Then all vectors in both eigenspaces will be close to the non-Gaussian subspace $E$ which we are trying to find. Let us state this algorithm and its guarantee precisely. 
+
+\begin{algorithm}[H]                      
+\caption{\textsc {Reweighted PCA($\boldX$,$\alpha_1$,$\alpha_2$,$\beta_1$,$\beta_2$)}}     
+\begin{algorithmic}[1]              
+    \REQUIRE Data points $\boldX_1,\ldots,\boldX_N, \boldX'_1,\ldots,\boldX'_N$, 
+    	scaling parameters $\alpha_1,\alpha_2 \in \R$, 
+	tolerance parameters $\beta_1,\beta_2 > 0$.
+    \ENSURE Two estimates $\hat{E}_{\boldPhi}$ and $\hat{E}_{\boldPsi}$ for $E$.
+    \STATE Compute test matrices $\hat{\boldPhi}_{\boldX,\alpha_1}$ and $\hat{\boldPsi}_{\boldX,\alpha_2}$.
+    \STATE Compute the eigenspace $\hat{E}_{\boldPhi}$ of $\hat{\boldPhi}_{\boldX,\alpha_1}$ 
+    	corresponding to the nonzero eigenvalues that are farther than $\beta_1$ from the value $(2\alpha_1+1)^{-1}$.
+    \STATE Compute the eigenspace $\hat{E}_{\boldPsi}$ of $\hat{\boldPsi}_{\boldX,\alpha_2}$ 
+    	corresponding to the nonzero eigenvalues that are farther than $\beta_2$ from 
+	the value $\alpha_2(\alpha_2^2-1)^{-1}$.
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}[Finding one non-Gaussian direction] \label{thm:finding_one_direction}
+  Let $\boldX$ be a sub-Gaussian random vector (see Appendix \ref{sec: proof of first Gaussian test appendix}) which follows the isotropic NGCA model \eqref{NGCA model}, 
+  and with sub-Gaussian norm bounded above by $K \geq 1$. 
+  Let $r$ be the minimum integer for which the $r$-th moment distance $D_{\tilde{\boldX},r} =: D > 0$. Then for any $\delta,\epsilon \in (0,1)$, with probability at least $1-\delta$, if we run {\textsc Reweighted PCA} with a choice of parameters $\alpha_1,\alpha_2,\beta_1,\beta_2$ that is optimal up to constant multiples, at least one of $\hat{E}_{\boldPhi}$ and $\hat{E}_{\boldPsi}$ is non-trivial, and any unit vector in their union is $\epsilon$-close to one in $E$, so long as the sample size $N$ is greater than $\text{poly}_r(n,1/\epsilon,\log(1/\delta),1/D,K)$. Here, $\text{poly}_r$ is a polynomial whose total degree depends linearly on $r$. 
+\end{theorem}
+
+The idea of the proof is to use eigenvector perturbation theory from \cite{Davis1970a}. The robust version of the second Gaussian test asserts the existence of a gap between Gaussian and non-Gaussian eigenvalues. By bounding the deviation of the test matrix estimators $\hat{\boldPhi}_{\boldX,\alpha}$ and $\hat{\boldPsi}_{\boldX,\alpha}$ from their expectation, we can thus show that their eigenstructures are similar. We will prove this theorem formally in Section \ref{sec: proof of guarantee}.
+
+The next step is to obtain a good estimate for the entire non-Gaussian subspace. To do so, we follow \cite{Vempala2011}'s strategy of projecting the sample points onto the orthogonal complement of the found directions, and recursing our algorithm on the new sample. After a set number of iterations, we collate all the found directions into a basis spanning candidate subspace $\hat{E}$. To state our guarantee for this procedure, we use the following notion of distance between subspaces.
+
+\begin{definition}[Subspace distance]
+	Let $F$ and $F'$ be subspaces of $\R^n$ of dimensions $m$. Let $\textbf{U}$ and $\textbf{U}'$ be matrices whose columns form an orthonormal basis for $F$ and $F'$ respectively. The distance between $F$ and $F'$ is defined to be $d(F,F') := \norm{\textbf{U}\textbf{U}^T-\textbf{U}'(\textbf{U}')^T}_F$.
+\end{definition}
+
+\begin{theorem}[Finding all non-Gaussian directions] \label{thm:finding_all_directions}
+	Let $\boldX$ be a sub-Gaussian random vector which follows the isotropic NGCA model \eqref{NGCA model}, 
+	and with sub-Gaussian norm bounded above by $K \geq 1$. Suppose that $\tilde{\boldX}$ is $(m,\eta)$-moment-identifiable along all unit vectors $\boldv \in E$. Then running {\textsc Reweighted PCA} recursively (i.e. Algorithm \ref{alg:iterated_reweighted_PCA}) produces an estimate $\hat{E}$ such that $d(\hat{E},E) < \epsilon$ so long as the sample size $N$ is greater than $\text{poly}_{m,d}(n,1/\epsilon,\log(1/\delta),1/D,K)$. Here, $\text{poly}_{m,d}$ is a polynomial whose total degree depends linearly on $m$ and $d$. 
+\end{theorem}
+
+We shall prove this theorem in Appendix \ref{sec:finding_all_directions}. The theorem gives a polynomial time and sample complexity guarantee that \textsc{Reweighted PCA} solves the NGCA problem, so long as $m$ and $d$ are assumed to be constants, while making exactly the same assumptions as \cite{Vempala2011}. This means that theoretically, both algorithms do just as well. On the other hand, \textsc{Reweighted PCA} is a simple spectral algorithm, which is easier and faster to implement than local search.
+
+Furthermore, while local search discovers one non-Gaussian direction at a time, \textsc{Reweighted PCA} possibly discovers multiple directions in each iteration. Most importantly, there is hope that all non-Gaussian directions can be discovered in the very first iteration. This is probably what will happen in practice with real data, and we may moreover prove that this is the case for special distributions. For instance, we can prove the following guarantee for finding a planted sphere.
+
+\begin{corollary}[Finding a sphere] \label{cor:finding_a_sphere}
+	Let $\tilde{\boldX}$ be uniformly distributed on the scaled unit sphere $\sqrt{d}S^{d-1}$ in $E$. Suppose we are given a sample of size $N \gtrsim dn^2(n+\log(1/\delta))/\epsilon^2$, then running the first two steps of \textsc{Reweighted PCA} with a choice of $\alpha \in [c_1/n, c_2/n]$, and $\beta = \alpha/3$ yields a subspace $\hat{E}_{\boldPhi}$ so that $d(\hat{E}_{\boldPhi},E) < \epsilon$. Here, $c_1$ and $c_2$ are absolute constants.
+\end{corollary}
+
+\subsection{Reweighted PCA in other contexts}
+
+The name of the algorithm stems from the first test matrix, which can be seen as a PCA matrix for the reweighted sample obtained when each point $\boldX_i$ is given the weight $e^{-\alpha\norm{\boldX_i}_2^2}$. As mentioned in the previous section, $\boldPhi_{\boldX,\alpha}$ reveals at least one non-Gaussian direction in all but adversarial situations, and so can be considered the primary test matrix.
+
+The idea of doing PCA with weight functions that are non-linear in the sample points can be traced back at least as far as \cite{Brubaker2008b}. In that paper, the authors similarly use Gaussian weights, but do so in order to handle clustering for Gaussian mixture models that are highly non-spherical. In a later paper, \cite{Goyal2014a} used Fourier weights to handle ICA. While our analysis is radically different, the idea for the algorithm was directly inspired by these two papers.
+
+\subsection{Organization of paper and notation}
+
+In Section \ref{sec: proof of first Gaussian test}, we will prove the first Gaussian test and its robust version. In Section \ref{sec: proof of second Gaussian test}, we will prove the second Gaussian test and state a robust version needed for proving our guarantee for Reweighted PCA. The guarantee for finding one direction is proved in Section \ref{sec: proof of guarantee} and Appendix \ref{sec:proof_of_guarantee_for_Phi}. The guarantees for finding all directions, and the special case of finding a sphere are proved in Appendices \ref{sec:finding_all_directions} and \ref{sec:finding_a_sphere} respectively. For the sake of space, many technical details are also deferred to the appendix. Throughout the paper, scalars are denoted in standard font, while vectors and matrices are denoted with bold font. $C$ and $c$ denote absolute constants whose value may change from line to line. We let $\boldg_n$ denote the standard Gaussian vector in $\R^n$. The subscript is omitted whenever the dimension is obvious. In addition, for each $r$, we let $\gamma_r$ and $\tilde{\gamma}_r$ denote the $r$-th moment and $r$-th absolute moment of a standard Gaussian random variable.
+
+\section{Proof of the first Gaussian test} \label{sec: proof of first Gaussian test}
+%=========
+
+The first Gaussian test is based on the work of \cite{Tan2016}. For completeness, we will repeat the key arguments. The statements and proofs in this section are valid more generally for random variables $\boldX$ with finite moments of all orders (not necessarily sub-Gaussian).
+
+Recall the following fact from multilinear algebra. For any positive integer $r$, we may identify the $r$-th tensor product $T^r(\R^n) = \R^n\tensor\cdots\tensor\R^n$ with $\R^{n^r}$ by picking as a basis the vectors $\braces{\textbf{e}_{i_1}\tensor \textbf{e}_{i_2}\tensor\cdots\tensor \textbf{e}_{i_r}}_{1\leq i_1,\ldots i_r \leq n}$. With this choice of Euclidean structure, the Euclidean inner product between any two pure tensors $\textbf{u}_1\tensor\cdots\tensor \textbf{u}_r$ and $\textbf{\boldv}_1\tensor\cdots\tensor \textbf{\boldv}_r$ (treated as vectors) can be written as
+\[
+\inprod{\textbf{u}_1\tensor\cdots\tensor \textbf{u}_r,\textbf{\boldv}_1\tensor\cdots\tensor \textbf{\boldv}_r} = \prod_{i=1}^r\inprod{\textbf{u}_i,\textbf{\boldv}_i}.
+\]
+In particular, for power tensors $\textbf{u}^{\tensor r}$ and $\textbf{\boldv}^{\tensor r}$, we have the formula $\inprod{\textbf{u}^{\tensor r},\textbf{\boldv}^{\tensor r}} = \inprod{\textbf{u},\textbf{\boldv}}^r$.
+
+Now let $\boldX$ and $\boldY$ be two independent random vectors. The above formula allows us to rewrite the $r$-th moment of their inner product as an inner product between their $r$-th moment tensors. Namely, we have
+\begin{align} \label{tensorid1}
+\E\braces{\inprod{\boldX,\boldY}^r} = \E\braces{\inprod{\boldX^{\tensor r},\boldY^{\tensor r}}} = \inprod*{\boldM^r_\boldX,\boldM^r_\boldY},
+\end{align}
+where we define $\boldM^r_\boldX := \E \boldX^{\tensor r}$.
+For independent copies $\boldX$, $\boldX'$ of the same random vector having distribution $\mu$, $\boldM^r_\boldX = \boldM^r_{\boldX'}$, so
+\begin{align} \label{tensorid2}
+\E\braces{\inprod{\boldX,\boldX'}^r} = \norm{\boldM^r_\boldX}^2.
+\end{align}
+
+Next, for any random vector $\boldX$, let $\boldX_{rot}$ denote a random vector that is independent of $\boldX$, has the same radial distribution as $\boldX$, and whose distribution is rotationally invariant. We call $\boldX_{rot}$ the \emph{rotational symmetrization} of $\boldX$. Comparing the moment tensors of a random vector and those of its rotational symmetrization gives rise to what we shall call eccentricity tensors. Specifically, for any positive integer $r$, we define the $r$-th \emph{eccentricity tensor} of $\boldX$ to be $\textbf{E}^r_\boldX = \boldM^r_\boldX - \boldM^r_{\boldX_{rot}}$.
+
+Since $\boldX \stackrel{d}{=} \boldX_{rot}$ if and only if $\boldX$ is rotationally invariant, we see that the eccentricity tensors of $\boldX$ are quantitative measures of how far its distribution is from being rotationally invariant. This interpretation is further supported by the following observation.
+
+\begin{lemma}[Orthogonality]
+	The eccentricity tensors of a random vector $\boldX$ are orthogonal to the moment tensors of its rotational symmetrization. In other words, for any positive integer $r$,
+	\begin{align} \label{eq: orthogonality}
+	\inprod{\textbf{E}^r_\boldX, \boldM^r_{\boldX_{rot}}} = 0
+	\quad \text{and} \quad
+	\norm*{\boldM^r_\boldX}_2^2 = \norm*{\boldM^r_{\boldX_{rot}}}_2^2 + \norm*{\textbf{E}^r_\boldX}_2^2.
+	\end{align}
+\end{lemma}
+
+\begin{proof}
+	Let $\boldQ$ be a random orthogonal matrix chosen according to the Haar measure on $O(n)$. For any fixed vector $\boldv \in \R^n$, $\boldQ\boldv$ is uniformly distributed on the sphere of radius $\norm{\boldv}_2$, so if $\boldY$ is any random vector independent of $\boldQ$, applying $\boldQ$ to $\boldY$ preserves its radial distribution but makes $\boldQ\boldY$ rotationally invariant.
+	
+	Now choose $\boldQ$ to be independent of $\boldX$ and $\boldX_{rot}$. Our previous discussion implies that $\boldQ^T\boldX \stackrel{d}{=} \boldQ\boldX_{rot} \stackrel{d}{=} \boldX_{rot}$.
+	We use this to compute
+	\begin{align}
+	\E\braces{\inprod{\boldX,\boldX_{rot}}^r} = \E\braces{\inprod{\boldX,\boldQ\boldX_{rot}}^r} = \E\braces{\inprod{\boldQ^T \boldX,\boldX_{rot}}^r} = \E\braces{\inprod{\boldX_{rot}',\boldX_{rot}}^r},
+	\end{align}
+	where $\boldX_{rot}'$ is an independent copy of $\boldX_{rot}$. We may then apply identities \eqref{tensorid1} and \eqref{tensorid2} to rewrite the above equation as
+	\begin{align}
+	\inprod*{\boldM^r_\boldX,\boldM^r_{\boldX_{rot}}} = \inprod*{\boldM^r_{\boldX_{rot}},\boldM^r_{\boldX_{rot}}}.
+	\end{align}
+	Subtracting the right hand side from the left hand side gives \eqref{eq: orthogonality}.
+\end{proof}
+
+\begin{theorem}\label{thm: inner product moments minimized by rotational symmetrization}
+	Let $\boldX$ be a random vector in $\R^n$ with finite moments of all orders. Then
+	\begin{enumerate}[nosep]
+		\item[a)] (Minimization) If $\boldX'$ is an independent copy of $\boldX$, and $\boldX_{rot}, \boldX_{rot}'$ are independent copies of its rotational symmetrization, we have
+		\begin{align} \label{minimization}
+		\E\braces{\inprod{\boldX,\boldX'}^r} \geq \E\braces{\inprod{\boldX_{rot},\boldX_{rot}'}^r}
+		\end{align}
+		for any positive integer $r$.
+		\item[b)] (Uniqueness) Furthermore, if equality holds in \eqref{minimization} for all $r$ and we further assume that $\boldX$ has a subexponential distribution\footnote{For an introduction to the properties of subexponential distributions, we again refer the reader to \cite{Vershynin2011b}.}, then $\boldX$ is rotationally invariant.
+	\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+	Using identity \eqref{tensorid2}, we rewrite the first claim as
+	\[
+	\norm*{\boldM^r_\boldX}_2^2 \geq \norm*{\boldM^r_{\boldX_{rot}}}_2^2,
+	\]
+	and this follows immediately from equation \eqref{eq: orthogonality}.
+	
+	If equality holds for all positive integers $r$, then by \eqref{eq: orthogonality}, $\textbf{E}^r_\boldX = 0$ for all $r$, implying that $\boldX$ and $\boldX_{rot}$ have the same moment tensors of all orders. Since subexponential random variables are characterized by their moments (see Lemma \ref{lem: subexponential RV characterized by moments}), $\boldX$ and $\boldX_{rot}$ have the same distribution.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm: first Gaussian test}]
+	If $\boldX$ has the same radial distribution as $\boldg$, then $\boldg$ is the rotational symmetrization of $\boldX$. The claim is then a direct application of the uniqueness portion of Theorem \ref{thm: inner product moments minimized by rotational symmetrization}.
+\end{proof}
+
+We now move on to proving the robust version of the test, namely Theorem \ref{thm: first Gaussian test, robust}.
+
+\begin{lemma} \label{lem: moment deviation}
+	Let $\boldX$ be a random vector in $\R^n$. Let $\boldtheta$ be uniformly distributed on the sphere $S^{n-1}$. Then the following hold for any positive integer $r$:
+	\begin{enumerate}[nosep]
+		\item[a)] $\boldM^r_{\boldX_{rot}} = \E\braces{\norm{\boldX}_2^r}\boldM_{\boldtheta}^r$.
+		\item[b)] $\norm{\textbf{E}^r_\boldX}^2_2 = \paren*{\E\braces{\inprod{\boldX,\boldX'}}^r} - \paren*{\E\braces{\norm{\boldX}^r_2}}^2\paren*{\E\braces{\inprod{\boldtheta,\boldtheta'}}^r}$.
+		\item[c)] For any unit vector $v \in \R^n$,
+		\begin{align} \label{moment deviation bound}
+		\abs*{\E\braces{\inprod{\boldX,\boldv}^r} - \E\braces{\inprod{\boldg,\boldv}^r}} & \leq \abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}}\E\braces{\inprod{\boldtheta,\boldtheta'}^r} \\ \nonumber
+		& \quad + \paren*{\E\braces{\inprod{\boldX,\boldX'}^r} - \paren*{\E\braces{\norm{\boldX}^r_2}}^2\E\braces{\inprod{\boldtheta,\boldtheta'}^r}}^{1/2}.
+		\end{align}
+		\item[d)] In particular, when $r$ is odd,
+		\begin{align} \label{odd moment deviation}
+		\abs*{\E\braces{\inprod{\boldX,\boldv}^r} - \E\braces{\inprod{\boldg,\boldv}^r}} \leq \paren*{\E\braces{\inprod{\boldX,\boldX'}^r}}^{1/2} = \abs*{\E\braces{\inprod{\boldX,\boldX'}^r} - \paren*{\E\braces{\inprod{\boldg,\boldg'}^r}}}^{1/2}.
+		\end{align}		
+	\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+	Deferred to Appendix \ref{sec: proof of first Gaussian test appendix}.
+\end{proof}
+
+By balancing the two terms on the right hand side in part c), we obtain the following lemma, whose proof is again deferred to Appendix \ref{sec: proof of first Gaussian test appendix}.
+
+\begin{lemma} \label{lem: comparison for even moments}
+	Let $\boldX$ be a random vector in $\R^n$ for $n \geq 2$. Suppose there is a unit vector $v \in S^{n-1}$, an even integer $r \geq 2$, and a positive number $0 < \delta \leq 1$ such that $\abs*{\E\braces{\inprod{\boldX,\boldv}^r} - \E\braces{ \inprod{\boldg,\boldv}^r} } \geq \delta\E\braces{ \inprod{\boldg,\boldv}^r}$. Then either
+	\[
+	\abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}} \geq \frac{\delta^2}{4}\E\braces{ \inprod{\boldg,\boldv}^r}
+	\quad \text{or} \quad
+	\abs*{\E\braces{\inprod{\boldX,\boldX'}^r} - \E\braces{\inprod{\boldg,\boldg'}^r}} \geq \frac{15\delta^2}{64} \paren*{\E\braces{ \inprod{\boldg,\boldv}^r}}^2.
+	\]
+\end{lemma}
+
+\begin{proof}[Proof of Theorem \ref{thm: first Gaussian test, robust}]
+	If $r$ is odd, then the statement follows from \eqref{odd moment deviation}. If $r$ is even, set $\delta = \frac{D_{\boldX,r}}{\E\inprod{\boldg,\boldv}^r}$ in the previous theorem.
+\end{proof}
+
+\section{Proof of the second Gaussian test} \label{sec: proof of second Gaussian test}
+
+In this section, we return to the setting where $\boldX$ follows the NGCA model \eqref{NGCA model}. We further assume that the non-Gaussian component $\tilde{\boldX}$ is a sub-Gaussian random vector with sub-Gaussian norm bounded by $K$. In order not to break the flow of the paper, most of the proofs are deferred to Appendix \ref{sec: proof of second Gaussian test appendix}.
+
+The first step in proving the test is to notice that the independence of the Gaussian and non-Gaussian components allows us to block diagonalize the test matrices.
+
+\begin{lemma}[Block diagonalization for $\boldPhi_{\boldX,\alpha}$ and $\boldPsi_{\boldX,\alpha}$] \label{lem:Phi_and_Psi_diagonalization}
+	Assume $E$ is spanned by the first $d$ basis vectors. Then the test matrices $\boldPhi_{\boldX,\alpha}$ and $\boldPsi_{\boldX,\alpha}$ decompose into blocks in the following manner:
+	\begin{align}
+	\boldPhi_{\boldX,\alpha} = \left(
+	\begin{array}{c|c}
+	\boldPhi_{\tilde{\boldX},\alpha} & 0 \\
+	\hline
+	0 & \boldPhi_{\boldg,\alpha}
+	\end{array}
+	\right), \hspace{0.2in} \boldPsi_{\boldX,\alpha} = \left(
+	\begin{array}{c|c}
+	\boldPsi_{\tilde{\boldX},\alpha} & 0 \\
+	\hline
+	0 & \boldPsi_{\boldg,\alpha}
+	\end{array}
+	\right).
+	\end{align}
+\end{lemma}
+
+We then observe that the trace of the test matrices are conveniently equal to the negated log derivatives of their respective partition functions.
+
+\begin{lemma}[Trace of $\boldPhi_{\boldY,\alpha}$ and $\boldPsi_{\boldY,\alpha}$] \label{lem: trace of Phi and Psi}
+	Let $\boldY$ be any random vector in $\R^n$. Then $\textnormal{Tr}\paren{\boldPhi_{\boldY,\alpha}} = -(\log Z_{\boldPhi,\boldY})'(\alpha)$ and $\textnormal{Tr}\paren{\boldPsi_{\boldY,\alpha}} = -(\log Z_{\boldPsi,\boldY})'(\alpha)$.	
+\end{lemma}
+
+Our next lemma shows that for $\alpha$ small enough, the partition functions themselves differentiate between Gaussian and non-Gaussian random vectors. This is obvious once we realize that they are just the moment generating functions of $\norm{\boldX}_2^2$ and $\inprod{\boldX,\boldX'}$, and that these are analytic in a small neighborhood around 0.
+
+\begin{lemma}[Partition functions characterize Gaussian distributions] \label{lem: partition functions characterize Gaussians}
+	The following hold for any sub-Gaussian random vector $\boldY$:
+	\begin{enumerate}[nosep]
+		\item[a)] If $Z_{\boldPhi,\boldY}(\alpha_k) = Z_{\boldPhi,\boldg}(\alpha_k)$ for a sequence of values $\alpha_k$ converging to $0$, then $\boldY$ has the same radial distribution as $\boldg$.
+		\item[b)] If in addition, $Z_{\boldPsi,\boldY}(\beta_k) = Z_{\boldPsi,\boldg}(\beta_k)$ for a sequence of values $\beta_k$ converging to 0, then $\boldX$ has the standard Gaussian distribution.
+	\end{enumerate}
+\end{lemma}
+
+We are now in a position to prove the second Gaussian test.
+
+\begin{proof}[Proof of Theorem \ref{thm: second Gaussian test}]
+	Let $\boldg_d$ denote the standard Gaussian in $\R^d$. By Lemma \ref{lem: partition functions characterize Gaussians}, either $Z_{\boldPhi,\tilde{\boldX}}(\alpha) \neq Z_{\boldPhi,\boldg_d}(\alpha)$ for $\abs{\alpha}$ small enough, or $Z_{\boldPsi,\tilde{\boldX}}(\alpha) \neq Z_{\boldPsi,\boldg_d}(\alpha)$ for $\abs{\alpha}$ small enough. As such, either $(\log Z_{\boldPhi,\tilde{\boldX}})'(\alpha) \neq (\log Z_{\boldPhi,\boldg_d})'(\alpha)$ or $(\log Z_{\boldPsi,\tilde{\boldX}})'(\alpha) \neq (\log Z_{\boldPsi,\boldg_d})'(\alpha)$. Assume the former holds, and let $\lambda_1,\ldots, \lambda_n$ denote the eigenvalues of $\boldPhi_{\boldX,\alpha}$. Since we may write $\boldPhi_{\boldX,\alpha}$ in a block form, these eigenvalues are either those of $\boldPhi_{\tilde{\boldX},\alpha}$ or $\boldPhi_{\boldg,\alpha}$. Without loss of generality, we may assume that $\lambda_1,\ldots,\lambda_d$ are the eigenvalues of $\boldPhi_{\tilde{\boldX},\alpha}$, and $\lambda_{d+1},\ldots,\lambda_n$ are those of $\boldPhi_{\boldg,\alpha}$.
+	
+	Lemma \ref{lem: formula for Phi and Psi for Gaussian} tells us that $\lambda_{d+1} = \cdots = \lambda_n = (2\alpha+1)^{-1}$. On the other hand, by Lemma \ref{lem: trace of Phi and Psi},
+	\[
+	\sum_{i=1}^d\lambda_i = \textnormal{Tr}\paren{\boldPhi_{\tilde{\boldX},\alpha}} = -(\log Z_{\boldPhi,\tilde{\boldX}})'(\alpha).
+	\]
+	By Lemma \ref{lem: formula for log derivatives for Gaussian}, $-(\log Z_{\boldPhi,\boldg_d})'(\alpha) = d(2\alpha+1)^{-1}$, so we have $\sum_{i=1}^d\lambda_i \neq d(2\alpha+1)^{-1}$. Dividing through by $d$, we get $\frac{1}{d}\sum_{i=1}^d\lambda_i \neq (2\alpha+1)^{-1}$, which implies that at least one $\lambda_i$ differs from this value for $1 \leq i \leq d$.
+	
+	If it were the case that $(\log Z_{\boldPsi,\tilde{\boldX}})'(\alpha) \neq (\log Z_{\boldPsi,\boldg_d})'(\alpha)$, a similar argument involving $\boldPsi_{\boldX,\alpha}$ gives the alternate conclusion.
+\end{proof}
+
+It is tedious but not too difficult to make the second Gaussian test quantitative. We do this by tracking how the non-Gaussian moments for $\norm{\tilde{\boldX}}_2$ and $\inprod{\tilde{\boldX},\tilde{\boldX}'}$ contribute to the power series expansions for $-(\log Z_{\boldPhi,\tilde{\boldX}})'$ and $-(\log Z_{\boldPsi,\tilde{\boldX}})'$ around 0. This yields the following theorem.
+
+\begin{theorem}[Second Gaussian test, robust] \label{thm: second Gaussian test, robust}
+	Let $r$ be the integer such that $D_{\tilde{\boldX},r} > 0$ and $D_{\tilde{\boldX},r'} = 0$ for all $r' < r$. Then either
+	\begin{enumerate}
+		\item[a)] for $\abs{\alpha} \leq \eta_r^2 r/\sqbracket{(CK^2)^r(d^{r+1}+(r+1)!)}$, we have
+		\begin{align}
+		\abs*{\frac{1}{d}\sum_{i=1}^d\lambda_i(\boldPsi_{\tilde{\boldX},\alpha})-\frac{\alpha}{\alpha^2-1}} \geq \frac{c\eta_r^2}{d(r-1)!}\abs{\alpha}^{r-1},
+		\end{align}
+		\item[b)] or for $\abs{\alpha} \leq \eta_r^2 r/\sqbracket{(CK^2)^{r/2}\tilde{\gamma}_r(d^{r/2+1}+(r/2+1)!)}$, we have
+		\begin{align}
+		\abs*{\frac{1}{d}\sum_{i=1}^d\lambda_i(\boldPhi_{\tilde{\boldX},\alpha})-\frac{1}{2\alpha+1}} \geq \frac{c\eta_r^2}{d(r/2-1)!\tilde{\gamma}_r}\abs{\alpha}^{r/2-1}.
+		\end{align}
+		% and in which case $r$ is even.
+		Here $\tilde{\gamma}_r = \E|\inprod{\boldg,\boldv}|^r$ for an arbitrary vector $v \in S^{n-1}$ 
+		and $\eta_r = \min\braces{D_{\boldX,r}, \tilde{\gamma}_r}$.  
+	\end{enumerate}
+\end{theorem}
+
+\section{Proof of guarantee for Reweighted PCA} \label{sec: proof of guarantee}
+
+The second Gaussian test tells us how we can recover non-Gaussian directions from $\boldPhi_{\boldX,\alpha}$ and $\boldPsi_{\boldX,\alpha}$. Our guarantee for Reweighted PCA algorithm shows that we can do the same with the plug-in estimators $\hat{\boldPhi}_{\boldX,\alpha}$ and $\hat{\boldPsi}_{\boldX,\alpha}$. To this end, we first provide concentration bounds for these estimators, whose proofs can be found in Appendix \ref{concentration of estimators}.
+
+\begin{theorem}[Concentration for $\hat{\boldPhi}_{\boldX,\alpha}$] \label{thm:Phi_concentration}
+	There is an absolute constant $C$ such that for any $0 < \epsilon, \delta < 1$, and any $0 \leq \alpha < 1/\sqbracket{CK^2n}$, we have $\P\braces{\norm{\hat{\boldPhi}_{\boldX,\alpha} - \boldPhi_{\boldX,\alpha}} > \epsilon} \leq \delta$ so long as $N \geq CK^2(n+\log(1/\delta))\epsilon^{-2}$.
+\end{theorem}
+
+\begin{theorem}[Concentration for $\hat{\boldPsi}_{\boldX,\alpha}$] \label{thm:Psi_concentration}
+	There is an absolute constant $C$ such that for any $0 < \epsilon, \delta < 1$, if $N \geq CK^2(n+\log(1/\delta))\epsilon^{-2}$ and $\abs{\alpha} \leq 1/\sqbracket{CK^2\tau(n+\tau)}$, we have $\P\braces{\norm{\hat{\boldPsi}_{\boldX,\alpha} - \boldPsi_{\boldX,\alpha}} > \epsilon} \leq \delta$. Here, $\tau = \log^{1/2}(N/\min\braces{\delta,K\epsilon})$.
+\end{theorem}
+
+\begin{lemma}[Guarantee for $\hat{E}_{\boldPhi}$] \label{lem:guarantee_for_Phi}
+	Suppose the moments of $\norm{\tilde{\boldX}}_2^2$ and $\norm{\boldg_d}_2^2$ agree up to order $r-1$, but there is a number $\Delta > 0$ such that $\abs*{\E\braces{ \norm{\tilde{\boldX}}_2^{2r}} - \E\braces{ \norm{\boldg_d}_2^{2r}}} \geq \Delta$. For any $\delta,\epsilon \in (0,1)$, pick $\alpha_1$ such that  $0 < \alpha_1 < \min\braces{\Delta r/\sqbracket{(CK^2)^r(d^{r+1}+(r+1)!)},1/\sqbracket{CK^2n}}$, and $\beta_1 = \Delta\alpha_1^{r-1}/\sqbracket{4d(r-1)!}$. Then with probability at least $1-\delta$, {\textsc Reweighted PCA} with $2N \geq CK^2d^{3/2}(n+\log(1/\delta))/\beta_1^2\epsilon^2$ samples together with this choice of $\alpha_1$ and $\beta_1$ produces a nontrivial estimate $\hat{E}_{\boldPhi}$ of dimension $1 \leq \hat{d}_{\boldPhi} \leq d$, such that there is a $\hat{d}_{\boldPhi}$-dimensional subspace $E_{\boldPhi} \subset E$ satisfying $d(\hat{E}_{\boldPhi},E_{\boldPhi}) \leq \epsilon$.
+\end{lemma}
+
+\begin{proof}
+	Deferred to Appendix \ref{sec:proof_of_guarantee_for_Phi}
+\end{proof}
+
+\begin{lemma}[Guarantee for $\hat{E}_{\boldPsi}$]
+	Suppose the moments of $\inprod{\boldX,\boldX'}$ and $\inprod{\boldg,\boldg'}$ agree up to order $r-1$ but $\abs*{\E\braces{ \inprod{\boldX,\boldX'}^r} - \E\braces{\inprod{\boldg,\boldg'}^r}} \geq \Delta$. For any $\delta,\epsilon,\tau \in (0,1)$, pick $0 < \alpha_2 < \min\braces{\Delta r/\sqbracket{(CK^2)^r(d^{r+1}+(r+1)!)},1/\sqbracket{CK^2n^{1+\tau}}}$, and $\beta_2 = \Delta\alpha_2^{r-1}/4d(r-1)!$. Then with probability at least $1-\delta$, {\textsc Reweighted PCA} with sample size $2N$ satisfying $\exp(n^{2\tau})\min\braces{\delta,K\epsilon} \geq 2N \geq CK^2d^{3/2}(n+\log(1/\delta))/\beta_2^2\epsilon^2$, together with this choice of $\alpha_2$ and $\beta_2$ produces a nontrivial estimate $\hat{E}_{\boldPsi}$ of dimension $1 \leq \hat{d}_{\boldPsi} \leq d$, such that there is a $\hat{d}_{\boldPsi}$-dimensional subspace $E_{\boldPsi} \subset E$ satisfying $d(\hat{E}_{\boldPsi},E_{\boldPsi}) \leq \epsilon$.
+\end{lemma}
+
+\begin{proof}
+	The proof is completely analogous to that for the previous theorem, except that we replace our estimates and identities for $\boldPhi_{\boldX,\alpha_1}$ with those for $\boldPsi_{\boldX,\alpha_2}$ wherever necessary.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm:finding_one_direction}]
+	Combine the last two lemmas with Theorem \ref{thm: second Gaussian test, robust} from the last section.
+\end{proof}
+
+\begin{remark}[Selecting optimal parameters]
+	If the problem parameters $d, n, r, K$ and $D_{\tilde{\boldX},r}$ were known before hand, then in principle, one could compute the optimal tuning parameters $\alpha_1,\alpha_2,\beta_1,\beta_2$. In practice, however, one rarely is in this situation, so one would have to estimate the problem parameters as a first step to solving the NGCA problem. Nonetheless, one can do this by the doubling/halving trick. In other words, we start with some fixed initial choice of $\alpha_1$ and $\alpha_2$. Using Theorems \ref{thm:Phi_concentration} and \ref{thm:Psi_concentration}, we can detect whether there are any outlier eigenvalues with high probability. If there are none, we halve $\alpha_1$ and $\alpha_2$ and try again, repeating this process until outliers show up. The number of iterations is then the base 2 logarithm of the final $\alpha_1$ and $\alpha_2$, plus an additive constant. This is at most polynomial in all the problem parameters, so the algorithm remains efficient.
+\end{remark}
+
+\section{Discussion} \label{discussion}
+
+We have presented and analyzed an algorithm that is guaranteed to return at least one non-Gaussian direction efficiently, with sample and time complexity a polynomial in the problem parameters for a fixed $r$, where $r$ is the smallest order at which $\tilde{\boldX}$ has positive $r$-th moment distance from a standard Gaussian. Furthermore, if $\tilde{\boldX}$ is $(m,\eta)$-moment-identifiable, then the algorithm estimates the $d$-dimensional non-Gaussian subspace efficiently with polynomial time and sample complexity for fixed $m$ and $d$.
+
+Since the degree of the polynomial increases linearly in $r$, it would seem that the algorithm is practically useless if $r$ is larger than a small constant. However, note that having all third and fourth moments equal those of a Gaussian is a condition that is already stringent in one dimension, and which becomes even more so in higher dimensions. As such, unless $\tilde{\boldX}$ has some kind of adversarial distribution, $r$ will be either $4$ or $3$, depending on whether $\tilde{\boldX}$ is centrally symmetric or not.
+
+The algorithm also often delivers much more than is guaranteed for several reasons. First, in order to bound the subspace perturbation by $\epsilon$, we used a very crude estimate of the eigengap, bounding it from below using the pigeonhole principle, which in the worst case assumes that the eigenvalues are spread out at regular intervals. This should not happen in practice, and we expect the non-Gaussian eigenvalues to instead cluster relatively tightly around their average. If this happens, the sample complexity requirement can be relaxed by a factor of $d$.
+
+Second, just as it is extremely unlikely for $r$ to be higher than $4$, for a general non-Gaussian $\tilde{\boldX}$ and a small, random $\alpha$, it is extremely unlikely for any of the non-Gaussian values of $\boldPhi_{\boldX,\alpha}$ to be equal to the Gaussian one on the dot. This means that even though the guarantee for a single run of the base algorithm is for one direction, in practice we most probably can recover the entire subspace $E$ simultaneously with just $\hat{\boldPhi}_{\boldX,\alpha}$ alone (as in the case in Corollary \ref{cor:finding_a_sphere}), albeit with a more sophisticated truncation technique.
+
+\subsection{Conjectures and questions}
+
+We conjecture that \textsc{Reweighted PCA} actually recovers the entire non-Gaussian subspace $E$ with in polynomial time and sample complexity if we fix $m$, but now allow $d$ to vary. This would improve upon both our result and that of \cite{Vempala2011}. The first Gaussian test for a random vector $\boldX$ using the distribution of its norm and dot product pairing also leads to further questions. For a fixed nonzero real number $t$, both of these appear in the formula for $\norm{\boldY_t}_2^2$, where we set $\boldY_t := \boldX+t\boldX'$, so it is natural to ask whether Reweighted PCA works with $\boldPhi_{\boldY_t,\alpha}$ alone for some $t$. In particular, does it work for $t=-1$? It is also an open question whether $\inprod{\boldX,\boldX'}$ alone is sufficient to test whether $\boldX$ is standard Gaussian.
+
+\subsection*{Acknowledgements}
+
+Both authors are partially supported by NSF Grant DMS 1265782 and U.S. Air Force Grant FA9550-14-1-0009.
+
+\nocite{*}
+\bibliographystyle{acm}
+\bibliography{Projects-NGCA_paper}
+
+\appendix
+
+\section{Equivalence of NGCA models}
+
+In this section, we note the equivalence of several formulations of the NGCA model used in the literature. First, the isotropic NGCA model \eqref{def: NGCA model} can be written equivalently as
+\begin{equation*} \label{eq:Vempala_model}
+F(\boldx) = H(\boldP_E(\boldx)) G(\boldP_{E^\perp}(\boldx)),
+\end{equation*}
+where $F$ is the distribution of $\boldX$, $H$ is the distribution of $\tilde{\boldX}$, and $G$ is the standard normal distribution. This is the way in which \cite{Vempala2011} stated the NGCA model. 
+
+Next, consider the model
+\begin{equation*}
+\boldX = \tilde{\boldX} + \boldg,
+\end{equation*}
+where now $\tilde{\boldX} \in E$ as before, but $\boldg$ is a centered Gaussian in $\R^n$ with arbitrary covariance. As a special case of this, we have $\boldX = (\tilde{\boldX},\boldg) \in E\oplus E'$, where $E$ and $E'$ are complementary but not necessarily orthogonal. Let $\boldSigma = \Cov(\boldX)$, and consider the whitened distribution $\boldSigma^{-1/2}\boldX = \boldSigma^{-1/2}\tilde{\boldX} + \boldSigma^{-1/2}\boldg$. Now the non-Gaussian subspace is $\boldSigma^{-1/2}E$, which we assume without loss of generality to be the span of the first $d$ coordinate vectors. This means that $\Cov(\boldSigma^{-1/2}\tilde{\boldX})$ only has nonzero entries in its top left $d$ by $d$ block. Since we can decompose
+\begin{align*}
+\boldI_n & = \Cov(\boldSigma^{-1/2}\boldX) = \Cov(\boldSigma^{-1/2}\tilde{\boldX}) + \Cov(\boldSigma^{-1/2}\boldg),
+\end{align*}
+this in turn implies that we can write
+\begin{equation*}
+\Cov(\boldSigma^{-1/2}\boldg) = \left(
+\begin{array}{c|c}
+\boldA & 0 \\
+\hline
+0 & \boldI_{n-d}
+\end{array}
+\right),
+\end{equation*}
+where $\boldA$ is a PSD matrix such that $\boldA = \boldI_d - \boldSigma^{-1/2}\tilde{\boldX}$. Because of this structure, we have $\boldSigma^{-1/2}\boldg = (\tilde{\textbf{h}},\textbf{h}) \in E\oplus E^\perp$, with $\tilde{\textbf{h}} \sim \N{\textbf{0}}{\boldA}$ and $\textbf{h} \sim \N{\textbf{0}}{\boldI_{n-d}}$. Since these two Gaussian components have zero correlation, they are independent. Since a non-Gaussian distribution remains non-Gaussian after convolution with a Gaussian, if we set $\tilde{\boldY} := \boldSigma^{-1/2}\tilde{\boldX} + \tilde{\textbf{h}}$ to be our new non-Gaussian component, we see that we have again produced an instance of \eqref{def: NGCA model}.
+
+This additive model seems to be the most common formulation of NGCA in the literature (see \cite{Blanchard2006b,Kawanabe2006}, etc.). It can also be equivalently written as
+\begin{equation}
+F(\boldx) = H(\boldP_E(\boldx)) G(\boldx),
+\end{equation}
+where $G$ is now a centered Gaussian density with arbitrary covariance, and $H$ is now just some function. See Lemma 1 in \cite{Blanchard2006b} for more details.
+ 
+\section{Details for Section \ref{sec: proof of first Gaussian test}} \label{sec: proof of first Gaussian test appendix}
+
+Let $\psi\colon \R_+ \to \R_+$ be a convex, increasing function with $\psi(0) = 0$. We define the \textit{Orlicz norm} of a random variable $X$ with respect to $\psi$ as
+\begin{equation} \label{eq:orlicz_norm}
+\norm{X}_\psi := \inf\braces*{\lambda > 0 ~\colon~ \E \braces{\psi(|X|/\lambda)} \leq 1}.
+\end{equation}
+Equipped with this norm, the space of random variables with finite norm forms a Banach space, called an \textit{Orlicz space}. For $\alpha \geq 1$, set $\psi_{\alpha}(x) := \exp(x^\alpha)-1$. Elements of the $\psi_1$ Orlicz space are called \textit{subexponential} random variables. Similarly, elements of the $\psi_2$ Orlicz space are called \textit{sub-Gaussian} random variables. The reason for this terminology is that the finiteness of \eqref{eq:orlicz_norm} is equivalent to tail decay conditions for $\psi = \psi_\alpha$ (see \cite{Vershynin2011b}.) Finally, we say that a random vector $\boldX$ in $\R^n$ is sub-Gaussian (respectively subexponential) if all its 1-dimensional marginals are sub-Gaussian (respectively subexponential).
+
+
+\begin{lemma} \label{lem: subexponential RV characterized by moments}
+	Let $\boldX$ be a subexponential random vector in $\R^n$. Then the distribution of $\boldX$ is determined by its moment tensors.
+\end{lemma}
+
+\begin{proof}
+	Let $\phi_\boldX(\boldv) = \E\braces{e^{i\inprod{\boldX,\boldv}}}$ denote the characteristic function of $\boldX$, and let $K = \norm{\boldX}_{\psi_1}$ denote the subexponential norm of $\boldX$. We then have the following moment growth condition (see \cite{Vershynin2011b}):
+	\begin{align} \label{moments}
+	\sup_{\boldv \in S^{n-1}}\limsup_{r \to \infty} \frac{\paren*{\E\braces{\abs*{\inprod{\boldX,\boldv}}^r}}^{1/r}}{r} \lesssim K.
+	\end{align}
+	This condition implies that for each $\boldv \in S^{n-1}$, the function $t \mapsto \E\braces{e^{it\inprod{\boldX,\boldv}}}$ can be written as a power series with coefficients $\frac{\E\braces{\inprod{\boldX,\boldv}^r}}{r!}$ (see \cite{Billingsley1995b}), so $\phi_\boldX(\boldv)$ is determined by the moments $\E\braces{\inprod{\boldX,\boldv}^r}$. By \eqref{tensorid1}, $\E\braces{\inprod{\boldX,\boldv}^r} = \inprod{\boldM_\boldX^k,\boldv^{\tensor r}}$, so these are functions of the moment tensors. Finally, it is a fact from elementary probability that $\boldX$ is determined by its characteristic function (see \cite{Cnlar2011b}).
+\end{proof}
+
+\begin{proof}[Proof of Lemma \ref{lem: moment deviation}]
+	For the first statement, observe that $\boldX_{rot} = \norm{\boldX}_2\boldtheta$, with $\norm{\boldX}_2$ and $\boldtheta$ independent. We thus have
+	\[
+	\boldM^r_{\boldX_{rot}} = \E\braces{\paren*{\norm{\boldX}_2\boldtheta}^{\tensor r}} = \E\braces{\norm{\boldX}_2^r}\E\braces{\boldtheta^{\tensor r}} =  \E\braces{\norm{\boldX}_2^r}\boldM_{\boldtheta}^r.
+	\]
+	Next, rewrite \eqref{eq: orthogonality} as $\norm{\textbf{E}^r_\boldX}^2_2 = \norm{\boldM^r_\boldX}_2^2 - \norm{\boldM^r_{\boldX_{rot}}}_2^2$. By \eqref{tensorid2}, we have $\norm{\boldM^r_\boldX}_2^2 = \E\braces{\inprod{\boldX,\boldX'}^r}$ and using a), we get $\norm{\boldM^r_{\boldX_{rot}}}_2^2 = \paren*{\E\braces{\norm{\boldX}^r_2}}^2\E\braces{\inprod{\boldtheta,\boldtheta'}^r}$.
+	
+	To prove part c), fix $v$ and write
+	\begin{align*}
+	\E\braces{\inprod{\boldX,\boldv}^r} - \E\braces{\inprod{\boldg,\boldv}^r} & = \inprod{\boldM^r_\boldX-\boldM^r_g,\boldv^{\tensor r}} = \inprod{\boldM^r_{\boldX_{rot}}-\boldM^r_g,\boldv^{\tensor r}} + \inprod{\textbf{E}^r_\boldX,\boldv^{\tensor r}}.
+	\end{align*}
+	We use a) to write
+	\[
+	\inprod{\boldM^r_{\boldX_{rot}}-\boldM^r_g,\boldv^{\tensor r}} = \inprod{\E\braces{\norm{\boldX}_2^r}\boldM^r_{\boldtheta}-\E\braces{\norm{\boldg}_2^r}\boldM^r_{\boldtheta},\boldv^{\tensor r}} = \paren*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}}\E\braces{\inprod{\boldtheta,\boldv}^r}.
+	\]
+	Notice that $\E\braces{\inprod{\boldtheta,\boldv}^r} = \E\braces{\inprod{\boldtheta,\boldtheta'}^r}$. We then combine the last two equations with b) and Cauchy-Schwarz to get \eqref{moment deviation bound}. Finally, to get the last claim, we use the fact that $\E\braces{\inprod{\boldtheta,\boldtheta'}^r} = \E\braces{\inprod{\boldg,\boldg'}^r} = 0$ whenever $r$ is odd.
+\end{proof}
+
+\begin{proof}[Proof of Lemma \ref{lem: comparison for even moments}]
+	Observe that \eqref{moment deviation bound} gives the bound
+	\begin{align} \label{marginal moment 1}
+	\delta\E\braces{ \inprod{\boldg,\boldv}^r} \leq \abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}}\E\braces{\inprod{\boldtheta,\boldtheta'}^r}+\paren*{\E\braces{\inprod{\boldX,\boldX'}^r} - \paren*{\E\braces{\norm{\boldX}^r_2}}^2\paren*{\E\braces{\inprod{\boldtheta,\boldtheta'}^r}}}^{1/2}.
+	\end{align}
+	Suppose $\abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}} \leq \frac{\delta^2}{4}\E\braces{ \inprod{\boldg,\boldv}^r}$. Then the second term on the right in equation \eqref{marginal moment 1} has to be large. Indeed, since $\delta \leq 1$ and
+	\[
+	\E\braces{\inprod{\boldtheta,\boldtheta'}^r} = \E\braces{\theta_1^r} \leq \E\braces{\theta_1^2} = \frac{1}{n},
+	\]
+	we have, for $n \geq 2$, that
+	\begin{align*}
+	\paren*{\E\braces{\inprod{\boldX,\boldX'}^r} - \paren*{\E\braces{\norm{\boldX}^r_2}}^2\E\braces{\inprod{\boldtheta,\boldtheta'}^r}}^{1/2} & \geq \delta \E\braces{ \inprod{\boldg,\boldv}^r} - \frac{\delta^2}{4}\E\braces{\inprod{\boldtheta,\boldtheta'}^r}\E\braces{ \inprod{\boldg,\boldv}^r} \\
+	& \geq \frac{7\delta}{8} \E\braces{ \inprod{\boldg,\boldv}^r}.
+	\end{align*}	
+	Now, applying the fact that $\E\braces{ \inprod{\boldg,\boldg'}^r} = \paren*{\E\braces{\norm{\boldg}_2^r}}^2\E\braces{ \inprod{\boldtheta,\boldtheta'}^r}$, we use the reverse triangle inequality and the above bound to write
+	\begin{align} \label{marginal moment 2}
+	\abs*{\E\braces{\inprod{\boldX,\boldX'}^r} - \E\braces{\inprod{\boldg,\boldg'}^r}} & \geq \abs*{\E\braces{\inprod{\boldX,\boldX'}^r} - \paren*{\E\braces{\norm{\boldX}^r_2}}^2\E\braces{\inprod{\boldtheta,\boldtheta'}^r}} \\ & \quad\quad\quad - \abs*{\paren*{\E\braces{\norm{\boldX}_2^r}}^2-\paren*{\E\braces{\norm{\boldg}_2^r}}^2}\E\braces{\inprod{\boldtheta,\boldtheta'}^r} \nonumber \\
+	& \geq \paren*{\frac{7\delta}{8} \E\braces{ \inprod{\boldg,\boldv}^r}}^2 - \abs*{\paren*{\E\braces{\norm{\boldX}_2^r}}^2-\paren*{\E\braces{\norm{\boldg}_2^r}}^2}\E\braces{\inprod{\boldtheta,\boldtheta'}^r}.
+	\end{align}
+	
+	Next, notice that
+	\begin{align*}
+	\abs*{\paren*{\E\braces{\norm{\boldX}_2^r}}^2-\paren*{\E\braces{\norm{\boldg}_2^r}}^2} & = \abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}} \paren*{\E\braces{ \norm{\boldX}_2^r} +\E\braces{ \norm{\boldg}_2^r}} \\
+	& = \abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}}\cdot 2\E\braces{ \norm{\boldg}_2^r} + \paren*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}}^2,
+	\end{align*}
+	so by the assumption on $\abs*{\E\braces{\norm{\boldX}_2^r}-\E\braces{\norm{\boldg}_2^r}}$, we have
+	\begin{align} \label{marginal moment 3}
+	\abs*{\paren*{\E\braces{\norm{\boldX}_2^r}}^2-\paren*{\E\braces{\norm{\boldg}_2^r}}^2}\E\braces{\inprod{\boldtheta,\boldtheta'}^r} & \leq \frac{\delta^2}{4}\E\braces{ \inprod{\boldg,\boldv}^r}\cdot2\E\braces{ \norm{\boldg}_2^r}\cdot\E\braces{\inprod{\boldtheta,\boldtheta'}^r} \\ & \quad\quad\quad + \paren*{\frac{\delta^2}{4}\E\braces{ \inprod{\boldg,\boldv}^r}}^2\E\braces{\inprod{\boldtheta,\boldtheta'}^r} \nonumber \\
+	& = \frac{\delta^2}{2} \paren*{\E\braces{ \inprod{\boldg,\boldv}^r}}^2 + \paren*{\frac{\delta^2}{4}\E\braces{ \inprod{\boldg,\boldv}^r}}^2\E\braces{\inprod{\boldtheta,\boldtheta'}^r} \nonumber \\
+	& \leq \frac{17\delta^2}{32}\paren*{\E\braces{ \inprod{\boldg,\boldv}^r}}^2.
+	\end{align}
+	We can now substitute \eqref{marginal moment 3} into \eqref{marginal moment 2} to get
+	\begin{equation*}
+	\abs*{\E\braces{\inprod{\boldX,\boldX'}^r} - \E\braces{\inprod{\boldg,\boldg'}^r}} \geq \frac{15\delta^2}{64}\paren*{\E\braces{ \inprod{\boldg,\boldv}^r}}^2.
+	\end{equation*}
+\end{proof}
+
+\section{Details for Section \ref{sec: proof of second Gaussian test}} \label{sec: proof of second Gaussian test appendix}
+
+\begin{proof}[Proof of Lemma \ref{lem:Phi_and_Psi_diagonalization}]
+	The decompositions follow easily from the independence of the two components of the mixed vector, $\tilde{\boldX}$ and $\boldg$, as well as the unconditional symmetry of the Gaussian component. Let us illustrate this by proving the decomposition for $\boldPhi_{\boldX,\alpha}$. First, note that $e^{-\alpha\norm{\boldX}_2^2} = e^{-\alpha\norm{\tilde{\boldX}}_2^2}e^{-\alpha\norm{\boldg}_2^2}$, so that $Z_{\boldPhi,\boldX}(\alpha) = Z_{\boldPhi,\tilde{\boldX}}(\alpha)Z_{\boldPhi,\boldg}(\alpha)$. The top left $d$ by $d$ block is hence given by
+	\[
+	\frac{\E\braces{e^{-\alpha\norm{\boldX}_2^2}\tilde{\boldX}\tilde{\boldX}^T}}{Z_{\boldPhi,\boldX}(\alpha)} = \frac{Z_{\boldPhi,\boldg}(\alpha)\E\braces{e^{-\alpha\norm{\tilde{\boldX}}_2^2}\tilde{\boldX}\tilde{\boldX}^T}}{Z_{\boldPhi,\boldX}(\alpha)} = \frac{\E\braces{e^{-\alpha\norm{\tilde{\boldX}}_2^2}\tilde{\boldX}\tilde{\boldX}^T}}{Z_{\boldPhi,\tilde{\boldX}}(\alpha)} = \boldPhi_{\tilde{\boldX},\alpha}.
+	\]
+	The bottom right $d'$ by $d'$ block is also computed similarly. Finally, any entry outside these two blocks is of the form
+	\begin{equation*}
+	\frac{\E\braces{e^{-\alpha\norm{\boldX}_2^2}\tilde{\boldX}_i\boldg_j}}{Z_{\boldPhi,\boldX}(\alpha)} = \frac{\E\braces{e^{-\alpha\norm{\boldX}_2^2}\tilde{\boldX}_i(-\boldg_j)}}{Z_{\boldPhi,\boldX}(\alpha)} = -\frac{\E\braces{e^{-\alpha\norm{\boldX}_2^2}\tilde{\boldX}_i\boldg_j}}{Z_{\boldPhi,\boldX}(\alpha)} = 0.
+	\end{equation*}
+\end{proof}
+
+\begin{proof}[Proof of Lemma \ref{lem: trace of Phi and Psi}]
+	We have
+	$$
+	\textnormal{Tr}\paren{\boldPhi_{\boldX,\alpha}} = \frac{\E\norm{\boldX}_2^2e^{-\alpha\norm{\boldX}_2^2}}{\E e^{-\alpha\norm{\boldX}_2^2}} = \frac{-Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} = -(\log Z_{\boldPhi,\boldX})'(\alpha).
+	$$
+	The calculation for $\boldPsi_{\boldX,\alpha}$ is similar.
+\end{proof}
+
+In order to prove Lemma \ref{lem: partition functions characterize Gaussians}, we first need to establish the analyticity for the two partition functions.
+
+\begin{lemma}[Analyticity for $Z_{\boldPhi,\boldX}$ and $Z_{\boldPsi,\boldX}$] \label{lem: analyticity}
+	Let $\boldX$ be a sub-Gaussian random vector in $\R^n$ with sub-Gaussian norm bounded by $K \geq 1$. The functions $Z_{\boldPhi,\boldX}$ and $Z_{\boldPsi,\boldX}$ are both analytic on $(-1/CK^2,1/CK^2)$. They are given by the formulae $Z_{\boldPhi,\boldX}(\alpha) = \sum_{r=0}^\infty\E\braces{\norm{\boldX}^{2r}_2}(-\alpha)^r/r!$ and $Z_{\boldPsi,\boldX}(\alpha) = \sum_{r=0}^\infty\E\braces{\inprod{\boldX,\boldX'}^r}(-\alpha)^r/r!$. Furthermore, by choosing $C$ sufficiently large, on this interval they satisfy the bounds
+	\begin{align} \label{MGF bounds}
+	\abs{Z_{\boldPhi,\boldX}(\alpha)}, \abs{Z_{\boldPsi,\boldX}(\alpha)} \leq e^{CK^2n\abs{\alpha}} + \frac{CK^2\abs{\alpha}}{1-CK^2\abs{\alpha}}.
+	\end{align}
+\end{lemma}
+
+\begin{proof}
+	Let us first prove the bounds in \eqref{MGF bounds}. Observe that
+	\begin{align} \label{MGF expansion}
+	\E\braces{e^{-\alpha\norm{\boldX}_2^2}} \leq \E\braces{e^{\abs{\alpha}\norm{\boldX}_2^2}} = \sum_{n=0}^\infty \frac{\E\braces{\norm{\boldX}_2^{2n}}}{n!}\abs{\alpha}^n.
+	\end{align}
+	Here, Tonelli allows us to interchange the sum and expectation. We next use Lemma \ref{norm concentration} to bound the terms of this series. Indeed, using the equivalent estimate \eqref{alternate norm moment bound}, we have
+	\[
+	\E\braces{\norm{\boldX}_2^{2r}} \leq C^rK^{2r}\paren{n^r+r!}
+	\]
+	for some universal constant $C$. Substituting this into \eqref{MGF expansion} and using $\abs{\alpha} \leq 1/CK^2$, we have
+	\begin{align*}
+	\E\braces{e^{-\alpha\norm{\boldX}_2^2}} & \leq \sum_{r=0}^\infty \frac{(CK^2)^r(n^r+r!)}{r!}\abs{\alpha}^r \\
+	& = \sum_{r=0}^\infty \frac{\paren{CK^2n\abs{\alpha}}^r}{r!} + \sum_{r=1}^\infty \paren{CK^2\abs{\alpha}}^r \\
+	& = e^{CK^2n\abs{\alpha}} + \frac{CK^2\abs{\alpha}}{1-CK^2\abs{\alpha}}.
+	\end{align*}
+	One may prove the bound for $Z_{\boldPsi,\boldX}$ by doing the same computation but using \eqref{norm moment bound 2} instead of \eqref{norm moment bound 1}.
+	
+	We next handle analyticity of $Z_{\boldPhi,\boldX}$. We shall prove by induction on $r$ that we may differentiate under the integral sign to get the formula
+	\begin{align} \label{MGF derivative}
+	Z_{\boldPhi,\boldX}^{(r)}(\alpha) = (-1)^r\E\braces{\norm{\boldX}_2^{2r}e^{-\alpha\norm{\boldX}_2^2}}.
+	\end{align}
+	Assume the formula is true for all $r' < r$. Then
+	\begin{align} \label{MGF derivative limit}
+	Z_{\boldPhi,\boldX}^{(r)}(\alpha) & = (-1)^{r-1}\lim_{h \to 0}\E\braces{\frac{\norm{\boldX}_2^{2r-2}e^{-(\alpha+h)\norm{\boldX}_2^2}-\norm{\boldX}_2^{2r-2}e^{-\alpha\norm{\boldX}_2^2}}{h}} \\
+	& = (-1)^r\lim_{h \to 0}\E\braces{\norm{\boldX}_2^{2r-2}e^{-\alpha\norm{\boldX}_2^2}\frac{1-e^{-h\norm{\boldX}_2^2}}{h}}
+	\end{align}
+	Next, note that the integrand is positive and by the mean value theorem, for a fixed value of $\norm{\boldX}_2^2$, we have
+	\[
+	\frac{1-e^{-h\norm{\boldX}_2^2}}{h} = \norm{\boldX}_2^2e^{-h'\norm{\boldX}_2^2}
+	\]
+	for some $h' \in [0,h]$ if $h > 0$ and $h' \in [h,0]$ otherwise. As such, we have
+	\[
+	\norm{\boldX}_2^{2r-2}e^{-\alpha\norm{\boldX}_2^2}\frac{1-e^{-h\norm{\boldX}_2^2}}{h} \leq \norm{\boldX}_2^{2r}e^{(\abs{h}-\alpha)\norm{\boldX}_2^2}
+	\]
+	For $\abs{h}-\alpha \leq 1/CK^2$, one can easily show that this is integrable by expanding this as a power series in $\norm{\boldX}_2^2$ and bounding the growth of the coefficients as above. As such, we may apply the Dominated Convergence Theorem to push the limit inside the expectation in \eqref{MGF derivative limit}, thereby yielding \eqref{MGF derivative}.
+	
+	In particular, differentiating $Z_{\boldPhi,\boldX}$ at 0, we see that its Taylor series at 0 is given by
+	\begin{align}
+	Z_{\boldPhi,\boldX}(\alpha) \sim \sum_{r=0}^\infty\frac{\E\braces{\norm{\boldX}^{2r}_2}}{r!}(-\alpha)^r.
+	\end{align}
+	The formula above shows that the Taylor series is absolutely convergent on our chosen interval. We next need to show that $Z_{\boldPhi,\boldX}$ agrees with its Taylor series on this interval, meaning we have to show that the remainder term for the $r$-th Taylor polynomial goes to zero pointwise. The Lagrange form of the remainder term is written as
+	\[
+	R_{Z_{\boldPhi,\boldX},r}(\alpha) = \frac{Z_{\boldPhi,\boldX}^{(r+1)}(\alpha')}{(r+1)!}\alpha^{r+1}
+	\]
+	where $0 < \abs{\alpha'} < \abs{\alpha}$. Applying Cauchy-Schwarz to the formula \eqref{MGF derivative}, we get
+	\begin{align}
+	\abs{Z_{\boldPhi,\boldX}^{(r+1)}(\alpha)} \leq \paren*{\E\braces{\norm{\boldX}_2^{4r+2}}}^{1/2}\paren*{\E\braces{e^{-2\alpha\norm{\boldX}_2^2}}}^{1/2}.
+	\end{align}
+	Lemma \ref{norm concentration} again allows us to compute
+	\[
+	\paren*{\E\braces{\norm{\boldX}_2^{4r+2}}}^{1/2} \leq (CK^2)^{r+1}\paren{n^{r+1}+(r+1)!}.
+	\]
+	This implies that for any $C' > 2C$,
+	\begin{align*}
+	\norm{R_{Z_{\boldPhi,\boldX},r}}_{L_\infty([-1/C'K^2,1/C'K^2])} & \leq \frac{\norm{Z_{\boldPhi,\boldX}^{(r+1)}}_{L_\infty([-1/C'K^2,1/C'K^2])}}{(C'K^2)^{r+1}(r+1)!} \\
+	& \leq \frac{(CK^2)^{r+1}\paren{n^{r+1}+(r+1)!}}{(C'K^2)^{r+1}(r+1)!}\paren*{\E\braces{e^{2\norm{\boldX}_2^2/C'K^2}}}^{1/2}  \\
+	& \leq \paren*{\frac{C}{C'}}^{r+1}\paren*{\frac{n^{r+1}}{(r+1)!}+1} \paren*{e^{2nC/C'} + \frac{2C/C'}{1-2C/C'}}.
+	\end{align*}
+	Using the fact that $r! \sim \paren{\frac{r}{e}}^r$, this last expression decays to zero as $r$ tends to $\infty$. Finally, to prove the claim for $Z_{\boldPsi,\boldX}$, we repeat the same arguments.
+\end{proof}
+
+Note that in the course of proving the last lemma, we have also proved the following result to be used elsewhere in the paper.
+
+\begin{lemma}[Taylor remainder terms for $Z_{\boldPhi,\boldX}$ and $Z_{\boldPsi,\boldX}$] \label{MGF remainder}
+	Let $\boldX$ be a sub-Gaussian random vector in $\R^n$ with sub-Gaussian norm bounded above by $K \geq 1$. There is an absolute constant $C$ such that for all $0 < \alpha < 1/CK^2$, on the interval $\sqbracket*{-\alpha,\alpha}$, the remainder terms for the $r$-th degree Taylor polynomials for $Z_{\boldPhi,\boldX}$ and $Z_{\boldPsi,\boldX}$ at 0 satisfy the uniform bound
+	\begin{align}
+	\norm{R_{Z_{\boldPhi,\boldX},r}}_{\infty}, \norm{R_{Z_{\boldPsi,\boldX},r}}_{\infty}\leq (CK^2)^{r+1}\alpha^{r+1}\paren*{\frac{n^{r+1}}{(r+1)!}+1} \paren*{e^{CK^2\alpha n} + \frac{CK^2\alpha}{1-CK^2\alpha}}
+	\end{align}
+\end{lemma}
+
+\begin{proof}[Proof of Lemma \ref{lem: partition functions characterize Gaussians}]
+	By Lemma \ref{lem: analyticity}, all four functions are analytic in a neighborhood of 0. Now recall that two different analytic functions cannot agree on a sequence with an accumulation point.
+\end{proof}
+
+We now move on to proving Theorem \ref{thm: second Gaussian test, robust}. This requires the following technical lemma.
+
+\begin{lemma} \label{lem: second Gaussian test, robust lemma}
+	Let $\boldX$ be sub-Gaussian random vector in $\R^n$ with sub-Gaussian norm bounded above by $K \geq 1$. Suppose the moments of $\norm{\boldX}_2^2$ and $\norm{\boldg}_2^2$ agree up to order $r-1$, but there is a number $\Delta > 0$ such that $\abs*{\E\braces{ \norm{\boldX}_2^{2r}} - \E\braces{ \norm{\boldg}_2^{2r}}} \geq \Delta$, then there is an absolute constant $C$ such that for $\abs{\alpha} \leq \Delta r/(CK^2)^r(n^{r+1}+(r+1)!)$, we have
+	\begin{align} \label{CGF difference 1}
+	\abs*{(\log Z_{\boldPhi,\boldX})'\paren*{\alpha}-(\log Z_{\boldPhi,\boldg})'\paren*{\alpha}} \geq \frac{\Delta}{2(r-1)!}\abs*{\alpha}^{r-1}.
+	\end{align}
+	Similarly, suppose the moments of $\inprod{\boldX,\boldX'}$ and $\inprod{\boldg,\boldg'}$ agree up to order $r-1$ but $\abs{\E\braces{ \inprod{\boldX,\boldX'}^r} - \E\braces{ \inprod{\boldg,\boldg'}^r}} \geq \Delta$, then for $\abs{\alpha} \leq \Delta r/(CK^2)^r(n^{r+1}+(r+1)!)$, we have
+	\begin{align} \label{CGF difference 2}
+	\abs*{(\log Z_{\boldPsi,\boldX})'\paren*{\alpha}-(\log Z_{\boldPsi,\boldg})'\paren*{\alpha}} \geq \frac{\Delta}{2(r-1)!}\abs*{\alpha}^{r-1}.
+	\end{align}
+\end{lemma}
+
+\begin{proof}
+	Let us first prove \eqref{CGF difference 1}. For every positive integer $k$, let $p_{\boldX,k}(\alpha) = \sum_{j=0}^k \E\braces{\norm{\boldX}_2^{2j}}\alpha^j/j!$ denote the $k$-th Taylor polynomial of $Z_{\boldPhi,\boldX}$, and define $p_{\boldg,k}$ analogously. For convenience, also denote the $k$-th Taylor remainder term as $R_{\boldX,k} := R_{Z_{\boldPhi,\boldX},k}$. For any $\alpha$, we then have
+	\begin{equation}
+	(\log Z_{\boldPhi,\boldX})'(\alpha)-(\log Z_{\boldPhi,\boldg})'(\alpha) = \frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{Z_{\boldPhi,\boldg}'(\alpha)}{Z_{\boldPhi,\boldg}(\alpha)},
+	\end{equation}
+	which we can then bound using
+	\begin{align} \label{CGF difference}
+	\abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{Z_{\boldPhi,\boldg}'(\alpha)}{Z_{\boldPhi,\boldg}(\alpha)}} \geq \abs*{\frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)} - \frac{p_{\boldg,r}'(\alpha)}{p_{\boldg,r-1}(\alpha)}} - \abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)}} - \abs*{\frac{p_{\boldg,r}'(\alpha)}{p_{\boldg,r-1}(\alpha)} - \frac{Z_{\boldPhi,\boldg}'(\alpha)}{Z_{\boldPhi,\boldg}(\alpha)}}.
+	\end{align}
+	
+	We now bound each of these three terms individually. First, we need upper and lower bounds for $p_{\boldX,k}(\alpha)$. Using the $\norm{\boldX}_2^2$ moment bound \eqref{alternate norm moment bound}, we have
+	\begin{align*}
+	\abs*{p_{\boldX,k}(\alpha) -1} & \leq \sum_{j=1}^k \frac{\E\braces{\norm{\boldX}_2^{2j}}\abs*{\alpha}^j}{j!} \\
+	& \leq \sum_{j=1}^k \frac{(CK^2)^{j}(n^j+j!)\abs*{\alpha}^j}{j!} \\
+	& = \sum_{j=1}^k \frac{(CK^2n\abs{\alpha})^j}{j!} + \sum_{j=1}^k (CK^2\abs{\alpha})^j \\
+	& \leq e^{CK^2n\abs{\alpha}}-1 + \frac{CK^2\abs{\alpha}}{1-CK^2\abs{\alpha}}.
+	\end{align*}
+	By sharpening the constant $C$ in our assumption on $\abs{\alpha}$ if necessary, we may thus ensure that
+	\begin{align} \label{Taylor poly bounds}
+	\abs*{p_{\boldX,k}(\alpha) -1} \leq \frac{1}{2}
+	\end{align}
+	By the same argument, we can also ensure that
+	\begin{align} \label{Taylor poly derivative bounds}
+	\abs*{p_{\boldX,k}'(\alpha) - \E\norm{\boldX}^2_2} \leq \frac{1}{2}.
+	\end{align}
+	
+	By our assumptions on the moments of $\norm{\boldX}_2^2$ and $\norm{\boldg}_2^2$, we have $p_{\boldX,r-1} \equiv p_{\boldg,r-1}$. Furthermore, only the leading terms of $p_{\boldX,r}'$ and $p_{\boldg,r}'$ differ. This, together with \eqref{Taylor poly bounds} implies that
+	\begin{align} \label{Taylor difference}
+	\abs*{\frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)} - \frac{p_{\boldg,r}'(\alpha)}{p_{\boldg,r-1}(\alpha)}} & \geq \frac{2}{3} \abs*{p_{\boldX,r}'(\alpha) - p_{\boldg,r}'(\alpha) } \nonumber \\
+	& \geq \frac{2\Delta\abs{\alpha}^{r-1}}{3(r-1)!}.
+	\end{align}
+	Next, we have
+	\begin{align} \label{CGF remainder bound}
+	\abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)}} \leq \abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)}} + \abs*{\frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)}}.
+	\end{align}
+	
+	Again we bound these two terms individually. Using the identity $p_{\boldX,r}(\alpha) = p_{\boldX,r-1}(\alpha) + \E\norm{\boldX}_2^{2r}(-\alpha)^r/r!$, we get
+	\begin{align}
+	\abs*{\frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)}} & = \abs*{\frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)}}\abs*{1- \frac{p_{\boldX,r}(\alpha)}{p_{\boldX,r-1}(\alpha)}} \nonumber \\
+	& = \abs*{\frac{p'_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)p_{\boldX,r-1}(\alpha)}}\frac{\E\norm{\boldX}_2^{2r}\abs{\alpha}^r}{r!}
+	\end{align}
+	Using the bounds on $p_{\boldX,r}$ and $p_{\boldX,r}'$ \eqref{Taylor poly bounds} and \eqref{Taylor poly derivative bounds}, together with the $\norm{\boldX}_2^2$ moment bound \eqref{alternate norm moment bound}, we get
+	\begin{align} \label{Taylor one term off bound}
+	\abs*{\frac{p'_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)p_{\boldX,r-1}(\alpha)}}\frac{\E\norm{\boldX}_2^{2r}\abs{\alpha}^r}{r!} & \leq \frac{3}{8}\frac{(CK^2)^r(n^r+r!)\abs{\alpha}^r}{r!}.
+	\end{align}
+	
+	For the first term in \eqref{CGF remainder bound}, we write
+	\begin{align} \label{CGF Taylor deviation}
+	\abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)}} & = \abs*{\paren*{\log Z_{\boldPhi,\boldX}(\alpha)}'- \paren*{\log p_{\boldX,r}(\alpha)}'} \nonumber \\
+	& = \abs*{\frac{d}{d\alpha} \log\paren*{\frac{Z_{\boldPhi,\boldX}(\alpha)}{p_{\boldX,r}(\alpha)}} } \nonumber \\
+	& = \abs*{\frac{d}{d\alpha} \log\paren*{1+\frac{R_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)}} }.
+	\end{align}
+	Using Lemma \ref{MGF remainder} together with our assumptions on $\abs{\alpha}$, we observe that
+	\begin{align} \label{Taylor remainder bound}
+	\abs{R_{\boldX,r}(\alpha)} & \leq (CK^2)^{r+1}\abs{\alpha}^{r+1}\paren*{\frac{n^{r+1}}{(r+1)!}+1} \paren*{e^{CK^2\abs{\alpha} n} + \frac{CK^2\abs{\alpha}}{1-CK^2\abs{\alpha}}} \nonumber \\
+	& \leq (CK^2)^{r+1}\abs{\alpha}^{r+1}\paren*{\frac{n^{r+1}}{(r+1)!}+1}.
+	\end{align}
+	In particular, by sharpening the constant $C$ in our assumption on $\abs{\alpha}$ if necessary, we can ensure that this quantity is less than $\frac{1}{4}$. In this case, we have
+	\[
+	\abs*{\frac{R_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)}} \leq \frac{1}{2},
+	\]
+	so that
+	\begin{align} \label{log derivative bound}
+	\abs*{\frac{d}{d\alpha} \log\paren*{1+\frac{R_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)}} } & = \abs*{\log'\paren*{1+\frac{R_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)}} }\abs*{\paren*{\frac{R_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)}}'} \nonumber \\
+	& \leq 2\abs*{\paren*{\frac{R_{\boldX,r}(\alpha)}{p_{\boldX,r}(\alpha)}}'} \nonumber \\
+	& \leq 2 \paren*{\abs*{\frac{R_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)}} + \abs*{\frac{R_{\boldX,r}(\alpha)p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)^2}}}.
+	\end{align}
+	
+	By our bounds on these functions \eqref{Taylor poly bounds}, \eqref{Taylor poly derivative bounds}, and \eqref{Taylor remainder bound}, we have
+	\begin{align}
+	\abs*{\frac{R_{\boldX,r}(\alpha)p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)^2}} \leq (CK^2)^{r+1}\abs{\alpha}^{r+1}\paren*{\frac{n^{r+1}}{(r+1)!}+1}.
+	\end{align}
+	Furthermore, by using the moment bounds \eqref{alternate norm moment bound} as before, one can show that
+	\[
+	\abs{R_{\boldX,r}'(\alpha)} \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1}.
+	\]
+	so that the first term is also bounded according to
+	\begin{align}
+	\abs*{\frac{R_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)}} \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1}.
+	\end{align}
+	As such, combining \eqref{CGF Taylor deviation} and \eqref{log derivative bound} tells us that 
+	\begin{align}
+	\abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r}(\alpha)}} & \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1} + (CK^2)^{r+1}\abs{\alpha}^{r+1}\paren*{\frac{n^{r+1}}{(r+1)!}+1} \nonumber \\
+	& \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1}.
+	\end{align}
+	We can now use this estimate together with \eqref{Taylor one term off bound} to continue \eqref{CGF remainder bound}, writing
+	\begin{align}
+	\abs*{\frac{Z_{\boldPhi,\boldX}'(\alpha)}{Z_{\boldPhi,\boldX}(\alpha)} - \frac{p_{\boldX,r}'(\alpha)}{p_{\boldX,r-1}(\alpha)}} & \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1} +  \frac{(CK^2)^r(n^r+r!)\abs{\alpha}^r}{r!} \nonumber \\
+	& \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1}.
+	\end{align}
+	
+	Notice that same methods also give us
+	\begin{align}
+	\abs*{\frac{p_{\boldg,r}'(\alpha)}{p_{\boldg,r-1}(\alpha)} - \frac{Z_{\boldPhi,\boldg}'(\alpha)}{Z_{\boldPhi,\boldg}(\alpha)}} \leq (CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1}.
+	\end{align}
+	We may therefore finally substitute these last two bounds, together with \eqref{Taylor difference}, into \eqref{CGF difference}. This yields
+	\begin{align}
+	\abs*{(\log Z_{\boldPhi,\boldX})'(\alpha)-(\log Z_{\boldPhi,\boldg})'(\alpha)} \geq \frac{2\Delta\abs{\alpha}^{r-1}}{3(r-1)!} - C(CK^2)^r\abs{\alpha}^r\paren*{\frac{n^{r+1}}{r!}+r+1}.
+	\end{align}
+	We now claim that with our assumptions on $\abs{\alpha}$, the first term dominates the second. This is a simple calculation, thereby competing the proof of \eqref{CGF difference 1}. To prove \eqref{CGF difference 2}, we repeat the entire argument, but using the relevant estimates for $Z_{\boldPsi,\boldX}$ instead of those for $Z_{\boldPhi,\boldX}$.
+\end{proof}
+
+Applying the previous lemma in the setting of our NGCA model, we get the following result.
+
+\begin{theorem}[Robustness for non-Gaussian eigenvalues] \label{thm:robustness_for_non_Gaussian_eigenvalues}
+	Let $\boldX$ be a sub-Gaussian random vector satisfying the NGCA model \eqref{NGCA model}, and with sub-Gaussian norm bounded above by $K \geq 1$. Let $\lambda_1(\boldPhi_{\tilde{\boldX},\alpha}),\ldots,\lambda_d(\boldPhi_{\tilde{\boldX},\alpha})$ denote the eigenvalues of $\boldPhi_{\tilde{\boldX},\alpha}$. Suppose the moments of $\norm{\tilde{\boldX}}_2^2$ and $\norm{\boldg_d}_2^2$ agree up to order $r-1$, but there is a number $\Delta > 0$ such that $\abs*{\E\braces{ \norm{\tilde{\boldX}}_2^{2r}} - \E\braces{ \norm{\boldg_d}_2^{2r}}} \geq \Delta$, then there is an absolute constant $C$ such that for $\abs{\alpha} \leq \Delta r/(CK^2)^r(d^{r+1}+(r+1)!)$, we have
+	\begin{align} \label{Phi difference}
+	\abs*{\frac{1}{d}\sum_{i=1}^d\lambda_i(\boldPhi_{\tilde{\boldX},\alpha})-\frac{1}{2\alpha+1}} \geq \frac{\Delta}{2d(r-1)!}\abs{\alpha}^{r-1}.
+	\end{align}
+	Similarly, let $\lambda_1(\boldPsi_{\tilde{\boldX},\alpha}),\ldots,\lambda_d(\boldPsi_{\tilde{\boldX},\alpha})$ denote the eigenvalues of $\boldPsi_{\tilde{\boldX},\alpha}$, and suppose the moments of $\inprod{\boldX,\boldX'}$ and $\inprod{\boldg,\boldg'}$ agree up to order $r-1$ but $\abs*{\E\braces{ \inprod{\boldX,\boldX'}^r} - \E\braces{ \inprod{\boldg,\boldg'}^r}} \geq \Delta$. Then for $\abs{\alpha} \leq \Delta r/(CK^2)^r(d^{r+1}+(r+1)!)$, we have
+	\begin{align} \label{Psi difference}
+	\abs*{\frac{1}{d}\sum_{i=1}^d\lambda_i(\boldPsi_{\tilde{\boldX},\alpha})-\frac{\alpha}{\alpha^2-1}} \geq \frac{\Delta}{2d(r-1)!}\abs{\alpha}^{r-1}.
+	\end{align}
+\end{theorem}
+
+\begin{proof}
+	This is simply a translation of the previous theorem with the help of Lemma \ref{lem: trace of Phi and Psi}, which tells us that the log derivatives of the partition functions are equal to the traces of $\boldPhi_{\boldX,\alpha}$ and $\boldPsi_{\boldX,\alpha}$, and that of Lemma \ref{lem: formula for Phi and Psi for Gaussian}, which tells us what the Gaussian eigenvalue is.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm: second Gaussian test, robust}]
+	Combine the previous Corollary with Theorem \ref{thm: first Gaussian test, robust}.
+\end{proof}
+
+\section{Identities for Gaussian test matrices}
+
+In this section, we let $g$ denote a standard Gaussian random variable, and $\boldg_n$, a standard Gaussian random vector in $\R^n$. First, notice that independence gives $Z_{\boldPhi,\boldg_n}(\alpha) = Z_{\boldPhi,g}(\alpha)^n$ and $Z_{\boldPsi,\boldg_n}(\alpha) = Z_{\boldPsi,g}(\alpha)^n$.
+
+\begin{lemma}
+	We have the identities $Z_{\boldPhi,\boldg_n}(\alpha) = \paren*{2\alpha+1}^{-n/2}$ when $\alpha > -1/2$ and $Z_{\boldPsi,\boldg_n}(\alpha) = \paren*{1-\alpha^2}^{-n/2}$ when $\abs{\alpha} < 1$.
+\end{lemma}
+
+\begin{proof}
+	By the remarks above, it suffices to prove the formula when $n=1$. These are then simple exercises in calculus. Notice that
+	\[
+	Z_{\boldPhi,g}(\alpha) = \E\braces{ e^{-\alpha g^2}} = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^\infty e^{-\alpha t^2} e^{-\frac{t^2}{2}} dt = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^\infty e^{-\frac{(2\alpha+1)t^2}{2}} dt.
+	\]
+	Now substitute $u = \sqrt{2\alpha+1}\cdot t$ to arrive at the formula for $Z_{\boldPhi,g}$. For the next formula, we use conditional expectations to write
+	\begin{align} \label{psi conditional expectation}
+	Z_{\boldPsi,g}(\alpha) = \E\braces{ e^{-\alpha g g'}} = \E\braces{ \E\braces{e^{-\alpha g g'} \big| g}}.
+	\end{align}
+	The inner expectation can be computed as
+	\[
+	\E\braces{e^{-\alpha g g'} \big| g} = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^\infty e^{-\alpha g t} e^{-\frac{t^2}{2}} dt = e^{\frac{(\alpha g)^2}{2}}.
+	\]
+	Substituting this back into \eqref{psi conditional expectation} and using the same technique as above gives us what we want.
+\end{proof}
+
+\begin{lemma} \label{lem: formula for log derivatives for Gaussian}
+	We have the identities $-(\log Z_{\boldPhi,\boldg_n})'(\alpha) = n(2\alpha+1)^{-1}$ when $\alpha > -1/2$ and \\ $-(\log Z_{\boldPsi,\boldg_n})'(\alpha) = n\alpha(\alpha^2-1)^{-1}$ when $\abs{\alpha} < 1$.
+\end{lemma}
+
+\begin{lemma} \label{lem: formula for Phi and Psi for Gaussian}
+	We have the identities $\boldPhi_{\boldg_n,\alpha} = (2\alpha+1)^{-1}\boldI_n$ when $\alpha > -1/2$ and $\boldPsi_{\boldg_n,\alpha} = \alpha(\alpha^2-1)^{-1}\boldI_n$ when $\abs{\alpha} < 1$. Here, $\boldI_n$ is the $n$-dimensional identity matrix.
+\end{lemma}
+\begin{proof}
+	By rotational symmetry, we know that both matrices are multiples of the identity. To compute these scalars, it hence suffices to find the trace of both matrices. But
+	\[
+	\textnormal{Tr}\paren{\boldPhi_{\boldg_n,\alpha}} = \frac{\E\braces{e^{-\alpha\norm{\boldg_n}_2^2}\norm{\boldg_n}_2^2}}{\E\braces{ e^{-\alpha\norm{\boldg_n}_2^2}}} = -(\log Z_{\boldPhi,\boldg_n})'(\alpha).
+	\]
+	Dividing by $n$ and using the previous lemma gives us what we want.
+\end{proof}
+
+\section{Concentration and moment bounds} \label{concentration of estimators}
+
+\begin{theorem}[Concentration of norm for general sub-Gaussian vectors] \label{norm concentration}
+	Let $\boldX$ be a sub-Gaussian random vector in $\R^n$, with $\norm{\boldX}_{\psi_2} \leq K$. There is a universal constant $C$ such that for each positive integer $r > 0$, the moments of $\norm{\boldX}_2$ and $\inprod{\boldX,\boldX'}$ satisfy
+	\begin{align} \label{norm moment bound 1}
+	\paren*{\E\braces{\norm{\boldX}_2^r}}^{1/r} \leq CK\paren{\sqrt{n} + \sqrt{r}}
+	\end{align}
+	\begin{align} \label{norm moment bound 2}
+	\paren*{\E\braces{\abs{\inprod{\boldX,\boldX'}}^r}}^{1/{2r}} \leq  CK\paren{\sqrt{n} + \sqrt{r}}.
+	\end{align}
+\end{theorem}
+
+\begin{proof}
+	The second bound follows from the first, since by Cauchy-Schwarz,
+	\[
+	\paren*{\E\braces{\abs{\inprod{\boldX,\boldX'}}^r}}^{1/{2r}} \leq \paren*{\E\braces{\norm{\boldX}_2^r\norm{\boldX'}_2^r}}^{1/2r} = \paren*{\E\braces{\norm{\boldX}_2^r}}^{1/r}
+	\]
+	To prove \eqref{norm moment bound 1}, pick a $\frac{1}{2}$-net $\mathcal{N}$ on $S^{n-1}$. A volumetric argument shows that one may pick $\mathcal{N}$ to have size no more than $5^n$ (see \cite{Vershynin2011b}). We then have
+	\[
+	\norm{\boldX}_2 = \sup_{\boldv \in S^{n-1}}\inprod{\boldX,\boldv} \leq 2\sup_{\boldv \in \mathcal{N}}\inprod{\boldX,\boldv}.
+	\]
+	By definition, there is a universal constant $c$ such that for any fixed unit vector $v \in S^{d-1}$, $\P\braces{ \inprod{\boldX,\boldv} > t } \leq 2\exp\paren*{-\frac{ct^2}{K^2}}$. Taking a union bound over the net thus gives
+	\begin{align} \label{norm tail}
+	\P\braces*{\norm{\boldX}_2 > 2t} \leq 2\exp\paren*{n\log5 - \frac{ct^2}{K^2}}.
+	\end{align}
+	Next, we integrate out the tail bound \eqref{norm tail} to obtain bounds for the moments. Observe that if $\frac{ct^2}{2K^2} \geq n\log 5$, we have $n\log 5 - \frac{ct^2}{K^2} \leq - \frac{ct^2}{2K^2}$. This condition on t is equivalent to $t \geq CK\sqrt{n}$, so we have
+	\begin{align} \label{norm tail bound}
+	\P\braces*{\norm{\boldX}_2 > 2t} \leq
+	\begin{cases}
+	1 & t < CK\sqrt{n} \\
+	2\exp\paren*{-\frac{ct^2}{K^2}} & t \geq CK\sqrt{n}
+	\end{cases}
+	\end{align}
+	For any positive integer $r$, we integrate this bound to get
+	\begin{align*}
+	\E\braces{\norm{\boldX}_2^r} & = \int_0^\infty rt^{r-1}\P\braces*{\norm{\boldX} > t}dt \\
+	& \leq \int_0^{CK\sqrt{n}} rt^{r-1} dt + \int_{CK\sqrt{n}}^\infty 2rt^{r-1}\exp\paren*{-\frac{ct^2}{K^2}}dt \\
+	& \leq C^rK^rn^{r/2} + C^rK^rr\int_0^\infty t^{r/2-1}e^{-t}dt.
+	\end{align*}
+	The integral in the last line is the gamma function, so in short, we have shown that
+	\begin{align} \label{alternate norm moment bound}
+	\E\braces{\norm{\boldX}_2^r} \leq C^rK^r\paren{n^{r/2}+\Gamma(r/2+1)}.
+	\end{align}
+	Taking $r$-th roots of both sides and using H{\"o}lder, together with the fact that $\Gamma(x)^{1/x} \lesssim x$, gives \eqref{norm moment bound 1}.
+\end{proof}
+
+\begin{lemma}[Covariance estimation for sub-Gaussian random vectors] \label{covariance estimation}
+	Let $\boldX$ be a centered sub-Gaussian random vector in $\R^n$ with covariance matrix $\boldSigma$ and sub-Gaussian norm satisfying $\norm{\boldX}_{\psi_2} \leq K$ for some $K \geq 1$. Let $\hat{\boldSigma}_N=\frac{1}{N}\sum_{i=1}^N \boldX_i\boldX_i^T$ denote the sample covariance matrix from $N$ independent samples. Then there is an absolute constant $C$ such that for any $0 < \epsilon, \delta < 1$, we have $\P\braces*{\norm*{\hat{\boldSigma}_N-\boldSigma} > \epsilon} \leq \delta$ so long as $N \geq CK^2(n+\log(1/\delta))\epsilon^{-2}$.
+\end{lemma}
+
+\begin{proof}
+	Refer to \cite{Vershynin2011b}.
+\end{proof}
+
+\begin{lemma}[Moments of spherical marginals]
+	Let $\boldtheta$ be uniformly distributed on the sphere $S^{n-1}$. Then for any unit vector $v \in S^{n-1}$ and any positive integer $k$, we have
+	\begin{align} \label{spherical moments}
+	\E\braces{\inprod{\boldtheta,\boldv}^{2k}} = \frac{1\cdot 3\cdots(2k-1)}{n\cdot(n+2)\cdots(n+2k-2)}
+	\end{align}
+\end{lemma}
+
+\begin{proof}
+	There are several ways to prove this identity. We shall prove this by computing Gaussian integrals. Let $g$ and $g_n$ denote standard Gaussians in 1 dimension and $n$ dimensions respectively. Then using the radial symmetry of $\boldg$, we have
+	\[
+	\E\braces{g^{2k}} = \E\braces{\inprod{\boldg_n,\boldv}^{2k}} = \E\braces{\inprod{\norm{\boldg_n}_2\boldtheta,\boldv}^{2k}} = \E\braces{\norm{\boldg_n}_2^{2k}}\E\braces{\inprod{\boldtheta,\boldv}^{2k}}.
+	\]
+	Rearranging gives
+	\[
+	\E\braces{\inprod{\boldtheta,\boldv}^{2k}} = \frac{\E\braces{g^{2k}}}{\E\braces{\norm{\boldg_n}_2^{2k}}}.
+	\]
+	We then compute
+	\begin{align} \label{Gaussian norm moment}
+	\E\braces{\norm{\boldg_n}_2^{2k}} = \frac{\omega_n}{(2\pi n)^{n/2}}\int_0^\infty r^{2k}r^{n-1}e^{-r^2/2}dr,
+	\end{align}
+	where $\omega_n$ is the volume of the sphere $S^{n-1}$. It is well known that
+	\[
+	\omega_n = \frac{2\pi^{n/2}}{\Gamma(n/2)},
+	\]
+	while we also have
+	\[
+	\int_0^\infty r^{2k}r^{n-1}e^{-r^2/2}dr = 2^{n/2+k-1}\Gamma(n/2+k).
+	\]
+	Substituting these back into \eqref{Gaussian norm moment} gives
+	\begin{equation} \label{eq: Gaussian moments}
+	\E\braces{\norm{\boldg_n}_2^{2k}} = 2^k\frac{\Gamma(n/2+k)}{\Gamma(n/2)} = n\cdot(n+2)\cdots(n+2k-2).
+	\end{equation}
+	This yields the denominator in \eqref{spherical moments}. A similar calculation for $\E\braces{g^{2k}}$ yields the numerator. 
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm:Phi_concentration}]
+	Let $\boldY = e^{-\alpha\norm{\boldX}_2^2}\boldX$. Then $\boldY$ is a sub-Gaussian random vector with $\norm{\boldY}_{\psi_2} \leq K$. Let $\boldSigma$ and $\hat{\boldSigma}$ denote its covariance and empirical covariance matrices respectively. Then $\norm{\boldSigma} \leq 1$ and by Lemma \ref{covariance estimation}, we have $\norm{\hat{\boldSigma} - \boldSigma} \leq \epsilon/2$ with probability at least $1 - \delta/2$. Next,
+	observe that $\boldPhi_{\boldX,\alpha} = Z_{\boldPhi,\boldX}(\alpha)^{-1}\boldSigma$ and $\hat{\boldPhi}_{\boldX,\alpha} = \hat{Z}_{\boldPhi,\boldX}(\alpha)^{-1}\hat{\boldSigma}$, where $\hat{Z}_{\boldPhi,\boldX}(\alpha) = \sum_{j=1}^N e^{-\alpha\norm{\boldX_j}_2^2}/N$. As such, we have
+	\begin{align}
+	\norm{\hat{\boldPhi}_{\boldX,\alpha} - \boldPhi_{\boldX,\alpha}} \leq \abs{\hat{Z}_{\boldPhi,\boldX}(\alpha)^{-1}}\norm{\hat{\boldSigma} - \boldSigma} + \abs{\hat{Z}_{\boldPhi,\boldX}(\alpha)^{-1}-Z_{\boldPhi,\boldX}(\alpha)^{-1}}\norm{\boldSigma}.
+	\end{align}
+	
+	Combining our lower bound on $\alpha$ with the power series formula for $Z_{\boldPhi}$ from Lemma \ref{lem: analyticity}, we have $Z_{\boldPhi,\boldX}(\alpha) \geq 1/2$. Furthermore, we may apply Hoeffding's inequality to see that $\abs{\hat{Z}_{\boldPhi,\boldX}(\alpha)-Z_{\boldPhi,\boldX}(\alpha)} \leq \epsilon/2$ with probability at least $1- \delta/2$. We can now combine all of this together to get the probability bound.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm:Psi_concentration}]
+	First, define $\boldSigma = \E\braces{e^{-\alpha\inprod{\boldX,\boldX'}}\boldX(\boldX')^T}$ and $\hat{\boldSigma} = \sum_{i=1}^N e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\paren{\boldX_i\paren{\boldX_i'}^T + \boldX_i'\boldX_i^T}/2N$, so that $\boldPsi_{\boldX,\alpha} = Z_{\boldPsi,\boldX}(\alpha)^{-1}\boldSigma$ and $\hat{\boldPsi}_{\boldX,\alpha} = \hat{Z}_{\boldPsi,\boldX}(\alpha)^{-1}\hat{\boldSigma}$. As in the previous theorem, we can write
+	\begin{align} \label{Psi decomposition}
+	\norm{\hat{\boldPsi}_{\boldX,\alpha} - \boldPsi_{\boldX,\alpha}} \leq \abs{\hat{Z}_{\boldPsi,\boldX}(\alpha)^{-1}}\norm{\hat{\boldSigma} - \boldSigma} + \abs{\hat{Z}_{\boldPsi,\boldX}(\alpha)^{-1}-Z_{\boldPsi,\boldX}(\alpha)^{-1}}\norm{\boldSigma}.
+	\end{align}
+	
+	This time however, we cannot immediately invoke Lemma \ref{covariance estimation} because we can no longer view $\boldSigma$ and $\hat{\boldSigma}$ as the covariance and empirical covariance matrices of a random vector. Nonetheless, we can follow the same proof scheme with a few adjustments.
+	
+	The basic idea is to use a net argument to transform the operator deviation bound into a scalar bound for random variables. Let $\mathcal{N}$ be a $\frac{1}{4}$-net on $S^{n-1}$. By a volumetric argument, we may pick $\mathcal{N}$ to have size no more than $9^n$ (see \cite{Vershynin2011b}). For any $n$ by $n$ real symmetric matrix $\boldM$, we then have
+	\begin{align} \label{net operator bound}
+	\norm{\boldM} = \sup_{\boldv \in S^{n-1}}\abs{\inprod{\boldv,\boldM\boldv}} \leq 2\sup_{\boldv \in \mathcal{N}}\abs{\inprod{\boldv,\boldM\boldv}}.
+	\end{align}
+	As such, by taking a union bound, we can hope to bound $\norm{\hat{\boldSigma} - \boldSigma}$ by bounding $\abs{\inprod{\boldv,(\hat{\boldSigma}-\boldSigma)\boldv}}$ for a fixed unit vector $v \in S^{n-1}$. Let us do just this. We have
+	\begin{align*}
+	\inprod{\boldv,\hat{\boldSigma}\boldv} & = \frac{1}{N} \sum_{i=1}^N e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\inprod{\boldX_i,\boldv}\inprod{\boldX_i',\boldv},
+	\end{align*}
+	so that
+	\begin{align}
+	\inprod{\boldv,(\hat{\boldSigma}-\boldSigma)\boldv} & = \frac{1}{N} \sum_{i=1}^N \paren{Y_i - \E Y_i},
+	\end{align}
+	where
+	\begin{align}
+	Y_i = e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\inprod{\boldX_i,\boldv}\inprod{\boldX_i',\boldv}.
+	\end{align}
+	
+	Observe that the $Y_i$'s are i.i.d. random variables. At this point in the proof of covariance estimation, one observes that the resulting random variables are subexponential, so one may apply Bernstein's inequality. Unfortunately, our $Y_i$'s are not subexponetial because of the $e^{-\alpha\inprod{\boldX_i,\boldX_i'}}$ factor. The way we overcome this is to condition on the size of these factors being uniformly small. Indeed, by Lemma \ref{uniform bound on exp factors} to come, we have $e^{-\alpha\inprod{\boldX_i,\boldX_i'}} \leq e$ for all samples $i$ with probability at least $1- \delta$. We call this event $A$.
+	
+	Next, define $\tilde{Y}_i := Y_i1_A$. The $\tilde{Y}_i$'s are i.i.d random variables with subexponential norm bounded by $eK^2$. We can then apply Bernstein and our assumption on the sample size $N$ to get
+	\begin{align}
+	\P\braces*{\abs*{\frac{1}{N}\sum_{i=1}^N \paren{\tilde{Y}_i - \E \tilde{Y}_i}} > \epsilon} \leq e^{-N\epsilon^2/CK^4} \leq \frac{\delta}{9^n}.
+	\end{align}
+	Conditioning on the set $A$, we have $Y_i = \tilde{Y}_i$ for each $i$. We can also rewrite the bound on the right hand side using our assumption on $N$. Doing this gives us
+	\begin{align} \label{intermediate Y deviation}
+	\P\braces*{\abs*{\frac{1}{N}\sum_{i=1}^N \paren{Y_i - \E \tilde{Y}_i}} > \epsilon \ \Big| \ A} \leq \frac{\delta}{9^n}.
+	\end{align}
+	We would like to replace $\E \tilde{Y}_i$ with $\E Y_i$, but the two quantities are not necessarily equal. Nonetheless, we can bound their difference as follows. We have
+	\begin{align}
+	\E Y_i - \E\tilde{Y}_i = \E \braces{Y1_{A^c}} = \E\braces{e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\inprod{\boldX_i,\boldv}\inprod{\boldX_i',\boldv}1_{A^c}}.
+	\end{align}
+	We apply generalized H{\"o}lder to write
+	\begin{align}
+	\abs{\E\braces{e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\inprod{\boldX_i,\boldv}\inprod{\boldX_i',\boldv}1_{A^c}}} & \leq \paren*{\E \braces{e^{-4\alpha\inprod{\boldX_i,\boldX_i'}}}}^{1/4} \paren*{\E\braces{\inprod{\boldX_i,\boldv}^4\inprod{\boldX_i',\boldv}^4}}^{1/4}\P\braces*{A^c}^{1/2}.
+	\end{align}
+	We now use the moment bounds for sub-Gaussian random variables and Lemma \ref{better bound for psi} to bound the first two multiplicands on the right. This gives us
+	\begin{align}
+	\abs{\E\braces{e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\inprod{\boldX_i,\boldv}\inprod{\boldX_i',\boldv}1_{A^c}}} \leq CK^2\P\braces*{A^c}^{1/2}.
+	\end{align}
+	
+	Next, we use Lemma \ref{uniform bound on exp factors} together with our assumption on $\abs{\alpha}$, tightening the constant if necessary, to see that $\P\braces*{A^c} \leq \epsilon^2/C^2K^4$. We combine this together with the last few equations to obtain $\abs{\E Y_i - \E\tilde{Y}_i} \leq \epsilon$, and combining this with \eqref{intermediate Y deviation}, we obtain
+	\begin{align}
+	\P\braces*{\abs*{\frac{1}{N}\sum_{i=1}^N \paren{Y_i - \E Y_i}} > 2\epsilon \ \Big| \ A} \leq \frac{\delta}{9^n}.
+	\end{align}
+	Recall that $Y_i$'s were defined for a fixed $\boldv \in \mathcal{N}$. We can take a union bound over all vectors in $\mathcal{N}$ to get
+	\begin{align}
+	\P\braces*{ \sup_{\boldv \in \mathcal{N}}\abs{\inprod{\boldv,(\hat{\boldSigma}-\boldSigma)\boldv}} > 2\epsilon \ \Big| \ A} \leq \delta.
+	\end{align}
+	Combining this with \eqref{net operator bound} then gives
+	\begin{align}
+	\P\braces*{ \norm{\hat{\boldSigma} - \boldSigma } > 4\epsilon \ \Big| \ A} \leq \delta.
+	\end{align}
+	
+	Let us continue to bound the other terms in \eqref{Psi decomposition} conditioned on the set $A$. Notice that on this set, $\hat{Z}_{\boldPsi,\boldX}(\alpha)$ is an average of terms that are each bounded in absolute value by $e$. Using Hoeffding's inequality together with a similar argument as above to bound $\abs{\E\hat{Z}_{\boldPsi,\boldX}(\alpha)1_A - Z_{\boldPsi,\boldX}(\alpha)}$, one may show that
+	\begin{align}
+	\P\braces*{\abs{\hat{Z}_{\boldPsi,\boldX}(\alpha) - Z_{\boldPsi,\boldX}(\alpha)} > \epsilon/2 \  \big| \ A } \leq \delta.
+	\end{align}
+	We may also use the power series formula for $Z_{\boldPsi,\boldX}$ from Lemma \ref{lem: analyticity} together with our bound on $\abs{\alpha}$ to show that $Z_{\boldPsi,\boldX}(\alpha) \geq \frac{1}{2}$.
+	
+	It remains to bound $\norm{\boldSigma}$. To do this, we let $v$ again be an arbitrary unit vector, and use Cauchy-Schwarz to compute
+	\begin{align}
+	\abs{\E\braces{e^{-\alpha\inprod{\boldX_i,\boldX_i'}}\inprod{\boldX_i,\boldv}\inprod{\boldX_i',\boldv}}} & \leq \paren*{\E e^{-2\alpha\inprod{\boldX_i,\boldX_i'}}}^{1/2} \paren*{\E\braces{\inprod{\boldX_i,\boldv}^2\inprod{\boldX_i',\boldv}^2}}^{1/2}.
+	\end{align}
+	We have already seen that moment bounds and Lemma \ref{better bound for psi} imply that this is bounded by an absolute constant $C$. In fact, we can take $C = 3$.
+	
+	Putting everything together, we see that on the set $A$, we can continue writing \eqref{Psi decomposition} as
+	\begin{align*}
+	\norm{\hat{\boldPsi}_{\boldX,\alpha} - \boldPsi_{\boldX,\alpha}} & \leq \abs{\hat{Z}_{\boldPsi,\boldX}(\alpha)^{-1}}\norm{\hat{\boldSigma} - \boldSigma} + \abs{\hat{Z}_{\boldPsi,\boldX}(\alpha)^{-1}-Z_{\boldPsi,\boldX}(\alpha)^{-1}}\norm{\boldSigma} \\
+	& \leq C\epsilon.
+	\end{align*}	
+	Using our bound for $\P\braces*{A}$, we can therefore uncondition to get 
+	\begin{align}
+	\P\braces*{\norm{\hat{\boldPsi}_{\boldX,\alpha} - \boldPsi_{\boldX,\alpha}} > C\epsilon} \leq \delta + \P\braces*{A} \leq 2\delta.
+	\end{align}
+	Finally, note that we can massage the constants so that the multiplying constants in front of $\epsilon$ and $\delta$ disappear.
+\end{proof}
+
+\begin{lemma} \label{uniform bound on exp factors}
+	For any $0 < \delta < 1$ and $N \in \mathbb{N}$, if $\abs{\alpha} \leq \paren*{CK^2\sqrt{\log(N/\delta)}(\sqrt{n}+\sqrt{\log(N/\delta)})}^{-1}$, then
+	\begin{align}
+	\P\braces*{\sup_{1 \leq i \leq N}e^{-\alpha\inprod{\boldX_i,\boldX_i'}} > e} \leq \delta.
+	\end{align}
+\end{lemma}
+
+\begin{proof}
+	Without loss of generality, assume that $\alpha > 0$. Using the union bound, it suffices to prove that
+	\begin{align}
+	\P\braces*{\inprod{\boldX,\boldX'} < -1/\alpha} = \P\braces*{e^{-\alpha\inprod{\boldX,\boldX'}} > e} \leq \frac{\delta}{N}.
+	\end{align}
+	To compute this, we first condition on $\boldX'$ and use the sub-Gaussian tail of $\boldX$ to get
+	\begin{align*}
+	\P\braces*{\inprod{\boldX,\boldX'} < -1/\alpha \st \boldX'} \leq \exp\paren*{-\frac{1}{CK^2\alpha^2\norm{\boldX'}_2^2}},
+	\end{align*}
+	and integrating out $\boldX'$, then gives
+	\begin{align}
+	\P\braces*{\inprod{\boldX,\boldX'} < - 1/\alpha} \leq \E \braces{e^{-\paren{CK^2\alpha^2\norm{\boldX'}_2^2}^{-1}}}.
+	\end{align}
+	
+	To compute this expectation, let $A$ be the event that $\norm{\boldX'}_2 \leq CK (\sqrt{n}+\sqrt{\log(N/\delta)})$. Then by equation \eqref{norm tail bound} in Theorem \ref{norm concentration}, we have $\P\braces*{A^c} \leq \delta/N$. As such, we can break up the expectation into the portion over $A$ and the the portion over $A^c$ to obtain
+	\begin{align}
+	\E e^{-\paren{CK^2\alpha^2\norm{\boldX'}_2^2}^{-1}} & = \E\braces{e^{-\paren{CK^2\alpha^2\norm{\boldX'}_2^2}^{-1}} \st A}\P\braces*{A} + \E\braces{e^{-\paren{CK^2\alpha^2\norm{\boldX'}_2^2}^{-1}} \st A^c}\P\braces*{A^c} \nonumber \\
+	& \leq  \E\braces{e^{-\paren{CK^2\alpha^2\norm{\boldX'}_2^2}^{-1}} \st A} + \P\braces*{A^c} \nonumber \\
+	& \leq \exp\paren*{-\frac{1}{CK^4\alpha^2(n+\log(N/\delta))}} + \frac{\delta}{N}.
+	\end{align}
+	As such, we just need the first term to be less than $\delta/N$, which corresponds to the requirement that
+	\begin{align*}
+	\frac{1}{CK^4\alpha^2(n+\log(N/\delta))} \geq \log(N/\delta).
+	\end{align*}
+	This is simply a rearrangement of our assumption on $\abs{\alpha}$.
+\end{proof}
+
+\begin{lemma}[Better bound for $Z_{\boldPsi}$] \label{better bound for psi}
+	There is an absolute constant $C$ such that if $\abs{\alpha} \leq 1/CK^2\sqrt{n}$, then $Z_{\boldPsi,\boldX}(\alpha) \leq 3$.
+\end{lemma}
+
+\begin{proof}
+	The idea of the proof is similar to that of the previous lemma. We first condition on $\boldX'$ and use the sub-Gaussian nature of $\boldX$ to bound its Laplace transform, thereby obtaining
+	\begin{align*}
+	\E\braces{e^{-\alpha\inprod{\boldX,\boldX'}} \st \boldX' } \leq e^{CK^2\alpha^2\norm{\boldX'}_2^2}.
+	\end{align*}
+	Integrating out $\boldX'$ gives
+	\begin{align} \label{psi intermediate bound}
+	Z_{\boldPsi,\boldX}(\alpha) & \leq \E \braces{e^{CK^2\alpha^2\norm{\boldX'}_2^2}} \nonumber \\
+	& = \int_0^\infty \P\braces*{e^{CK^2\alpha^2\norm{\boldX'}_2^2} > t} dt \nonumber \\
+	& \leq e + \int_e^\infty \P\braces*{e^{CK^2\alpha^2\norm{\boldX'}_2^2} > t} dt
+	\end{align}
+	
+	Next, we use our assumption on $\abs{\alpha}$ to write
+	\begin{align}
+	\P\braces*{e^{CK^2\alpha^2\norm{\boldX'}_2^2} > t} & = \P\braces*{\norm{\boldX'}_2 > \frac{\sqrt{\log t}}{CK\abs{\alpha}} } \nonumber \\
+	& \leq \P\braces*{\norm{\boldX'}_2 > \sqrt{\log t}CK\sqrt{n} }.
+	\end{align}
+	For $t > e$, we have $\sqrt{\log t} > 1$, so we may apply \eqref{norm tail bound} to get
+	\begin{align}
+	\P\braces*{\norm{\boldX'}_2 > \sqrt{\log t}CK\sqrt{n} } \leq e^{-\log t Cn} = t^{-Cn}.
+	\end{align}
+	Plugging this into \eqref{psi intermediate bound} gives
+	\begin{align}
+	Z_{\boldPsi,\boldX}(\alpha) \leq e + \frac{e^{-Cn}}{Cn} \leq 3
+	\end{align}
+	if we choose $C$ to be large enough.
+\end{proof}
+
+\section{Eigenvector perturbation theory} \label{eigenvector perturbation}
+
+If two $n$ by $n$ matrices are close in spectral norm, one can use minimax identities to show that their eigenvalues are also close. It is less trivial to show that their eigenvectors are also close, which is the case in the presence of an ``eigengap''. This was addressed by \cite{Davis1970a}.
+
+\begin{definition}
+	Let $E$ and $\hat{E}$ be two subspaces of $\R^n$ of dimension $d$. Let $\textbf{V}$ and $\hat{\textbf{V}}$ be $n$ by $d$ matrices with orthonormal columns forming a basis for $E$ and $\hat{E}$ respectively. Let $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_d$ be the singular values of $\textbf{V}^T\hat{\textbf{V}}$. We define the \emph{principal angles} of $E$ and $\hat{E}$ to be $\boldtheta_i(E,\hat{E}) = \arccos\sigma_i$ for $1 \leq i \leq d$.
+\end{definition}
+
+\begin{lemma}
+	Let $E$, $\hat{E}$, $\textbf{V}$ and $\hat{\textbf{V}}$ be as in the previous definition. We have
+	\begin{equation}
+	\norm{\hat{\textbf{V}}\hat{\textbf{V}}^T - \textbf{V}\textbf{V}^T}^2_F = 2\sum_{i=1}^d \sin^2\boldtheta_i(E,\hat{E}).
+	\end{equation}
+	In particular, the quantity depends only on $E$ and $\hat{E}$ and not the choice of bases.
+\end{lemma}
+
+\begin{proof}
+	We expand
+	\begin{align}
+	\norm{\hat{\textbf{V}}\hat{\textbf{V}}^T - \textbf{V}\textbf{V}^T}^2_F = \norm{\hat{\textbf{V}}\hat{\textbf{V}}^T}_F^2 + \norm{\textbf{V}\textbf{V}^T}^2_F - 2\inprod{\textbf{V}\textbf{V}^T,\hat{\textbf{V}}\hat{\textbf{V}}^T}.
+	\end{align}
+	Observe that
+	\begin{align}
+	\norm{\textbf{V}\textbf{V}^T}^2_F = \textnormal{Tr}\paren{\textbf{V}\textbf{V}^T\textbf{V}\textbf{V}^T} = \textnormal{Tr}\paren{\textbf{V}^T\textbf{V}\textbf{V}^T\textbf{V}} = \textnormal{Tr}\paren{\boldI_d} = d.
+	\end{align}
+	Similarly, we have
+	\begin{align}
+	\norm{\hat{\textbf{V}}\hat{\textbf{V}}^T}_F^2 = d.
+	\end{align}
+	Next, we compute
+	\begin{align}
+	\inprod{\textbf{V}\textbf{V}^T,\hat{\textbf{V}}\hat{\textbf{V}}^T} = \textnormal{Tr}\paren{\textbf{V}\textbf{V}^T\hat{\textbf{V}}\hat{\textbf{V}}^T} = \textnormal{Tr}\paren{\hat{\textbf{V}}^T\textbf{V}\textbf{V}^T\hat{\textbf{V}}} = \norm{\hat{\textbf{V}}^T\textbf{V}}_F^2.
+	\end{align}
+	Next, we use the fact that the squared Frobenius norm of a matrix is the sum of squares of its singular values to write
+	\begin{align}
+	\norm{\hat{\textbf{V}}^T\textbf{V}}_F^2 = \sum_{i=1}^d\sigma_i^2 = \sum_{i=1}^d \cos^2\boldtheta_i(E,\hat{E}).
+	\end{align}
+	We may then combine these identities to write
+	\begin{align}
+	\norm{\hat{\textbf{V}}\hat{\textbf{V}}^T - \textbf{V}\textbf{V}^T}^2_F = 2\sum_{i=1}^d(1-\cos^2\boldtheta_i(E,\hat{E})) = 2\sum_{i=1}^d\sin^2\boldtheta_i(E,\hat{E}).
+	\end{align}
+	as was to be shown.
+\end{proof}
+
+Using the previous lemma, it is easy to see that the distance between subspaces is preserved under taking orthogonal complements.
+
+\begin{lemma}
+	Let $F$ and $F'$ be subspaces of $\R^n$ of dimensions $m$, and let $F'$ and $F'^\perp$ denote their orthogonal complements. We have $d(F,F') = d(F^\perp,F'^\perp)$.
+\end{lemma}
+
+We can now use these observations to state Theorem 2 from \cite{Yu2015} in a convenient form.
+
+\begin{theorem} \label{thm:Davis-Kahan}
+	Let $\boldSigma$ and $\hat{\boldSigma}$ be two $n$ by $n$ symmetric real matrices, with eigenvalues $\lambda_1 \geq \cdots \geq \lambda_n$ and $\hat{\lambda}_1 \geq \cdots \geq \hat{\lambda}_n$. Fix $1 \leq r \leq s \leq n$, and assume that $\min\braces{\lambda_r-\lambda_{r+1},\lambda_s-\lambda_{s+1}} > 0$, where we define $\lambda_0 = \infty$ and $\lambda_{n+1} = - \infty$. Let $d$ = $r+n-s$, and let $\textbf{V} = \paren{\boldv_1,\boldv_2,\ldots,\boldv_r,\boldv_{s+1},\ldots,\boldv_n}$ and $\hat{\textbf{V}} = \paren{\hat{\boldv}_1,\hat{\boldv}_2,\ldots,\hat{\boldv}_r,\hat{\boldv}_{s+1},\ldots,\hat{\boldv}_n}$ be $n$ by $d$ matrices whose columns are orthonormal eigenvectors to $\lambda_1,\lambda_2,\ldots,\lambda_r,\lambda_{s+1},\ldots,\lambda_n$ and $\hat{\lambda}_1,\hat{\lambda}_2,\ldots,\hat{\lambda}_r,\hat{\lambda}_{s+1},\ldots,\hat{\lambda}_n$ respectively. Then
+	\begin{equation}
+	\norm{\hat{\textbf{\textbf{V}}}\hat{\textbf{V}}^T - \textbf{V}\textbf{V}^T}_F \leq \frac{2\sqrt{2d}\norm{\hat{\boldSigma}-\boldSigma}}{\min\braces{\lambda_r-\lambda_{r+1},\lambda_s-\lambda_{s+1}}}.
+	\end{equation}
+\end{theorem}
+
+\section{Proof of Lemma \ref{lem:guarantee_for_Phi}} \label{sec:proof_of_guarantee_for_Phi}
+
+\begin{proof}
+	Combining Lemmas \ref{lem:Phi_and_Psi_diagonalization}, \ref{lem: trace of Phi and Psi}, and \ref{lem: formula for Phi and Psi for Gaussian} tells us that in the right coordinates, $\boldPhi_{\boldX,\alpha}$ block diagonalizes as
+	\begin{align}
+	\boldPhi_{\boldX,\alpha} = \left(
+	\begin{array}{c|c}
+	\boldPhi_{\tilde{\boldX},\alpha} & 0 \\
+	\hline
+	0 & (2\alpha+1)^{-1}\boldI_{n-d},
+	\end{array}
+	\right).
+	\end{align}
+	
+	Next, label the eigenvalues of $\boldPhi_{\boldX,\alpha_1}$ as $\lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_n$. We can find $0 \leq p \leq q \leq n$ such that the eigenvalues corresponding to the $\boldPhi_{\tilde{\boldX},\alpha_1}$ block are $\lambda_1,\lambda_2,\ldots,\lambda_p,\lambda_{q+1},\ldots,\lambda_n$. Using Theorem \ref{thm:robustness_for_non_Gaussian_eigenvalues}, we then have
+	\begin{equation}
+	\abs*{\frac{1}{d}\paren*{\sum_{i=1}^p\lambda_i+\sum_{i=q+1}^n\lambda_i}-\frac{1}{2\alpha_1+1}} \geq \frac{\Delta}{2d(r-1)!}\alpha_1^{r-1} = 2\beta_1.
+	\end{equation}
+	
+	In particular, we have $\frac{1}{p}\sum_{i=1}^p\lambda_i - 1/(2\alpha_1+1) \geq 2\beta_1$, and $1/(2\alpha_1+1) - \frac{1}{n-q}\sum_{i=q+1}^n\lambda_i \geq 2\beta_1$. Since at least one of these sums of eigenvalues is non-empty, truncating the eigenvalues of $\boldPhi_{\boldX,\alpha_1}$ at the $\beta_1$ level gives us a non-trivial subspace of $E$.
+	
+	In order to show that our empirical estimate $\hat{\boldPhi}_{\boldX,\alpha_1}$ also has an approximation to this property, we will need to use the eigenvector perturbation theory explained in Appendix \ref{eigenvector perturbation}. First, we need to bound from below the ``eigengap'' in $\boldPhi_{\boldX,\alpha_1}$. Suppose first that $p \geq 1$, i.e. that there are eigenvalues larger than $(2\alpha_1+1)^{-1}$. Then by the pigeonhole principle, one can find $i$ such that $(2\alpha_1+1)^{-1} + \beta_1/2 \geq \lambda_{i+1} \geq (2\alpha_1+1)^{-1}$ and $\lambda_i - \lambda_{i+1} \geq \beta_1/2d$. Similarly, if $q \leq n-1$, then we can find $j$ such that $(2\alpha_1+1)^{-1} \geq \lambda_{j-1} \geq (2\alpha_1+1)^{-1} - \beta_1/2$ and $\lambda_{j-1}-\lambda_j \geq \beta_1/2d$.
+	
+	Now let $F$ be the span of the eigenvectors of $\boldPhi_{\boldX,\alpha_1}$ corresponding to $\lambda_1,\ldots,\lambda_i,\lambda_j,\ldots,\lambda_n$, and let $\hat{F}$ be the eigenvectors of $\hat{\boldPhi}_{\boldX,\alpha_1}$ corresponding to $\hat{\lambda}_1,\ldots,\hat{\lambda}_i,\hat{\lambda}_j,\ldots,\hat{\lambda}_n$. By Theorem \ref{thm:Phi_concentration}, with probability at least $1-\delta$, we have
+	\begin{equation} \label{Phi difference for correctness proof}
+	\norm{\hat{\boldPhi}_{\boldX,\alpha} - \boldPhi_{\boldX,\alpha}} \leq \frac{\beta_1\epsilon}{4\sqrt{2}d^{3/2}}.
+	\end{equation}
+	We may then use Theorem \ref{thm:Davis-Kahan} to see that $d(\hat{F},F) \leq \epsilon$.
+	
+	We are not yet done, because we do not have access to $\hat{F}$. Nonetheless, we can show that $\hat{F}$ contains $\hat{E}_{\boldPhi}$. Using eigenvalue perturbation inequalities together with equation \eqref{Phi difference for correctness proof} tells us that we have
+	\begin{equation}
+	\hat{\lambda}_{i+1} \leq \lambda_{i+1} + \frac{\beta_1\epsilon}{2d} \leq (2\alpha_1+1)^{-1} + \frac{\beta_1}{2} + \frac{\beta_1\epsilon}{2d} \leq (2\alpha_1+1)^{-1} + \frac{2\beta_1}{3},
+	\end{equation}
+	and similarly that
+	\begin{equation}
+	\hat{\lambda}_{j-1} \leq \lambda_{j-1} - \frac{\beta_1\epsilon}{2d} \leq (2\alpha_1+1)^{-1} - \frac{\beta_1}{2} - \frac{\beta_1\epsilon}{2d} \leq (2\alpha_1+1)^{-1} - \frac{2\beta_1}{3}.
+	\end{equation}
+	Let $\hat{I}_{\boldPhi} = \braces{i \ \colon \abs{\hat{\lambda}_i - (1-2\alpha_1)^{-1}} > \beta_1}$. We see that this set does not contain any index between $i+1$ and $j-1$, so $\hat{E}_{\boldPhi}$, which comprises the span of the eigenvectors to these eigenvalues, does not contain any eigenvector that $\hat{F}$ does not contain, as was to be shown. The inclusion then implies that we may find a subspace $E_{\boldPhi} \subset F$ such that $d(\hat{E}_{\boldPhi},E_{\boldPhi}) \leq \epsilon$.
+	
+	Finally, we observe that $\dim{\hat{E}_{\boldPhi}} \geq 1$, since
+	\begin{equation}
+	\frac{1}{p}\sum_{i=1}^p\hat{\lambda}_i - \frac{1}{2\alpha_1+1} \geq \frac{1}{p}\sum_{i=1}^p\lambda_i - \frac{\beta_1\epsilon}{2d} - \frac{1}{2\alpha_1+1} > \beta_1,
+	\end{equation}
+	and
+	\begin{equation}
+	\frac{1}{2\alpha_1+1} - \frac{1}{n-q}\sum_{i=q+1}^n\hat{\lambda}_i \geq \frac{1}{2\alpha_1+1} - \frac{1}{n-q}\sum_{i=q+1}^n\lambda_i - \frac{\beta_1\epsilon}{2d} > \beta_1.
+	\end{equation}	
+\end{proof}
+
+\section{Proof of Theorem \ref{thm:finding_all_directions}} \label{sec:finding_all_directions}
+
+Before we prove the guarantee, we state our proposed algorithm more formally.
+
+\begin{algorithm}[H] 
+	\caption{\textsc{Iterated Reweighted PCA}($\boldX$,$d$,$\boldsymbol{\alpha}_1$,$\boldsymbol{\alpha}_2$,$\boldsymbol{\beta}_1$,$\boldsymbol{\beta}_2$)}    
+	\begin{algorithmic}[1]   \label{alg:iterated_reweighted_PCA}           
+		\REQUIRE Data points $\boldX = \sqbracket{\boldX_1,\ldots,\boldX_N, \boldX'_1,\ldots,\boldX'_N}$, 
+		scaling parameters $\alpha_1,\alpha_2 \in \R$, 
+		tolerance parameters $\beta_1,\beta_2 > 0$.
+		\ENSURE Output $\hat{E}$ for $E$.
+		\STATE Initialize $\check{E} := 0$.
+		\STATE \textbf{for} $k =1,\ldots,d$ \textbf{do}:
+		\STATE \quad $F_1,F_2 :=$ \textsc{Reweighted PCA}($\boldP_{\check{E}^\perp}\boldX$,$\alpha_1^{(k)}$,$\alpha_2^{(k)}$,$\beta_1^{(k)}$,$\beta_2^{(k)}$).
+		\STATE \quad \textbf{if} $F_1 \neq 0$, then $\check{E} := \check{E}\oplus F_1$.
+		\STATE \quad \textbf{else} $\check{E} := \check{E}\oplus F_2$.
+		\STATE \quad \textbf{if} $\dim(\check{E}) = d$ \textbf{return} $\hat{E} := \check{E}$.
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{proof}
+	We provide an outline of the proof, omitting details that are similar to those in the proof of Theorem \ref{thm:finding_one_direction}. Suppose we are at Step 3, having just completed $k$ iterations, and have found $\check{E}$ so that $\dim(\check{E}) = d_k$ and $d(\check{E},E_k) < \epsilon_k$ for some subspace $E_k \subset E$. Call $\boldY := \boldP_{E^\perp}\boldX$, and $\check{\boldY} := \boldP_{\check{E}^\perp}\boldX$.
+	
+	By Lemma \ref{lem:moment_identifiability_consequence}, the remaining non-Gaussian part of $\boldY$ is either $(m,c\eta^2/\tilde{\gamma}_m)$-norm-moment-identifiable or it is $(m,c\eta^2)$-product-moment-identifiable (see Definition \ref{def:norm_and_product_moment_identifiability} below). Let us assume that the former holds since the other case is similar.  For convenience, we denote $\alpha = \alpha_1^{(k+1)}$, $\beta = \beta_1^{(k+1)}$ to be the scaling and tolerance parameters for the $k+1$-th iteration.
+	
+	By Theorem \ref{thm:robustness_for_non_Gaussian_eigenvalues}, we observe the existence of non-Gaussian eigenvalues in the $\boldPhi$ matrix for $\boldY$ for $\alpha$ small enough (specifically, $\alpha < \min\braces{c\eta^2 r/(CK^2)^r\tilde{\gamma}_m(d^{r+1}+(r+1)!),1/CK^2n}$):
+	\begin{align}
+	\abs*{\frac{1}{d-d_0}\sum_{i=1}^d\lambda_i(\boldPhi_{\boldP_E{\boldY},\alpha})-\frac{1}{2\alpha+1}} \geq \frac{c\eta^2}{d(m-1)!\tilde{\gamma}_m}\alpha^{m-1}.
+	\end{align}
+	
+	It remains to see that this signal is not destroyed by the noise stemming from our estimation of $\boldPhi_{\boldY,\alpha}$ by $\hat{\boldPhi}_{\check{\boldY},\alpha}$.
+	Note that we have
+	\begin{align*}
+	\abs{\E\braces{e^{-\alpha\norm{\boldY}_2^2}} - \E\braces{e^{-\alpha\norm{\check{\boldY}}_2^2}}} & \leq \E\braces{\paren{e^{-\alpha\norm{\boldY}_2^2}+ e^{-\alpha\norm{\check{\boldY}}_2^2}}\abs{\alpha\norm{\boldY}_2^2 - \alpha\norm{\check{\boldY}}_2^2}} \\
+	& \leq \alpha \E\braces{\abs{\norm{\boldY}_2^2 - \norm{\check{\boldY}}_2^2}} \\
+	& = \alpha \E\braces{\abs{\boldX^T\paren{\boldP_{E_k^\perp}-\boldP_{\check{E}^\perp}}\boldX}} \\
+	& \leq \alpha \norm{\boldP_{E_k^\perp}-\boldP_{\check{E}^\perp}} \E\braces{\norm{\boldX}_2^2} \\
+	& \leq n\alpha \epsilon_k.
+	\end{align*}
+	Here, the first inequality follows from Lemma \ref{lem:difference_of_exponentials}, while the last one follows from the fact that 
+	\[
+	\norm{\boldP_{E_k^\perp}-\boldP_{\check{E}^\perp}} \leq \norm{\boldP_{E_k^\perp}-\boldP_{\check{E}^\perp}}_F = d(\check{E},E_k).
+	\]
+	
+	By doing several computations similar to the above, we obtain
+	\begin{equation} \label{eq:bound_for_projected_Phis_1}
+	\norm{\boldPhi_{\boldY,\alpha} - \boldPhi_{\check{\boldY},\alpha}} \leq \text{poly}_m(n)\epsilon_k.
+	\end{equation}
+	Meanwhile, Theorems \ref{thm:Phi_concentration} and \ref{thm:Psi_concentration} imply that with high probability,
+	\begin{equation} \label{eq:bound_for_projected_Phis_2}
+	\norm{\hat{\boldPhi}_{\check{\boldY},\alpha} - \boldPhi_{\check{\boldY},\alpha}} \leq \epsilon_0
+	\end{equation}
+	We may combine \eqref{eq:bound_for_projected_Phis_1} and \eqref{eq:bound_for_projected_Phis_2} to get
+	\begin{align*}
+	\norm{\boldPhi_{\boldY,\alpha} - \hat{\boldPhi}_{\check{\boldY},\alpha}} & \leq \norm{\boldPhi_{\boldY,\alpha} - \boldPhi_{\check{\boldY},\alpha}} + \norm{\hat{\boldPhi}_{\check{\boldY},\alpha} - \boldPhi_{\check{\boldY},\alpha}} \\
+	& \leq \text{poly}_m(n)\epsilon_k+ \epsilon_0.
+	\end{align*}
+	
+	Suppose $\epsilon_0$ and $\epsilon_k$ are small enough so that
+	\begin{equation} \label{eq:first_req_for_eps}
+	\text{poly}_m(n)\epsilon_k + \epsilon_0 \lesssim \frac{\eta^2}{d(m-1)!\tilde{\gamma}_m}\alpha^{m-1}.
+	\end{equation}
+	Then the non-Gaussian eigenvalues continue to be outlier eigenvalues of $\hat{\boldPhi}_{\check{\boldY},\alpha}$, and can be discovered via truncation. One can formalize this using same argument as in the proof of Lemma \ref{lem:guarantee_for_Phi}. Finally, we again imitate the proof of Lemma \ref{lem:guarantee_for_Phi} and appeal to Theorem \ref{thm:Davis-Kahan}. This tells us that the eigenspace $F_1$ corresponding to the found eigenvalues is $\epsilon'$ close to that of the ``true'' eigenspace $F'$ in $E$ if
+	\begin{equation} \label{eq:second_req_for_eps}
+	\text{poly}_m(n)\epsilon_k + \epsilon_0 \lesssim \frac{\beta\epsilon'}{d^{3/2}},
+	\end{equation}
+	where we pick $\beta \asymp \eta^2\alpha^{m-1}/d(r-1)!\tilde{\gamma}_r$. If this is the case, we have have
+	\begin{equation*}
+	d(\check{E}\oplus F_1,E_k\oplus F') = \norm{\boldP_{\check{E}}+\boldP_{F_1} - \boldP_{E_k}+\boldP_{F'}}_F \leq \epsilon_k + \epsilon' =: \epsilon_{k+1}.
+	\end{equation*}
+	
+	Suppose the algorithm terminates in $l$ steps. Then $l \leq d$, and if we fix a desired $\epsilon_l < 1$, then iterating the inequalities \eqref{eq:first_req_for_eps} and \eqref{eq:second_req_for_eps} shows us that we just require
+	\begin{equation*}
+	\epsilon_0 \leq \epsilon_l/\text{poly}_m(n)^d = \epsilon_l/\text{poly}_{m,d}(n).
+	\end{equation*}
+	By Theorem \ref{thm:Phi_concentration}, this condition can be met with a sample size that grows according to $\text{poly}_{m,d}(n)$.
+\end{proof}
+
+\begin{definition} \label{def:norm_and_product_moment_identifiability}
+	Let $\tilde{\boldX}$ be an isotropic random vector in $\R^d$. For any positive integer $m$, $\gamma_r > \eta > 0$, we say that $\tilde{\boldX}$ is $(m,\mu)$-norm-moment-identifiable if
+	\begin{equation*}
+	\abs*{\E\braces{\norm{\tilde{\boldX}}_2^{2r}} - \E\braces{\norm{\boldg}_2^{2r}}} \geq \mu
+	\end{equation*}
+	for some integer $r \leq m/2$. Similarly, we say that $\tilde{\boldX}$ is $(m,\mu)$-product-moment-identifiable if
+	\begin{equation*}
+	\abs*{\E\braces{\inprod{\tilde{\boldX},\tilde{\boldX}'}^{r}} - \E\braces{\inprod{\boldg,\boldg'}^r}} \geq \mu
+	\end{equation*}
+	for some integer $r \leq m$.
+\end{definition}
+
+\begin{lemma} \label{lem:moment_identifiability_consequence}
+	In the NGCA model \eqref{def: NGCA model}, suppose $\tilde{\boldX}$ is $(m,\eta)$-moment-identifiable along every direction $\boldv \in E$ for some $\eta \in (0,1)$. Then for any proper subspace $E_k$ of $E$, $\boldP_{E_k^\perp}\tilde{\boldX}$ is either $(m,c\eta^2/\tilde{\gamma}_r)$-norm-moment-identifiable or it is $(m,c\eta^2)$-product-moment-identifiable.
+\end{lemma}
+
+\begin{proof}
+	Note that $\boldP_{E_k^\perp}\tilde{\boldX}$ is still $(m,\eta)$-moment-identifiable along every direction in $E\cap E_k^\perp$. As such, we may apply Theorem \ref{thm: first Gaussian test, robust} to conclude.
+\end{proof}
+
+\begin{lemma} \label{lem:difference_of_exponentials}
+	For any real numbers $a$ and $b$, we have $\abs{e^b-e^a} \leq (e^a+e^b) \abs{b-a}$.
+\end{lemma}
+
+\begin{proof}
+	Use the fact that $e^x(x-1)+1 \geq 0$ for all real $x$.
+\end{proof}
+
+\section{Proof of Corollary \ref{cor:finding_a_sphere}} \label{sec:finding_a_sphere}
+
+\begin{proof}
+	By symmetry, we know that $\boldPhi_{\tilde{\boldX},\alpha} = c_0 \boldI_d$ is a scalar matrix. To compute $c_0$, we write
+	\begin{equation*}
+	c_0 = \frac{1}{d}\Tr(\boldPhi_{\tilde{\boldX},\alpha}) = \frac{1}{d} \frac{\E\braces{e^{-\alpha\norm{\tilde{\boldX}}_2^2}\norm{\tilde{\boldX}}_2^2}}{\E\braces{e^{-\alpha\norm{\tilde{\boldX}}_2^2}}} = \frac{1}{d} \frac{e^{-\alpha d}d}{e^{-\alpha d}} = 1.
+	\end{equation*}
+	Combining this with Lemma \ref{lem: formula for Phi and Psi for Gaussian} and \ref{lem:Phi_and_Psi_diagonalization} allows us to write
+	\begin{equation*}
+	\boldPhi_{\boldX,\alpha} = \left(
+	\begin{array}{c|c}
+	\boldI_d & 0 \\
+	\hline
+	0 & (2\alpha+1)^{-1}\boldI_{n-d},
+	\end{array}
+	\right).
+	\end{equation*}
+	By our choice of $\alpha$, this gives an eigengap of
+	\begin{equation*}
+	1 - \frac{1}{1+2\alpha} \geq \alpha = \frac{c}{n}.
+	\end{equation*}
+	Our assumption that $N \gtrsim dn^2(n+\log(1/\delta))/\epsilon^2$ together with Theorem \ref{thm:Phi_concentration} then guarantees that
+	\begin{equation} \label{eq:Phi_deviation_for_sphere}
+	\norm{\hat{\boldPhi}_{\boldX,\alpha} - \boldPhi_{\boldX,\alpha}} \leq \frac{c\epsilon}{\sqrt{d}n}
+	\end{equation}
+	with high probability. We may now apply Theorem \ref{thm:Davis-Kahan} to see that $d(F,E) \leq \epsilon$ where $F$ is the subspace spanned by the top $d$ eigenvectors of $\hat{\boldPhi}_{\boldX,\alpha}$.
+	
+	It remains to see that $F$ is discovered by the algorithm. But then \eqref{eq:Phi_deviation_for_sphere} implies that
+	\begin{align*}
+	\lambda_i(\hat{\boldPhi}_{\boldX,\alpha}) - \frac{1}{1+2\alpha} \geq \lambda_i(\boldPhi_{\boldX,\alpha}) - \frac{1}{1+2\alpha} - \frac{c\epsilon}{\sqrt{d}n} \geq \frac{\alpha}{2}
+	\end{align*}
+	for $1 \leq i \leq d$, and similarly,
+	\begin{align*}
+	\lambda_i(\hat{\boldPhi}_{\boldX,\alpha}) - \frac{1}{1+2\alpha} \leq \lambda_i(\boldPhi_{\boldX,\alpha}) - \frac{1}{1+2\alpha} + \frac{c\epsilon}{\sqrt{d}n} \leq \frac{\alpha}{4}
+	\end{align*}
+	for $d+1 \leq i \leq n$. The final inequality in both lines holds after choosing $c$ to be small enough. We therefore see that the top $d$ eigenvalues are indeed those that are identified by truncating at level $\beta = \alpha/3$.
+\end{proof}
+
+
+\end{document}

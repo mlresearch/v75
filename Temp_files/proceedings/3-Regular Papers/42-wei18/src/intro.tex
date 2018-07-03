@@ -1,0 +1,120 @@
+
+The adversarial Multi-Armed Bandits (MAB) problem~\citep{auer2002nonstochastic} is a classic online learning problem with partial information feedback.
+In this problem, at each round the learner selects one of the $K$ arms while simultaneously the adversary decides the loss of each arm,
+then the learner suffers and observes (only) the loss of the picked arm.
+The goal of the learner is to minimize the regret, that is, the difference between her total loss and the total loss of the best fixed arm.
+The classic Exp3 algorithm~\citep{auer2002nonstochastic} achieves a regret bound of order $\tilde{\mathcal{O}}(\sqrt{TK})$ after $T$ rounds,\footnote{%
+Throughout the paper we use the notation $\tilde{\mathcal{O}}(\cdot)$ to suppress factors that are poly-logarithmic in $T$ and $K$.}
+which is worst-case optimal up to logarithmic factors.
+
+There are several existing works on deriving more adaptive bandit algorithms, replacing the dependence on $T$ in the regret bound
+by some data-dependent quantity that is $\mathcal{O}(T)$ in the worst-case but could be potentially much smaller in benign environments.
+Examples of such data-dependent quantities include the loss of the best arm~\citep{allenberg2006hannan, foster2016learning} or the empirical variance of all arms~\citep{hazan2011better, bubeck2017sparsity}. 
+Extensions to more general settings such as semi-bandit, two-point bandit, and graph bandit have also been studied~\citep{neu2015first, chiang2013beating, lykouris2017small}.
+These adaptive algorithms not only enjoy better performance guarantees,
+but also have important applications for other areas such as game theory~\citep{foster2016learning}.
+
+In this work, we propose a novel and generic bandit algorithm in the more general semi-bandit setting
+(formally defined in Section~\ref{section:notations}).
+By instantiating this generic algorithm differently,
+we obtain various adaptive algorithms with new data-dependent expected regret bounds that improve previous work.
+When specified to the MAB setting with $\ell_{t,i} \in [-1,1]$ denoting the loss of arm $i$ at time $t$ (and $\ell_{0,i} \triangleq 0$),
+these bounds replace the dependence on $T$ by (also see Table~\ref{table:summary} for a summary):
+\begin{itemize}
+\item 
+$\sum_{t=1}^T (\ell_{t,i^\star} - \frac{1}{T}\sum_{s=1}^T\ell_{s,i^\star})^2$,
+that is, the (unnormalized) variance of the best arm $i^\star$.
+Similar existing bounds of~\citep{hazan2011better, hazan2011simple, bubeck2017sparsity} replace $T$ by the average of the variances of all arms.
+In general these two are incomparable. 
+However, note that the variance of the best arm is always bounded by $K$ times the average variance,
+while it is possible that the latter is of order $\Theta(T)$ and the former is only $\mathcal{O}(1)$. (Section~\ref{subsubsection:variation bound})
+
+\item
+$K\sum_{t=1}^T |\ell_{t,i^\star} - \ell_{t-1,i^\star}|$, that is, ($K$ times) the first-order path-length of the best arm. (Section~\ref{subsubsection:path-length})
+
+\item
+$\sum_{i=1}^K\sum_{t=1}^T |\ell_{t,i} - \ell_{t-1,i}|$, that is, the sum of the first-order path-lengths of all arms.
+Importantly, there is also an additional negative term in the regret similar to the one of~\citep{syrgkanis2015fast} for the full information setting.
+This implies a fast convergence rate of order $1/T^\frac{3}{4}$ for several game playing settings with bandit feedback. 
+(Sections~\ref{subsection:first_order_better_k})
+
+\item
+A new quantity in terms of some second-order excess loss (see Eq.~\eqref{eqn:new_excess_loss_bound} for the exact form). 
+While the bound is not easy to interpret on it own, 
+it in fact automatically and simultaneously implies the so-called ``small-loss'' bound $\tilde{\mathcal{O}}\Big(\sqrt{K\sum_{t=1}^T \ell_{t,i^\star}}\Big)$,\footnote{%
+Assuming that losses are non-negative in this case as it is common for small-loss bounds.
+}
+{\it and} logarithmic regret $\mathcal{O}(\frac{K\ln T}{\Delta})$ if there is an arm whose expected loss is always smaller than those of other arms by a fixed gap $\Delta$
+(e.g. the classic i.i.d. MAB setting~\citep{lai1985asymptotically}). (Section~\ref{section:best of both worlds})
+
+\end{itemize}
+
+These bounds are incomparable in general. 
+All of them have known counterparts in the full information setting (see for example~\citep{steinhardt2014adaptivity} and~\citep{de2014follow}),
+but are novel in the bandit setting to the best of our knowledge.
+Note that for the first two results that depend on some quantities of only the best arm, 
+we require tuning a learning rate parameter in terms of these (unknown) quantities.
+Obtaining the same results with parameter-free algorithms remains open, even for the full information setting.
+However, for the other results, we indeed provide parameter-free algorithms based on a variant of the doubling trick.
+
+Our general algorithm falls into the Online Mirror Descent (OMD) framework (see for example~\citep{hazan2016introduction})
+with the ``log-barrier'' as the regularizer, originally proposed in~\citep{foster2016learning}.
+However, to obtain our results, two extra crucial ingredients are needed:
+\begin{itemize}
+\item
+First, we adopt the ideas of optimism and adaptivity from~\citep{steinhardt2014adaptivity},
+which roughly speaking amounts to incorporating a correction term as well as an optimistic prediction into the loss vectors.
+In~\citep{steinhardt2014adaptivity}, this technique was developed in the Follow-the-Regularized-Leader (FTRL) framework,\footnote{%
+Although it was confusingly referred as OMD in~\citep{steinhardt2014adaptivity}.}
+but it is in fact crucial here to re-derive it in the OMD framework (due to the next ingredient).
+The challenges here are to come up with the right correction terms and optimistic predictions.
+
+\item
+Second, we apply an individual and increasing learning rate schedule for one of the path-length results.
+Such increasing learning rate schedule was originally proposed in~\citep{bubeck2016kernel} and also recently used in~\citep{agarwal2017corralling},
+but for different purposes.
+
+\end{itemize}
+
+Although most algorithmic techniques we use in this work have been studied before,
+combining all of them, in the general semi-bandit setting, requires novel and non-trivial analysis.
+The use of log-barrier in the semi-bandit setting is also new as far as we know.
+
+\paragraph{Related work.}
+There is a rich literature in deriving adaptive algorithms and regret bounds for online learning with full information feedback
+(see recent work~\citep{luo2015achieving, koolen2015second, van2016metagrad, orabona2016coin, cutkosky2017online} and references therein),
+as well as the stochastic bandit setting (such as~\citep{garivier2011kl, lattimore2015optimally, degenne2016anytime}).
+Similar results for the adversarial bandit setting, however, are relatively sparse and have been mentioned above.
+While obtaining regret bounds that depend on the quality of the best action is common in the full information setting,
+it is in fact much more challenging in the bandit setting, 
+and the only existing result of this kind is the ``small-loss'' bound~\citep{allenberg2006hannan, foster2016learning}.
+We hope that our work opens up more possibilities in obtaining these results,
+despite some recent negative results discovered by~\citet{gerchinovitz2016refined}.
+
+\citet{chiang2013beating} proposed bandit algorithms with second-order path-length bounds, but their work requires stronger two-point feedback.
+The implication of path-length regret bounds on faster convergence rate for computing equilibriums was studied in~\citep{syrgkanis2015fast}.
+Other examples of adaptive online learning leading to faster convergence in game theory include~\citep{rakhlin2013optimization, daskalakis2015near, foster2016learning}.
+
+There exist several bandit algorithms that achieve almost optimal regret in both the adversarial setting ($\mathcal{O}(\sqrt{TK})$) and 
+the i.i.d. setting ($\mathcal{O}(\sum_{i: \Delta_i \neq 0}\frac{\ln T}{\Delta_i})$ where $\Delta_i$ is the gap between the expected loss of arm $i$ and the one of the optimal arm)~\citep{bubeck2012best, seldin2014one, auer2016algorithm, seldin2017improved}.
+Our results in Section~\ref{section:best of both worlds} have slightly weaker guarantee for the i.i.d. setting (at most $K$ times worse specifically)
+since it essentially replaces all $\Delta_i$ by $\min_{i: \Delta_i \neq 0} \Delta_i$.
+On the other hand, however, our results have several advantages compared to previous work.
+First, our guarantee for the adversarial setting is stronger since it replaces the dependence on $T$ by the loss of the best arm.
+Second, our logarithmic regret result applies to not just the simple i.i.d. setting, 
+but the more general setting mentioned above where neither independence nor identical distributions is required.
+Our dependence on $\ln T$ is also better than previous works,
+resolving an open problem raised by~\citet{seldin2017improved}.
+Finally, our algorithm and analysis are also arguably much simpler, without performing any stationarity detection or gap estimation.
+Indeed, the result is in some sense algorithm-independent and solely through a new adaptive regret bound Eq.~\eqref{eqn:new_excess_loss_bound},
+similar to the results in the full-information setting such as~\citep{gaillard2014second}.
+
+Using a self-concordant barrier as regularizer was proposed in the seminal work of~\citep{abernethy2008competing} for general linear bandit problems.
+The log-barrier is technically not a barrier for the decision set of the semi-bandit problem, 
+but still it exhibits many similar properties as shown in our proofs.
+Optimistic FTRL/OMD was developed in~\citep{chiang2012online, rakhlin2013online}.
+As pointed out in~\citep{steinhardt2014adaptivity}, incorporating correction terms in the loss vectors can also be viewed as using adaptive regularizers,
+which was studied in several previous works, mostly for the full information setting (see~\citep{mcmahan2017survey} for a survey).
+
+
+

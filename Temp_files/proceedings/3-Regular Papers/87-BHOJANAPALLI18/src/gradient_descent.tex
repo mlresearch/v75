@@ -1,0 +1,49 @@
+\section{Max-Cut}\label{sec:maxcut}
+In this section we present our results for the Max-Cut problem which finds applications in clustering related problems. In a seminal paper, \cite{goemans1995improved} defined the following SDP to solve the Max-Cut problem: $\min_{X\in \Rnn} \ip{C}{X}, \mbox{s.t. } X_{ii} = 1 \; \forall \; 1 \leq i \leq n, X \succeq 0 $, where $n$ is the number of vertices in the given graph and $C$ is its adjacency matrix. Since the constraint set also satisfies $\trace{X}=n$, we consider the following penalized, non-convex version of the problem.
+% \begin{align*}	& \min_{X\in \Rnn} \ip{C}{X} \\
+%	& \mbox{s.t. } X_{ii} = 1 \; \forall \; 1 \leq i \leq n \\
+%	& \qquad X \succeq 0,
+%\end{align*}
+\begin{align}
+	\widehat{L}_{\mu}(U) \defeq \ip{C+G}{U\trans{U}} + \mu\left(\left(\ip{I}{U\trans{U}}-n\right)^2 + \sum_{i=1}^{n}\left(\ip{e_i \trans{e_i}}{U\trans{U}}-1\right)^2\right),\label{eqn:maxcut}
+\end{align}
+where $G$ is a random symmetric Gaussian matrix.  Let $\widehat F_{\mu}(UU^T) = \widehat L_{\mu} (U)$. After some simplifying computations, we have the following corollary of Theorem~\ref{thm:optimal_approx_compact}.
+\begin{corollary}\label{cor:maxcut}
+There exists an absolute numerical constant $c_1$ such that the following holds. With probability greater than $1-\delta$,
+every $(\eps, \gamma)$-SOSP $U$ of the perturbed Max-Cut problem $\widehat{L}_{\mu}(U)$~\eqref{eqn:maxcut} with:
+\begin{align*}\epsilon \leq \frac{1}{c_1} \left(\frac{\gamma \sigma_G^2}{\mu n}\right)^{2/3},~~ \text{ and } ~~  k = \tilde{\Omega} \left( \sqrt{n \log\left(\frac{\mu^2 \sqrt{n}}{\sigma_G}\right)}\right),
+\end{align*}
+satisfies $	\widehat{F}_{\mu}(UU^T) - \widehat{F}_{\mu}(X^*) \leq \gamma \sqrt{\epsilon} \trace{X^*} +\frac{1}{2} \epsilon \frob{U}$, where $X^*$ is a global optimum of $\widehat{F}_{\mu}(X)$.
+%\begin{align*}
+%	\widehat{L}_{\mu}(U) - \widehat{L}_{\mu}(U^*) \leq \gamma \sqrt{\epsilon} \trace{U^* \trans{U^*}} + \epsilon \frob{U}.
+%\end{align*}
+\end{corollary}
+The above result states that for the penalized version of the perturbed Max-Cut SDP, the Burer--Monteiro approach finds an approximate global optimum as soon as the factorization rank $k = \tilde{\Omega}(\sqrt{n})$ (with high probability). Existing results for Max-Cut using this approach either only handle exact SOSPs~\citep{boumal2016non}, or require $k=n+1$~\citep{boumal2016globalrates}, or require $k$ that is dependent on $\frac{1}{\eps}$~\citep{pmlr-v65-mei17a}. Moreover, complexity per iteration scales only linearly with the number of edges in the graph. %However, current analysis is required to set $\epsilon$ to be fairly small which can lead to a super-linear algorithm; we leave further tightening of dependence on $\epsilon$ for future work.
+
+
+\section{Gradient Descent}\label{sec:gd}
+In previous sections we have seen that for the perturbed penalty objective~\eqref{eq:smoothed}, under some technical conditions on the SDP, with high probability upon appropriate choice of the parameters, every approximate SOSP is approximately optimal. Second-order methods such as cubic regularization and trust regions~\citep{nesterov2006cubic,cartis2012complexity} converge to an approximate SOSP in polynomial time.
+%More recently,  \citet{lee2016gradient} have shown that even first order methods such as gradient converge to SOSPs and avoid saddle points from almost all initializations. \praneeth{Their result does not quite say this. It says that for any given saddle point, there is a measure zero set that converges to it. However, there could be infinite saddle points and you cannot say something about not converging to any of them.}
+While gradient descent with random initialization can take exponential time to converge to an SOSP~\citep{du2017gradient}, a recent line of work starting with~\citet{ge2015escaping} has established that perturbed gradient descent (PGD)\footnote{This is vanilla gradient descent but with additional random noise added to the updates when the gradient magnitude becomes smaller than a threshold.} converges to an SOSP as efficiently as second-order methods in the worst case, with high probability. In particular we have the following \emph{almost dimension free} convergence rate for PGD from~\citep{jin2017escape}.
+
+\begin{theorem}[Theorem 3 of \citet{jin2017escape}]
+Let $f$ be $l$-smooth (that is, its gradient is $l$-Lipschitz) and have a $\rho$-Lipschitz Hessian. There exists an absolute constant $c_{\max}$ such that, for any $\delta \in (0, 1)$, $\eps \leq \frac{l^2}{\rho}$, $\Delta_f \geq f(X_0) -f^*$, and constant $c \leq c_{\max}$, $PGD(X_0,l,\rho,\eps,c,\delta,\Delta_f)$ applied to the cost function $f$ outputs a $(\rho^2,\eps)$ SOSP with probability at least $1-\delta$ in
+$$O \left( \frac{(f(X_0)-f^*)l}{\eps^2} \log^4 \left( \frac{nkl \Delta_f}{\eps^2 \delta} \right) \right)$$
+iterations.
+\end{theorem}
+
+The above theorem requires the function $f$ to be smooth and Hessian-Lipschitz. The next lemma states that the perturbed penalty objective~\eqref{eq:smoothed} satisfies these requirements---proof in Appendix~\ref{apdx:gd}. %The lemma below characterizes the properties of the perturbed penalty objective \eqref{eq:smoothed}. Let $\|\calA\|_F^2 =\sum_{i=1}^m \|A_i\|_F^2$.
+\begin{lemma}\label{lem:gd_param}
+In the region $\{U \in \Rnk : \|U\|_F \leq \tau \}$ for some $\tau > 0$, the cost function $\hat L_\mu(U)$ in~\eqref{eq:smoothed} is $l$-smooth and its Hessian is $\rho$-Lipschitz with:
+\begin{itemize} 
+	\item $l \leq 2\|C+\tG\|_2 + 4 \mu \|\calA\| \|\vb\|_2 + 12 \mu \tau^2 \|\calA\|^2$, and
+	\item $\rho \leq 16\mu \tau \|\calA\|^2$.
+\end{itemize}
+Here, $\|\calA\|$ is as defined in~\eqref{eq:normofA}. Notice furthermore that, with high probability, $\|G\|_2 \leq 3\sG\sqrt{n}$. In that event, $\|C+G\|_2 \leq \|C\|_2 + 3\sG\sqrt{n}$.
+\end{lemma}
+
+Combining this lemma with the above theorem shows that the perturbed gradient method converges to an $(\eps, \rho^2)$ SOSP in $\widetilde{O}(\frac{1}{\eps^2})$ steps (ignoring all other problem parameters). This can be improved to $\widetilde{O}(\frac{1}{\eps^{1.75}})$ using a variant of Nesterov's accelerated gradient descent~\citep{jin2017accelerated}. 
+Moreover, if the objective function is (restricted) strongly convex in the vicinity of the local minimum, then we can further improve the rates to $\textrm{poly} \log\left(\frac{1}{\epsilon}\right)$~\citep{jin2017escape}. This property is satisfied for problems where $\calA$ meets either restricted isometry conditions or when $\calA$ pertains to a uniform sampling of incoherent matrices~\citep{agarwal2010fast, negahban2012restricted,sun2014guaranteed}. See~\citep{bhojanapalli2016dropping} for more discussions on restricted strong convexity close to the global optimum.
+
+The complexity of the algorithm is given by Gradient-Computation-Time $\times $ Number of iterations. Computing the gradient in each iteration requires $O\left(Zk+nk^2 + mnk \right)$ arithmetic operations where $Z$ is the number of non-zeros in $C$ and the constraint matrices. For dense problems this becomes $O\left( mn^2k \right)$. However, most practical problems tend to have a certain degree of sparsity in the constraint matrices so that the computational complexity of such a method can be significantly smaller than the worst-case bound.
+

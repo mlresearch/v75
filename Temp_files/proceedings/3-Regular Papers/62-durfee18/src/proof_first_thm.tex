@@ -1,0 +1,83 @@
+\section{Proof of Theorem~\ref{thm:applyKatyusha}}\label{sec:katyushaproof}
+
+In this section, we prove our primary result, stated in \Cref{thm:applyKatyusha}.
+Specifically, we further examine whether our strong initialization distance bound will allow us to improve the running time with black-box accelerated stochastic gradient descent methods.
+The first step towards this is to apply smoothing reductions to our objective function.
+
+\subsection{Smoothing the Objective Function and Adding Strong Convexity}
+
+As before, we let $\xx^* = \arg\min_{\xx} \norme{\AA\xx - \bb}$. For clarity, we will borrow some of the notation from \cite{AllenZhuH16} to more clearly convey their black-box reductions.% to reduce the objective function to one with smoothness and strong convexity, along with its corresponding runtime and approximation guarantees.
+
+\begin{definition}
+	A function $f(x)$ is $(L,\sigma)$-\textit{smooth-sc} if it is both $L$-\textit{smooth} and $\sigma$-\textit{strongly-convex}.
+\end{definition}
+
+\begin{definition}
+	An algorithm $\calA(f(x),x_0)$ is a $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer} if $f(x)$ is  $(L,\sigma)$-\textit{smooth-sc} and $\textsc{Time}_\calA(L,\sigma)$ is the time it takes $\calA$ to produce $x'$ such that $f(x') - f(x^*) \leq \frac{f(x_0) - f(x^*)}{4}$ for any starting $x_0$.
+\end{definition}
+
+Allen-Zhu and Hazan assume access to efficient $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer} algorithms, and show how a certain class of objective functions can be slightly altered to meet the smoothness and strong convexity conditions to apply these algorithms without losing too much in terms of error and runtime.
+
+
+\begin{theorem}[Theorem C.2 from \cite{AllenZhuH16}]\label{thm:reductionAlgo}
+	Consider the problem of minimizing an objective function
+	\[f(x) = \frac{1}{n}\sum_{i=1}^n f_i(x) \]
+	such that each $f_i(\cdot)$ is $G$-Lipschitz continuous. Let $\xx_0$ be a starting vector such that $f(\xx_0) - f(\xx^*) \leq \Delta$ and $\|\xx_0 - \xx^*\|_2^2 \leq \Theta$. 
+	Then there is a routine that takes as input a $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer}, $\calA$, alongside $f(x)$ and $x_0$, with $\beta_0 = \Delta/G^2$, $\sigma_0 = \Delta/\Theta$ and $T = \log_2(\Delta/\epsilon)$, and produces $x_T$ satisfying $f(x_T) - f(x^*) \leq O(\epsilon)$ in total running time \[\sum_{t=0}^{T-1}\textsc{Time}_{\calA}(2^t/\beta_0,\sigma_0\cdot 2^{-t}).\] 
+\end{theorem}
+
+
+It is then straightforward to show that our objective function fits the necessary conditions to utilize \Cref{thm:reductionAlgo}.
+
+
+\begin{lemma}\label{lem:minEqualSumLipsFunctions}
+	If $\AA$ is IRB, then the function $\norm{\AA\xx - \bb}_1$ can be written as $\frac{1}{n}\sum_{i=1}^n f_i(\xx)$ such that each $f_i(\cdot)$ is $O(\sqrt{nd})$-Lipschitz continuous.
+\end{lemma}
+
+
+\begin{proof}
+	By the definition of 1-norm,
+	\[\norm{\AA\xx - \bb}_1 = \sum_{i=1}^n\abs{\AA_{i,:}\xx-\bb_i}.\]
+	We then set $f_i(\xx) = n \cdot \abs{\AA_{i,:}\xx-\bb_i}$ and the result follows from Lemma~\ref{lem:easyLipscitz}.
+\end{proof}
+
+We can then incorporate our objective into the routine from \Cref{thm:reductionAlgo}, along with our initialization of $\xx_0$.
+
+\begin{lemma}\label{lem:applyReduction}
+	Let $\calA$ be a $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer}, along with objective $\norm{\AA\xx -\bb}_1$ such that $\AA$ is IRB and $\xx_0 = \AA^T \bb$, then the routine from \Cref{thm:reductionAlgo} produces
+	$\xx_T$ satisfying $f(\xx_T) - f(\xx^*) \leq O(\epsilon)$ in total running time \[ \sum_{t=0}^{T-1}\textsc{Time}_\calA\left(O\left(\frac{nd2^t}{\Delta}\right),O\left(\frac{n\Delta}{d \cdot f(\xx^*)^2 2^t}\right)\right).\] 
+\end{lemma}
+
+\begin{proof}
+	Lemma~\ref{lem:minEqualSumLipsFunctions} implies that we can apply \Cref{thm:reductionAlgo} where $G = O(\sqrt{nd})$, and Lemma~\ref{lem:easyInit} gives $\Theta = O(\frac{d}{n}f(x^*)^2)$.
+	We then obtain $\beta_0 = O(\frac{\Delta}{nd})$ and $\sigma_0 = O(\frac{n\Delta}{d f(x^*)^2})$ and substitute these values in the running time of \Cref{thm:reductionAlgo}.
+\end{proof}
+
+\subsection{Applying Katyusha Accelerated SGD}\label{subsec:applykatyusha}
+
+Now that we have shown how our initialization can be plugged into the smoothing construction of \cite{AllenZhuH16}, we simply need an efficient $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer} to obtain all the necessary pieces to prove our primary result.
+
+\begin{theorem}[Corollary 3.8 in \cite{AllenZhu17}]\label{thm:katyushaRuntime}
+	There is a routine that is a $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer} where $\textsc{Time}_\calA(L,\sigma) = d \cdot O(n + \sqrt{nL/\sigma})$.
+\end{theorem}
+
+We can then precondition the matrix to give our strong bounds on the initialization distance of $\xx_0$ from the optimal $\xx^*$, which allows us to apply the smoothing reduction and Katyusha accelerated gradient descent more efficiently. 
+
+\applyKatyusha*
+\begin{proof}	
+	Once again, by preconditioning with Lemma~\ref{lem:lewisAndRotate} and error $O(\epsilon)$ we obtain a matrix $\tilde{\AA}\UU \in \R^{N \times d}$ and a vector $\tilde{\bb} \in \R^n$ in time $O(nnz(\AA)\log{n} + d^{\omega-1}\min\{d\epsilon^{-2}\log{n},n\})$.
+	We utilize the routine in \Cref{thm:katyushaRuntime} as the $\textsc{Time}_\calA(L,\sigma)$-\textit{minimizer} for Lemma~\ref{lem:applyReduction}, and plug the time bounds in to achieve an absolute error of $O(\delta)$ in the preconditioned objective function with the following running time:
+	\begin{align*} 
+	d \cdot O\left( \sum_{t=0}^{T-1}N + \sqrt{N\cdot\left(\frac{Nd 2^{t}}{\Delta}\right)\left(\frac{d\cdot f(x^*)^2 2^{t}}{N\Delta}\right)}\right) 
+	&= d \cdot O\left( N\log{\frac{\Delta}{\delta}} +  \frac{d\sqrt{N}\cdot f(x^*)}{\Delta}\sum_{t=0}^{T-1} 2^{t}\right) \\ &= d \cdot O\left( N\log{\frac{\Delta}{\delta}} + \frac{d\sqrt{N}\cdot f(x^*)}{\delta}\right) .
+	\end{align*}
+
+	To achieve our desired relative error of $\epsilon$ we need to set $\delta = O(\epsilon f(\xx^*))$. Technically, this means that the input to gradient descent will require at least a constant factor approximation to $f(\xx^*)$. We will show in \Cref{subsec:binarySearch} that we can assume that we have such an approximation at the cost of a factor of $\log{n}$ in the running time. We assume that $f(\xx^*) \geq n^{-c}$ for some fixed constant\footnote{Note that if $f(\xx^*) = 0$, then our initialization $\xx_0 = \AA^T \bb$ will be equal to $\xx^*$.} $c$ in order to upper bound $\log\frac{\Delta}{\delta}$, which gives a runtime of $O\left(d N\log (n\epsilon^{-1}) + \frac{d\sqrt{N}\cdot }{\epsilon}\right)$.
+		
+	Here, we used the fact that $N = O(d\epsilon^{-2}\log{n})$, but can also assume that computationally, $N \leq n$, as will be addressed in \Cref{subsec:simulatedSplitting}. This gives a runtime of 
+	\[
+	O\left(\min\{d^{2.5} \epsilon^{-2} \sqrt{\log {n}} , nd\log (n/\epsilon) + \sqrt{n}d^2\epsilon^{-1} \}\right),
+	\] which, combined with our preconditioning runtime (where $\Upsilon$ is a lower order term if we assume the $\epsilon$ is at most polynomially small in $n$) and the factor $\log{n}$ overhead from estimating $f(\xx^*)$ which we address in \Cref{subsec:binarySearch}, gives the desired runtime. Furthermore, since the error in our preconditioning was $O(\epsilon)$, by Lemma~\ref{lem:lewisAndRotate} we have achieved a solution with $O(\epsilon)$ relative error in the original problem.
+\end{proof}
+
+%\input{simulated_sampling}

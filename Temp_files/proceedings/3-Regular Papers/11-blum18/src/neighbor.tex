@@ -1,0 +1,45 @@
+\section{Estimating the Performance of $k$-Nearest Neighbor Algorithms}
+\label{sec:neighbor}
+%\subsection{The $k$-Nearest Neighbor Algorithm}
+In this section, we develop estimators for estimating the performance of $k$-Nearest Neighbor ($\knn$) algorithms \citep{FH51,FH89,CH67}. 
+
+Let $\calD$ be a distribution on a ground set $X$. Suppose every point $x\in X$ has a (true) label $f(x)\in\{0,1\}$. In addition, we have a distance metric $\D :X\times X\rightarrow \mathbb{R}_{\geq 0}$ that is symmetric, nonnegative and satisfies the triangle inequality. The \emph{$k$-Nearest Neighbor algorithm with soft predictions} ($\knnsoft$) is given a pool $S$ of unlabeled examples, sampled iid from $\calD$, and for any input $x\in X$, finds its $k$ nearest examples $x_1,x_2,\cdots, x_k\in S$ with respect to the distance metric $\D$ and outputs $\hat{f}(x)=\frac{1}{k}\sum\limits_{i=1}^kf(x_i)$ as an approximation of $f(x)$. In this paper, we assume the $k$ nearest examples are calculated by an oracle $M$, i.e., when given $x$ and $S$, $M$ calculates the $k$ nearest examples to $x$ in $S$. There may be ties when distances to $x$ are compared and we assume $M$ breaks ties according to some (probably random) mechanism.
+
+The \emph{$k$-Nearest Neighbor algorithm with hard predictions} ($\mv$) does the same thing as $\knnsoft$, except that $\hat{f}(x)$ is chosen as the majority vote $I[\frac{1}{k}\sum\limits_{i=1}^kf(x_i)>0.5]$.\footnote{$I[\cdot]$ is the indicator function of a statement, which takes value 1 if the statement is true and value 0 if the statement is false.}
+
+For both algorithms, we use $\err(x)=|\hat f(x)-f(x)|$ to denote the $L^1$ error on point $x\in X$.  For soft prediction, we will penalize the algorithm by taking the $p$th power of the $L^1$ error for positive integer $p$.
+
+
+
+
+\subsection{Estimating the Performance of $\knnsoft$}
+\label{subsec:knnsoft}
+Given a loss function $\loss(\cdot)$, we can measure the performance of $\knnsoft$ by its expected loss $\mathbb E_{x}[\loss(\err(x))]$. The expectation is over the random draw of $x$ with respect to distribution $\calD$ and the randomness of the oracle $M$ when ties occur. In this paper, we focus on the $p$th-power loss $\mathbb E_{x}[(\err(x))^p]$ for positive integer $p$. Let $\tsoft_{\calD} (f,\epsilon,S,k)$ denote the task of estimating the expected loss of a $\knnsoft$ algorithm up to an additive error $\epsilon$ with success probability at least $\frac{2}{3}$. We consider the estimation task in the active model, in which the estimator is only allowed to query labels of examples in an unlabeled pool sampled iid from $\calD$. In addition to the given unlabeled pool $S$ from which $\knnsoft$ would learn, we allow the $\tsoft_{\calD} (f\ac,\epsilon,S,k)$ estimator to sample fresh unlabeled examples and query their labels. We assume the estimator has access to the oracle $M$.%The task of $\knn(f,\epsilon,N)$ is to approximate the expected loss of the $\knn$ algorithm when the true labels are $f$ and the training set has size $N$ within additive error $\epsilon$. When showing upper bound results, we assume the tie breaking mechanism $M$ is given as input and when showing lower bound results, we assume the $\knn(f,\epsilon,N)$ algorithm can assume any $M$ it likes.
+\begin{theorem}
+\label{thm:pth}
+Suppose we consider the $p$th-power loss for $p\in\mathbb N^*$. There is an estimator $\tsoft_{\calD}(f\ac,\epsilon,S,k)$ using $O(\frac{p}{\epsilon^2})$ queries on $N+O(\frac{1}{\epsilon^2})$ unlabeled examples when the unlabeled pool $S$ has size $N$. The underlying distribution $\calD$ is assumed unknown to the estimator. Moreover, the estimator has success probability at least $\frac{2}{3}$ for \emph{any} unlabeled pool $S$.
+\end{theorem}
+The proof of Theorem \ref{thm:pth} is in Appendix \ref{sec:pthproof}. We will show (Theorem \ref{thm:pthpowerlower} in Appendix \ref{sec:lower}) that the $O(\frac{p}{\epsilon^2})$ query complexity is optimal.
+
+\subsection{Finding an Approximately-Best Choice of $k$}
+\label{subsec:bestk}
+Based on the result in Section \ref{subsec:knnsoft}, we are able to construct an algorithm that approximately optimizes the choice of $k$ in the $\knnsoft$ algorithm.
+
+Suppose we have active access to the true label $f$ with respect to distribution $\calD$ over ground set $X$ with distance metric $\D$. Suppose the size of the unlabeled pool $S$ is fixed to be $N$. We use $\mathrm{loss}_k$ to denote the expected loss of the $\knnsoft$ algorithm and consider how the $\knnsoft$ algorithm performs with different values of $k$. We assume the oracle $M$ uses the same tie-breaking mechanism for different values of $k$. Specifically, given $x$ and $S$, $M$ arranges the examples in $S$ as $x_1,x_2,\cdots,x_N$ so that $\forall i,\D(x_i,x)\leq \D(x_{i+1},x)$. $x_1,x_2,\cdots,x_k$ are taken by $\knnsoft$ as the $k$ nearest neighbors of $x$ for any $k\in\{1,2,\cdots,N\}$.
+
+
+We say $k$ is $\epsilon$-approximately-best, if $\forall k'\in\{1,2,\cdots, N\},\mathrm{loss}_{k'}\geq \mathrm{loss}_{k}-\epsilon$. The following theorem states that we can find an $\epsilon$-approximately-best $k$ using a small number of queries. The proof of the theorem is in Appendix \ref{sec:bestkproof}.
+\begin{theorem}
+\label{thm:bestk}
+Suppose $\knnsoft$ algorithms with an unlabeled pool $S$ of size $N$ are measured by $p$th-power loss for $p\in\mathbb N^*$. Suppose $\epsilon\in(0,\frac{1}{2})$. There is an algorithm that finds an $\epsilon$-approximately-best $k$ w.p.\ at least $\frac{2}{3}$ using $O(\frac{p^2\log N}{\epsilon^3}(\log\log N+\log p+\log\frac{1}{\epsilon}))$ queries on $N+O(\frac{p\log N}{\epsilon^3}(\log\log N+\log p+\log\frac{1}{\epsilon}))$ unlabeled examples.
+\end{theorem}
+
+\subsection{Estimating the Performance of $\mv$}
+\label{subsec:mv}
+The performance of $\mv$ is naturally measured by its error rate $\mathbb E_{x}[\err(x)]$ and we use $\thard_{\calD}(f,\epsilon,S,k)$ to denote the corresponding estimation task of estimating the error rate of $\mv$ up to an additive error $\epsilon$ with success probability at least $\frac{2}{3}$.
+
+A trivial estimator achieving this goal using $O(\frac{k}{\epsilon^2})$ queries on $N+O(\frac{1}{\epsilon^2})$ unlabeled examples is to use the empirical mean of $\err(x)$ as an estimator of $\mathbb E_{x}[\err(x)]$. %The algorithm runs $O(\frac{1}{\epsilon^2})$ iterations and in each iteration, the algorithm samples a fresh unlabeled example $x$ from $\calD$ and then uses $k+1$ queries to determine whether $\mv$ makes the correct prediction on $x$. The algorithm outputs the empirical mean of the errors of the $O(\frac{1}{\epsilon^2})$ iterations as an estimate of the error rate of $\mv$. 
+This estimator is not satisfactory because its query complexity grows with respect to $k$. In Appendix \ref{sec:lower}, we show (Theorem \ref{thm:mv}) that this linear growth with respect to $k$ can't be eliminated. 
+%Also, we will show (Theorem \ref{thm:reductionfrombandit}) that the $O(\frac{k}{\epsilon^2})$ query complexity is optimal if we assume a natural algorithm for \emph{approximating the fraction of good arms} ($\aga$) in the stochastic multi-armed bandit setting has the optimal query complexity. Before we show our lower bound results, we first define the problems of \emph{counting and approximating the number of good arms}.
+
+

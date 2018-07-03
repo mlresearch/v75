@@ -1,0 +1,28 @@
+%In this document, study an algorithm for sampling from the target distribution $p^*(x,v) \propto e^{-\beta(f(x) - \frac{1}{2u}\|v\|_2^2)}$.
+%
+%The SDE \eqref{e:exactlangevindiffusion} has $p^*$ as its stationary distribution. We establish in section \ref{s:exactconvergence} that the the distributions $p_t$ from \eqref{e:exactlangevindiffusion} converges to $p^*$ geometrically in $W_2$.
+%
+%However, \eqref{e:exactlangevindiffusion} is a continuous time process and is not implementable. We will approximate \eqref{e:exactlangevindiffusion} by \eqref{e:discretelangevindiffusion}. We study the discretization error of \eqref{e:discretelangevindiffusion} in section \ref{s:discreteerror}.
+%
+%In section \ref{s:discreteconvergence}, we combine the results of sections \ref{s:exactconvergence} and \ref{s:discreteerror} to obtain our main convergence result, Theorem \ref{t:kstepconvergence}.
+%
+%Finally, in section \ref{s:howtodiscretize}, we give explicit formulas for how to implement \ref{e:discretelangevindiffusion}.
+%
+%
+%\begin{remark}
+%The $\frac{1}{L}$ factor is not an issue because we can assume wlog that $L=1$ by scaling the space $R^d$ by a factor of $L$.
+%\end{remark} \blfootnote{(x.cheng, niladri.chatterji, peter)@berkeley.edu, jordan@cs.berkeley.edu}
+In this paper, we study the continuous time \emph{underdamped} Langevin diffusion represented by the following stochastic differential equation (SDE):
+\begin{align}\label{e:exactlangevindiffusion}
+d v_t &= -\gamma v_t dt - u \nabla  f(x_t) dt + (\sqrt{2\gamma u}) dB_t \\
+\nonumber d x_t &= v_t dt,
+\end{align}
+where $(x_t,v_t)\in \mathbb{R}^{2d}$, $f$ is a twice continuously-differentiable function and $B_t$ represents standard Brownian motion in $\mathbb{R}^d$. Under fairly mild conditions, it can be shown that the invariant distribution of the continuous-time process \eqref{e:exactlangevindiffusion} is proportional to $\exp(-(f(x)+ \lVert  v \rVert_2^2/2u))$. Thus the marginal distribution of $x$ is proportional to $\exp(-f(x))$. There is a discretized version of \eqref{e:exactlangevindiffusion} which can be implemented algorithmically, and provides a useful way to sample from $p^*(x) \propto e^{-f(x)}$ when the normalization constant is not known.
+
+Our main result establishes the convergence of SDE \eqref{e:exactlangevindiffusion} as well as its discretization, to the invariant distribution. This provides explicit rates for sampling from log-smooth and strongly log-concave distributions using the underdamped Langevin Markov chain Monte Carlo (MCMC) algorithm (Algorithm \ref{ulmcmc}).  
+
+Underdamped Langevin diffusion is particularly interesting because it contains a Hamiltonian component, and its discretization can be viewed as a form of Hamiltonian MCMC. Hamiltonian MCMC \citep[see review of HMC in][]{neal,betan} has been empirically observed to converge faster to the invariant distribution compared to standard Langevin MCMC which is a discretization of \emph{overdamped} Langevin diffusion,
+\begin{align*}
+dx_t = -\nabla f(x_t) dt + \sqrt{2}dB_t,
+\end{align*}
+the first order SDE corresponding to the high friction limit of \eqref{e:exactlangevindiffusion}. This paper provides a non-asymptotic quantitative explanation for this statement.

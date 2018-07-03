@@ -1,0 +1,50 @@
+\section{Algorithm}
+We present our main algorithm, namely Algorithm~\ref{alg:ae_al} in this section. We defer the exact settings of constants $c_1, c_2, c_3$ to Appendix~\ref{sec:params}.
+Our algorithm uses the margin-based active learning framework, initially proposed by~\cite{BBZ07}.
+Specifically, it proceeds in epochs, where at each epoch $k$, it draws a sample $S_k$ from distribution $D_X|_{B_k}$, queries their labels, and updates its iterate $w_k$ based on $S_k$. Due to technical reasons, at the first epoch ($k=0$), the sampling region $B_0$ and the constraint set $W_0$ are different from those in subsequent epochs. Throughout the process, the algorithm maintains the invariant that at each epoch $k$, $w_k$ is a  $t$-sparse unit vector.
+
+At each epoch $k \geq 1$, the sampling region $B_k$ is a ``small-margin'' band $\{x: |w_{k-1} \cdot x| \leq b_k \}$, with bandwidth $b_k$ descreasing exponentially in $k$.
+Then it performs constrained empirical hinge loss minimization over $S_k$, getting a linear classifier $w_k'$.
+The constraint set $W_k$ is the intersection between an $\ell_1$ ball and an $\ell_2$ ball, centered at $w_{k-1}$ with different radii ($\rho_k$ and $r_k$). This is similar to the approach in~\cite{PV13b} for tackling the symmetric noise setting, where a linear optimization problem with a similar shaped constraint set is proposed. The construction of $W_k$'s is inspired by version space constructions in the PAC active learning literature~\citep{CAL94,BBL09,H14}.
+Throughout the algorithm, we ensure $W_k$ to satisfy the following two properties with high probability: first, $u$ lie in all the $W_k$'s; second, the $W_k$'s are shrinking in size.\footnote{We refer the reader to Lemma~\ref{lem:induct} for a formal statement.}
+In addition, the hinge loss used at epoch $k$ is parameterized by $\tau_k$, which also decreases exponentially in $k$.
+
+Observe that $w_k'$ may not be a sparse vector; therefore, we perform a hard thresholding step (applying $\HT_t$), to ensure that our learned halfspace at the end of round $k$, is $t$-sparse. Hard thresholding has been widely used in the (unquantized) compressed sensing literature~\citep[See e.g.][]{BD09,GK09}, however its utility in one-bit compressed sensing is not yet well-understood. For example, ~\cite{JLBB13} proposes an algorithm named BIHT (binary iterative hard thresholding) that has strong empirical performance, but its convergence properties are unknown.
+To the best of our knowledge, our work is the first that establishes convergence guarantees for iterative hard thresholding style algorithms for one-bit compressed sensing. We then perform a $\ell_2$ normalization step to ensure that our iterate $w_k$ is an unit vector, which has a scale comparable to $u$.
+
+Finally, we remark that Algorithm~\ref{alg:ae_al} admits a computationally efficient implementation. First, the sampling regions $B_k$'s can be shown to have probability masses at least $\Omega(\epsilon)$ in $D_X$ for all $k$ in $\{0,1,\ldots,k_0\}$, which makes rejection sampling from $D_X|_{B_k}$ take $O(\frac 1 \epsilon)$ time per example.
+Second, optimization problem~\eqref{eqn:opt} is convex, and can be approximately solved by e.g. stochastic gradient descent~\citep[See e.g.][Theorem 2]{SZ13} efficiently.
+
+\begin{algorithm}[t]
+  \caption{Attribute and computationally efficient active learning of halfspaces}
+\begin{algorithmic}[1]
+  \REQUIRE sparsity parameter $t$, target error $\epsilon$, failure probability $\delta$.
+  \ENSURE  learned halfspace $\hat{w}$.
+  \STATE Initialization: $k_0 \gets \lceil \log_2 \frac {1} {C_1 \epsilon} \rceil$, where $C_1$ is defined in Equation~\eqref{eqn:angdis}.
+  \FOR{$k = 0, 1, 2 \ldots,k_0$}
+  \STATE $S_k \gets $ sample $n_k = c_1 t (\ln d + \ln \frac{1}{\epsilon} + \ln\frac1{\delta_k})^3$ examples from $D_X|_{B_k}$ and query their labels, where
+  \[ B_k := \begin{cases} \R^d, & k = 0, \\ \{x: |w_{k-1} \cdot x| \leq b_k \}, & k \geq 1, \end{cases}\]
+	$\delta_k = \frac{\delta}{(k+1)(k+2)}$ and $b_k = c_2 \cdot 2^{-k}$.
+
+  \STATE Solve the following optimization problem:
+  \begin{equation}
+    w_k' \gets \argmin_{w \in W_k} \sum_{(x,y) \in S_k} \ell_{\tau_k}(w, (x, y)),
+    \label{eqn:opt}
+  \end{equation}
+  where
+	%\B_2(0,1) \cap \B_1(0,\sqrt{t})
+	%\B_2(w_{k-1},r_k) \cap \B_1(w_{k-1}, \rho_k)
+  \[ W_k = \begin{cases} \{ w \in \R^d: \| w \|_2 \leq 1 \text{ and } \| w \|_1 \leq \sqrt{t} \}, & k = 0, \\ \{ w \in \R^d: \| w - w_{k-1} \|_2 \leq r_k \text{ and } \| w - w_{k-1} \|_1 \leq \rho_k \}, & k \geq 1, \end{cases}
+  \]
+  %\begin{cases}
+  %\{w: \| w \|_2 \leq 1 \text{ and } \| w \|_1 \leq \sqrt{t} \}, & k = 0, \\
+  %\{w: \| w - w_{k-1} \|_2 \leq r_k \text{ and } \| w - w_{k-1} \|_1 \leq \rho_k \}, & k \geq 1. \end{cases}
+  $r_k = 2^{-k-3}$, $\rho_k = \sqrt{2t} \cdot 2^{-k-3}$, and $\tau_k = c_3 \cdot 2^{-k}$.
+	\label{line:hlm}
+  \STATE Let $w_k \gets \frac{\HT_t(w_k')}{\| \HT_t(w_k') \|_2}$.
+	\label{line:ht}
+  \ENDFOR
+  \RETURN $w_{k_0}$.
+\end{algorithmic}
+\label{alg:ae_al}
+\end{algorithm}

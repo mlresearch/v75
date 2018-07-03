@@ -1,0 +1,49 @@
+\section{Overview} \label{sec:proofsketch}
+
+For the major part of our paper we will focus on learning the weight for one of the components. This can be iterated straightforwardly to learn all the weights, which will be presented at the end. 
+
+Our algorithm for learning one weight has two phases. In the first phase, we use method of moments to obtain a warm start. In the second phase, we use gradient descent on a \emph{concave} function to get a more accurate solution. 
+
+\paragraph{Method of moments algorithm}
+On a high level, our algorithm is based on the following simple strategy: At each iteration $t$, we maintain a vector $a_t$, and the hope is that $\min_{i \in [k]} \{ \| \bSigma_i (w_i - a_t) \|_2\} $ is getting smaller and smaller as $t$ grows, so eventually $a_t$ will be sufficiently close to one $w_i$.  
+Since $\alpha - \langle a_t, x \rangle  = \langle x, w_z - a_t \rangle $ comes from a mixture of one dimension Gaussian distributions with variances $\{ \| \bSigma_i (w_i - a_t) \|_2^2\}_{i = 1}^k$, existing algorithms such as~\citep{moitra2010settling} can be used to estimate them. Suppose the next vector $a_{t + 1}$ is simply chosen as $a_t + \eta r$ for a random vector $r \sim \mathcal{N}(0, \bI)$. With at least $1/4$ probability, we know that $r$ is positively correlated with $w_j - a_t $ for $j = \argmin_i \{ \| \bSigma_i (w_i - a_t) \|_2^2\}$, and thus $\| \bSigma_j (w_j - a_t - \eta r) \|_2^2$ will be smaller than $\| \bSigma_j (w_j - a_t  ) \|_2^2$ for sufficiently small $\eta$. If this happens, we can let $a_{t + 1} = a_t + \eta r$ as the next vector. This process is fundamentally different from many of the existing tie breaking algorithms such as~\citep{li2017convergence}, since we do not have any control over which component the algorithm is converging to: the algorithm may switch target components on the fly arbitrarily, but the minimal of $\{ \| \bSigma_i (w_i - a_t) \|_2^2\}_{i = 1}^k$ is always decreasing. 
+
+
+
+However, this simple strategy is too expensive in terms of the sample and computational complexity. In each iteration, since $r$ is just a random vector, $\| \bSigma_j (w_j - a_t - \eta r) \|_2^2$ can only be smaller than $\| \bSigma_j (w_j - a_t  ) \|_2^2$  for a factor no more than $\frac{1}{d}$. Thus, we need at least $d$ iterations to finish the whole process. Moreover, to guarantee decreasing, we need to estimate $\| \bSigma_i (w_i - a_t  ) \|_2^2$ to accuracy at least $O \left(\frac{1}{d} \right) $ in each iteration, requiring a lot of samples. 
+
+
+The first key idea of our algorithm is to replace sampling from $\mathcal{N}(0, \bI)$ by sampling from $ \mathcal{N}(0, \bU \bU^{\top})$ for some $\bU \in \mathbb{R}^{d \times k}$ whose span is known to contain a vector with good correlation with $\bSigma_j (w_j - a_t  )$. To get this subspace, we rely on the method of moments. Note that 
+\begin{align} \label{eqn:moment}
+\E[\left( \alpha - \langle a_t, x \rangle \right)^2 x x^{\top}] = \sum_{i = 1}^k p_i    \left( 2\bSigma^2_i (w_i - a_t  )(w_i - a_t  )^{\top} \bSigma_i^2 + \| \bSigma_i (w_i-a_t) \|_2^2\bSigma_i^2  \right).
+\end{align}
+When all $\bSigma_i = \bI$, we have $\E[\left( \alpha - \langle a_t, x \rangle \right)^2 x x^{\top}]  \propto \bI + \bU \bU^{\top} $ for some $\bU \in  \mathbb{R}^{d \times k}$ whose span is the subspace spanned by $\bSigma_i^2 (w_i - a_t  )$'s. In this case, using a random vector from $\bU$ will make the per-iteration improvement as large as $1/k$, much better than a random vector from the entire space. 
+
+However, such simple process does not carry on to the case when $\bSigma_i$'s are different, since they are reweighed by $ \| \bSigma_i (w_i - a_t  ) \|_2^2  $ in the summation~(\ref{eqn:moment}). As mentioned, we have little control over this reweighing so $\sum_{i= 1}^k p_i \| \bSigma_i (w_i-a_t) \|_2^2\bSigma_i^2$ can be arbitrarily away from $\bI$. 
+
+The second key idea of our algorithm is to combine higher moments with the polynomial method to obtain a good subspace $\bU$. We will use a set of carefully designed coefficients $c_0, \cdots, c_k$ 
+%for $\E[\left( \alpha - \langle a_t, x \rangle \right)^0 x x^{\top}], \cdots, \E[\left( \alpha - \langle a_t, x \rangle \right)^{2k} x x^{\top}]  $ 
+such that in the summation $\sum_i c_i \E[\left( \alpha - \langle a_t, x \rangle \right)^{2i} x x^{\top}]$,  the $\bSigma_i^2$ terms will get canceled and all the $\bSigma_i^2 (w_i - a_t  )(w_i - a_t  )^{\top} \bSigma_i^2 $ terms get preserved. 
+The $\{c_i\}_{i=0}^k$ are the coefficients of a polynomial constructed to have properties that can ensure the cancellation and preservation. 
+More intuition about the construction of this polynomial is given later in Section~\ref{sec:warm_start}. 
+
+We note that many previous algorithms use tensor decomposition as the method of moments gadget (e.g.,~\citep{sedghi2016provable,zhong2016mixed}) to learn the mixtures in one shot. Their algorithms, while being novel and inspiring, either require the data distribution for different components to be spherical Gaussian, or have high complexity to tolerate derivation from spherical Gaussian.
+
+
+\paragraph{Gradient descent algorithm}
+If we only use the method of moments, then we will need $\left(\frac{\sigma}{\veps}\right)^{O(k)}$ sample to achieve error $\veps$. The dependence on $\veps$ is not desired. To achieve the polylog dependence on the final error $\veps$, we only use the method of moments to get a warm start, and then apply gradient descent beginning from the warm start. 
+
+This step is a ``local'' convergence step by using gradient descent to minimize the \emph{concave} function
+$$
+  g(v) = \E[\log(|\langle w - v, x \rangle| + \zeta)].
+$$
+Without $\zeta$, the approach is similar to the classical Gravitational allocation~\citep{holden2017gravitational}. However, without it, when $v$ is very close to one of the $w_i$'s,  $\log(|\langle w - v, x \rangle| )$ will be close to zero and becomes less \emph{smooth}. Thus, we add $\zeta$ to ensure smoothness for the convergence of SGD. As we will show, even with a fairly large $\zeta$, SGD will converge \emph{with high probability}. Similar local convergence algorithms were also used in previous works (e.g., \citep{klusowski2017estimating}). However, with our objective function, the proof is \emph{significantly simpler}. 
+ 
+The proof is by lower bounding the correlation between the negative gradient and the difference of the current solution from the ground truth, and then applying standard optimization analysis to get the convergence. The correlation is (a variant) of inverse Gaussians and thus can be bounded; see Section~\ref{sec:gd} for more intuition.
+
+%Suppose we begin with a warm start for $w_1$, then the correlation is $ \E \left[\frac{\sign(\alpha - \langle v^{(t)}, x \rangle) \langle w_1 - v^{(t)}, x \rangle}{|\alpha - \langle v^{(t)}, x \rangle| + \zeta} \right]$. This is (a variant) of inverse Gaussians and can be bounded by a function of the norms $\| w_i - v^{(t)}\|_2$ for $i \in [k]$. Since $\| w_1 - v^{(t)}\|_2$ is much smaller than the other norms $\| w_i - v^{(t)}\|_2$ for $i\neq 1$, the correlation can be shown to be large and the proof follows.
+
+
+
+
+

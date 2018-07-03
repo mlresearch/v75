@@ -1,0 +1,89 @@
+\begin{proof}[Proof of Lemma~\ref{lem:main-bias}]
+Let $\v \eqdef \frac{1}{1-\alpha}\left(\y - \alpha \x\right)$ and consider the following update rules corresponding to the noiseless versions of the updates in Algorithm~\ref{algo:TAASGD}:
+\begin{align*}
+	\xplus &= \y - \delta \Hhat (\y-\xs) \\
+	\z &= \beta \y + (1-\beta) \v \\
+	\vplus &= \z - \gamma \Hhat (\y-\xs) \\
+	\yplus &= \alpha \xplus + (1-\alpha) \vplus,
+\end{align*}
+where $\Hhat \eqdef \a \a\T$ where $\a$ is sampled from the marginal on $\distr$. We first note that 
+\begin{align*}
+\E{\otimes_2 \begin{bmatrix} \xplus-\xs \\ \yplus-\xs \end{bmatrix}} &= \E{\Ah \bigg(\otimes_2 \begin{bmatrix} \x-\xs \\ \y-\xs \end{bmatrix}\bigg)\Ah\T} \\
+&=\BT\bigg(\otimes_2 \begin{bmatrix} \x-\xs \\ \y-\xs \end{bmatrix}\bigg) 
+\end{align*}
+Letting $\Gtilde \eqdef \begin{bmatrix} \Id &\zero \\ \frac{-\alpha}{1-\alpha}\Id & \frac{1}{1-\alpha}\Id \end{bmatrix}$, we can verify that $\begin{bmatrix} \x-\xs \\ \v-\xs \end{bmatrix} = \Gtilde \begin{bmatrix} \x-\xs \\ \y-\xs \end{bmatrix}$, similarly $\begin{bmatrix} \xplus-\xs \\ \vplus-\xs \end{bmatrix} = \Gtilde \begin{bmatrix} \xplus-\xs \\ \yplus-\xs \end{bmatrix}$. Recall that $\G \defeq \Gtilde \T \begin{bmatrix} \Id &\zero \\ \zero & {\mu}\inv{\Cov} \end{bmatrix} \Gtilde$. With this notation in place, we prove the statement below, and substitute the values of $\cone,\ctwo,\cthree$ to obtain the statement of the lemma:
+\begin{align}
+\label{eq:biasContraction}
+\iprod{\begin{bmatrix}\eye&0\\0&\mu\cdot\Hinv\end{bmatrix}}{\otimes_{2}\bigg(\begin{bmatrix}\xplus-\xs\\\vplus-\xs\end{bmatrix}\bigg)}\leq\left(1-\cthree\frac{\ctwo\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnHh}}\right)\cdot\iprod{\begin{bmatrix}\eye&0\\0&\mu\cdot\Hinv\end{bmatrix}}{\otimes_{2}\bigg(\begin{bmatrix}\x-\xs\\\v-\xs\end{bmatrix}\bigg)}
+\end{align}
+%Where, $\phiv_k,\hat{\A}_{k+1}$ represents the bias operator $\phiv_k^{\text{bias}}$, $\hat{\A}_{k+1}^{\text{bias}}$. Since we are dealing with the bias analysis, we understand error contraction on the noiseless problem.
+
+To establish this result, let us define two quantities: $\e \eqdef {\twonorm{\x-\xs}^2}$, $\f \eqdef {\norm{\v-\xs}^2_{\Hinv}}$ and similarly, $\eplus \eqdef {\twonorm{\xplus-\xs}^2}$ and $\fplus \eqdef {\norm{\vplus-\xs}^2_{\Hinv}}$. The potential function we consider is $\e + \mu\cdot \f$. Recall that the parameters are chosen as:
+%\praneeth{Fix the parameters below.}
+\begin{align*}
+\alpha = \frac{\sqrt{\cnH\cnHh}}{\ctwo\sqrt{2\cone-\cone^2}+\sqrt{\cnH\cnHh}},\ \  \beta = \cthree\frac{\ctwo\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnHh}},\ \  \gamma = \ctwo\frac{\sqrt{2\cone-\cone^2}}{\mu\sqrt{\cnH\cnHh}}, \ \ \delta=\frac{\cone}{\infbound}
+\end{align*}
+with $\cone<1/2$, $\cthree=\frac{\ctwo\sqrt{2\cone-\cone^2}}{\cone}$, $\ctwo^2=\frac{\cfour}{2-\cone}$.
+Consider $\eplus$ and employ the simple gradient descent bound:
+\begin{align}
+\label{eq:gd}
+\eplus=\E{\twonorm{\xplus-\xs}^2}&=\E{\twonorm{\y-\delta\cdot\Hhat(\y-\xs)-\xs}^2}\nonumber\\
+&=\E{\twonorm{\y-\xs}^2}-2\delta\cdot\E{\norm{\y-\xs}^2_{\H}}+\delta^2\E{\norm{\y-\xs}^2_{\M\eye}}\nonumber\\
+&\leq\E{\twonorm{\y-\xs}^2}-2\delta\cdot\E{\norm{\y-\xs}^2_{\H}}+\infbound\delta^2\E{\norm{\y-\xs}^2_{\H}}\nonumber\\
+&=\E{\twonorm{\y-\xs}^2}-\frac{2\cone-\cone^2}{\infbound}\E{\norm{\y-\xs}^2_{\H}}
+\end{align}
+Next, consider $\fplus$:
+\begin{align}
+\label{eq:1}
+\fplus=\E{\norm{\vplus-\xs}^2_{\Hinv}}&=\E{\norm{\z-\gamma\Hhat(\y-\xs)-\xs}^2_{\Hinv}}\nonumber\\
+&=\E{\norm{\z-\xs}^2_{\Hinv}}+\gamma^2\E{\norm{\y-\xs}^2_{\M\Hinv}}-2\gamma\E{\iprod{\z-\xs}{\y-\xs}}\nonumber\\
+&\leq\E{\norm{\z-\xs}^2_{\Hinv}}+\gamma^2\cnHh\cdot\E{\norm{\y-\xs}^2_{\H}}-2\gamma\cdot\E{\iprod{\z-\xs}{\y-\xs}}
+\end{align}
+Where, we use the fact that $\M\Hinv\preceq\cnHh\H$, where $\cnHh$ is the {\em statistical} condition number.\linebreak
+Consider $\E{\norm{\z-\xs}^2_{\Hinv}}$ and use convexity of the weighted $2-$norm to get:
+\begin{align}
+\label{eq:3}
+\E{\norm{\z-\xs}^2_{\Hinv}}&\leq\beta\E{\norm{\y-\xs}^2_{\Hinv}}+(1-\beta)\E{\norm{\v-\xs}^2_{\Hinv}}\nonumber\\
+&\leq\frac{\beta}{\mu} \E{\twonorm{\y-\xs}^2}+(1-\beta)\cdot \f
+\end{align}
+Next, consider $\E{\iprod{\z-\xs}{\y-\xs}}$, and first write $\z$ in terms of $\x$ and $\y$. This can be seen as two steps:
+\begin{itemize}
+\item $\v = \frac{1}{1-\alpha}\cdot\y-\frac{\alpha}{1-\alpha}\cdot\x$
+\item $\z = \beta\y + (1-\beta)\v=\y + (1-\beta)(\v-\y)$. Then substituting $\v$ in terms of $\x$ and $\y$ as in the equation above, we get: $\z = \y + \left(\frac{\alpha\cdot(1-\beta)}{1-\alpha}\right)(\y-\x)$
+\end{itemize}
+Then, $\E{\iprod{\z-\xs}{\y-\xs}}$ can be written as:
+\begin{align}
+\label{eq:2}
+\E{\iprod{\z-\xs}{\y-\xs}}&=\E{\twonorm{\y-\xs}^2}+\left(\frac{\alpha(1-\beta)}{1-\alpha}\right)\E{\iprod{\y-\x}{\y-\xs}}
+\end{align}
+Then, we note:
+\begin{align*}
+\E{\iprod{\y-\x}{\y-\xs}} &= \E{\twonorm{\y-\xs}^2}-\E{\iprod{\x-\xs}{\y-\xs}}\\
+&\geq \E{\twonorm{\y-\xs}^2}-\frac{1}{2}\cdot\left(\E{\twonorm{\y-\xs}^2}+\E{\twonorm{\x-\xs}^2}\right) \\
+&=\frac{1}{2}\cdot\left(\E{\twonorm{\y-\xs}^2}-\E{\twonorm{\x-\xs}^2}\right)
+\end{align*}
+Re-substituting in equation~\ref{eq:2}:
+\begin{align}
+\label{eq:4}
+\E{\iprod{\z-\xs}{\y-\xs}}&\geq\left(1+\frac{1}{2}\cdot\frac{\alpha(1-\beta)}{1-\alpha}\right)\E{\twonorm{\y-\xs}^2}-\frac{1}{2}\cdot\frac{\alpha(1-\beta)}{1-\alpha}\E{\twonorm{\x-\xs}^2}\nonumber\\
+&=\left(1+\frac{1}{2}\cdot\frac{\alpha(1-\beta)}{1-\alpha}\right)\E{\twonorm{\y-\xs}^2}-\frac{1}{2}\cdot\frac{\alpha(1-\beta)}{1-\alpha}\cdot \e
+\end{align}
+Substituting equations~\ref{eq:3},~\ref{eq:4} into equation~\ref{eq:1}, we get:
+\begin{align*}
+\mu\cdot \fplus&\leq \left(\beta-2\gamma\mu-\frac{\gamma\mu\alpha(1-\beta)}{1-\alpha}\right)\E{\twonorm{\y-\xs}^2}+\mu(1-\beta)\cdot \f \nonumber\\&+ \frac{\gamma\mu\alpha(1-\beta)}{1-\alpha}\cdot \e+\mu\gamma^2\cnHh\cdot\E{\norm{\y-\xs}^2_{\H}}
+\end{align*}
+Rewriting the guarantee on $\eplus$ as in equation~\ref{eq:gd}:
+\begin{align*}
+\eplus \leq \E{\twonorm{\y-\xs}^2}-\frac{2\cone-\cone^2}{\infbound}\cdot\E{\norm{\y-\xs}^2_{\H}}
+\end{align*}
+By considering $\eplus+\mu\cdot \fplus$, we see the following:
+\begin{itemize}
+\item The coefficient of $\E{\norm{\y-\xs}_{\H}^2}\leq 0$ by setting $\gamma = \ctwo\frac{\sqrt{2\cone-\cone^2}}{\mu\sqrt{\cnH\cnHh}}$, where, $0<\ctwo\leq1$, $\cnH = \frac{\infbound}{\mu}$.
+\item Set $\frac{\gamma\mu\alpha}{1-\alpha}=1$ implying $\alpha = \frac{1}{1+\gamma\mu} = \frac{\sqrt{\cnH\cnHh}}{\ctwo\sqrt{2\cone-\cone^2}+\sqrt{\cnH\cnHh}}$
+\end{itemize}
+With these in place, we have the final result:
+\begin{align*}
+\eplus+\mu\cdot \fplus \leq (2\beta-2\gamma\mu)\E{\twonorm{\y-\xs}^2} + (1-\beta)\cdot(\e+\mu\cdot \f)
+\end{align*}
+In particular, setting $\beta=\cthree\gamma\mu=\cthree\frac{\ctwo\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnHh}}$, we have a per-step contraction of $1-\beta$ which is precisely $1-\cthree\frac{\ctwo\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnHh}}$, from which the claimed result naturally follows by substituting the values of $\cone,\ctwo,\cthree$.
+\end{proof}

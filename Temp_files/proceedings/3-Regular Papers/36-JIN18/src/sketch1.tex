@@ -1,0 +1,52 @@
+%!TEX root = main.tex
+
+\subsection{Improve or Localize} \label{sec:imp_local}
+One significant challenge in the analysis of gradient-based algorithms for nonconvex optimation is that many phenomena---such as accumulation of momentum and the escape from saddle points via perturbation---are multiple-step behaviors; they do not happen in a single step. We address this issue by developing a general technique for analyzing long-term behavior of such algorithms.
+
+
+% We also stress that under both of these settings,~\pagd~can not achieve $\Omega(\ufun/\utime)$ decrease in each step---it has to accumulate momentum over time to achieve $\Omega(\ufun/\utime)$ amortized decrease, requiring an understanding of multiple-step behavior of~\nag. The \emph{\iol} framework (Corollary \ref{cor:localball}) is crucial here, telling us that either the Hamiltonion decreases by $\ufun$, or $\{\x_\tau\}_{\tau = t}^{t+\utime}$ is localized in a {ball} of radius $\uspace = \tilde{\Theta}(\sqrt{\epsilon/\rho})$. In this ball, we can approximate $f(\cdot)$ by a quadratic taking advantage of the Lipschitz property, and analyze the remainder as approximation error.
+
+
+% When tracking the Hamiltonian over the iterates of Algorithm \ref{algo:PAGD}, previous section shows either \eqref{eq:certificate} holds and the Hamiltonian is decreased by a fixed amount due to NCE step (Lemma \ref{lem:energy_NCE}), or AGD steps are running and the progress is discribed in Lemma \ref{lem:energy_nonconvex}. 
+
+In our case, to track the long-term behavior of AGD, one key observation from Lemma~\ref{lem:energy_nonconvex} is that the amount of progress relates to movement of the iterates, which leads to the following \emph{improve-or-localize} corollary:
+\begin{corollary}[Improve or localize] \label{cor:localball}
+Under the same setting as in Lemma \ref{lem:energy_nonconvex}, if \eqref{eq:certificate} does not hold for all steps in $[t, t+T]$, we have:
+\begin{equation*}
+\sum_{\tau = t+1}^{t+T}\norm{\x_\tau - \x_{\tau-1}}^2
+\le \frac{2\eta}{\theta} (E_t - E_{t+T}).
+% \text{~~~and~~~} \norm{\x_{t+T} -\x_t}^2 \le \frac{2\eta T}{\theta}(E_t - E_{t+T}).
+\end{equation*}
+\end{corollary}
+% \pn{Clarify that this is the unperturbed version.}
+Corollary~\ref{cor:localball} says that the algorithm either makes progress in terms of the 
+Hamiltonian, or the iterates do not move much. In the second case, Corollary~\ref{cor:localball} allows us to approximate the dynamics of $\{\x_\tau\}_{\tau = t}^{t+T}$ with a \emph{quadratic approximation} of $f(\cdot)$.
+% function, which is second-order Taylor expansion around $\x_t$:
+% We defer the actual usage of this 
+% in case there is no progress in function value (i.e., does not decrease much), also helps restrict attention to a small local region, where the function is approximately quadratic.
+
+
+
+The acceleration phenomenon is rooted in and can be seen clearly for a quadratic, where the function can be decomposed into eigen-directions. Consider an eigen-direction with eigenvalue $\lambda$, and linear term $g$ (i.e., in this direction $f(x) =  \frac{\lambda}{2} x^2 + gx$).
+The GD update becomes $x_{\tau+1} = (1-\eta\lambda)x_{\tau} - \eta g$, with $\mu_{\text{GD}}(\lambda) \defeq 1-\eta\lambda$ determining the rate of~\gd. The update of AGD is $(x_{\tau+1}, x_\tau) = (x_{\tau}, x_{\tau-1})\A\trans - (\eta g, 0)$ with matrix $\A$ defined as follows:
+\begin{equation*}
+\A \defeq \pmat{(2-\theta) (1 - \eta\lambda)&  -(1-\theta) (1 - \eta\lambda) \\ 1 & 0}.
+\end{equation*}
+The rate of~\nag~is determined by the largest eigenvalue of $\A$, denoted by $\mu_{\text{AGD}}(\lambda)$. Recall the choice of parameter~\eqref{eq:parameter}, and divide the eigen-directions into the following three categories.
+\begin{itemize}
+\item \textbf{Strongly convex directions $\lambda \in [\sqrt{\rho\epsilon}, \ell]$:} the slowest case is $\lambda = \sqrt{\rho\epsilon}$, where
+$\mu_{\text{GD}}(\lambda) = 1- \Theta(1/\cn)$ while $\mu_{\text{AGD}}(\lambda) = 1-\Theta(1/\sqrt{\cn})$, which results in AGD converging faster than GD.
+\item \textbf{Flat directions $\lambda \in [-\sqrt{\rho\epsilon}, \sqrt{\rho\epsilon}]$:}  the representative case is $\lambda = 0$ where AGD update becomes $x_{\tau+1} - x_\tau = (1-\theta) (x_\tau - x_{\tau - 1}) - \eta g$. For $\tau \le 1/\theta$, we have $|x_{t+\tau} - x_t| =  \Theta(\tau)$ for GD while  $|x_{t+\tau} - x_t| =  \Theta(\tau^2)$ for AGD, which results in AGD moving along negative gradient directions faster than GD.
+\item \textbf{Strongly nonconvex directions $\lambda \in [-\ell, -\sqrt{\rho\epsilon}]$:} similar to the strongly convex case, the slowest rate is for $\lambda = -\sqrt{\rho\epsilon}$ where
+$\mu_{\text{GD}}(\lambda) = 1 + \Theta(1/\cn)$ while $\mu_{\text{AGD}}(\lambda) = 1 + \Theta(1/\sqrt{\cn})$, which results in AGD escaping saddle point faster than GD.
+\end{itemize}
+
+% If negative curvature $\lambda = -\sqrt{\rho\epsilon}$, then we have $\mu_{\text{GD}} = 1+ \Theta(1/\cn)$ while $\mu_{\text{AGD}} = 1+\Theta(1/\sqrt{\cn})$, which results in~\nag~escaping saddle points faster than~\gd. 
+
+Finally, the approximation error (from a quadratic) is also under control in this framework. With appropriate choice of $T$ and threshold for $E_t - E_{t+T}$ in Corollary \ref{cor:localball}, by the Cauchy-Swartz inequality we can restrict iterates $\{\x_\tau\}_{\tau = t}^{t+T}$ to all lie within a local ball around $\x_t$ with radius $\sqrt{\epsilon/\rho}$, where both the gradient and Hessian of $f(\cdot)$ and its quadratic approximation
+$\tilde{f}_t(\x) = f(\x_t) + \la \grad f(\x_t), \x - \x_t\ra + \frac{1}{2} (\x - \x_t)\trans \hess f(\x_t) (\x - \x_t)$ are close:
+\begin{fact}
+Assume $f(\cdot)$ is $\rho$-Hessian Lipschitz, then for all $\x$ so that $\norm{\x - \x_t} \le \sqrt{\epsilon/\rho}$, 
+we have $\|\grad f(\x) - \grad \tilde{f}_t(\x)\| \le \epsilon$ and $\| \hess f(\x) - \hess \tilde{f}_t(\x)\|
+= \| \hess f(\x) - \hess f(\x_t) \|\le \sqrt{\rho\epsilon}$.
+\end{fact}

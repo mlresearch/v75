@@ -1,0 +1,85 @@
+\section{Row-Sparsity Bounds for $\ell_1$ Regression}\label{sec:sparsitypreserve}
+In this section, we explain how to avoid using matrix multiplication, which we use in Lemma~\ref{lem:lewisAndRotate}, to get an IRB matrix, and in Lemma~\ref{lem:easyInit}, to get a good initialization. To avoid both procedures, we assume that our given matrix $\AA \in \R^{n\times d}$ and vector $\bb \in \R^{n }$ are such that $[\AA\;\bb]^T [\AA\;\bb] \approx_{O(1)} \II$ and for each row $i$ of $[\AA\;\bb]$ we have $\norme{[\AA\;\bb]_{i,:}}^2 \approx_{O(1)} d/n$. Notice that these conditions imply $\AA^T\AA \approx_{O(1)} \II$ and $\norme{\AA_{i,:}}^2 \leq O(d/n)$, which are nearly the properties of the preconditioned matrix $\tilde{\AA}\UU$ generated in Lemma~\ref{lem:lewisAndRotate}. However, we still face two new complications: (1) the row count of matrix $\AA$ has not been reduced from $n$ to $O(d\epsilon^{-2}\log{n})$, and (2) $\AA$ is only approximately isotropic.
+
+We will account for the first complication by showing that, under these conditions, the Lewis weights are approximately equal, which implies that uniform row sampling is nearly equivalent to that in \Cref{thm:lewisWeights}. 
+We then describe how to find a good initialization point using conjugate gradient methods when $\tilde{\AA}$ is only approximately isotropic. 
+Finally, we use the reduction in \cite{AllenZhuH16} and the Katyusha stochastic gradient descent algorithm from \cite{AllenZhu17} to achieve a total running time of $\Otil(nnz(\AA) + sd^{1.5}\epsilon^{-2} + d^2\epsilon^{-2})$, where $s$ is the maximum number of non-zeros in a row of $\AA$. Note that as a byproduct of this algorithm, we achieve row-sparsity-preserving $\ell_1$ minimization.
+
+
+\subsubsection*{Uniform Sampling of $\AA$}
+We deal with the first complication of avoiding Lemma~\ref{lem:lewisAndRotate} by sampling $\AA$ uniformly. In particular, if we uniformly sample $N = O(d\epsilon^{-2} \log d)$ rows of $[\AA\;\bb]$, this yields a smaller matrix $[\tilde{\AA}\;\tilde{\bb}]$ such that $\tilde{\AA}^T\tilde{\AA} \approx_{O(1)} \II$ and $\|\tilde{\AA}_{i,:}\|_2^2 \leq  O(d/N)$ for each row $i$, which is to say $\tilde{\AA}$ is almost IRB. This then culminates in the following lemma whose proof we relegate to \Cref{subsec:unifSample}.
+
+\begin{restatable}[]{lemma}{uniformSampling}
+	\label{lem:uniformSampling}
+	Suppose we are given a matrix $\AA \in \R^{n \times d}$ such that $\AA^T\AA \approx_{O(1)} \II$ and $\norme{\AA_{i,:}}^2 \approx_{O(1)} d/n$.
+	If we uniformly sample $N = O(d\epsilon^{-2}\log{n})$ rows independently and rescale each row by $n/N$ to obtain matrix $\tilde{\AA}$, then with high probability the following properties hold:
+	\begin{enumerate}
+		\item $\norm{\AA\xx}_1 \approx_{1 + \epsilon} \|\tilde{\AA}\xx\|_1$ for all $\xx \in \R^d$.
+		\item $\tilde{\AA}^T\tilde{\AA} \approx_{O(1)} \left(\dfrac{n}{N}\right)\II$.
+		\item $\|\tilde{\AA}_{i,:}\|_2^2 \approx_{O(1)} dn/N^2$ for all rows $i \in \{1,2,\ldots, N\}$.
+	\end{enumerate}
+\end{restatable}
+
+
+
+
+%\todo{make this flow after removing some sections}
+
+
+\subsubsection*{Initialization using Approximate $\ell_2$ Minimizer}\label{subsec:l2Minimizer}
+It now remains to show that we can still find a good initialization $\xx_0$ for gradient descent even with our relaxed assumptions on $\AA$.
+Previously, when we had $\AA^T \AA = \II$, we used $\xx_0 = \AA^T \bb = \arg \min_{\xx} \norme{\AA \xx - \bb}$.
+It turns out that for $\AA^T \AA \approx_{O(1)} \II$, the $\ell_2$ minimizer $\xx_0 = \arg \min_{\xx} \norme{\AA \xx - \bb}$ is still a good initialization point.
+But finding an exact $\ell_2$ minimizer would take a prohibitive amount of time or would require matrix multiplication.
+However, an approximate $\ell_2$ minimizer suffices, and we can find such a point quickly using the conjugate gradient method.
+
+For this section, we define $\xx^* \defeq \arg\min_{\xx} \norm{\AA\xx - \bb}_1$ and $\xx_0 \defeq \arg \min_{\xx} \norme{\AA\xx - \bb}$. Our main result is the following:
+
+\begin{lemma}[Approximate $\ell_2$ minimizer is close to $x^*$] \label{lem:initMain} Let $\AA \in \R^{n \times d}$ be such that $\AA^T \AA \approx_{O(1)} \II$ and for each row $i$ of $\AA$, $\norme{\AA_{i,:}}^2 \leq O(d/n)$. Assume that $\norme{\bb} \le n^c$ and $\norme{\AA\xx_0 - \bb} \ge n^{-c}$ for some constant $c > 0$.
+	\begin{align*}
+	\norme{\tilde{\xx}_0 - \xx^*} \le O(\sqrt{d/n}) \norm{\AA \xx^* - \bb}_1.
+	\end{align*}
+	Moreover, $\tilde{\xx}_0$ can be computed in  $O( (t_{\AA^T \AA} + d) \log (n/ \epsilon))$ time, where $t_{\AA^T \AA}$ denotes the time to multiply a vector by $\AA^T \AA$. 
+\end{lemma}
+
+We prove Lemma~\ref{lem:initMain} using the following two lemmas whose proofs are deferred until \Cref{subsec:initialization_proofs}. Lemma~\ref{lem:exactInit} shows that the $\ell_2$ minimizer is close to the $\ell_1$ minimizer even when $\AA$ is only approximately isotropic, and the proof is similar to that of Lemma~\ref{lem:easyInit}.
+Lemma~\ref{lem:cg} shows that we can find a good estimate for the $\ell_2$ minimizer.
+
+\begin{lemma}[Exact $\ell_2$ minimizer is close to $\xx^*$]\label{lem:exactInit}
+	Let $\AA \in \R^{n \times d}$ be such that $\AA^T \AA \approx_{O(1)} \II$ and for each row $i$ of $\AA$, $\norme{\AA_{i,:}}^2 \leq O(d/n)$. Then
+	\begin{align*}
+	\norme{\xx_0 - \xx^*} \le O(\sqrt{d/n}) \norm{\AA \xx^* - \bb}_1.
+	\end{align*}
+\end{lemma}
+
+\begin{lemma}[Conjugate gradient finds an approximate $\ell_2$ minimizer]\label{lem:cg}
+Let $\AA \in \R^{n \times d}$ be such that $\AA^T \AA \approx_{O(1)} \II$ and for each row $i$ of $\AA$, $\norme{\AA_{i,:}}^2 \leq O(d/n)$. Assume that $\norme{\bb} \le n^c$ and $\norme{\AA\xx_0 - \bb} \ge n^{-c}$.
+Then for any $\epsilon > 0$, the conjugate gradient method can find an $\tilde{\xx}_0$ such that
+\begin{align*}
+\norme{\tilde{\xx}_0 - \xx_0} \le \epsilon \norme{\AA\xx_0 - \bb}.
+\end{align*}
+Moreover, $\tilde{\xx}_0$ can be found in time $O( (t_{\AA^T \AA} + d) \log (n/ \epsilon))$, where $t_{\AA^T \AA}$ is the time to multiply a vector by $\AA^T \AA$. 
+\end{lemma}
+
+\begin{proof}[Proof of Lemma~\ref{lem:initMain}]
+	We use conjugate gradient with $\epsilon = \sqrt{d/n}$ to find an $\tilde{\xx}_0$ in $O((t_{\AA^T \AA} + d) \log (n/ \epsilon))$ time by Lemma~\ref{lem:cg} to achieve our desired initialization time bounds.
+	Note that by definition of $\xx_0$ and by a standard norm inequality, we have:
+	\begin{align*}
+	\norme{\AA \xx_0 - \bb} \le \norme{\AA \xx^* - \bb} \le \norm{\AA \xx^* - \bb}_1
+	\end{align*}
+	
+	Then by the triangle inequality and Lemma~\ref{lem:exactInit} we have:
+	\begin{align*}
+	\norme{\tilde{\xx}_0 - \xx^*} &\le \norme{\tilde{\xx}_0 - \xx_0} + \norme{\xx_0 - \xx^*} \\
+	&\le \sqrt{d/n}\norm{\AA \xx^* - \bb}_1 + O(\sqrt{d/n})\norm{\AA \xx^* - \bb}_1
+%\qedhere
+	\end{align*}
+	which gives our desired initialization accuracy.
+\end{proof}
+
+\subsubsection*{Fast Row-sparsity-preserving $\ell_1$ Minimization}
+
+Finally, we combine the matrix achieved by uniform sampling in Lemma~\ref{lem:uniformSampling} and the initialization from Lemma~\ref{lem:initMain} to achieve fast row-sparsity-preserving $\ell_1$ minimization. This then gives the following main theorem that we prove in \Cref{subsec:achievingSparsity}.
+
+\noFastMatrixMult*
+

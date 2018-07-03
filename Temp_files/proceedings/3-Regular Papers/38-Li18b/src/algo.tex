@@ -1,0 +1,198 @@
+\section{Algorithm} \label{sec:algo}
+
+In this section, we describe our algorithm in three subsections, describing the three parts as mentioned in the overview respectively.
+%getting a warm start for the weight of one of the components using method of moments, learning the weight from the warm start, and finally learning all the weights. 
+
+
+%\yingyu{restructured: described the algo, and also add related lemmas here (with some proof sketch/ideas )}
+
+\subsection{Warm Start for Learning One of the Weights} \label{sec:warm_start}
+
+Here we present our algorithm for obtaining a warm start for the weight for one of the components $w_i$, whose
+algorithmic ideas and analysis are at the core of this paper.
+This algorithm outputs a point $a_T$ such that $\min\{\|a_T - w_i\|_2\}_{i = 1}^k \leq O(\sigma^2\veps)$. The total sample complexity and running time of this algorithm are proportional to $\left(\frac{\sigma}{\veps} \right)^{O(k^2)}$. Eventually, we will take $\veps = \text{poly}\left(\frac{p_{\min}\Delta}{\sigma}\right)$ to enter the warm start for the gradient descent in the next subsection. 
+
+\textsc{MomentDescent} (Algorithm~\ref{alg:one}) describes the details.
+It begins with $a_0 = 0$ and iterates to improve it to $a_T$. 
+In each iteration, it first uses a set of samples to compute two quantities: $\sigma_t^2$ which is an estimation of $\min \{\|\bSigma_i^2 (w_i - a_t)\|_2\}_{i=1}^k$, and $\bU_t$ which is an estimation of the span of $\{\bSigma_i^2 (w_i - a_t)\}_{i=1}^k$. Then it picks a random vector $v$ from the span of $\bU_t$ and tests if moving $a_t$ along $v$ can decrease $\sigma_t^2$; this is repeated a few times to guarantee success with high probability. 
+
+
+\begin{algorithm}[!t]
+\caption{ \textsc{MomentDescent}($k , \delta, \veps$) \label{alg:one}}
+\begin{algorithmic}[1]
+\REQUIRE  Number of mixture components $k$, failure probability $\delta$, and error $\veps$. 
+\ENSURE $a_T$ which is close to some $w_i$ up to error $O(\sigma^2\veps)$ with probability $1 -\delta$. 
+\STATE $a_0 \leftarrow 0$. Set $T \leftarrow \Theta(k \sigma \log \frac{\sigma}{\veps}) $ and $q \leftarrow \Theta\left(\log \frac{k\sigma}{\veps\delta} \right)$. 
+\FOR{$t = 0, 1, \cdots , T-1$}
+\STATE Sample $m  = (\frac{\sigma}{p_{\min}\veps})^{O(k^2)}$
+%$m = \text{poly}\left(\frac{\sigma k}{\Delta p_{\min} \veps}\right) + \left(k \log \frac{\sigma k}{\Delta p_{\min} \veps} \right)^{O(k^2)}$  
+many samples $\{( x_i, \alpha_i) \}_{i = 1}^m $. 
+\STATE For every $i \in [m]$, $\alpha_i \leftarrow \alpha_i - \langle x_i, a_t \rangle$.
+\STATE  Let $\{ \sigma_i^2\}_{i = 1}^k \leftarrow \textsc{OneDMixture} ( \{ \alpha_i \}_{i = 1}^m, k,  \veps^2/(k\sigma)^2)$.\STATE Let $\sigma_t^2 \leftarrow \min \{ \sigma_i^2\}_{i = 1}^k$. 
+\STATE $\bU_t \leftarrow  \textsc{Powerw}(\{ x_i \}_{i = 1}^m, \{ \alpha_i \}_{i = 1}^m, k,  \veps)$
+\FOR{$j \in [q]$}
+\STATE Pick a random $\gamma \in \mathbb{R}^k$ such that $\gamma \sim \mathcal{N}(0, \bI)$ and let $v = \frac{\bU_t \gamma}{\| \bU_t \gamma \|_2}$. 
+\STATE  Sample $m$ many samples $\{ (x_i, \alpha_i) \}_{i = 1}^m $. 
+\STATE  For every $i \in [m]$, let $\alpha_i' \leftarrow \alpha_i - \langle x_i, a_t + \eta_t v \rangle$, where $\eta_t = \Theta\left(\frac{\sigma_t}{\sigma\sqrt{k}} \right)$.
+\STATE   Let $\{( \sigma_i')^2\}_{i = 1}^k \leftarrow \textsc{OneDMixture} ( \{\alpha_i' \}_{i = 1}^m, k,  \veps^2/(k\sigma)^2)$, 
+\STATE Let $(\sigma')^2 \leftarrow \min \{ (\sigma_i')^2\}_{i = 1}^k$
+\IF{ $(\sigma')^2  \leq \left(1 - \frac{1}{150 k \sigma}\right) \sigma_t^2 $}
+\STATE $a_{t + 1} \leftarrow a_t + \eta_t v$.
+\STATE $\bold{break;}$
+\ENDIF
+\ENDFOR
+\ENDFOR
+%\STATE $\tilde{w} \leftarrow a_t$. 
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}[!t]
+\caption{ \textsc{OneDMixture} ($\{ z_i \}_{i = 1}^m, k, \veps$) \label{alg:1_d}}
+\begin{algorithmic}[1]
+\REQUIRE $\{ z_i \}_{i = 1}^m$ where each $z_i \in \mathbb{R}$ comes from a mixture of one dimension (mean zero) Gaussian distribution, number of mixture components $k$, and error $\veps$.
+\ENSURE $\{\sigma_i^2\}_{i = 1}^k$, the variance of each component up to additive error $\veps$.
+\STATE See the algorithm in~\citep{moitra2010settling}. Their theorem implies that the output is up to additive error $\veps$ with $O\left(\frac{\sigma_{\max}}{ p_{\min}\veps } \right)^{O(k)}$ samples, where $\sigma_{\max}^2$ is the maximum variance of those mixtures and $ p_{\min}$ is the minimal probability that one mixture occurs.)
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}[!t]
+\caption{ \textsc{Powerw}($\{ x_i \}_{i = 1}^m, \{ \alpha_i \}_{i = 1}^m, k,  \veps$) \label{alg:pww}}
+\begin{algorithmic}[1]
+\REQUIRE  $\{ x_i \}_{i = 1}^m$ where each $x_i \in \mathbb{R}^d$ comes from a mixture of Gaussian distributions, and $\alpha_i$ the label of $x_i$, number of mixture components $k$, and error $\veps$
+\ENSURE $\bU \in \mathbb{R}^{d \times k}$, $\veps$ close to the subspace spanned by $\bSigma_1^2 w_1, \cdots, \bSigma_k^2 w_k$
+\STATE $\{ \sigma_i^2\}_{i = 1}^k \leftarrow \textsc{OneDMixture} ( \{ \alpha_i \}_{i = 1}^m, k,  \veps^{(g)})$ for $\veps^{(g)} = \left(\frac{\veps}{\sigma} \right)^{4k}  $.
+\STATE $\{ c_i \}_{i = 0}^k \leftarrow \textsc{Coeff}(\{ \sigma_i^2 \}_{i = 1}^k, \veps^{(p)})$ for $\veps^{(p)} = \veps$.
+\STATE \begin{align}\bM \leftarrow \frac{1}{m} \sum_{p = 0}^k \frac{c_p}{(2p - 1)!!}  \sum_{i = 1}^m \alpha_i^{2p} x_i x_i^{\top}.
+\end{align}
+\STATE $\bU \leftarrow $ the top-$k$ singular vectors of $\bM$.
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}[!t]
+\caption{ \textsc{Coeff}($\{ r_i \}_{i = 1}^k, \veps$) \label{alg:coeff}}
+\begin{algorithmic}[1]
+\REQUIRE  $\{ r_i \}_{i = 1}^k$ where each $r_i \in \mathbb{R}$, and error $\veps$.
+\ENSURE $\{ c_i \}_{i = 0}^k$ where each $c_i \in \mathbb{R}$.
+\STATE Let $z_1, \cdots, z_s$ be a center of $r_1, \cdots, r_k$ defined by Lemma~\ref{lem:cluster}.
+\STATE Let $c_i$ be the coefficient of $x^{2i}$ in the polynomial: \begin{align}
+f(x) = \prod_{p = 1}^s (x^2 - z_p).
+\end{align}
+\end{algorithmic}
+\end{algorithm}
+
+
+\textsc{MomentDescent} uses two subroutines. \textsc{OneDMixture } (Algorithm~\ref{alg:1_d}) is adopted from existing work~\citep{moitra2010settling} and is used to compute $\sigma_t^2$, an estimation of $\min \{\|\bSigma_i^2 (w_i - a_t)\|_2\}_{i=1}^k$. 
+So we focus on the other subroutine \textsc{Powerw} (Algorithm~\ref{alg:pww}).
+
+$\textsc{Powerw}$ tries to identify the subspace spanned by $\{\bSigma_i^2 w_i\}_{i=1}^k$, given labels $\alpha_\ell$ from regression weights $\{w_i\}_{i=1}^k$.\footnote{When used in \textsc{MomentDescent}, it is given labels $\alpha_\ell$ from regression weights $(w_i - a_t)$'s, so it will estimate the subspace spanned by $\{\bSigma_i^2 (w_i - a_t)\}_{i=1}^k$.}
+As mentioned in the overview, the moments will contain both the signal $\bSigma_i w_i w_i^{\top} \bSigma_i$ and the noise $\bSigma_i^2 $. For example,
+\begin{align*} 
+\E[\alpha^2 x x^{\top}] = \sum_{i = 1}^k p_i     \left( 2\bSigma_i w_i w_i^{\top} \bSigma_i + \| \bSigma_i w_i \|_2^2 \bSigma_i^2  \right).
+\end{align*}
+The crucial piece here is to mix the moments with carefully designed coefficients $\{c_p\}_{p=0}^k$, so that $\E[\bM] = \sum_{p = 0}^k \frac{c_p}{(2p - 1)!!} \E[\alpha^{2p} x x^{\top}]$ will mostly contain only the signal.
+Later, we will show that if we let $c_p$ to be the coefficients of $z^{2p}$ in some polynomial $f(z) = \prod_{p = 1}^s (z^2 - z_p)$ with carefully chosen $z_1, \cdots, z_s$ that are closely related to $\{ \| \bSigma_i w_i\|_2^2\}_{i = 1}^k$, then 
+$$
+ \E[\bM] = \sum_{i=1}^k p_i (\bX_i + \bY_i)
+$$
+where $ \bX_i$ is proportional to $\bSigma_i^2 w_i w_i^{\top} \bSigma_i^2  f'( \| \bSigma_i w_i\|_2)$ and $\bY_i$ is proportional to $\bSigma_i^2 f(\| \bSigma_i w_i \|_2)$.
+Therefore, if $j = \argmin_i \| \bSigma_i w_i \|_2$, then we would like $f$ to be small and $f'( \| \bSigma_j w_j\|_2)$ to be large. Furthermore, we would like $f'$ and $f''$ to be bounded to tolerate errors in estimating $\| \bSigma_i w_i \|_2$'s. 
+
+The following lemma shows that such a polynomial can be efficiently constructed. Using this lemma, \textsc{Coeff} (Algorithm~\ref{alg:coeff}) constructs the coefficients $c_p$'s which are used in \textsc{Powerw}. 
+
+\begin{restatable}[Coefficients]{lemma}{clusterlemma}\label{lem:cluster}
+%\begin{lemma}[Coefficients]\label{lem:cluster}
+For every $k \geq 2$, every $\rho > 1$, every $r_1, \cdots, r_k \in [\frac{1}{\rho}, \rho]$, and every $\veps > 0$, one can find in time $O(k\log k)$ an integer $0<s\le k$ and centers $1/\rho \leq z_1 \leq  \cdots \leq z_s \leq \rho$ such that for $f(x) = \prod_{p = 1}^s (x^2 - z_p)$ the following holds.
+\begin{enumerate}
+\item For $r = \min\{r_i\}_{i = 1}^k$ and every $i \in [k]$, $|f(\sqrt{r_i})| \leq \veps |\sqrt{r}f'(\sqrt{r}) |  $. 
+\item $|\sqrt{r}f'(\sqrt{r})| \geq  \left( \frac{ \veps}{\rho} \right)^k$. 
+\item For all $x$ with $x^2\in [1/\rho, \rho]$, $|f'(x)| \leq 2k \rho^k$ and $|f''(x)| \leq 4k^2 \rho^k$.
+\end{enumerate}
+%\end{lemma}
+\end{restatable}
+
+Putting things together, we can prove the main lemma regarding the per-iteration improvement of Algorithm~\ref{alg:one}.
+
+\begin{restatable}{lemma}{oneiterlemma} \label{lem:one_iter}
+%\begin{lemma}\label{lem:one_iter}
+For every $t \in \{0, 1, \cdots, T - 1\}$ and $\delta > 0$, as long as $\sigma_t = \Omega ( \sigma \veps)$, then with probability at least $1 - \delta$,
+$$
+\sigma_{t + 1}^2 \leq \left(1 - \frac{1}{200 k \sigma} \right) \sigma_t^2.
+$$
+%\end{lemma}
+\end{restatable}
+
+
+Using this Lemma and by the choice of our parameters we immediately have the following guarantee for the output of Algorithm~\ref{alg:one}.
+
+\begin{restatable}{lemma}{warmstartlemma}\label{lem:warmstart}
+%\begin{lemma}\label{lem:warmstart}
+With probability at least $1-\delta$, $\min_i \|w_i - a_T\|_2 \le O(\sigma^2\veps)$.
+%\end{lemma}
+\end{restatable}
+
+
+
+
+\subsection{Learning One of the Weights from Warm Start}\label{sec:gd}
+
+
+\begin{algorithm}[!h]
+\caption{ \textsc{GradientDescent}($k , v, \veps$) \label{alg:gd}}
+\begin{algorithmic}[1]
+\REQUIRE $k$ the number of clusters, a warm start $v$, and the final error $\veps$. 
+\ENSURE $v^{(T)}$, recovered weight parameter up to additive error $\veps$.
+\STATE Let $v^{(0)} \leftarrow v$, $T \leftarrow \Theta\left(\frac{d}{p_{\min}^2} \log \frac{\zeta}{\veps}\right)$, where $\zeta= \min\left\{\frac{\Delta}{2\sigma}, \frac{\Delta p_{\min}}{64 } \right\}$.
+\FOR{$t = 0, 1 , \cdots, T - 1$}
+\STATE Sample $m  = \text{poly}\left( \frac{1}{\Delta}, \frac{1}{p_{\min}}, \sigma, \log T\right)$ many samples $\set{S}_{t + 1} = \{ x_i, \alpha_i \}_{i = 1}^m$.
+\STATE Update: For properly chosen learning rate $\eta_t = \Theta\left( \frac{\zeta p_{\min}}{d} \right) \times \left(1 - \Theta\left(\frac{p_{\min}^2}{d} \right)\right)^t$ \begin{align}
+ v^{(t + 1)} = v^{(t)} + \eta_t \frac{1}{|\set{S}_{t+1}|}\sum_{(x,\alpha) \in \set{S}_{t+1}} \frac{\sign(\alpha - \langle v^{(t)}, x \rangle)}{|\alpha - \langle v^{(t)}, x \rangle| + \zeta} x .
+\end{align}
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+Here we describe how to use gradient descent on a concave function for faster convergence to one of the $w_i$'s, given the warm start computed by the algorithm in the last subsection.
+
+Algorithm~\ref{alg:gd} describes the details. The gradient descent is to minimize the function
+$$
+  g(v) = \E[\log(|\langle w - v, x \rangle| + \zeta)]
+$$
+where $\zeta$ is added to make the $\log(\cdot)$ smooth.
+The key property used is that we have a large correlation between the negative gradient and the difference of the current solution from the ground truth. Suppose we begin with a warm start close enough to $w_1$, then the correlation is
+$ \E \left[\frac{\sign(\alpha - \langle v^{(t)}, x \rangle) \langle w_1 - v^{(t)}, x \rangle}{|\alpha - \langle v^{(t)}, x \rangle| + \zeta} \right]$.
+This is (a variant of) inverse Gaussians and can be bounded by a function of the norms $\| w_i - v^{(t)}\|_2$ for $i \in [k]$. Since $\| w_1 - v^{(t)}\|_2$ is much smaller than the other norms $\| w_i - v^{(t)}\|_2$ for $i\neq 1$, the correlation can be shown to be large. 
+The convergence then follows from standard analysis.
+
+\begin{restatable}[Gradient descent]{lemma}{gradientlemma}\label{lem:gradient}
+%\begin{lemma}[Gradient descent] \label{lem:gradient}
+Suppose there exists $i \in [k]$ such that $\| w_i - v \|_2 \le \zeta / \sigma$. Then with high probability, Algorithm~\ref{alg:gd} outputs a vector $v^{(T)}$ such that
+$
+  \| w_{i} - v^{(T)} \| \le \veps.
+$
+%\end{lemma}
+\end{restatable}
+
+
+\subsection{Learning All the Weights}  \label{sec:algo_learn_all}
+
+Here we describe our final algorithm for learning all the weights. It uses the algorithm in the previous subsections to learn the weight of one of the components, removes the data points from that component, and repeats. Note that we can learn the weight up to error $\veps_g$ in time $\log(1/\veps_g)$, so $\veps_g$ can be made as small as $\left(\frac{p_{\min} \Delta}{\sigma d} \right)^{\Omega(k^2)}$ so that the step of removing the data points introduces essentially no error to later steps within our sample size. So we arrive at our final guarantee in Theorem~\ref{thm:main}. 
+
+\begin{algorithm}[!t]
+\caption{Learning Mixtures of Linear Regressions\label{alg:mlr}}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $\set{D} = \{(x_\ell, \alpha_\ell)\}_{\ell =1}^N$, number of components $k$, error $\veps$. (Parameters $\sigma, \Delta, p_{\min}$ are known to all the algorithms)
+\ENSURE $\{v_i\}_{i=1}^k$, recovered weight parameters up to additive error $\veps$.
+\FOR{$i = 1, \ldots, k$}
+\STATE $a \leftarrow$ \textsc{MomentDescent}($k-i+1, \delta, \veps_w$), where $\veps_w = \text{poly}\left(\frac{p_{\min}\Delta}{\sigma}\right)$ and $\delta=\text{poly}\left(\frac{1}{d}\right)$.
+\STATE $v_i \leftarrow$ \textsc{GradientDescent}($ k-i+1, a, \veps_g$), where $\veps_g = \min \left\{\veps, \left(\frac{p_{\min} \Delta}{\sigma d}\right)^{\Omega(k^2)} \right\}$.
+\STATE Remove from $\set{D}$ all the data $(x_\ell, \alpha_\ell)$ such that $|\langle x_\ell, v_i \rangle - \alpha_\ell| \le \veps_g  \sigma \cdot \text{polylog}(d)$. 
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}

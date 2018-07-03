@@ -1,0 +1,227 @@
+%!TEX root = main.tex
+
+\section{Main Result}\label{sec:results}
+
+% \begin{algorithm}[t]
+% \caption{Perturbed AGD with Negative Curvature Exploration
+% ($\x_0, \eta, \theta, r, s$)}\label{algo:PAGD}
+% \begin{algorithmic}[1]
+% \State $\v_0 \leftarrow 0$
+% \For{$t = 0, 1, \ldots, T $}
+% \If{perturbation condition holds}
+% \State $\x_t \leftarrow \x_t + \xi_t \qquad \xi_t \sim \text{Unif}\left(B_0(r)\right)$
+% \EndIf
+% \State $\y_{t} \leftarrow \x_{t} + (1-\theta) \v_t$
+% \State $(\x_{t+1}, ~\v_{t+1}) \leftarrow (\y_t - \eta \grad f (\y_t), ~\x_{t+1} - \x_t)$
+% \If{certificate Eq.\eqref{eq:certificate} is false}
+% \State $(\x_{t+1}, \v_{t+1}) \leftarrow $ Negative-Curvature-Exploitation($\x_t, \v_t, s$)
+% \EndIf
+% \EndFor
+% \State \textbf{return} $\x_T$
+% \end{algorithmic}
+% \end{algorithm}
+
+
+
+
+
+\begin{algorithm}[t]
+\caption{Negative Curvature Exploitation$\left(\x_t, \v_t, s\right)$}\label{algo:NCE}
+\begin{algorithmic}[1]
+\IF{$\norm{\v_t} \ge s$}
+\STATE $\x_{t+1} \leftarrow \x_t$;
+\ELSE
+\STATE $\delta = s\cdot \v_t/\norm{\v_t}$
+\STATE $\x_{t+1} \leftarrow \argmin_{\x \in \{\x_t + \delta, \x_t - \delta\}} f(\x)$
+\ENDIF
+\STATE \textbf{return} $(\x_{t+1}, 0)$
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+
+% \begin{figure}[t]
+% 	\begin{minipage}{0.48\textwidth}
+% 	\begin{algorithm}[H]
+% 	\caption{Perturbed AGD with Negative Curvature Exploration
+% 	($\x_0, \eta, \theta, r, s$)}\label{algo:PAGD}
+% 	\begin{algorithmic}[1]
+% 	\State $\v_0 \leftarrow 0$
+% 	\For{$t = 0, 1, \ldots, T $}
+% 	\If{perturbation condition holds}
+% 	\State $\x_t \leftarrow \x_t + \xi_t \qquad \xi_t \sim \text{Unif}\left(B_0(r)\right)$
+% 	\EndIf
+% 	\State $\y_{t} \leftarrow \x_{t} + (1-\theta) \v_t$
+% 	\State $(\x_{t+1}, ~\v_{t+1}) \leftarrow (\y_t - \eta \grad f (\y_t), ~\x_{t+1} - \x_t)$
+% 	\If{certificate Eq.\eqref{eq:certificate} is false}
+% 	\State $(\x_{t+1}, \v_{t+1}) \leftarrow $ Negative-Curvature-Exploration($\x_t, \v_t, s$)
+% 	\EndIf
+% 	\EndFor
+% 	\State \textbf{return} $\x_T$
+% 	\end{algorithmic}
+% 	\end{algorithm}
+% 	\end{minipage}
+% 	\hfill
+% 	\begin{minipage}{0.48\textwidth}
+% 	\begin{algorithm}[H]
+% 	\caption{Negative Curvature Exploitation$\left(\x_t, \v_t, s\right)$}\label{algo:NCE}
+% 	\begin{algorithmic}[1]
+% %	\Procedure{Negative-Curvature-Exploration}{$\x_t, \v_t, s$}
+% 	\If{$\norm{\v_t} \ge s$}
+% 	\State $\x_{t+1} \leftarrow \x_t$;
+% 	\Else
+% 	\State $\delta = s\cdot \v_t/\norm{\v_t}$
+% 	\State $\x_{t+1} \leftarrow \argmin_{\x \in \{\x_t + \delta, \x_t - \delta\}} f(\x)$
+% 	\EndIf
+% 	\State \textbf{return} $(\x_{t+1}, 0)$
+% %	\EndProcedure
+% 	\end{algorithmic}
+% 	\end{algorithm}
+% 	\vspace{1cm}
+% 	\end{minipage}
+% \end{figure}
+
+In this section, we present our main result providing a convergence rate of~\pagd (Algorithm~\ref{algo:PAGD}). As mentioned in Section~\ref{sec:intro},~\pagd~is essentially~\nag~with two key differences: perturbation and~\nce. Perturbation is added (to escape saddle points) when the gradient is small, and no more frequently than once in $\utime$ steps. The perturbation $\xi_t$ is sampled uniformly from a $d$-dimensional ball with radius $r$. The specific choices of gap and uniform distribution are for
+technical convenience (they are sufficient for our theoretical result but not necessary).
+
+\red{
+\nce~(Algorithm~\ref{algo:NCE}) is explicitly designed to guarantee decrease of the Hamiltonian~\eqref{eqn:hamiltonian}, whenever~\nag~steps are not guaranteed to do so. In particular,~\nag~steps might not decrease the Hamiltonian when
+%It is triggered when
+\begin{equation}\label{eq:certificate}
+f(\x_t) \le  f(\y_t) + \la \grad f(\y_t), \x_t - \y_t \ra - \frac{\gamma}{2} \norm{\x_t - \y_t}^2,
+\end{equation}
+i.e., the function has a large negative curvature between the current iterates $\x_{t}$ and $\y_t$. In this case,~\nce~is triggered.~\nce~does the following: if the momentum $\v_t$ is small, then $\y_t$ and $\x_t$ are close, so the large negative curvature also carries over to the Hessian at $\x_t$ due to the Lipschitz Hessian property. Since one of the directions $\pm(\y_t - \x_t)$ is negatively aligned with $\grad f(\x_t)$, moving from $\x_t$ along this direction decreases function value and Hamiltonian.
+If the momentum $\v_t$ is large, negative curvature can no longer be exploited, but resetting the momentum to zero kills the second term in~\eqref{eqn:hamiltonian}, significantly decreasing the Hamiltonian.}
+\vspace{0.2cm}
+
+\noindent\textbf{Setting of hyperparameters:} Let $\epsilon$ be the target accuracy for a second-order stationary point, let $\ell$ and $\rho$ be gradient/Hessian-Lipschitz parameters, and let $c, \chi$ be absolute constant and log factor to be specified later.
+Let $\cn \defeq \ell/\sqrt{\rho\epsilon}$, and set
+\begin{equation}
+\eta = \frac{1}{4\ell}, \quad
+\theta = \frac{1}{4\sqrt{\cn}},
+\quad \gamma = \frac{\theta^2}{\eta} ,
+\quad s = \frac{\gamma}{4\rho}, 
+\quad \utime = \sqrt{\cn}\cdot \chi c,
+\quad r = \eta\epsilon\cdot \chi^{-5}c^{-8}.
+\label{eq:parameter}
+\end{equation}
+
+\noindent
+%Now we are ready to present our main theorem:
+The following theorem is the main result of this paper.
+
+% parameter setting
+
+% theorem
+
+
+
+
+% More formally, negative curvature exploitation is triggered if the following \emph{does not hold}: \pn{Do you want to state the certificate this way or opposite?}
+% %\begin{enumerate}
+% %	\item \textbf{Perturbation} (lines $3$--$4$ of Algorithm~\ref{algo:PAGD}): 
+% %	\item \textbf{Negative curvature exploitation} (lines $7$--$8$ of Algorithm~\ref{algo:PAGD}): 
+% %\end{enumerate}
+% % \begin{equation}
+% % .
+% % \label{eq:certificate}
+% % \end{equation}
+% \pn{Give the value of $\gamma=\sqrt{\rho \epsilon}$.}
+% In this case, negative curvature exploitation (pseudocode in Algorithm~\ref{algo:NCE}) decides to either move in the direction of momentum or stay as is (depending on the magnitude of momentum), and resets momentum to $0$.
+% %where $s$ in algorithm should be of $O(\sqrt{\frac{\epsilon}{\rho}})$.
+% At a high level, the algorithm we are considering is essentially~\nag~with 
+% occasional perturbations and in the presence of highly negative curvature, exploits it. The following theorem is the main result of this paper.
+% \cnote{explain what is step 5 doing, and why this decrease Hamiltonian, why it depends on the magnitude of momentum.}
+
+% \cnote{Also say a bit more words on the perturbation component, what's the perturbation condition}\
+
+% \cnote{Say something about termination condition.}
+
+% \noindent \textbf{Parameter Setting:} let $\chi = c \log \frac{d \ell\Delta_f}{\rho \epsilon\delta}$.
+% \begin{equation*}
+% \eta = \frac{1}{2\ell}
+% \end{equation*}
+
+
+
+\begin{theorem}\label{thm:main}
+Assume that the function $f(\cdot)$ is $\ell$-smooth and $\rho$-Hessian Lipschitz.  There exists an absolute constant $c_{\max}$ such that for any $\delta >0$, $\epsilon \le \frac{\ell^2}{\rho}$, $\Delta_f \ge f(\x_0) - f^\star$, if $\chi =\max\{1, \log \frac{d \ell\Delta_f}{\rho \epsilon\delta}\}$, $c\ge c_{\max}$, if we run~\pagd~(Algorithm~\ref{algo:PAGD}) with choice of parameters according to~\eqref{eq:parameter}, then with probability at least $1-\delta$, one of the iterates $\x_t$ will be an $\epsilon$-second order stationary point
+in the following number of iterations:
+\begin{equation*}
+O\left(\frac{\ell^{1/2}\rho^{1/4}(f(\x_0) - f^*)}{\epsilon^{7/4}} \log^6 \left(\frac{d \ell\Delta_f}{\rho \epsilon\delta}\right)\right).
+\end{equation*}
+\end{theorem}
+\noindent
+Theorem~\ref{thm:main} says that when~\pagd~is run for the designated number of steps 
+(a number which is polylogarithmic in dimension\footnote{This logarithmic dimension 
+dependency can be removed if the primary target is to only find $\epsilon$-first order 
+stationary point, in which case the perturbation component (Lines 3-4) in 
+Algorithm~\ref{algo:PAGD} need not be executed (since an $\epsilon$-first order stationary point has been found), resulting in a completely deterministic algorithm.}), 
+at least one of the iterates is an~\ESSP. We focus on the case of small $\epsilon$ (i.e., $\epsilon \le \ell^2/\rho$) so that the Hessian requirement for the~\ESSP~($\lambda_{\min}(\hess f(\x)) \ge -\sqrt{\rho \epsilon}$) is nontrivial.
+Note that $\norm{\hess f(\x)} \le \ell$ implies $\cn = \ell/\sqrt{\rho\epsilon}$,
+which can be viewed as a condition number, akin to that in convex setting.
+%We denote $\ell/\sqrt{\rho\epsilon}$ as $\cn$.
+Comparing Theorem \ref{thm:main} with Theorem~\ref{thm:perturbed_GD},~\pagd, with a momentum parameter $\theta = \Theta(1/\sqrt{\cn})$, achieves $\tilde{\Theta}(\sqrt{\cn})$ better iteration complexity compared to~\pgd. 
+% The dimension dependence in iteration complexity is poly-logarithmic ($\log^8 d$), slightly worse than~\pgd.
+
+\vspace{0.2cm}
+
+\noindent\textbf{Output $\epsilon$-second order stationary point:}
+Although Theorem~\ref{thm:main} only guarantees that one of the iterates is an $\epsilon$-second order stationary point, it is straightforward to identify one of them by adding a proper termination condition: once the gradient is small and satisfies the pre-condition to add a perturbation, we can keep track of the point $\x_{t_0}$ prior to adding perturbation, and compare the Hamiltonian at $t_0$ with the one $\utime$ steps after. If the Hamiltonian decreases by $\ufun = \tilde{\Theta}(\sqrt{\epsilon^3/\rho})$, then the algorithm has made progress, otherwise $\x_{t_0}$ is an~\ESSP~according to Lemma~\ref{lem:negHess}. Doing so will add a hyperparameter (threshold $\ufun$) but does not increase complexity.
+
+% \vspace{0.2cm}
+
+% \noindent
+% \textbf{Find $\epsilon$-first order stationary point in dimension-free iterations:}
+% We comment on by removing perturbation component (Lines 3-4) in Algorithm \ref{algo:PAGD}, we will obtain a completely deterministic algorithm. Theorem~\ref{thm:main} can be easily modified to find $\epsilon$-first order stationary point using this deterministic algorithm without logarithmic dependency.
+% meaning of theorem
+
+
+% remark on termination condition
+
+
+% \noindent
+% As can be seen from the value of negative curvature in~\eqref{eq:certificate} to trigger negative curvature exploitation, the equivalent notion of condition number for this problem turns out to be $\cn = \frac{\ell}{\sqrt{\rho\epsilon}}$. As in the strongly convex case, where~\nag~improves upon~\gd~by a factor of squareroot of condition number, in the nonconvex case~\pagd~improves upon~\pgd~by a factor of $\sqrt{\cn}$ as well.
+
+% \cnote{More comparison to convex case even about the choice of $\theta$.}
+
+% \cnote{Say more about condition number, why we are interested in the case $\ell/\sqrt{\rho\epsilon}$}
+
+
+
+
+
+% We say $\x$ is $\epsilon-$close to second order stationary point if:
+% \begin{equation*}
+% \norm{\grad f(\x)} \le \epsilon, \qquad\qquad \lambda_{\min}(\hess f(\x)) \ge - \sqrt{\rho \epsilon}
+% \end{equation*}
+
+% \textbf{Assumption:}
+% \begin{enumerate}[label=A\arabic*]
+% \item $f(\cdot)$ is \textbf{$\rho$-Hessian Lipschitz}, i.e. $\norm{\hess f(\x_1) - \hess f(\x_2)} \le \rho \norm{\x_1 - \x_2}$.
+% \item $f(\cdot)$ is \textbf{$\ell$-smooth}, i.e. $\norm{\grad f(\x_1) - \grad f(\x_2)} \le \ell \norm{\x_1 - \x_2}$
+% % \item Saddle points are all $\gamma$-strict.
+% \end{enumerate}
+
+
+% ~
+
+% \begin{theorem}\label{thm:main}
+% If function $f(\cdot)$ satisfies A1, A2, and we run Perturbed AGD with NCE (Algorithm \ref{algo:PAGD}) 
+% with suitable parameters, then it will output $\epsilon-$second-order stationary point
+% with high probability in iterations:
+% \begin{equation*}
+% \tilde{O}\left(\frac{\ell^{1/2}\rho^{1/4}(f(\x_0) - f^*)}{\epsilon^{7/4}}\right)
+% \end{equation*}
+% \end{theorem}
+% \begin{proof}
+
+% \end{proof}

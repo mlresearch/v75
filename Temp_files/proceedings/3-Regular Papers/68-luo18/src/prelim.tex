@@ -1,0 +1,150 @@
+ \section{Preliminaries}\label{sec:setup}
+
+
+The contextual bandits problem is defined as follows.  Let $\calX$ be
+an arbitrary context space and $K$ be the number of actions.  Let
+$[n]$ denote the set $\{1, \ldots, n\}$ for any integer $n$.  A
+mapping $\pi: \calX \rightarrow [K]$ is called a policy and the
+learner is given a fixed set of policies $\Pi$.  For simplicity, we
+assume $\Pi$ is a finite set but with a large cardinality $N = |\Pi|$.
+Ahead of time, the environment decides $T$ distributions $\calD_1,
+\ldots, \calD_T$ on $\calX \times [0,1]^K$, and draws $T$
+context-reward pairs $(x_t, r_t) \sim \calD_t$ for $t=1,\ldots, T$
+independently.\footnote{That is, the data generating process is
+  oblivious to the algorithm.}  Then at each round $t = 1, \ldots, T$,
+the environment reveals $x_t$ to the learner, the learner picks an
+action $a_t \in [K]$ and observes its reward $r_t(a_t)$.  The regret
+of the learner with respect to a policy $\pi$ at round $t$ is
+$r_t(\pi(x_t)) - r_t(a_t)$.  Most existing results on contextual
+bandits focus on minimizing cumulative regret against any fixed policy
+$\pi \in \Pi$: $\sum_{t=1}^T r_t(\pi(x_t)) - r_t(a_t)$.
+
+To better deal with non-stationary environments, we consider several
+related notions of regret.  The first one is cumulative regret with
+respect to a fixed policy on a time interval $\calI$, which we call
+{\it interval regret} on $\calI$. Specifically, we use the notation
+$\calI = [s, s']$ for $s \leq s'$ and $s, s' \in [T]$ to denote the
+set $\{s, s+1, \ldots, s'\}$ and call it a time interval (starting
+from round $s$ to round $s'$).  The regret with respect to a fixed
+$\pi \in \Pi$ on a time interval $\calI$ is then defined as $\sum_{t
+  \in \calI} r_t(\pi(x_t)) - r_t(a_t)$. %Thus, a low interval regret
+%for a class of intervals implies competition with the \emph{best fixed
+%  policy on each interval in the class} with the freedom to pick
+%different benchmark policies on different intervals when the
+%environment changes. 
+This is similar to the notion of adaptive and strongly
+adaptive regret~\citep{HazanSe07, DanielyGoSh15}. We use the term
+interval regret without any specific interval when the choice is
+clear from context.
+
+Interval regret is useful in studying more general regret measures for non-stationary environments.
+Specifically, we aim at the most challenging benchmark,
+that is, the cumulative rewards achieved by using the best policy {\it at each time}.
+Formally, let $\calR_t(\pi) \coloneqq \E_{(x,r)\sim\calD_t} r(\pi(x))$ be the expected reward of policy
+$\pi$ under $\calD_t$ and $\pi^\star_t \coloneqq \argmax_{\pi \in \Pi} \calR_t(\pi)$ be the optimal policy at round $t$.
+Then the aforementioned general regret is defined as $\sum_{t=1}^T r_t(\pi^\star_t(x_t)) - r_t(a_t)$.
+It is well-known that in general no sub-linear regret is achievable with this definition. 
+
+However, one can bound such regret in terms of some quantity that measures the non-stationarity of the environment
+and achieve meaningful results whenever such quantity is not too large.
+One example is to count the number of switches in the distribution sequence,
+that is, $\sum_{t=2}^T \one\{\calD_t \neq \calD_{t-1}\}$.
+We denote this by $S - 1$ (so that $S$ is the number of i.i.d. segments)
+and call a regret bound in terms of $S$ {\it switching regret}.
+
+Switching regret might be meaningless if the distribution is slowly drifting,
+leading to a large number of switches but overall a small amount of variation in the distribution.
+To capture this situation, we also consider another type of non-stationarity measure,
+generalizing a similar notion from the multi-armed bandit literature~\citep{BesbesGuZe14}.
+Specifically, define \sloppy$\var = \sum_{t=2}^T \max_{\pi \in \Pi} |\calR_t(\pi) - \calR_{t-1}(\pi)|$
+to be the variation of reward distributions.
+Note that this is a lower bound on the sum of total variation between consecutive distributions
+$\bvar = \sum_{t=2}^T \TVD{\calD_t-\calD_{t-1}} = \sum_{t=2}^T\int_{[0,1]^K}\int_{\calX} \bigabs{\calD_{t}(x,r)-\calD_{t-1}(x,r)} dxdr$
+(see Lemma~\ref{lemma:variation_relation} for a proof).
+We call regret bounds in terms of $\var$ or $\bvar$ {\it dynamic regret}.
+
+%As an example, consider a sequence of benchmark policies $\pi_1,
+%\ldots, \pi_T \in \Pi$, that switches at most $S$ times, that is,
+%$\sum_{t=2}^T \one\{\pi_t \neq \pi_{t-1}\} \leq S$. This is a natural
+%baseline if the distribution of contexts and rewards changes $S$ times
+%over $T$ rounds (e.g., each time new content is added in a
+%personalization application). Regret against this baseline is called
+%{\it switching regret} in previous works~\citep{SyrgkanisKrSc16}. Low
+%interval regret implies low switching regret, as we can consider the
+%$S+1$ intervals defined by the switches, where the baseline $\pi_t$
+%stays fixed. Results on switching regret are discussed in
+%Section~\ref{subsec:switching}.
+
+%Alternatively, the distributions over contexts and rewards might
+%slowly drift, due to underlying trends. The optimal policy might
+%change slightly very often, but the total change might still be
+%controlled in some appropriate measure. We capture these scenarios by
+%generalizing {\it dynamic regret}~\citep{BesbesGuZe14} to the
+%contextual setting. Specifically, let $\calR_t(\pi) \coloneqq
+%\E_{(x,r)\sim\calD_t} r(\pi(x))$ be the expected reward of policy
+%$\pi$ and $\pi^\star_t \coloneqq \argmax_{\pi \in \Pi} \calR_t(\pi)$
+%be the optimal policy at round $t$.  Then dynamic regret is defined as
+%$\sum_{t=1}^T r_t(\pi^\star_t(x_t)) - r_t(a_t)$.  It is well-known
+%that in general no sub-linear dynamic regret is achievable.  
+%%We therefore generalize the notion of the {\it variation} of reward distributions in~\citep{BesbesGuZe14} and define $\var_T = \sum_{t=2}^T \max_{\pi \in \Pi} |\calR_t(\pi) - \calR_{t-1}(\pi)|$.  
+%{\color{red} We generalize the notion of {\it variation} in reward 
+%distributions in~\citep{BesbesGuZe14} to the variation in the joint 
+%distributions of rewards and contexts. Using the notion of \textit{total 
+%variation} distance, which is defined as $ \TVD{\calP-\calQ}=\int_{\calZ}\abs{\calP(z)-\calQ(z)}dz$ for probability measures $\calP, \calQ$ over $\calZ$, we can define $\var_T = \sum_{t=2}^T
+%\TVD{\calD_t-\calD_{t-1}}$.} 
+%We aim to derive dynamic regret that depends on $\var_T$ and is meaningful
+%whenever $\var_T$ is reasonably small.
+
+All algorithms we consider construct a distribution $p_t$ over actions
+at round $t$ and then sample $a_t \sim p_t$.  The importance weighted
+reward estimator is defined as $\ips_t(a) = \frac{r_t(a)}{p_t(a)}
+\one\{a = a_t\},\; \forall a \in [K]$.  For an interval $\calI$, we
+use $\calR_\calI(\pi)$ and $\avgR_\calI(\pi)$ to denote the average
+expected and empirical rewards of $\pi$ over $\calI$ respectively,
+that is, $\calR_\calI(\pi) =
+\frac{1}{|\calI|}\sum_{t\in\calI}\calR_t(\pi)$ and $\avgR_\calI(\pi) =
+\frac{1}{|\calI|}\sum_{t\in\calI}\ips_t(\pi(x_t))$.  
+The empirically best policy on interval $\calI$ is defined as $\hat{\pi}_\calI = \argmax_{\pi\in\Pi}\avgR_\calI(\pi)$.
+The number of i.i.d. periods, the reward variation, and the total variation on an interval
+$\calI = [s,s']$ are respectively defined as 
+$S_\calI = 1+\sum_{\tau=s+1}^{s'} \one\{\calD_\tau \neq \calD_{\tau-1}\}$,
+$\var_\calI \coloneqq \sum_{\tau = s+1}^{s'} \max_{\pi \in \Pi} |\calR_\tau(\pi) - \calR_{\tau - 1}(\pi)|$,
+and $\bvar_\calI \coloneqq \sum_{\tau = s+1}^{s'}\TVD{\calD_{\tau}-\calD_{\tau-1}}$.
+%{\color{red}
+%\begin{equation}
+%\var_\calI \coloneqq \sum_{\tau = s+1}^{s'}\TVD{\calD_{\tau}-\calD_{\tau-1}}
+%\label{eqn:var-def}
+%\end{equation}
+%}
+%\begin{equation}
+%\var_\calI \coloneqq \sum_{\tau = s+1}^{s'} \max_{\pi \in \Pi}
+%|\calR_\tau(\pi) - \calR_{\tau - 1}(\pi)|.
+%\label{eqn:var-def}
+%\end{equation}
+
+%and $\var_T$ denotes $\var_{[1,T]}$. 
+We use $\calD_t^\calX$ to denote
+the marginal distribution of $\calD_t$ over $\calX$, and $\E_t$ to
+denote the conditional expectation given everything before round $t$.
+Finally, we are interested in efficient algorithms assuming access to
+an optimization oracle~\citep{AgarwalHsKaLaLiSc14}:
+
+\begin{definition}
+The argmax oracle (AMO) is an algorithm which takes any set $\calS$ of
+context-reward pairs $(x, r) \in \calX \times \fR^K$ as
+inputs and outputs any policy in $\argmax_{\pi \in \Pi} \sum_{(x,r)\in
+  \calS} r(\pi(x))$.
+\end{definition}
+
+An algorithm is oracle-efficient if its total running time and the
+number of oracle calls are both polynomial in $T, K$ and $\ln N$,
+excluding the running time of the oracle itself. 
+%As mentioned earlier, in general no 
+%oracle-efficient algorithm with a sublinear bound on even the ordinary regret can 
+%exist~\cite{Hazan2016}. Since interval regret is an even stronger notion, 
+%the hardness result extends. Consequently, the bulk of our results will rely 
+%on some specific assumptions to enable oracle-efficient algorithms.
+
+In the rest of the paper, we start with discussing interval regret in Section~\ref{sec:interval_regret},
+followed by the implications for switching/dynamic regret in Section~\ref{sec:implications}.
+The parameter-free algorithm \AdaBIN is then discussed in Section~\ref{sec:bin}.

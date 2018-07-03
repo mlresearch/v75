@@ -1,0 +1,70 @@
+% !TEX root = paper.tex
+
+So far all of our examples have concerned adaptive bounds $\cA$ that adapt to the data sequence $x_{1},\ldots,x_{n}$, not the comparator $f$. In this section we will show that the framework of Burkholder functions and sufficient statistics readily encompasses comparator-dependent norms by giving a new family of algorithms for the problem of \emph{parameter-free online learning} \citep{mcmahan2014unconstrained}. The setup is as follows: We equip the subset $\cX\subseteq{}\bbR^{d}$ with a norm $\nrm*{\cdot}$ and assume that $\nrm*{x_{t}}\leq{}1$ for all $t$.\footnote{The result extends verbatim to the general Banach space case; this is only to simplify presentation.} Recall that $\norm{\cdot}_{\star}$ will denote the dual norm. Rather than constraining the benchmark class to a compact set, we set $\cW=\bbR^{d}$ and set $\cF=\crl*{x\mapsto\tri*{w,x}\mid{}w\in\cW}$. We assume smoothness of the norm: letting $\Psi(x) = \frac{1}{2}\nrm*{x}^{2}$, it holds that\footnote{Our analysis extends to the general case where we instead have  $\frac{1}{2}\nrm*{x}^{2}\leq{}\Psi(x)$ for some $\Psi\neq{}\frac{1}{2}\nrm*{\cdot}^{2}$ and the same smoothness inequality holds, which is needed for settings such as $\ls_1$/$\ls_{\infty}$.}
+  \[
+    \Psi(x+y) \leq{} \Psi(x) + \tri*{\grad{}\Psi(x), y} + \frac{\beta}{2}\nrm*{y}^{2}.
+  \]
+
+
+To ease notational burden, we will assume the loss is $1$-Lipschitz in this section. We will efficiently obtain a regret bound of the form
+\begin{equation}
+  \label{eq:regret_param}
+\reg(w) \leq{} \cA(w) \ldef \nrm*{w}_{\star}\sqrt{2\beta{}n\log\prn*{\sqrt{\beta}n\nrm*{w}_{\star} + 1}} + 1 \quad\forall{}w\in\bbR^{d}
+\end{equation}
+for any such smooth norm. We begin by stating a sufficient statistic representation for the problem. This is based on a familiar potential which has appeared in previous works on parameter-free online learning (e.g. \citep{mcmahan2014unconstrained}) in Hilbert spaces; we extend it to any smooth norm, then use it in the Burkholder method to provide \emph{the first linear time/linear space algorithm for parameter-free learning with general smooth norms in online supervised learning}.\footnote{Since the original submission of this paper, the independent work of \citep{cutkosky2018blackbox} has provided an algorithm with a similar regret guarantee and computational efficiency.}
+
+\begin{proposition}
+  \label{prop:param_sufficient} Suppose we are interested in an adaptive regret bound of
+\[
+\cA(w) = \nrm*{w}_{\star}\sqrt{2an\log\prn*{\frac{\sqrt{an}\nrm*{w}_{\star}}{\gamma} + 1}} + c
+\]
+for constants $a,\gamma,c>0$. Then $\suff(x_t,\pred_t,\delta_t) = \left( \delta_t\cdot\pred_t, \delta_t\cdot x_t\right)\in\reals\times \X$ and the function
+\begin{equation}
+\label{eq:param_v}
+V(b, x) = b + \gamma\exp\prn*{\frac{\nrm*{x}^{2}}{2an}} - c,
+\end{equation}
+yield a sufficient statistic pair for the regret bound $\cA$.
+
+\end{proposition}
+
+Because the regret bound we provide is not horizon independent unlike previous examples, it will be convenient to allow time-indexed Burkholder functions $(\burk_{t})_{t\leq{}n}$. This indexing is of purely notational convenience, as time-dependent Burkholder functions fit squarely into the algorithmic framework of \pref{lem:universal_algo} by enlarging $\cX$ to $\cX\times{}\brk*{n}$. Nonetheless, we recap the analogous properties for time-dependent Burkholder functions in the proof of the following theorem.
+
+\begin{theorem}
+  \label{thm:param_free}
+  Suppose $c=1$, $a=\beta$, and $\gamma=1/\sqrt{n}$ in \pref{eq:param_v}. Then
+  \[
+    \burk_{t}(b, x) \ldef b + \frac{1}{\sqrt{n}}\exp\prn*{\frac{\nrm*{x}^{2}}{2\beta{}t} + \frac{1}{2}\sum_{s=t+1}^{n}\frac{1}{s}} - 1, 
+  \]
+  is a family of time-varying Burkholder functions satisfying $1^o$, $2^o$, and $3'$.
+\end{theorem}
+
+This Burkholder function immediately yields both a prediction strategy achieving \pref{eq:regret_param} and a simple probabilistic martingale inequality. We will now state them both. Because $(\burk_t)_{t\leq{}n}$ satisfy additional convexity properties, the strategy is especially efficient (per \pref{app:efficient} and \pref{lem:det_strat3}).
+
+\begin{corollary}
+Suppose that $\cY=\brk*{-B, B}$ for some $B>0$. Then the deterministic prediction strategy
+  \[
+    \yh_{t} = \mathrm{proj}_{\brk*{-B, B}}\prn*{-\frac{1}{\sqrt{n}}\En_{\sigma\in\pmo}\brk*{\sigma\cdot\exp\prn*{\frac{\nrm*{\sum_{s=1}^{t-1}\dl_{s}x_s + \sigma{}x_t}^{2}}{2\beta{}t} + \frac{1}{2}\sum_{s=t+1}^{n}\frac{1}{s}}}}
+  \]
+  leads to a regret bound of
+  \[
+    \sum_{t=1}^{n}\ls(\yh_t, y_t) - \sum_{t=1}^{n}\ls(\tri*{w,x_t}, y_t) \leq{} \nrm*{w}_{\star}\sqrt{2\beta{}n\log\prn*{\sqrt{\beta}n\nrm*{w}_{\star} + 1}} + 1 \quad\forall{}w\in\bbR^{d}.
+  \]
+\end{corollary}
+
+The Burkholder function family stated above and \pref{lem:equivalence_burkholder} certify that $\sup\En\brk*{V}\leq{}0$. One special case of this martingale inequality is the following mgf bound for vector-valued martingales under smooth norms.
+
+\begin{corollary}
+  Let $\bx_{t}(\eps) \ldef \bx_{t}(\eps_1,\ldots,\eps_{t-1})$ be adapted to the filtration $\cF_{t-1}=\sigma(\eps_{1},\ldots,\eps_{t-1})$ for Rademacher random variables $\eps_{1},\ldots,\eps_{n}$, and let $\nrm*{\bx_t}\leq{}1$ almost surely, where $\nrm*{\cdot}$ is a $\beta$-smooth norm. Then it holds that
+  \[
+    \En_{\eps}\exp\prn*{\frac{\nrm*{\sum_{t=1}^{n}\eps_{t}\bx_{t}(\eps)}^{2}}{2\beta{}n}} \leq{} \sqrt{n}.
+  \]
+
+\end{corollary}
+
+\noindent\textbf{Related work~~} Parameter-free online learning is a very active area of research, but essentially all results in this area that we are aware of \citep{mcmahan2013minimax,mcmahan2014unconstrained,orabona2014simultaneous,orabona2016coin,cutkosky2016online, cutkosky2017online} only provide regret bounds of the form \pref{eq:regret_param} in the special case where $\nrm*{\cdot}$ is a Hilbert space. The only exception is \citep{foster2017parameter} which gives an algorithm for smooth norms $\nrm*{\cdot}$, but has time $\mathrm{poly}(n)$ per step.
+Our Burkholder-based algorithm has running time $O(d)$ per step and only $O(d)$ memory.\footnote{Technically our algorithm only applies to the online supervised learning setting, whereas the algorithm of \cite{foster2017parameter} applies to the OCO setting.} The key ingredient to achieving this improvement was to examine a known potential through the lens of the Burkholder method. We hope that this approach can lead to similarly useful improvements by applying the Burkholder method to construct more sophisticated potentials as in, e.g. \citep{orabona2016coin, cutkosky2017online}, particularly to achieve regret bounds that adapt jointly to the model and to data.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

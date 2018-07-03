@@ -1,0 +1,164 @@
+\section{Stochastic Gradient Descent for $\ell_1$ Regression}\label{sec:SGDforl1}
+
+In this section, we describe how we achieve the bounds in \Cref{thm:applyKatyusha}. We first introduce the preconditioning technique by \cite{cohenpeng}, which, along with rotating the matrix,
+will reduce our problem to $\ell_1$ minimization where the input matrix $\AA$ is isotropic and the norms of all its rows have strong upper bounds, i.e. it is IRB by Definition~\ref{def:good}. We relegate the details and proof of this preconditioning procedure to \Cref{sec:lewis}.
+
+In \Cref{subsec:sgd}, we prove that known stochastic gradient descent algorithms
+will run provably faster if we assume that $\AA$ is IRB. In particular, if $\AA$ is IRB, we can find an initialization $\xx_0$ that is close to the optimum $\xx^*$,
+which in addition to bounding the gradient of our objective,
+will then allow us to plug these bounds into standard stochastic gradient descent algorithms
+and achieve a runtime of $\Otil(nnz(\AA) + d^3\epsilon^{-2})$. Finally, in \Cref{subsec:katyusha} we take known smoothing techniques by \cite{AllenZhuH16}
+along with the Katyusha accelerated stochastic gradient descent by \cite{AllenZhu17} to achieve a runtime of $\Otil(nnz(\AA) + d^{2.5}\epsilon^{-2})$.
+
+\subsection{Preconditioning with Lewis weights}
+\label{sec:LewisPreconditioning}
+The primary tool in our preconditioning routine will be a sampling scheme by Lewis weights, introduced in \cite{cohenpeng}, that was shown to approximately preserve the $\ell_1$ norm.
+Specifically, we will use the combination of two primary theorems from \cite{cohenpeng}
+that approximately compute the Lewis weights of a matrix quickly
+and then sample accordingly while still approximately
+preserving $\ell_1$ norm distances with high probability.
+
+\begin{theorem}[Theorem 2.3 and 6.1 from \cite{cohenpeng}]
+	\label{thm:lewisWeights}
+	Given a matrix $\AA \in \R^{n \times d}$
+	with $\ell_1$ Lewis weights $\lw$ and
+	an error parameter $\epsilon > 0$,
+	then for any function $h(n,\epsilon) \geq O(\epsilon^{-2}\log{n})$,
+	we can find sampling values
+	\[\pp_i \approx_{O(1)} \lw_i h(n,\epsilon)\]
+	for each $i \in \{1,2, \ldots, n\}$,
+	and generate a matrix $\SS$ with $N = \sum_i\pp_i$ rows,
+	each chosen independently as the $i^{th}$ standard basis vector of dimension $n$,
+	times $\frac{1}{\pp_i}$ with probability proportional to $\pp_i$,
+	such that with high probability we have 
+	\[ \textstyle \|\tilde{\AA}\xx\|_1 \approx_{1+\epsilon}\norm{\AA\xx}_1\]
+	for all $\xx \in \R^d$, where $\tilde{\AA} = \SS\AA$. 
+	Computing these sampling values requires
+	$O(nnz(\AA)\log{n} + d^{\omega})$ time.
+\end{theorem} 
+
+In \Cref{sec:lewis}, we will show that this sampling scheme also ensures that
+each row of $\tilde{\AA}$ has approximately the same leverage score.
+This proof will involve applying known facts about leverage scores and their connections with Lewis weights, along with standard matrix concentration bounds.
+Furthermore, we will obtain additional nice properties by rotating $\AA$
+and showing that a solution to our reduced problem gives an approximate solution to the original problem,
+culminating in the following lemma:
+
+\begin{restatable}{lemma}{lewisAndRotate}
+	\label{lem:lewisAndRotate}
+	There is a routine that takes
+	a matrix $\AA \in \R^{n \times d}$,	a vector $\bb \in \R^{n}$ and $\epsilon > 0$,
+	then produces a matrix $[\tilde{\AA},\tilde{\bb}] \in \R^{N \times (d+1)}$
+	with $N = O(d\epsilon^{-2}\log{n})$
+	and an invertible matrix $\UU \in \R^{d \times d}$
+	such that matrix $\tilde{\AA}\UU$ is IRB and
+	if $\tilde{\xx}_{\UU}^*$ minimizes $\|\tilde{\AA}\UU\xx - \tilde{b}\|_1$,
+	then for any $\tilde{\xx}$ such that 
+	\[ \|\tilde{\AA}\UU\tilde{\xx} - \tilde{\bb}\|_1\leq (1 + \delta) \|\tilde{\AA}\UU\tilde{\xx}_{\UU}^* - \tilde{\bb}\|_1, \]
+	holds for some $\delta > 0$, we must have 
+	\[
+	\|\AA(\UU\tilde{\xx}) - \bb\|_1 \leq (1 + \epsilon)^2(1 + \delta)\|\AA \xx^* - \bb \|_1 \]
+	with high probability.
+	
+	Furthermore, the full running time is
+	$O(nnz(\AA)\log{n} + d^{\omega-1}\min\{d\epsilon^{-2}\log{n},n\} + \Upsilon)$ where $\Upsilon = \min\{d\epsilon^{-2}\log{n}, (d\epsilon^{-2}\log{n})^{1/2 + o(1)} + n\log^2{n}\}$.
+\end{restatable}
+
+As a result, we will assume that all of our matrices $\AA$ are already in the same form as $\tilde{\AA}\UU$, i.e. we assume $\AA$ is IRB, since relative error guarantees for the preconditioned system apply to the original system.
+
+
+\subsection{Isotropic and Row-Bounded $\AA$ for Stochastic Gradient Descent}\label{subsec:sgd}
+
+To demonstrate the usefulness of the properties of our preconditioned $\AA$,
+we consider standard stochastic gradient descent and the bounds on its running time. We let $\xx^* = \arg\min_{\xx} \norm{\AA\xx - \bb}_1$. We will use the following theorem to prove runtime bounds for standard SGD:
+
+\begin{theorem}[\cite{RS86ssgd}]
+	\label{thm:standardSGD}
+	Given a function $f$ and $\xx_0$ such that
+	$\norme{\xx_0 - \xx^*} \leq R$
+	and $L$ is an upper bound on the $\ell_2$ norm of the stochastic subgradients of $f$,
+	then projected subgradient descent ensures that after $t$ steps:
+	\[
+	f(\xx_t) - f(\xx^*) \leq O\left(\frac{RL}{\sqrt{t}}\right).
+	\]
+	where $\xx^* = \arg \min_{\xx} f(\xx)$.
+\end{theorem}
+
+To use this theorem, we must prove bounds on the initialization distance $\norme{\xx_0 -\xx^*}$ and the norm of the stochastic subgradients we use, i.e. $\nabla (n \cdot |\AA_{i,:}\xx - \bb_i|)$ for each $i$. We show that both of these bounds come from our assumptions on $\AA$.
+
+\begin{lemma}\label{lem:easyInit}
+	If $\AA$ is IRB, then by setting $\xx_0 = \AA^T\bb$ we have
+	\[
+	\norme{\xx_0 - \xx^*}^2 \leq O\left(d/n\right)\norm{\AA\xx^*-\bb}_1^2.
+	\]
+\end{lemma}
+
+\begin{proof}
+	\begin{align*}
+	\textstyle{\norm{\xx^{\left( 0 \right)} - \xx^{\left( * \right)}}_{2}^2} & = \textstyle{\norm{\AA^T \bb - \xx^{\left( * \right)}}_{2}^2} \\
+	& \textstyle{= \norm{\AA^T \left(\bb - \AA\xx^{(*)}\right)}_2^2} & &\text{by assumption $\AA^T\AA = \II$}\\
+	& \textstyle{= \norme{\sum_i \AA_{i,:} \left(\bb - \AA\xx^{(*)}\right)}^2} \\
+	& \textstyle{\leq \norm{\AA\xx^*-\bb}_1^2 \cdot \max_i ||\AA_{i,:}||_2^2} & & \text{by convexity of $\norm{\cdot}_2$, also shown in Lemma~\ref{lem:subordinatenorm}}\\
+	& = O\left({\dfrac{d}{n}}\right)\norm{\AA\xx^*-\bb}_1^2.
+	%\qedhere 
+	\end{align*}
+\end{proof}
+
+\comment{ The convexity argument (Jensen) does rely on the $1$-norm. So if we relax it back to $p$-norm for some $p > 1$, we lose a factor of $n^{p - 1}$, giving
+\begin{align}
+	\norme{\xx_0 - \xx^*}^2
+	& = \norme{\AA^T\left( \xx_0 - \xx^* \right) }^2\\
+	& \leq \norm{\AA\xx^*-\bb}_1^2 \cdot \frac{d}{n}\\
+	& \leq O\left(d n^{2p - 3} \right)\norm{\AA\xx^*-\bb}_{p}^2.
+\end{align}
+Specifically if $\AA \xx^{*} - \bb$ is the all-$1$s vector,
+this is actually tight.
+On the other hand, for $p = 2$,
+we have that $\AA \xx^{*} - \bb$ is orthogonal to $\AA^{T}$,
+and should be $0$.
+So this kind of algebra seems only to be tight in the $p = 1$ case.
+}
+\begin{lemma}\label{lem:easyLipscitz}
+		If $\AA$ is IRB, then $\norme{\nabla (n \cdot |\AA_{i,:}\xx - \bb_i|)}^2 \leq O(nd)$ for all $i$.
+\end{lemma}
+
+%\rp{For $p$-norm this is not true: the gradient becomes $n \AA_{i,:}^{T} (\AA_{i, :} \xx - \bb_{i})^{p - 1}$, which can be very large when $\AA_{i, :} \xx - \bb_{i} \rightarrow 0$.}
+
+\begin{proof} We see that $\nabla (n \cdot |\AA_{i,:}\xx - \bb_i|) = n \cdot \AA_{i,:}^T\sgn{\AA_{i,:}\xx - \bb_i} $, and $\norme{\AA_{i,:}}^2 \leq O(d/n)$ for all $i$ by our assumption that $\AA$ is IRB. This then implies our desired inequality.
+\end{proof}
+
+These bounds, particularly the initialization distance, are stronger than the bounds for general $\AA$, and together will give our first result that improves upon the runtime given by \cite{YangCRM16} by using our preconditioning.
+
+\begin{restatable}[]{theorem}{ourSGD}
+	\label{thm:ourSGD}
+	Given $\AA \in \R^{n\times d}$, we can find $\tilde{\xx}\in \R^d$ using preconditioning and stochastic gradient descent such that 
+	\[
+	\norm{\AA\tilde{\xx} - \bb}_1 \leq (1 + \epsilon)\norm{\AA \xx^* - \bb}_1
+	\]	
+	in time $O(nnz(\AA)\log^2{n} + d^3\epsilon^{-2}\log{n})$.
+\end{restatable}
+
+\begin{proof}
+	By preconditioning with Lemma~\ref{lem:lewisAndRotate} and error $O(\epsilon)$ we obtain an $N \times d$ matrix $\tilde{\AA}\UU$ in time $O(nnz(\AA)\log{n} + d^{\omega}\epsilon^{-2})$.
+	
+	By \Cref{thm:standardSGD}, we then need to run $O(d^2 \epsilon^{-2})$ iterations of standard stochastic gradient descent to achieve absolute error of $O(\epsilon\cdot f(\xx^*))$ which is equivalent to relative error of $O(\epsilon)$. The required runtime is then $O(d^3\epsilon^{-2})$. Technically, the input to stochastic gradient descent will require the value $R$, i.e. the upper bound on initialization distance, which requires access to a constant factor approximation of $f(\xx^*)$. We will show in \Cref{subsec:binarySearch} that we can assume that we have such an approximation at the cost of a factor of $\log{n}$ in the running time.
+	
+	Combining the preconditioning and stochastic gradient descent will produce $\tilde{\xx}$ with $O(\epsilon)$ relative error to the optimal objective function value in time $O(nnz(\AA)\log{n} + d^3\epsilon^{-2})$. Adding the factor $\log{n}$ overhead from estimating $f(\xx^*)$ gives the desired runtime.
+\end{proof}
+
+
+\subsection{Smoothing Reductions and Katyusha Accelerated SGD}
+\label{subsec:katyusha}
+In order to improve the running time guarantees, we consider whether our strong initialization distance bound will allow us to apply black-box accelerated stochastic gradient descent methods. These methods generally require smoothness and strong convexity of the objective function, neither of which are necessarily true for our objective function. Previous results \citep{Nesterov05smooth, Nesterov07, DuchiBW12, OuyangG12, AllenZhuH16} have addressed this general issue and given reductions from certain classes of objective functions to similar functions with smoothness and strong convexity, while still maintaining specific error and runtime guarantees. Accordingly, we will first show how our initialization distance fits into the reduction of \cite{AllenZhuH16}, then apply Katyusha's accelerated gradient descent algorithm by \cite{AllenZhu17} to their framework. 
+We state the theorem below, and relegate the details of its proof to \Cref{sec:katyushaproof}.
+
+\applyKatyusha*
+
+The last bound in \Cref{thm:applyKatyusha} may seem odd, as Lewis weights sampling produces a matrix with row-dimension $d\epsilon^{-2}\log{n}$, which will in fact hurt our running time if $n \ll d\epsilon^{-2}\log{n}$. Moreover, we cannot simply avoid running the Lewis weights sampling because our algorithm critically relies on the resulting leverage score properties.
+Instead, if $n \ll d\epsilon^{-2}\log{n}$, we can simulate the sampling procedure in $O(n)$ time and keep a count for each of the $n$ unique rows. Since the simulated sample matrix will look like the original but with duplicated rows, we will be able to carry out the rest of our linear algebraic manipulations in time dependent on $n$ rather than $d\epsilon^{-2}\log{n}$. %\footnote{We also note that the ``$n$'' used by Katyusha is the time required to compute a full gradient, which we can also do in $O(n)$ time when we do simulated sampling.} 
+We will address this in \Cref{subsec:simulatedSplitting}.
+
+
+%We now further examine whether our strong initialization distance bound will allow us to improve the running time with black-box accelerated stochastic gradient descent methods. These methods generally require smoothness and strong convexity of the objective function, neither of which are necessarily true for our objective function. Previous results \cite{Nesterov05smooth, Nesterov07, DuchiBW12, OuyangG12, AllenZhuH16} have addressed this general issue and given reductions from certain classes of objective functions to similar functions with smoothness and strong convexity, while still maintaining certain error and runtime guarantees. Accordingly, we will first show how our initialization distance fits into the reduction of \cite{AllenZhuH16}, then apply Katyusha's accelerated gradient descent algorithm in \cite{AllenZhu17} to their framework. 
+
+%\input{proof_first_thm}

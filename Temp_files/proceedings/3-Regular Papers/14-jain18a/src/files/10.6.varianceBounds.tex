@@ -1,0 +1,555 @@
+Before we prove lemma~\ref{lem:main-variance}, we recall old notation and introduce new notations that will be employed in these proofs.
+\subsection{Notations}
+We begin with by recalling that we track $\thetav_k=\begin{bmatrix}\x_k-\xs\\\y_k-\xs\end{bmatrix}$. Given $\thetav_k$, we recall the recursion governing the evolution of $\thetav_k$:
+\begin{align}
+\label{eq:simpleXYRec}
+\thetav_{k+1}&=\begin{bmatrix}0&\eye-\delta\widehat{\H}_{k+1}\\-c\cdot\eye&(1+c)\eye-\g\cdot\widehat{\H}_{k+1}\end{bmatrix}\thetav_k+\begin{bmatrix}\delta\cdot\epsilon_{k+1}\av_{k+1}\\\g\cdot\epsilon_{k+1}\av_{k+1}\end{bmatrix}\nonumber\\
+&=\widehat{\A}_{k+1}\thetav_{k}+\zetav_{k+1}
+\end{align}
+where, recall, $c=\alpha(1-\beta),\  \g=\alpha\delta+(1-\alpha)\gamma$, and $\widehat{\H}_{k+1}=\a_{k+1}\a_{k+1}\T$. Furthermore, we recall the following definitions, which will be heavily used in the following proofs:
+\begin{align*}
+\A&=\E{\Ah_{k+1}|\mathcal{F}_{k}}\\
+\BT&=\E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_{k}}\\
+\Sigh&=\E{\zetav_{k+1}\otimes\zetav_{k+1}|\mathcal{F}_{k}}=\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Sig\preceq\sigma^2\cdot\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Cov
+\end{align*}
+\iffalse
+Finally, we observe the following:
+\begin{align*}
+\E{(\A-\Ah_{k+1})\otimes(\A-\Ah_{k+1})|\mathcal{F}_k}&=\A\otimes\A-\E{\Ah_{k+1}\otimes\A|\mathcal{F}_k}-\E{\Ah_{k+1}\otimes\A|\mathcal{F}_k}+\E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_k}\\
+&=-\A\otimes\A+\E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_k}\\
+\implies \E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_k}&=\E{(\A-\Ah_{k+1})\otimes(\A-\Ah_{k+1})|\mathcal{F}_k}+\A\otimes\A
+\end{align*}
+\fi
+We recall:
+\begin{align*}
+\RT&=\E{(\A-\Ah_{k+1})\otimes(\A-\Ah_{k+1})|\mathcal{F}_k}\\
+\DT&=\A\otimes\A
+\end{align*}
+And the operators $\BT,\DT,\RT$ being related by:
+\begin{align*}
+\BT=\DT+\RT
+\end{align*}
+Furthermore, in order to compute the steady state distribution with the fourth moment quantities in the mix, we need to rely on the following re-parameterization of the update matrix $\Ah$:
+\begin{align*}
+\Ah&=\begin{bmatrix}0&\eye-\delta\widehat{\H}\\-c\cdot\eye&(1+c)\cdot\eye-\g\cdot\widehat{\H}\end{bmatrix}\\
+&=\begin{bmatrix}0&\eye\\-c\cdot\eye&(1+c)\cdot\eye\end{bmatrix}+\begin{bmatrix}0&-\delta\cdot\widehat{\H}\\0&-\g\cdot\widehat{\H}\end{bmatrix}\\
+&\defeq \V_1+\Vh_2
+\end{align*}
+This implies in particular:
+\begin{align*}
+\Ah\otimes\Ah&=(\V_1+\Vh_2)\otimes(\V_1+\Vh_2)\\
+&=\V_1\otimes\V_1 + \V_1\otimes\Vh_2 + \Vh_2\otimes\V_1 + \Vh_2\otimes\Vh_2
+\end{align*}
+Note in particular, the fourth moment part resides in the operator $\Vh_2\otimes\Vh_2$. Terms such as $\V_1\otimes\V_1$ are deterministic, or terms such as $\V_1\otimes\Vh_2$ or $\Vh_2\otimes\V_1$ contain second moment quantities. Furthermore, note that the operator $\BT=\E{\Ah\otimes\Ah}$ where the expectation is taken with respect to a single random draw from the distribution $\mathcal{D}$.
+
+Considering the expectation of $\Ah\otimes\Ah$ with respect to a single draw from the distribution $\mathcal{D}$, we have:
+\begin{align}
+\BT=\E{\Ah\otimes\Ah}&=\V_1\otimes\V_1 + \E{\V_1\otimes\Vh_2} + \E{\Vh_2\otimes\V_1} + \E{\Vh_2\otimes\Vh_2}\nonumber\\
+&=\V_1\otimes\V_1 + \V_1\otimes\V_2 + \V_2\otimes\V_1 + \E{\Vh_2\otimes\Vh_2},\nonumber
+\end{align}
+where $\V_2\defeq\E{\Vh_2} =\begin{bmatrix}0&-\delta\cdot\H\\0&-\g\cdot\H\end{bmatrix}$. 
+
+Finally, we let $\text{nr}$ and $\text{dr}$ to denote the numerator and denominator respectively.
+
+\subsection{An exact expression for the stationary distribution}
+Note that a key term appearing in the expression for covariance of the variance equation~\eqref{eq:varianceTA} is $\inv{\left(\eyeT - \BT\right)}\Sighat$. This is in fact nothing but the covariance of the error when we run accelerated SGD forever starting at $\xs$ (i.e., at steady state). This can be seen by
+%In order to compute the steady state distribution $\phiv_{\infty}$, we have to understand what it is in the first place, when we deal with bounding the variance error. In particular, we begin by noting that for the bounding the variance error, we start at the solution, i.e. $\thetav_0=0$, and analyze the stochastic process driven purely by noise. In particular, let us
+considering the base variance recursion using equation~\eqref{eq:simpleXYRec}:
+\begin{align*}
+\thetav_{k}&=\Ah_{k}\thetav_{k-1}+\zetav_k\nonumber\\
+\implies \phiv_k&\defeq\E{\thetav_k\otimes\thetav_k}\nonumber\\
+&=\E{\E{\bigg(\Ah_{k}\thetav_{k-1}\otimes\thetav_{k-1}\Ah_{k}\T+\zetav_k\otimes\zetav_k\bigg)|\mathcal{F}_{k-1}}}\nonumber\\
+&=\E{\E{\bigg(\Ah_{k}\thetav_{k-1}\otimes\thetav_{k-1}\Ah_{k}\T\bigg)|\mathcal{F}_{k-1}}}+\Sigh\nonumber\\
+&=\BT\cdot\E{\thetav_{k-1}\otimes\thetav_{k-1}}+\Sigh\nonumber\\
+&=\BT\cdot\phiv_{k-1}+\Sigh
+\end{align*}
+This recursion on the covariance operator $\phiv_{k}$ can be unrolled until the start i.e. $k=0$ to yield:
+\begin{align}
+\label{eq:steadyStateExp}
+\phiv_k&=\BT^k\phiv_0 + \sum_{l=0}^{k-1} \BT^l\cdot\Sigh\nonumber\\
+&=(\eyeT-\BT)^{-1}(\eyeT-\BT^{k})\Sigh\quad\quad\quad(\because\ \phiv_0=0)\nonumber\\
+\implies\phiv_{\infty}&=\lim_{k\to\infty}\phiv_k=(\eyeT-\BT)^{-1}\Sigh
+\end{align}
+
+\iffalse
+At this point, we will state the following lemma that presents a sharp bound on the steady state covariance of $\y-\xs$, i.e. $\E{(\y_{\infty}-\xs)\otimes(\y_{\infty}-\xs)}$:
+\begin{lemma}
+The Covariance of the steady state parameters of $\y_{\infty}-\xs$, i.e. $\E{(\y_{\infty}-\xs)\otimes(\y_{\infty}-\xs)}$ is upper bounded by:
+\begin{align*}
+\U_{22}\defeq\E{(\y_{\infty}-\xs)\otimes(\y_{\infty}-\xs)}=
+\end{align*}
+\end{lemma}
+\fi
+
+\subsection{Computing the steady state distribution}
+
+We now proceed to compute the stationary distribution.
+%Given the expression for the stationary distribution as in equation~\ref{eq:steadyStateExp}, we can now recall the following:
+Recall that
+\begin{align*}
+\BT &= \V_1\otimes\V_1 + \V_1\otimes\V_2 + \V_2\otimes\V_1 + \E{\Vh_2\otimes\Vh_2}\nonumber\\
+\implies \eyeT-\BT &= \big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)-\E{\Vh_2\otimes\Vh_2}
+\end{align*}
+Where the expectation is over a single sample drawn from the distribution $\mathcal{D}$.
+This implies in particular,
+\begin{align}
+\label{eq:ibinv}
+&(\eyeT-\BT)^{-1}=\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)-\E{\Vh_2\otimes\Vh_2}\bigg)^{-1}\nonumber\\
+&=\sum_{k=0}^{\infty}\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\bigg)^k\nonumber\\&\qquad\qquad\qquad\qquad\qquad\qquad\cdot\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}
+\end{align}
+Since $\Sighat \preceq \sigma^2\cdot\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Cov$, and $\inv{\left(\eyeT - \BT\right)}$ is a PSD operator, the steady state distribution $\phiv_\infty$ is bounded by:
+\begin{align}
+\label{eq:phivInftyBound}
+\phiv_\infty&=(\eyeT-\BT)^{-1}\Sigh \preceq \sigma^2 (\eyeT-\BT)^{-1} \left(\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Cov\right) \nonumber\\
+&=\sigma^2 \sum_{k=0}^{\infty}\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\bigg)^k \cdot \nonumber \\
+&\qquad \qquad \quad \big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1} \left(\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Cov\right).
+\end{align}
+Note that the Taylor expansion above is guaranteed to be correct if the right hand side is finite. We will understand bounds on the steady state distribution by splitting the analysis into the following parts:
+\begin{itemize}
+\item Obtain $\U\eqdef\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1} \left(\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Cov\right)$ (in section~\ref{ssec:secMomentEffects}).
+\item Obtain bounds on $\E{\Vh_2\otimes\Vh_2}\U$ (in section~\ref{ssec:fourthMomentEffects})
+\item Combine the above to obtain bounds on $\phiv_{\infty}$ (lemma~\ref{lem:main-variance}).
+\end{itemize}
+Before deriving these bounds, we will present some reasoning behind the validity of the upper bounds that we derive on the stationary distribution $\phiv_{\infty}$:
+\begin{align}
+\label{eq:phivInftyUpperBound}
+\phiv_\infty&=(\eyeT-\BT)^{-1}\Sigh\nonumber\\
+&\preceq\sigma^2 \sum_{k=0}^{\infty}\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\bigg)^k\U\quad(***)\nonumber\\
+&=\sigma^2\U+\sigma^2\sum_{k=1}^{\infty}\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\bigg)^k\U\nonumber\\
+&=\sigma^2\U+\sigma^2\sum_{k=0}^{\infty}\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\bigg)^k\nonumber\\
+&\qquad\qquad\qquad\qquad\qquad\cdot\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\U\nonumber\\
+&=\sigma^2\U+\sigma^2(\eyeT-\BT)^{-1}\cdot\E{\Vh_2\otimes\Vh_2}\U\qquad\qquad\qquad\qquad\qquad\qquad(\text{using equation}~\ref{eq:ibinv}),
+\end{align}
+with $(***)$ following through using equation~\ref{eq:phivInftyBound} and through the definition of $\U$.
+Now, with this in place, we clearly see that since $(\eyeT-\BT)^{-1}$ and $\E{\Vh_2\otimes\Vh_2}$ are PSD operators, we can upper bound right hand side to create valid PSD upper bounds on $\phiv_{\infty}$. In particular, in section~\ref{ssec:secMomentEffects}, we derive with equality what $\U$ is, and follow that up with computation of an upper bound on $\E{\Vh_2\otimes\Vh_2}\U$ in section~\ref{ssec:fourthMomentEffects}. Combining this will enable us to present a valid PSD upper bound on $\phiv_{\infty}$ owing to equation~\ref{eq:phivInftyUpperBound}.
+
+\subsubsection{Understanding the second moment effects}\label{ssec:secMomentEffects}
+This part of the proof deals with deriving the solution to:
+\begin{align*}
+\U&=\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1} \left(\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\Cov\right)
+\end{align*}
+This is equivalent to solving the (linear) equation:
+\begin{align}
+\label{eq:linEq}
+\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)\cdot\U&= \left(\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\Cov\right) \nonumber\\
+\implies\U-\V_1\U\V_1\T-\V_1\U\V_2\T-\V_2\U\V_1\T&= \left(\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\Cov\right)
+\end{align}
+Note that all the known matrices above i.e., $\V_1, \V_2$ and $\Cov$ are all diagonalizable with respect to $\Cov$, and thus, the solution of this system can be computed in each of the eigenspaces $(\lambda_j,\u_j)$ of $\Cov$. This implies, in reality, we deal with matrices $\U^{(j)}$, one corresponding to each eigenspace. However, for this section, we will neglect the superscript on $\U$, since it is clear from context for the purpose of this section.
+\begin{align*}
+\V_1\U\V_1\T&=\begin{bmatrix}0&1\\-c&1+c\end{bmatrix}\begin{bmatrix}u_{11}&u_{12}\\u_{12}&u_{22}\end{bmatrix}\begin{bmatrix}0&-c\\1&1+c\end{bmatrix}\\
+&=\begin{bmatrix}u_{22}&-c u_{12}+(1+c)u_{22}\\-c u_{12}+(1+c)u_{22}&c^2u_{11}-2c(1+c)u_{12}+(1+c)^2u_{22}\end{bmatrix}
+\end{align*}
+Next,
+\begin{align*}
+\V_1\U\V_2\T&=\begin{bmatrix}0&1\\-c&1+c\end{bmatrix}\begin{bmatrix}u_{11}&u_{12}\\u_{12}&u_{22}\end{bmatrix}\begin{bmatrix}0 &0\\-\delta&-\g \end{bmatrix}\lambda_j\\
+&=\begin{bmatrix}u_{12}&u_{22}\\-cu_{11}+(1+c)u_{12}&-cu_{12}+(1+c)u_{22}\end{bmatrix}\begin{bmatrix}0 &0\\-\delta&-\g \end{bmatrix}\lambda_j\\
+&=\begin{bmatrix}-\delta u_{22}&-\g  u_{22}\\-\delta(-c u_{12}+(1+c)u_{22})&-\g (-c u_{12}+(1+c)u_{22})\end{bmatrix}\lambda_j
+\end{align*}
+It follows that:
+\begin{align*}
+\V_2\U\V_1\T&=(\V_1\U\V_2\T)\T\\
+&=\begin{bmatrix}-\delta u_{22}&-\delta(-c u_{12}+(1+c)u_{22})\\-\g  u_{22}&-\g (-c u_{12}+(1+c)u_{22})\end{bmatrix}\lambda_j
+\end{align*}
+Given all these computations, comparing the $(1,1)$ term on both sides of equation~\ref{eq:linEq}, we get:
+\begin{align}
+\label{eq:t11}
+u_{11}&-u_{22}+2\delta\lambda_j u_{22}=\delta^2\lambda_j\nonumber\\
+u_{11}&=u_{22}(1-2\delta\lambda_j)+\delta^2\lambda_j
+\end{align}
+Next, comparing $(1,2)$ term on both sides of equation~\ref{eq:linEq}, we get:
+\begin{align}
+\label{eq:t12}
+&u_{12}-(-c u_{12}+ (1+c) u_{22}) +\g  \lambda_j u_{22} + \delta\lambda_j (-c u_{12} + (1+c) u_{22})=\delta\ \g \lambda_j\nonumber\\
+&u_{12}-(1-\delta\lambda_j)(-c u_{12} + (1+c) u_{22})+\g \lambda_ju_{22}=\delta\ \g \lambda_j\nonumber\\
+&(1+c(1-\delta\lambda_j))\cdot u_{12}+(\g \lambda_j-(1+c)(1-\delta\lambda_j))\cdot u_{22}=\delta\ \g \lambda_j
+\end{align}
+Finally, comparing the $(2,2)$ term on both sides of equation~\ref{eq:linEq}, we get:
+\begin{align}
+\label{eq:t22}
+&u_{22}-(c^2u_{11}-2c(1+c)u_{12}+(1+c)^2u_{22})+2\g \lambda_j(-cu_{12}+(1+c)u_{22})=\g ^2\lambda_j\nonumber\\
+&\implies-c^2u_{11}+(2c(1+c)-2c\g \lambda_j)u_{12}+(1-(1+c)^2+2(1+c)\g \lambda_j)u_{22}=\g ^2\lambda_j\quad(\text{from equation}~\ref{eq:t11})\nonumber\\
+&\implies-c^2(u_{22}(1-2\delta\lambda_j)+\delta^2\lambda_j)+(2c(1+c)-2c\g \lambda_j)u_{12}+(1-(1+c)^2+2(1+c)\g \lambda_j)u_{22}=\g ^2\lambda_j\nonumber\\
+&\implies(2c(1+c)-2c\g \lambda_j)u_{12}+(1-(1+c)^2-c^2(1-2\delta\lambda_j)+2(1+c)\g \lambda_j)u_{22}=(\g ^2+c^2\delta^2)\lambda_j\nonumber\\
+&\implies2c((1+c)-\g \lambda_j)u_{12}+2((1+c)(\g \lambda_j-c)+\delta\lambda_jc^2)u_{22}=(\g ^2+c^2\delta^2)\lambda_j
+\end{align}
+Now, we note that equations~\ref{eq:t12},~\ref{eq:t22} are linear systems in two variables $u_{12}$ and $u_{22}$. Denoting the system in the following manner,
+\begin{align*}
+a_{11} u_{12} + a_{12} u_{22} = b_1\\
+a_{21} u_{12} + a_{22} u_{22} = b_2
+\end{align*}
+For analyzing the variance error, we require $u_{22},u_{12}$:
+\begin{align*}
+u_{22}=\frac{b_1a_{21}-b_2a_{11}}{a_{12}a_{21}-a_{11}a_{22}}, \ u_{12}=\frac{b_1a_{22}-b_2a_{12}}{a_{11}a_{22}-a_{12}a_{21}}
+\end{align*}
+Substituting the values from equations~\ref{eq:t12} and~\ref{eq:t22}, we get:
+\begin{align}
+\label{eq:u22-1}
+u_{22}&=\frac{2c\g \delta\bigg(1+c-\g \lambda_j\bigg)-(\g ^2+c^2\delta^2)\bigg(1+c(1-\delta\lambda_j)\bigg)}{2c\bigg( \big(1+c-\g \lambda_j\big)\cdot \big(\lambda_j \g -(1+c)(1-\delta\lambda_j)\big) \bigg)-2\cdot\bigg(\big(1+c-c\delta\lambda_j\big)\cdot\big((1+c)(\g \lambda_j-c)+\delta\lambda_jc^2\big) \bigg)}\cdot\lambda_j
+\end{align}
+\begin{align}
+\label{eq:u12-1}
+u_{12}=\frac{2\g \delta\bigg((1+c)(\g \lambda_j-c)+\delta\lambda_jc^2\bigg)-(\g ^2+c^2\delta^2)\bigg(\lambda_j\g -(1+c)(1-\delta\lambda_j)\bigg)}{2\bigg(\big(1+c-c\delta\lambda_j\big)\cdot\big((1+c)(\g \lambda_j-c)+\delta\lambda_jc^2\big) \bigg)-2c\bigg( \big(1+c-\g \lambda_j\big)\cdot \big(\lambda_j \g -(1+c)(1-\delta\lambda_j)\big) \bigg)}\cdot\lambda_j
+\end{align}
+\underline{\bf Denominator of $u_{22}$}:
+Let us consider the denominator of $u_{22}$ (from equation~\ref{eq:u22-1}) to write it in a concise manner.
+\begin{align*}
+\text{dr}(u_{22})=2 \bigg(\ \big(1+c-\g \lambda_j\big)\cdot k_1\ -\ \big(1+c-c\delta\lambda_j\big)\cdot k_2 \bigg)
+\end{align*}
+with 
+\begin{align*}
+k_1&=c\cdot\big(\lambda_j \g -(1+c)(1-\delta\lambda_j)\big)\\
+&=\big(c\lambda_j \g -(c+c^2)(1-\delta\lambda_j)\big)\\
+&=\big(c\g \lambda_j-c-c^2+c\delta\lambda_j+c^2\delta\lambda_j\big)\\
+k_2&=\big((1+c)(\g \lambda_j-c)+\delta\lambda_jc^2\big)\\
+&=\big(\g \lambda_j-c+c\g \lambda_j-c^2+\delta\lambda_jc^2\big)
+\end{align*}
+Plugging in expressions for $\g =\alpha\delta+(1-\alpha)\gamma$ and $c=\alpha(1-\beta)$, in $\text{dr}(u_{22})$ we get:
+\begin{align}
+\label{eq:dr-u22-int1}
+\text{dr}(u_{22})=2\cdot\bigg(\ \big(1+c-\alpha\delta\lambda_j\big)(k_1-k_2)-\lambda_j\cdot\big((1-\alpha)\gamma k_1 + \alpha\beta\delta k_2\big)\ \bigg)
+\end{align}
+Next, considering $k_1-k_2$, we have:
+\begin{align}
+\label{eq:dr-u22-p1}
+k_1-k_2&=c\lambda_j \g -c-c^2+c\delta\lambda_j+c^2\delta\lambda_j-\g \lambda_j+c-c \g \lambda_j+c^2-c^2\delta\lambda_j\nonumber\\
+&=(c\delta-\g )\lambda_j\nonumber\\
+&=-(\alpha\beta\delta+\gamma(1-\alpha))\lambda_j
+\end{align}
+Next, considering $\gamma(1-\alpha)k_1+\alpha\beta\delta\ k_2$, we have:
+\begin{align*}
+&\gamma(1-\alpha)k_1+\alpha\beta\delta\ k_2\\
+&=\gamma(1-\alpha)(c\lambda_j \g -c-c^2+c^2\delta\lambda_j+c\delta\lambda_j)\\
+&+\alpha\beta\delta(c\lambda_j \g -c-c^2+c^2\delta\lambda_j+\g \lambda_j)\\
+&=(\alpha\beta\delta+(1-\alpha)\gamma)(c\lambda_j \g -c-c^2+c^2\delta\lambda_j)+\lambda_j\delta(c\gamma(1-\alpha)+\alpha\beta \g )
+\end{align*}
+Consider $c\gamma(1-\alpha)+\alpha\beta \g $:
+\begin{align*}
+c\gamma(1-\alpha)+\alpha\beta \g &=\alpha(1-\beta)\gamma(1-\alpha)+\alpha\beta(\alpha\delta+(1-\alpha)\gamma)\\
+&=\alpha(1-\beta)\gamma(1-\alpha)+\alpha\beta\gamma(1-\alpha)+\alpha^2\beta\delta\\
+&=\alpha\gamma(1-\alpha)+\alpha^2\beta\delta\\
+&=\alpha(\alpha\beta\delta+(1-\alpha)\gamma)
+\end{align*}
+Re-substituting this in the expression for $\gamma(1-\alpha)k_1+\alpha\beta\delta k_2$, we have:
+\begin{align}
+\label{eq:dr-u22-p2}
+\gamma(1-\alpha)k_1+\alpha\beta\delta\ k_2&=(\alpha\beta\delta+(1-\alpha)\gamma)(c\lambda_j \g -c-c^2+c^2\delta\lambda_j)+\lambda_j\delta(c\gamma(1-\alpha)+\alpha\beta \g )\nonumber\\
+&=(\alpha\beta\delta+(1-\alpha)\gamma)(c\lambda_j \g -c-c^2+c^2\delta\lambda_j)+\alpha\lambda_j\delta(\alpha\beta\delta+(1-\alpha)\gamma)\nonumber\\
+&=(\alpha\beta\delta+(1-\alpha)\gamma)(c\lambda_j \g -c-c^2+c^2\delta\lambda_j+\alpha\lambda_j\delta)
+\end{align}
+Substituting equations~\ref{eq:dr-u22-p1},~\ref{eq:dr-u22-p2} into equation~\ref{eq:dr-u22-int1}, we have:
+\begin{align}
+\label{eq:dr-u22}
+\text{dr}(u_{22})&=-2\lambda_j(\alpha\beta\delta+\gamma(1-\alpha))\cdot(1+c-\alpha\delta\lambda_j+c\lambda_j \g -c-c^2+c^2\delta\lambda_j+\alpha\delta\lambda_j)\nonumber\\
+&=-2\lambda_j(\alpha\beta\delta+\gamma(1-\alpha))\cdot(1-c^2+c\lambda_j(\g +c\delta))
+\end{align}
+We note that the denominator of $u_{12}$ (in equation~\ref{eq:u12-1}) is just the negative of the denominator of $u_{22}$ as represented in equation~\ref{eq:dr-u22}.
+
+\underline{\bf Numerator of $u_{22}$}:
+We begin by writing out the numerator of $u_{22}$ (from equation~\ref{eq:u22-1}):
+\begin{align}
+\label{eq:nr-u22-int}
+\text{nr}(u_{22})&=\lambda_j\cdot\bigg(2c\g \delta\big(1+c-\g \lambda_j\big)-(\g ^2+c^2\delta^2)\big(1+c(1-\delta\lambda_j)\big)\bigg)\nonumber\\
+&=\lambda_j\cdot\bigg(2c\g \delta\big(1+c-\alpha\delta\lambda_j-\gamma(1-\alpha)\lambda_j\big)-(\g ^2+c^2\delta^2)\big(1+c-\alpha\delta\lambda_j+\alpha\beta\delta\lambda_j\big)\bigg)\nonumber\\
+&=\lambda_j\cdot\bigg( -(1+c-\alpha\delta\lambda_j)(\g -c\delta)^2-\lambda_j\cdot\big(2c\g \delta\gamma(1-\alpha)+(\g ^2+(c\delta)^2)\alpha\beta\delta\big)\bigg)
+\end{align}
+We now consider $2c\g \delta\gamma(1-\alpha)+(\g ^2+(c\delta)^2)\alpha\beta\delta$:
+\begin{align}
+\label{eq:nr-u22-p1}
+&2c\g \delta\gamma(1-\alpha)+(\g ^2+(c\delta)^2)\alpha\beta\delta\nonumber\\
+&=2c\g \delta\cdot(\gamma(1-\alpha)+\alpha\beta\delta)+(\g ^2+(c\delta)^2-2c\g \delta)\alpha\beta\delta\nonumber\\
+&=2c\g \delta(\g -c\delta)+(\g -c\delta)^2\alpha\beta\delta
+\end{align}
+Substituting equation~\ref{eq:nr-u22-p1} into equation~\ref{eq:nr-u22-int} and grouping common terms, we obtain:
+\begin{align}
+\label{eq:nr-u22}
+\text{nr}(u_{22})&=\lambda_j\cdot\bigg( -(1+c-\alpha\delta\lambda_j)(\g -c\delta)^2-\lambda_j\cdot\big(2c\g \delta(\g -c\delta)+(\g -c\delta)^2\alpha\beta\delta\big)\bigg)\nonumber\\
+&=\lambda_j\cdot\bigg( -(1+c-c\delta\lambda_j)(\g -c\delta)^2-\lambda_j\cdot\big(2c\g \delta(\g -c\delta)\big)\bigg)\nonumber\\
+&=-\lambda_j\cdot\bigg( (1+c-c\delta\lambda_j)(\g -c\delta)^2+2c\g \delta\lambda_j(\g -c\delta)\bigg)
+\end{align}
+With this, we can write out the exact expression for $u_{22}$:
+\begin{align}
+\label{eq:u22}
+u_{22}&=\frac{\big(1+c-c\delta\lambda_j\big)(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}
+\end{align}
+
+\underline{\bf Numerator of $u_{12}$}:
+We begin by rewriting the numerator of $u_{12}$ (from equation~\ref{eq:u12-1}):
+\begin{align}
+\label{eq:nr-u12-start}
+\text{nr}(u_{12})=\lambda_j\cdot\bigg(2\g \delta\big((1+c)(\g \lambda_j-c)+\delta\lambda_jc^2\big)-(\g ^2+c^2\delta^2)\big(\lambda_j\g -(1+c)(1-\delta\lambda_j)\big)\bigg)
+\end{align}
+We split the simplification into two parts: one depending on $(1+c)$ and the other part representing terms that don't contain $(1+c)$. In particular, we consider the terms that do not carry a coefficient of $(1+c)$:
+\begin{align}
+\label{eq:nr-u12-p1}
+&2\g \delta^2\lambda_j c^2-(\g ^2+c^2\delta^2)\cdot(\g \lambda_j)\nonumber\\
+&=\g \lambda_j\cdot(2\delta^2c^2-\g ^2-\delta^2c^2)\nonumber\\
+&=-\g \lambda_j\cdot(\g ^2-(c\delta)^2)
+\end{align}
+Next, we consider the other term containing the $(1+c)$ part:
+\begin{align}
+\label{eq:nr-u12-p2}
+&(1+c)\cdot\bigg(2\g \delta\cdot(\g \lambda_j-c)\ +\ (\g ^2+(c\delta)^2)\cdot(1-\delta\lambda_j)\bigg)\nonumber\\
+&=(1+c)\cdot\bigg(2\g ^2\delta\lambda_j-2\g \delta c+\g ^2+(c\delta)^2-\g ^2\delta\lambda_j-c^2\delta^3\lambda_j\bigg)\nonumber\\
+&=(1+c)\cdot\bigg(\ (\g -c\delta)^2 + \delta\lambda_j\ (\g ^2-(c\delta)^2)\ \bigg)
+\end{align}
+Substituting equations~\ref{eq:nr-u12-p1},~\ref{eq:nr-u12-p2} into equation~\ref{eq:nr-u12-start}, we get:
+\begin{align}
+\label{eq:nr-u12}
+\text{nr}(u_{12})&=\lambda_j\cdot\big((1+c)\delta\lambda_j(\g ^2-(c\delta)^2)+(1+c)(\g -c\delta)^2-\g \lambda_j(\g ^2-(c\delta)^2)\big)\nonumber\\
+&=\lambda_j\cdot\big((1+c)(\g -c\delta)^2+\lambda_j\big((1+c)\delta-\g \big)\cdot(\g ^2-(c\delta)^2)\big)\nonumber\\
+&=\lambda_j\cdot\big((1+c)(\g -c\delta)^2+\lambda_j\big(\delta-(\g -c\delta)\big)\cdot(\g ^2-(c\delta)^2)\big)\nonumber\\
+&=\lambda_j\cdot\big((1+c)(\g -c\delta)^2+\delta\lambda_j\cdot(\g ^2-(c\delta)^2)-\lambda_j(\g +c\delta)(\g -c\delta)^2\big)\nonumber\\
+&=\lambda_j\cdot\big((1+c-\lambda_j\cdot(\g +c\delta))\cdot(\g -c\delta)^2+\delta\lambda_j\cdot(\g ^2-(c\delta)^2)\big)
+\end{align}
+With which, we can now write out the expression for $u_{12}$:
+\begin{align}
+\label{eq:u12}
+u_{12}&=\frac{\big(1+c-\lambda_j(\g +c\delta)\big)(\g -c\delta)+\delta\lambda_j(\g +c\delta)}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}
+\end{align}
+\underline{\bf Obtaining $u_{11}$:}
+We revisit equation~\ref{eq:t11} and substitute $u_{22}$ from equation~\ref{eq:u22}:
+\begin{align*}
+u_{11}&=u_{22}(1-2\delta\lambda_j)+\delta^2\lambda_j\\
+&=\frac{\big(1+c-c\delta\lambda_j\big)(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\cdot(1-2\delta\lambda_j)+\delta^2\lambda_j
+\end{align*}
+From which, we consider the numerator of $u_{11}$ and begin simplifying it:
+\begin{align}
+\label{eq:nr-u11}
+\text{nr}(u_{11})&=(1+c-c\delta\lambda_j)(\g -c\delta)(1-2\delta\lambda_j)+2c\g \delta\lambda_j(1-2\delta\lambda_j)+2\delta^2\lambda_j(1-c^2+c\lambda_j(\g +c\delta))\nonumber\\
+&=(1+c-c\delta\lambda_j)(\g -c\delta)(1-2\delta\lambda_j)+2\delta^2\lambda_j + 2c\delta\lambda_j(\g -c\delta)(1-\delta\lambda_j)\nonumber\\
+&=(1+c+c\delta\lambda_j)(\g -c\delta)(1-\delta\lambda_j)+2\delta^2\lambda_j-\delta\lambda_j(1+c-c\delta\lambda_j)(\g -c\delta)\nonumber\\
+&=(1+c+c\delta\lambda_j)(\g -c\delta)-2\delta\lambda_j(\g -c\delta)(1+c)+2\delta^2\lambda_j\nonumber\\
+&=(1+c-c\delta\lambda_j)(\g -c\delta)-2\delta\lambda_j(\g -c\delta)+2\delta^2\lambda_j
+\end{align}
+This implies,
+\begin{align}
+\label{eq:u11}
+u_{11} = \frac{(1+c-c\delta\lambda_j)(\g -c\delta)-2\delta\lambda_j(\g -c\delta)+2\delta^2\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}
+\end{align}
+\underline{\bf Obtaining a bound on $\U_{22}$}
+
+For obtaining a PSD upper bound on $\U_{22}$, we will write out a sharp bound of $u_{22}$ in each eigen space:
+\iffalse
+\begin{align*}
+u_{22}&=\frac{\big(1+c-c\delta\lambda_j\big)(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&\leq \frac{1}{2\cnHh\lambda_j} + \frac{\delta}{2}
+\end{align*}
+Implying, $\U_{22}\preceq\frac{1}{2\cnHh}\cdot\Hinv+\frac{\delta}{2}\cdot\eye$.
+\fi
+\begin{align*}
+u_{22}&=\frac{\big(1+c-c\lambda_j\delta\big)(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&=\frac{\big(1-c^2+c\lambda_j(\g +c\delta)+\g\lambda_j+(1+c)(c-\lambda_j(\g +c\delta))\big)(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&=\frac{\g -c\delta}{2}+\frac{\g\lambda_j(\g-c\delta)}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}+\frac{(1+c)(c-\lambda_j(\g +c\delta))(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&\leq\frac{\g -c\delta}{2}+\frac{\g\lambda_j(\g-c\delta)}{2\cdot(c\lambda_j\cdot(\g +c\delta))}+\frac{(1+c)(c-\lambda_j(\g +c\delta))(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&\leq\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{(1+c)(c-\lambda_j(\g +c\delta))(\g -c\delta)+2c\g \delta\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber
+\end{align*}
+Let us consider bounding the numerator of the $2^{\text{nd}}$ term:
+\begin{align*}
+&(1+c)(c-\lambda_j(\g +c\delta))(\g -c\delta)+2c\g \delta\lambda_j\nonumber\\
+&=c(1+c)(\g -c\delta)-(1+c)\lambda_j(\g +c\delta)(\g -c\delta)+2c\g \delta\lambda_j\nonumber\\
+&=c(1+c)(\g -c\delta)-(1+c)\lambda_j(\g -c\delta)^2-2c\delta\lambda_j(1+c)(\g -c\delta)+2c\g \delta\lambda_j\nonumber\\
+&=c(1+c)(\g -c\delta)-(1+c)\lambda_j(\g -c\delta)^2-2c\delta\lambda_j(1+c)(\g -c\delta)+2c(\g -c\delta)\delta\lambda_j+2c^2\delta^2\lambda_j\nonumber\\
+&=c(1+c)(\g -c\delta)+2c^2\delta^2\lambda_j-(1+c)\lambda_j(\g -c\delta)^2-2c^2\delta\lambda_j(\g -c\delta)\nonumber\\
+&\leq c(1+c)(\g -c\delta)+2c^2\delta^2\lambda_j
+\end{align*}
+Implying,
+\begin{align*}
+u_{22}&\leq\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{c(1+c)(\g -c\delta)+2c^2\delta^2\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&\leq\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{c(1+c)(\g -c\delta)}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}+\frac{c^2\delta^2\lambda_j}{(1-c^2+c\lambda_j\cdot(\g +c\delta))}
+\end{align*}
+We will first upper bound the third term:
+\begin{align*}
+\frac{c^2\delta^2\lambda_j}{(1-c^2+c\lambda_j\cdot(\g +c\delta))}&\leq\frac{c\delta^2}{(\g +c\delta)}\nonumber\\
+&=\frac{c\delta^2}{(\g -c\delta+2c\delta)}\nonumber\\
+&\leq\frac{c\delta^2}{2c\delta}=\frac{\delta}{2}
+\end{align*}
+This implies,
+\begin{align*}
+u_{22}&\leq\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{\delta}{2}+\frac{c(1+c)(\g -c\delta)}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&=\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{\delta}{2}+\frac{c^2(\g -c\delta)}{1-c^2+c\lambda_j\cdot(\g +c\delta)}+\frac{c(1-c)(\g -c\delta)}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\nonumber\\
+&\leq\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{\delta}{2}+\frac{c^2(\g -c\delta)}{1-c^2+c\lambda_j\cdot(\g +c\delta)}+\frac{c(1-c)(\g -c\delta)}{2\cdot(1-c^2)}\nonumber\\
+&=\frac{\g -c\delta}{2}\cdot\frac{1+c}{c}+\frac{\delta}{2}+\frac{c^2(\g -c\delta)}{1-c^2+c\lambda_j\cdot(\g +c\delta)}+\frac{c(\g -c\delta)}{2\cdot(1+c)}\nonumber\\
+&= \frac{\g -c\delta}{2}\cdot\bigg(\frac{1+c}{c}+\frac{c}{1+c}\bigg)+\frac{\delta}{2}+\frac{c^2(\g -c\delta)}{1-c^2+c\lambda_j\cdot(\g +c\delta)}\nonumber\\
+&\leq \frac{\g -c\delta}{2}\cdot\frac{3}{c}+\frac{\delta}{2}+\frac{c^2(\g -c\delta)}{1-c^2+c\lambda_j\cdot(\g +c\delta)}\nonumber\\
+&\leq \frac{\g -c\delta}{2}\cdot\frac{3}{c}+\frac{\delta}{2}+\frac{c(\g -c\delta)}{\lambda_j\cdot(\g +c\delta)}\nonumber\\
+&= \frac{\g -c\delta}{2}\cdot\frac{3}{c}+\frac{\delta}{2}+\frac{c(\g -c\delta)}{\lambda_j\cdot(\g -c\delta+2c\delta)}\nonumber\\
+&\leq \frac{\g -c\delta}{2}\cdot\frac{3}{c}+\frac{\delta}{2}+\frac{\g -c\delta}{2\lambda_j\delta}\nonumber\\
+&\leq \frac{4}{c}\cdot\frac{\g -c\delta}{2\delta\lambda_j}+\frac{\delta}{2}
+\end{align*}
+Let us consider bounding $\frac{\g -c\delta}{2\delta\lambda_j}$ :
+\begin{align*}
+\frac{\g -c\delta}{2\delta\lambda_j}&=\frac{\alpha\beta\delta+\gamma(1-\alpha)}{2\delta\lambda_j}
+\end{align*}
+Substituting the values for $\alpha,\beta,\gamma,\delta$ applying $\frac{1}{1+\gamma\mu}\leq 1$, $c_3=\frac{c_2\sqrt{2c_1-c_1^2}}{c_1}$ and, $c_2^2=\frac{c_4}{2-c_1}$ with $0<c_4<1/6$ we get:
+\begin{align*}
+\frac{\g -c\delta}{2\delta\lambda_j}&\leq\bigg( \frac{c_3c_2\sqrt{2c_1-c_1^2}}{2}\sqrt{\frac{\cnS}{\cnH}} + \frac{c_2^2(2c_1-c_1^2)}{2c_1} \bigg)\cdot\frac{1}{\lambda_j\cnS}\nonumber\\
+&\leq\bigg( \frac{c_3c_2\sqrt{2c_1-c_1^2}}{2} + \frac{c_2^2(2c_1-c_1^2)}{2c_1} \bigg)\cdot\frac{1}{\lambda_j\cnS}\nonumber\\
+&=c_2^2(2-c_1)\cdot\frac{1}{\cnS\lambda_j}=c_4\cdot\frac{1}{\lambda_j\cnS}
+\end{align*}
+Which implies the bound on $u_{22}$:
+\begin{align*}
+u_{22}\leq\frac{4}{c}\cdot\frac{c_4}{\lambda_j\cnS}+\frac{\delta}{2}
+\end{align*}
+Now, consider the following bound on $1/c$:
+\begin{align}
+\label{eq:oneOverc}
+\frac{1}{c}&=\frac{1}{\alpha(1-\beta)}\nonumber\\
+&=1+\frac{(1+\cthree)\ctwo\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnS}-\ctwo\cthree\sqrt{2\cone-\cone^2}}\nonumber\\
+&\leq1+\frac{(1+\cthree)\ctwo\sqrt{2\cone-\cone^2}}{1-\ctwo\cthree\sqrt{2\cone-\cone^2}}\nonumber\\
+&=1+\frac{\sqrt{\cone\cfour}+\cfour}{1-\cfour}\nonumber\\
+&=\frac{1+\sqrt{\cone\cfour}}{1-\cfour}
+\end{align}
+Substituting values of $\cone$, $\cfour$ we have: $1/c\leq1.5$. This implies the following bound on $u_{22}$:
+\begin{align}
+\label{eq:u22b}
+u_{22}\leq6\cdot\frac{c_4}{\lambda_j\cnS}+\frac{\delta}{2}
+\end{align}
+Alternatively, this implies that $\U_{22}$ can be upper bounded in a psd sense as:
+\begin{align*}
+\U_{22}\preceq \frac{6 c_4}{\cnS}\cdot\Hinv + \frac{\delta}{2}\cdot\eye
+\end{align*}
+\subsubsection{Understanding fourth moment effects}\label{ssec:fourthMomentEffects}
+We wish to obtain a bound on:
+\begin{align*}
+\E{\Vh_2\otimes\Vh_2}\U&=\E{\Vh_2\U\Vh_2\T}\\
+&=\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\M\U_{22}
+\end{align*}
+We need to understand $\M\U_{22}$. 
+\begin{align}
+\label{eq:MU22}
+\M\U_{22}&\preceq\frac{6c_4}{\cnHh}\cdot\M\Hinv+\frac{\delta}{2}\cdot\M\eye\nonumber\\
+&\preceq(6c_4+\frac{\delta\infbound}{2})\cdot\H\nonumber\\
+&=s\cdot\H
+\end{align}
+where, $s\eqdef (6c_4+\frac{\delta\infbound}{2})=23/30\leq \frac{4}{5}$. This implies (along with the fact that for any PSD matrices $\A,\mat{B},\C$, if $\A\preceq\mat{B}$, then, $\A\otimes\C\preceq\mat{B}\otimes\C$)),
+\begin{align}
+\label{eq:fourthMomentAccBound}
+\E{\Vh_2\otimes\Vh_2}\U&\preceq s\cdot\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\H \preceq \frac{4}{5}\cdot\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\H.
+\end{align}
+
+%\subsubsection{Obtaining a bound on $\phiv_{\infty}$}
+
+This will lead us to obtaining a PSD upper bound on $\phiv_{\infty}$, i.e., the proof of lemma~\ref{lem:main-variance}
+
+\begin{proof}
+[Proof of lemma~\ref{lem:main-variance}]
+We begin by recounting the expression for the steady state covariance operator $\phiv_{\infty}$ and applying results derived from previous subsections:
+\begin{align}
+\label{eq:stationaryDistBound}
+\phiv_{\infty}&=(\eyeT-\BT)^{-1}\Sigh\nonumber\\
+&\preceq\sigma^2\U+\sigma^2(\eyeT-\BT)^{-1}\cdot\E{\Vh_2\otimes\Vh_2}\U\quad(\text{from equation}~\ref{eq:phivInftyUpperBound})\nonumber\\
+&\preceq\sigma^2\U+\frac{4}{5}\sigma^2(\eyeT-\BT)^{-1}\bigg(\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\H\bigg)\quad(\text{from equation}~\ref{eq:fourthMomentAccBound})\nonumber\\
+&=\sigma^2\U+\frac{4}{5}(\eyeT-\BT)^{-1}\Sigh\nonumber\\
+&=\sigma^2\U+\frac{4}{5}\cdot\phiv_{\infty}\nonumber\\
+\implies\phiv_{\infty}&\preceq5\sigma^2\U.
+\end{align}
+\iffalse
+\begin{align}
+\label{eq:stationaryDistBound}
+\phiv_\infty&=(\eyeT-\BT)^{-1}\Sigh \preceq \sigma^2 (\eyeT-\BT)^{-1} \left(\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\Cov\right) \nonumber\\
+&=\sigma^2 \sum_{k=0}^{\infty}\bigg(\big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\E{\Vh_2\otimes\Vh_2}\bigg)^k\cdot \nonumber\\ &\qquad \qquad \quad \big(\eyeT-\V_1\otimes\V_1 - \V_1\otimes\V_2 - \V_2\otimes\V_1\big)^{-1}\left(\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes\Cov\right)\nonumber\\
+&\preceq\sigma^2\bigg(\sum_{k=0}^{\infty} (4/5)^{-k}\bigg)\cdot\U=5\sigma^2 \U.
+\end{align}
+\fi
+Now, given the upper bound provided by equation~\ref{eq:stationaryDistBound}, we can now obtain a (mildly) looser upper PSD bound on $\U$ that is more interpretable, and this is by providing an upper bound on $\U_{11}$ and $\U_{22}$ by considering their magnitude along each eigen direction of $\H$. In particular, let us consider the max of $u_{11}$ and $u_{22}$ along the $j^{th}$ eigen direction (as implied by equations~\ref{eq:u11},~\ref{eq:u22}):
+\begin{align*}
+\max(u_{11},u_{22}) &= \frac{(1+c-c\delta\lambda_j)(\g -c\delta)+2\delta^2\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\\
+&=\frac{(1+c-c\delta\lambda_j)(\g -c\delta)+2\delta^2\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\\
+&=\frac{(1+c-c\delta\lambda_j)(\g -c\delta)+2c\g\lambda_j-2c\g\lambda_j+2\delta^2\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\\
+&=u_{22}+\frac{-2c\g\lambda_j+2\delta^2\lambda_j}{2\cdot(1-c^2+c\lambda_j\cdot(\g +c\delta))}\\
+&\leq \frac{6\cfour}{\cnS\lambda_j} + \frac{\delta}{2} + \frac{\delta^2\lambda_j-c\g\lambda_j}{(1-c^2+c\lambda_j\cdot(\g +c\delta))}\quad\text{(using equation~\ref{eq:u22b})}
+\end{align*}
+This implies, we can now consider upper bounding the term in the equation above and this will yield us the result:
+\begin{align*}
+\frac{\delta^2\lambda_j-c\g\lambda_j}{(1-c^2+c\lambda_j\cdot(\g +c\delta))}&\leq\frac{\delta^2\lambda_j-c\g\lambda_j}{c\lambda_j\cdot(\g +c\delta)}\\
+&\leq\frac{\delta^2\lambda_j-c\g\lambda_j}{2c^2\delta\lambda_j}\\
+&=\frac{\delta^2\lambda_j-c(\alpha\delta+\gamma(1-\alpha))\lambda_j}{2c^2\delta\lambda_j}\\
+&\leq\frac{\delta^2\lambda_j-c\alpha\delta\lambda_j}{2c^2\delta\lambda_j}=\frac{1-c\alpha}{c^2}\cdot\frac{\delta}{2}\\
+&=\big(\frac{1-c}{c^2}+\frac{1-\alpha}{c}\big)\cdot\frac{\delta}{2}\\
+&=\big(\frac{(1+\cthree)(1-\alpha)}{c^2}+\frac{1-\alpha}{c}\big)\cdot\frac{\delta}{2}\\
+&=\frac{1-\alpha}{c}\big(\frac{(1+\cthree)}{c}+1\big)\cdot\frac{\delta}{2}\\
+&\leq3\frac{1-\alpha}{c}\cdot\frac{1}{c}\cdot\frac{\delta}{2}\\
+&\leq3\frac{1-\alpha}{c}\cdot\frac{1+\sqrt{\cone\cfour}}{1-\cfour}\cdot\frac{\delta}{2}\\
+&=3\cdot\frac{\cone\cthree}{\sqrt{\cnH\cnS}-\cone\cthree^2}\cdot\frac{1+\sqrt{\cone\cfour}}{1-\cfour}\cdot\frac{\delta}{2}\\
+&\leq3\cdot\frac{\cone\cthree}{1-\cone\cthree^2}\cdot\frac{1+\sqrt{\cone\cfour}}{1-\cfour}\cdot\frac{\delta}{2}\\
+&\leq (2/3) \frac{\delta}{2}
+\end{align*}
+Plugging this into the bound for $\max{u_{11},u_{22}}$, we get:
+\begin{align*}
+\max(u_{11},u_{22}) &\leq \frac{6\cfour}{\cnS\lambda_j} + (5/3)\frac{\delta}{2}=(2/3)\frac{1}{\cnS\lambda_j}+(5/3)\frac{\delta}{2}
+\end{align*}
+This implies the bound written out in the lemma, that is,
+\begin{align*}
+\U\preceq\begin{bmatrix}1&0\\0&1\end{bmatrix}\otimes\bigg(\frac{2}{3}\big(\frac{1}{\cnS}\Hinv\big)+\frac{5}{6}\cdot\big(\delta\ \eye\big)\bigg)
+\end{align*}
+\end{proof}
+%\praneeth{Replace $c_{taylor}$ with explicit constants.}
+
+\begin{lemma}\label{lem:var-main-1}
+\begin{align*}
+&\iprod{\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{\bigg(\eyeT+(\eyeT-\AL)^{-1}\AL+(\eyeT-\AR\T)^{-1}\AR\T\bigg)\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\leq\nonumber\\&\iprod{\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{\bigg(\eyeT+(\eyeT-\AL)^{-1}\AL+(\eyeT-\AR\T)^{-1}\AR\T\bigg)\cdot\E{\thetav_{\infty}\otimes\thetav_{\infty}}}\leq 5  \sigma^2 d.
+\end{align*}
+Where, $d$ is the dimension of the problem.
+\label{lem:leadingOrderVar}
+\end{lemma}
+%It is unclear about how to upper bound the quantity in the lemma above given that the operator multiplying $\thetav_l\otimes\thetav_l$ may not even be PSD. In order to ensure we create valid upper bounds, we appeal to the following sequence of lemmas enroute to proving Lemma~\ref{lem:leadingOrderVar}.
+
+Before proving Lemma~\ref{lem:var-main-1}, we note that the sequence of expected covariances of the centered parameters $\E{\thetav_l\otimes\thetav_l}$ when initialized at the zero covariance (as in the case of variance analysis) only grows (in a psd sense) as a function of time and settles at the steady state covariance.
+\begin{lemma}
+Let $\thetav_0=0$. Then, by running the stochastic process defined using the recursion as in equation~\ref{eq:simpleXYRec}, the covariance of the resulting process is monotonically increasing until reaching the stationary covariance $\E{\thetav_{\infty}\otimes\thetav_{\infty}}$.
+\end{lemma}
+\begin{proof}
+As long as the process does not diverge (as defined by spectral norm bounds of the expected update $\BT=\E{\hat{\A}\otimes\hat{\A}}$ being less than $1$), the first-order Markovian process converges geometrically to its unique stationary distribution $\thetav_{\infty}\otimes\thetav_{\infty}$.
+In particular,
+\begin{align*}
+\E{\thetav_l\otimes\thetav_l}&=\BT\E{\thetav_{l-1}\otimes\thetav_{l-1}}+\Sigh\\
+&=(\sum_{k=0}^{l-1}\BT^k)\Sigh
+\end{align*}
+Thus implying the fact that
+\begin{align*}
+\E{\thetav_l\otimes\thetav_l} = \E{\thetav_{l-1}\otimes\thetav_{l-1}}+\BT^{l-1}\Sigh
+\end{align*}
+Owing to the PSD'ness of the operators in the equation above, the lemma concludes with the claim that $\E{\thetav_l\otimes\thetav_l}\succeq\E{\thetav_{l-1}\otimes\thetav_{l-1}}$
+\end{proof}
+
+Given these lemmas, we are now in a position to prove lemma~\ref{lem:leadingOrderVar}.
+\begin{proof}[Proof of Lemma~\ref{lem:leadingOrderVar}]
+
+\begin{align}
+\label{eq:simpVarMain}
+&\iprod{\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{\bigg(\eyeT+(\eyeT-\AL)^{-1}\AL+(\eyeT-\AR\T)^{-1}\AR\T\bigg)
+\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\nonumber\\
+&=\iprod{\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{\bigg(\eyeT+(\eyeT-\AL)^{-1}\AL+(\eyeT-\AR\T)^{-1}\AR\T\bigg)(\eyeT-\AL\AR\T)^{-1}(\eyeT-\AL\AR\T)\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\nonumber\\
+&=\iprod{\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{\bigg((\eyeT-\AL)^{-1}(\eyeT-\AR\T)^{-1}\bigg)(\eyeT-\AL\AR\T)\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\quad \left(\mbox{using Lemma~\ref{lem:lhs-psd-lemma}}\right)\nonumber\\
+&=\iprod{\bigg((\eyeT-\AL\T)^{-1}(\eyeT-\AR)^{-1}\bigg)\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{(\eyeT-\AL\AR\T)\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\nonumber\\
+&=\iprod{(\eye-\A\T)^{-1}\begin{bmatrix}\H&0\\0&0\end{bmatrix}(\eye-\A)^{-1}}{(\eyeT-\AL\AR\T)\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\nonumber\\
+&=\iprod{(\eye-\A\T)^{-1}\begin{bmatrix}\H&0\\0&0\end{bmatrix}(\eye-\A)^{-1}}{(\eyeT-\DT)\cdot\E{\thetav_{l}\otimes\thetav_{l}}}\nonumber\\
+&=\frac{1}{(\g -c\delta)^2}\iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g \Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{(\eyeT-\DT)\cdot\E{\thetav_l\otimes\thetav_l}}\quad\text{(using lemma~\ref{lem:com1})}\nonumber\\
+&=\frac{1}{(\g -c\delta)^2}\iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g \Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{(\eyeT-\DT)(\eyeT-\BT)^{-1}(\eyeT-\BT^l)\Sigh}\nonumber\\
+&=\frac{1}{(\g -c\delta)^2}\iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g \Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{(\eyeT-\BT+\RT)(\eyeT-\BT)^{-1}(\eyeT-\BT^l)\Sigh}\nonumber\\
+&=\frac{1}{(\g -c\delta)^2}\iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g\Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{\Sigh-\BT^l\Sigh+\RT(\eyeT-\BT)^{-1}\Sigh-\RT(\eyeT-\BT)^{-1}\BT^l\Sigh}\nonumber\\
+&\leq\frac{1}{(\g -c\delta)^2}\iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g \Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{\Sigh+\sigma^2\RT\cdot(5 \U)}
+\end{align}
+So, we need to understand $\RT\U$:
+\begin{align*}
+\RT\U&=\mathbb{E}\bigg( \begin{bmatrix}0 & \delta\cdot(\H-\av\av\T)\\0 & \g \cdot(\H-\av\av\T)\end{bmatrix}\U\begin{bmatrix}0 & 0\\\delta\cdot(\H-\av\av\T) & \g \cdot(\H-\av\av\T)\end{bmatrix} \bigg)\\
+&=\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes \E{(\H-\av\av\T)\U_{22}(\H-\av\av\T)}\\
+&=\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes \big(\M-\HL\HR\big)\U_{22}\\
+&\preceq \begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes \M\U_{22}\\
+&\preceq \frac{4}{5}\cdot\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes \H\quad(\text{from equation}~\ref{eq:MU22}).
+\end{align*}
+\iffalse
+This implies,
+\begin{align*}
+\RT\phiv_{\infty}&\preceq 5\sigma^2 \RT\U \preceq 4\sigma^2\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes \H.
+\end{align*}
+\fi
+Then,
+\begin{align}
+&\iprod{\begin{bmatrix}\H&0\\0&0\end{bmatrix}}{\bigg(\eyeT+(\eyeT-\AL)^{-1}\AL+(\eyeT-\AR\T)^{-1}\AR\T\bigg)\cdot\thetav_{l}\otimes\thetav_{l}}\nonumber\\
+&\leq\frac{1}{(\g -c\delta)^2}\iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g \Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{\Sigh+\sigma^2\RT\cdot(5\U)}\qquad\qquad(\text{from equation}~\ref{eq:simpVarMain})\nonumber\\
+&\leq\frac{5\sigma^2}{(\g -c\delta)^2} \cdot \iprod{\bigg(\otimes_2\begin{bmatrix} -(c\eye-\g \Cov)\Cov^{-1/2}\\(\eye-\delta\Cov)\Cov^{-1/2}\end{bmatrix}\bigg)}{\begin{bmatrix}\delta^2&\delta\cdot \g \\\delta\cdot \g &\g ^2\end{bmatrix}\otimes \H}\nonumber\\
+&=\frac{5}{(\g -c\delta)^2} \cdot d\ \sigma^2\cdot (\g-c\delta)^2\nonumber\\
+&=5\sigma^2d.
+\end{align}
+\end{proof}

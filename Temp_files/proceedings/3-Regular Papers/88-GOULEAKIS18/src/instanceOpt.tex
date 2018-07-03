@@ -1,0 +1,119 @@
+% !TeX root = main.tex
+\section{Certification Schemes for $\vec{w}$-Lipschitz Functions and Applications} \label{sec:instOpt}
+
+    In this section, we present a unified way of finding \textit{almost-optimal certification schemes}. For a given
+a function $f$, a desired approximation parameter $\eps$ and an instance $\vec{x}_{\Workers}$, we want to compute the
+``instance-optimal'' number of verifications in order to certify that
+$f(\vec{x}_{\Workers}) \in \left[ 1 - \eps, \frac{1}{1 - \eps} \right] f(\xt)$ with probability of failure at most $1/3$.
+The first result of this section is a structural result. We show that even though optimal schemes may be arbitrarily
+complex, there are simpler schemes, that verify records independently, which are almost-optimal.
+\smallskip
+
+To show this we define for every set $S\subseteq \Workers$ the probability $p_S$ that the instance-optimal certification scheme
+$\mathcal{C}^*$ verifies at least one record in $S$, i.e. $p_S = \Prob\left(\bigcup_{i \in S} \text{ \{$\mathcal{C}^*$ verifies
+record $i$\}} \right)$. For such an event, we say that the \emph{certification scheme verifies $S$} and for simplicity we denote
+$p_i$, the probability that $\mathcal{C}^*$ verifies record $i$, i.e. $p_i = p_{\{i\}}$.
+
+    For the instance $\vec{x}_\Workers$, the set of invalid records could be any $S \subseteq \Workers$. For the certification
+scheme to work with failure probability at most $2/3$, we must have that $p_{S} \ge 2/3$ for any subset $S \subseteq \Workers$
+such that $f(\xw)/f(\vec{x}_{\Workers\setminus S}) \notin [1 - \eps, 1/(1 - \eps)]$. If this doesn't hold for some $S$, an
+adversary could choose the set of invalid records to be $S$ and the certification scheme $\mathcal{C}^*$ would fail with
+probability more than $1/3$. Moreover, even though the  optimal certification scheme $\mathcal{C}^*$ may verify records in a very
+correlated way, we have that  $\sum_{i \in  S} p_i \ge p_{ S} \ge 2/3$ from a simple union bound. Therefore, the certification
+scheme $\mathcal{C}^*$ must satisfy the following set of necessary conditions:
+  \[ \sum_{i \in  S} p_i \ge 2/3 ~~~\forall S \subseteq \Workers \text{~ such that ~} \frac{f(\xw)}{f(\vec{x}_{\Workers\setminus S})} \notin \left[ 1 - \eps, \frac{1}{1 - \eps} \right] \]
+
+  \noindent By linearity of expectation, the expected total number of verifications that $\mathcal{C}^*$ performs is,
+  \[ \Exp[ \text{total number of verifications} ] = \Exp \left[ \sum_{i \in \Workers} \vec{1}\text{\{$\mathcal{C}^*$ verifies record $i$\}} \right] = \sum_{i \in \Workers} p_i \] % TODO define \vec{1}
+
+\noindent The above imply that the value of the following linear program is a lower bound on the total number of verifications
+needed by the optimal scheme $\mathcal{C}^*$ for this specific instance $\vec{x}_\Workers$.
+  \begin{equation}
+    \label{eq:neccLP1}
+    \begin{array}{ll@{}ll}
+      \min  & \displaystyle\sum\limits_{i \in \Workers} & ~p_i & \\
+      \text{s.t.} & \displaystyle\sum\limits_{i \in S} & ~p_i \ge 2/3, & \forall S \subseteq \Workers, \frac{f(\xw)}{f(\vec{x}_{\Workers\setminus S})} \notin \left[ 1 - \eps, \frac{1}{1 - \eps} \right] \\
+                  & 0 \le & ~p_i \le 1, & \forall i \in \Workers
+    \end{array}
+  \end{equation}
+
+  \noindent Notice that the solutions to LP~\eqref{eq:neccLP1}, do not directly correspond to certification schemes with success
+probability $2/3$. However, as we show, any solution to LP \eqref{eq:neccLP1} can be converted to a certification scheme with
+number of verifications at most twice as many as the optimal value of LP \eqref{eq:neccLP1} and success probability $2/3$. Since
+the optimal value of LP \eqref{eq:neccLP1} lower bounds the instance optimal number of verifications, our derived certification
+scheme will be a 2-approximation to the instance optimal scheme.
+
+\begin{definition}
+    For a solution $\bar{p}$ of LP~\eqref{eq:neccLP1}, we define the certification scheme $\mathcal{C}_{\bar{p}}$ that verifies
+  each record $i$ independently with probability $q_i=\min\{2\bar{p}_i,1\}$.
+\end{definition}
+
+  It is clear that the certification scheme $\mathcal{C}_{\bar{p}}$ uses in expectation at most twice as many verifications as
+the optimal value of LP~\eqref{eq:neccLP1} and the instance optimal scheme. We now show that it also achieves, success probability
+of $2/3$ as required.
+\medskip
+
+\noindent Assume that the subset of valid records is $\Truth = \Workers \setminus S$. The probability that the scheme
+$\mathcal{C}_{\bar{p}}$ does not verify anyone in the set $S = \{s_1, \dots, s_m\}$ is
+\[ \Prob(\text{$\mathcal{C}_{\bar{p}}$ doesn't verify $\Truth$}) = \Prob( (\text{$\mathcal{C}_{\bar{p}}$ doesn't verify $s_1$}) \wedge \dots \wedge (\text{$\mathcal{C}_{\bar{p}}$ doesn't verify $s_m$})) =\prod_{s \in S} (1 - q_s) \]
+
+\noindent Since $\bar{p}$ is a feasible solution to LP~\eqref{eq:neccLP1}, the probability that some record from $S$ is verified is
+
+\[ \Prob(\text{$\mathcal{C}_{\bar{p}}$ verifies $S$}) = 1 - \prod_{s \in S} (1 - q_s) \ge 1 - \exp\left( - 2\sum_{i \in S} \bar{p}_s \right) \ge 1 - \exp\left( - 4/3 \right)\ge 2/3. \]
+\noindent This means that our certification scheme succeeds with probability $2/3$ using at most twice the optimal number of
+verifications in expectation. We can amplify the probability of $2/3$, making it arbitrarily close to one by repeating the
+certification scheme. Since the repetitions are independent and each of them fails with probability at most $1/3$, after $r$
+repetitions the total probability of failure is $3^{-r}$. Repeating $r = \log(1 / \delta)$ times, guarantees that for any
+subset $S$, the probability that it will be verified is at least $1-\delta$. This result is summarized in the following theorem.
+%\[ \Prob(\text{we verify $S$}) \ge 1 - \delta \]
+
+%Therefore, solving LP~\eqref{eq:neccLP1}, we get a certification scheme that requires at most a factor of $\log(1 / \delta)$ more verifications than the instance optimal possible certification scheme.
+
+\begin{theorem} \label{thm:optInstV}
+    For any given function $f : \Domain^* \to \reals$ and any set of valus if records $\xw$, a solution to LP~\eqref{eq:neccLP1} corresponds to a
+  certification scheme that verifies records of the data set independently using at most twice as many verifications as the optimal scheme for
+  this instance and succeeds with probability $2/3$. Repeating the scheme $\log(1 / \delta)$ times increases the success probability to
+  $1-\delta$.
+\end{theorem}
+
+\paragraph{Remark} We note that the LP~\eqref{eq:neccLP1} has exponentially many constraints and it may be computationally
+intractable to solve depending on the function. It is very useful though as a tool to uncover the structure of approximately
+optimal certification schemes. For example, Theorem \ref{thm:optInstV} implies that even though optimal schemes may be arbitrarily
+complex, there are simpler schemes, that verify records independently, which are almost-optimal.
+\medskip
+
+In the following section, we derive a general methodology to obtain solutions to LP~\eqref{eq:neccLP1} for the very general class of
+$\vec{w}$-Lipschitz functions.
+
+\subsection{Certification Schemes for $\mathbf{w}$-Lipschitz Functions}
+
+  In this section we show how we can use Theorem \ref{thm:optInstV} to get sufficient smoothness conditions on the function $f$
+that can be used to provide certification schemes with small number of verifications.
+
+  For any record $i \in \Workers$ we define $w_i$ to be the \textit{weight} of the record $i$. The weight of record $i$ will be
+the quantity that will determine the probability that we will verify record $i$ according to the verification scheme that we want
+to define. We state now the property that we want $f$ to satisfy in order to find a good verification scheme.
+
+\begin{definition} \label{def:wcont}
+  We say that a function $f : \Domain^* \to \reals$ is $\vec{w}$-\emph{Lipschitz}, with $\vec{w} \in \reals_+^n$, if for any
+  $S \subseteq \Workers$ it holds that $|f(\xw) - f(\vec{x}_{\Workers\setminus S})| \le \sum_{i \in S} w_i$.
+\end{definition}
+
+\noindent For any function that satisfies this Lipschitz property we can get a good verification scheme that depends on the weight
+vector $\vec{w}$.
+
+\begin{theorem} \label{thm:wcont}
+    For any non-negative $\vec{w}$-Lipschitz function $f : \Domain^* \to \reals_+$, set of records $\Workers$ with value $\xw$, and
+  real numbers $\eps, \delta > 0$,
+  \noindent there exists a certification scheme that uses at most
+  $\frac{4\sum_{i \in \Workers} w_i}{3 f(\xw) \eps} \log(1 / \delta) $
+  verifications and has probability of success at least $1 - \delta$.
+\end{theorem}
+
+
+%\input{mst.tex}
+
+  In Appendix \ref{sec:app:proofOfLipschitz} we present the proof of Theorem \ref{thm:wcont}. Also, in Appendix \ref{ssec:tspIOpt} and \ref{ssec:steinerIOpt}, we present two applications of Theorem \ref{thm:wcont} to get
+certification schemes for the \emph{Traveling Salesman (TSP)} and the \emph{Steiner Tree} problems. In both applications, we show that
+the optimal solution is $\vec{w}$-Lipschitz with $\frac{\sum_{i \in \Workers} w_i}{f(\xw)} \le 2$. Hence, the total number of
+verifications by Theorem \ref{thm:wcont} is $O((1/\eps) \log(1/\delta))$.

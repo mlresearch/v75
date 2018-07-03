@@ -1,0 +1,73 @@
+% !TeX root = main.tex
+\subsection{Partial validity}
+\label{sec:partial-validity}
+In this section, we consider a generalization of our main setting, where we allow some slack in the validity constraint.
+More precisely, given some parameter $\alpha > 0$, we now have the requirement that $\Loss(\hat q) \leq \Loss(q^*) + \eps_1$ and $\Inv(\hat q) \leq \alpha + \eps_2$, where $q^*$ is the optimal distribution which minimizes $\Loss(q^*)$ such that $\Inv(q^*) \leq \alpha$.
+
+%In this result, we allow points to be ``partially valid'' -- specifically, we let $\Inv: X \rightarrow [0,1]$ take fractional values.
+
+\subsubsection{Algorithm}
+We provide an algorithm for solving the partial validity problem in Algorithm~\ref{alg:partial-validity}.
+This method is sample-efficient, requiring a number of samples which is $\poly\left(M, \eps_1^{-1}, \eps_2^{-1}, \log |Q|\right)$.
+
+\begin{algorithm}[ht]
+   \caption{Learning a distribution with partial validity}
+   \label{alg:partial-validity}
+\begin{algorithmic}[1]
+   \STATE {\bfseries Input:} Sample and invalidity access to a distribution $p$, parameters $\ve_1, \ve_2, \alpha > 0$, a family of distributions $Q$.
+   \STATE Using $n_1$  samples from $p$, empirically estimate $\overline \Loss(q) \in \Loss(q) \pm \frac {\eps_1} 3$ for all $q \in Q.$
+   \FOR{$\ell \in \left\{0, \frac {\eps_1} 3,..., M\right\}$} \label{ln:partial-validity-outer-loop}
+   \STATE Let $D = \{q \in Q\ |\ \overline \Loss(q) \le \ell \}$.
+   \STATE Let $x^*$ be any point with $\Inv(x^*) = 0$.
+   \STATE Let $\mu_D$ be the distribution which samples a distribution $q$ uniformly from $D$, and then draws a sample from $q$.
+   \WHILE{$D \neq \emptyset$} \label{ln:partial-validity-inner-loop}
+   \STATE Draw $n_2$ samples $x_1, ..., x_{n_2}$ from $\mu_D$.
+   \IF {$\frac{1}{n_2} \sum_{i=1}^{n_2} \Inv(x_i) \Pr_{q \sim \Unif(D)}[q(x_i) {\eps_1} < 3 \mu_D(x_i)  {M} ] \le \alpha + \frac {4 \eps_2}{5}$}
+   \RETURN $\mu'_D$, which samples $x$ from $\mu_D$ with probability $$\Pr_{q \sim \Unif(D)}[q(x) {\eps_1} < 3 \mu_D(x) {M} ],$$ and samples $x^*$ otherwise.
+   \ELSE \STATE Remove all distributions $q$ from $D$ for which $$\frac{1}{n_2} \sum_{i=1}^{n_2} \Inv(x_i) \frac {q(x_i)} {\mu_D(x_i)} \Ind[q(x_i) {\eps_1} < 3 \mu_D(x_i) {M} ] > \alpha + \frac {\eps_2} {5}.$$  
+   \ENDIF
+   \ENDWHILE
+   \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Analysis}
+We will show that, with high probability, Algorithm~\ref{alg:partial-validity} outputs a distribution $\hat q$ that has $\Loss(\hat q) \leq \Loss(q^*) + \eps_1$ and $\Inv(\hat q) \leq \alpha + \eps_2$.
+
+\begin{theorem}\label{thm:partial-validity}
+  Suppose that the loss function $L$ is convex.
+  The choice of parameters
+  \begin{equation}
+  n_1 = \Theta\left(\frac{M^2}{\ve_1^2} \log |Q| \right), n_2 = \Theta\left(\frac {M^2} {\eps_1^2 \eps_2^2} \log |Q| \log \left(\frac{M \log |Q|}{\eps_1 \eps_2}\right)\right)
+  \end{equation}
+  guarantees that Algorithm~\ref{alg:partial-validity} outputs w.p. $3/4$ a distribution with $\Loss(\hat q) \le \Loss(q^*) + \eps_1$ and $\Inv(\hat q) \le \alpha + \eps_2$ using $\Theta\left(\frac{M^2}{\ve_1^2} \log |Q| \right)$ samples from $p$ and $\Theta\left(\frac{M^3}{ \ve_1^3 \ve_2^3} \log^2 |Q| \log \left(\frac{M \log |Q|}{\eps_1\eps_2}\right)\right)$ invalidity queries.
+\end{theorem}
+
+\begin{remark}
+We note that this algorithm still works in the case where points may be ``partially valid'' -- specifically, we let $\Inv: X \rightarrow [0,1]$ take fractional values.
+This requires that we have access to some point $x^*$ where $\Inv(x^*) = 0$, which we assume is given to us by some oracle.
+For instance, the distribution may choose to output a dummy symbol $\bot$, rather than output something which may not be valid. 
+\end{remark}
+
+We prove Theorem~\ref{thm:partial-validity} through three lemmas.
+The sample complexity bound follows from the values of $n_1$, $n_2$, the fact that we have at most $O\left(\frac{M}{\eps_1}\right)$ iterations of the loop at Line~\ref{ln:partial-validity-outer-loop}, and Lemma~\ref{lem:partial-validity-inner-loop} which bounds the number of iterations of the loop at Line~\ref{ln:partial-validity-inner-loop} as $O\left(\frac{\log |Q|}{\eps_2}\right)$ for any $\ell$.
+To argue correctness, Lemmas~\ref{lem:partial-validity-invalid} and~\ref{lem:partial-validity-loss} bound the invalidity and loss of any output distribution, respectively.
+The proofs of these lemmata appear in Section~\ref{sec:partial-proofs}.
+
+\begin{lemma}
+\label{lem:partial-validity-inner-loop}
+With probability at least $14/15$, the loop at Line~\ref{ln:partial-validity-inner-loop} requires at most $O\left(\frac{\log |Q|}{\eps_2}\right)$ iterations for each $\ell$.
+\end{lemma}
+
+\begin{lemma}
+\label{lem:partial-validity-invalid}
+With probability at least $14/15$, if at any step a distribution $\mu'_D$ is output, $\Inv(\mu'_D) \le \alpha + \eps_2$.
+\end{lemma}
+
+\begin{lemma}
+\label{lem:partial-validity-loss}
+With probability at least $14/15$, if at any step a distribution $\mu'_D$ is output, $\Loss(\mu'_D) \le \ell + 2\eps_1/3$, where $\ell$ is the step at which the distribution was output.
+\end{lemma}
+
+The proof of Theorem~\ref{thm:partial-validity} concludes by observing that the optimal distribution $q^*$ is never eliminated (assuming all estimates involving its loss and validity are accurate, which happens with probability at least $19/20$), and that the loop in line~\ref{ln:partial-validity-outer-loop} steps by increments of $\eps_1/3$. 
+Combining this with Lemma~\ref{lem:partial-validity-loss}, if we output $\hat q$, then $\Loss(\hat q) \leq \Loss(q^*) + \eps_1$.

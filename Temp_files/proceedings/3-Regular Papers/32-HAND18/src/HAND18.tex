@@ -1,0 +1,460 @@
+\documentclass[final,12pt]{colt2018}
+%\documentclass[anon,12pt]{colt2018} % Anonymized submission
+%\documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Deep Generative Priors]{Global Guarantees for Enforcing Deep Generative Priors by Empirical Risk}
+\usepackage{times}
+\usepackage{mathabx}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+ \coltauthor{\Name{Paul Hand} \Email{hand@rice.edu}\\
+ \addr Rice University, Department of Computational and Applied Mathematics
+ \AND
+ \Name{Vladislav Voroninski} \Email{vlad@helm.ai}\\
+ \addr Helm.ai
+ }
+
+
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+\newcommand{\gtilde}{\tilde{g}}
+\newcommand{\ctilde}{\tilde{c}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\calB}{\mathcal{B}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\calAp}{\A_+}
+\newcommand{\calWp}{\mathcal{W}_+}
+\newcommand{\calBp}{\mathcal{B}_+}
+\newcommand{\calBo}{\mathcal{B}_0}
+\newcommand{\calAo}{\A_0}
+\newcommand{\eps}{\epsilon}
+\newcommand{\rhotilde}{\tilde{\rho}}
+\newcommand{\xtilde}{\tilde{x}}
+\newcommand{\ztilde}{\tilde{z}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\thetabar}{\overline{\theta}}
+\newcommand{\thetacheck}{\widecheck{\theta}}
+\newcommand{\zetacheck}{\rho}
+\newcommand{\thetabarn}[1]{\overline{\theta}_{#1}}
+\newcommand{\thetaxy}{\theta_{x,y}}
+\newcommand{\thetaxxo}{\theta_{x,\xo}}
+\newcommand{\thetaxtildexo}{\theta_{\xtilde,\xo}}
+\newcommand{\alphaxy}{\alpha_{x,y}}
+\newcommand{\alphabarxy}{\overline{\alpha}_{x,y}}
+\newcommand{\alphabarxxo}{\overline{\alpha}_{x,\xo}}
+\newcommand{\alphabarxtildexo}{\overline{\alpha}_{\xtilde,\xo}}
+\newcommand{\thetaxxt}{\theta_{x,\xtilde}}
+\newcommand{\spherek}{S^{k-1}}
+\newcommand{\spherel}{S^{\ell-1}}
+\newcommand{\calN}{\mathcal{N}}
+\newcommand{\tran}{t}
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\blue}[1]{{\color{blue} #1}}
+\newcommand{\xo}{x_0}
+\newcommand{\xotilde}{\tilde{x}_0}
+\newcommand{\At}{A^\tran}
+\newcommand{\Wt}{W^\tran}
+\newcommand{\Aplus}[1]{A_{+, #1}}
+\newcommand{\Wplus}[1]{W_{+, #1}}
+\newcommand{\Ahat}{\hat{A}}
+%\newcommand{\Ahato}{\hat{A}_0}
+%\newcommand{\AhatoS}{\hat{A}_{0, S}}
+%\newcommand{\Ahatone}{\hat{A}_1}
+%\newcommand{\Bhato}{\hat{B}_0}
+%\newcommand{\BhatoT}{\hat{B}_{0,T}}
+%\newcommand{\Bhatone}{\hat{B}_1}
+%\newcommand{\Bhat}{\hat{B}}
+\newcommand{\Ahatplus}[1]{\hat{A}_{+, #1}}
+\newcommand{\Apx}{\Aplus{x}}
+\newcommand{\Wpx}{\Wplus{x}}
+\newcommand{\Wpy}{\Wplus{y}}
+\newcommand{\Apy}{\Aplus{y}}
+\newcommand{\Ahatpx}{\Ahatplus{x}}
+\newcommand{\Ahatpy}{\Ahatplus{y}}
+\newcommand{\Apz}{\Aplus{z}}
+%\newcommand{\Apxtilde}{\Aplus{\xtilde}}
+%\newcommand{\Apxtildet}{\Aplus{\xtilde}^\tran}
+\newcommand{\Apxo}{\Aplus{\xo}}
+\newcommand{\Apxotilde}{\Aplus{\xotilde}}
+%\newcommand{\Aox}{A_{0, x}}
+\newcommand{\indax}{1_{a_i \cdot x > 0}}
+\newcommand{\inday}{1_{a_i \cdot y > 0}}
+\newcommand{\indwx}{1_{w_i \cdot x > 0}}
+\newcommand{\indwy}{1_{w_i \cdot y > 0}}
+\newcommand{\indaxo}{1_{a_i \cdot x_0 > 0}}
+\newcommand{\indwxo}{1_{w_i \cdot x_0 > 0}}
+\newcommand{\wi}{w_i}
+\newcommand{\ai}{a_i}
+\newcommand{\wix}{w_i \cdot x}
+\newcommand{\wixtilde}{w_i \cdot \xtilde}
+\newcommand{\wiytilde}{w_i \cdot \ytilde}
+\newcommand{\wiy}{w_i \cdot y}
+\newcommand{\wit}{w_i^\tran}
+\newcommand{\Wpxt}{\Wpx^\tran}
+\newcommand{\Wpyt}{\Wpy^\tran}
+\newcommand{\Apxt}{\Apx^\tran}
+\newcommand{\Apyt}{\Apy^\tran}
+\newcommand{\WpxtWpx}{\Wpx^\tran \Wpx} 
+\newcommand{\ApxtApx}{\Apx^\tran \Apx} 
+\newcommand{\ApxtildetApx}{\Apxtilde^\tran \Apx}
+\newcommand{\ApxtApxtilde}{\Apx^\tran \Apxtilde}
+\newcommand{\ApxtildetApxtilde}{\Apxtilde^\tran \Apxtilde}
+\newcommand{\ApxtApxo}{\Apx^\tran \Apxo} 
+\newcommand{\WpxtWpy}{\Wpx^\tran \Wpy} 
+\newcommand{\ApxotApxo}{\Apxo^\tran \Apxo}
+\newcommand{\hmeps}{h_{-\eps}}
+\newcommand{\Gmeps}{G_{-\eps}}
+\newcommand{\Fmeps}{F_{-\eps}}
+\newcommand{\heps}{h_{\eps}}
+\newcommand{\Geps}{G_{\eps}}
+\newcommand{\Feps}{F_{\eps}}
+\newcommand{\Fzero}{F_0}
+\newcommand{\Gzero}{G_0}
+\newcommand{\wiwit}{\wi\wit}
+\newcommand{\xii}{\xi_i}
+\newcommand{\xiit}{\xii^\tran}
+\newcommand{\xiixiit}{\xi_i\xiit}
+\newcommand{\matrixleq}{\preceq}
+\newcommand{\matrixgeq}{\succeq}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Ngamma}{\mathcal{N}_\gamma}
+\newcommand{\Ndelta}{\calN_\delta}
+\newcommand{\Mxxo}{M_{\xo \leftrightarrow x}}
+\newcommand{\Mxyhat}{M_{\hat{x} \leftrightarrow \hat{y}}}
+\newcommand{\Mxhatxohat}{M_{\xohat \leftrightarrow \xhat}}
+\newcommand{\xhat}{\hat{x}}
+\newcommand{\yhat}{\hat{y}}
+\newcommand{\xohat}{\hat{x}_0}
+\newcommand{\deltatilde}{\tilde{\delta}}
+\newcommand{\xtildehat}{\hat{\xtilde}}
+\newcommand{\ytilde}{\tilde{y}}
+\newcommand{\ytildet}{\tilde{y}^\tran}
+\newcommand{\CtC}{\blue{C^\tran C}}
+\newcommand{\AtA}{A^\tran A}
+\newcommand{\yt}{y^\tran}
+\newcommand{\xt}{x^\tran}
+\newcommand{\Etwoxy}{E_{2, x, y}}
+\newcommand{\Esixxy}{E_{6, x, y}}
+\newcommand{\Efourxxt}{E_{4, x, \xtilde}}
+\newcommand{\Bpx}{B_{+, x}}
+\newcommand{\Bpxt}{B_{+, x}^\tran}
+\newcommand{\Bpxtilde}{B_{+, \xtilde}}
+\newcommand{\Bpxotilde}{B_{+, \xotilde}}
+\newcommand{\Bpxtildet}{B_{+, \xtilde}^\tran}
+\newcommand{\Boox}{B_{0, x}}
+\newcommand{\Bpy}{B_{+, y}}
+\newcommand{\BpxtBpx}{\Bpx^\tran \Bpx}
+\newcommand{\Bpxo}{B_{+, \xo}}
+\newcommand{\BpxtBpxo}{\Bpx^\tran \Bpxo}
+\newcommand{\ApxtBptBpApx}{\Apx^\tran \Bpx^\tran \Bpx \Apx}
+\newcommand{\ApxtildetBptildetBptildeApxtilde}{\Apxtilde^\tran \Bpxtilde^\tran \Bpxtilde \Apxtilde}
+\newcommand{\ApxtBptBpApxo}{\Apx^\tran \Bpx^\tran \Bpxo \Apxo}
+\newcommand{\thetatwohat}{\hat{\theta}_2}
+
+\newcommand{\Qxy}{Q_{x,y}}
+\newcommand{\QApxy}{Q_{\Apx,\Apy}}
+\newcommand{\Spxy}{S_{+,x,y}}
+
+\newcommand{\Sepsxo}{S_{\eps, \xo}}
+\newcommand{\hxy}{h_{x,y}}
+\newcommand{\hxxo}{h_{x, \xo}}
+\newcommand{\htildexy}{\tilde{h}_{x,y}}
+%\newcommand{\htildexxo}{h_{\tilde{x}, \xo}}
+
+\newcommand{\yxxo}{y_{x,\xo}}
+\newcommand{\zxxo}{z_{x,\xo}}
+\newcommand{\XWhatWtwo}{X_{\What, W_2}}
+\newcommand{\zo}{z_0}
+\newcommand{\ho}{h_0}
+\newcommand{\zetabar}{\overline{\zeta}}
+
+\newcommand{\rmax}{r_{\text{max}}}
+\newcommand{\bigPioned}{\prod_{i=1}^d}
+\newcommand{\Pioned}{\Pi_{i=1}^d}
+\newcommand{\PiWd}{\Pi_{i=d}^1 W_{i,+,x}}
+\newcommand{\PiWdtilde}{\Pi_{i=d}^1 W_{i,+,\tilde{x}}}
+\newcommand{\PiWdy}{\Pi_{i=d}^1 W_{i,+,y}}
+\newcommand{\PiWdo}{\Pi_{i=d}^1 W_{i,+,\xo}}
+\newcommand{\Pini}{\Pi_{i=1}^d n_i}
+\newcommand{\PiWn}[1]{\Pi_{i={#1}}^1 W_{i,+,x}}
+\newcommand{\PiWny}[1]{\Pi_{i={#1}}^1 W_{i,+,y}}
+\newcommand{\Pipithetapii}{\prod_{i=0}^{d-1} \frac{\pi - \thetabar_i}{\pi}}
+\newcommand{\zetaterm}{\sum_{i=0}^{d-1} \frac{\sin \thetabar_i}{\pi} \prod_{j=i+1}^{d-1} \frac{\pi - \thetabar_j}{\pi}}
+
+\newcommand{\Wipxn}[1]{W_{#1, +, x}}
+\newcommand{\Wipyn}[1]{W_{#1, +, y}}
+\newcommand{\calWnp}[1]{\mathcal{W}_{#1, +}}
+\newcommand{\calWno}[1]{\mathcal{W}_{#1, 0}}
+\newcommand{\Wnpx}[1]{W_{#1, +, x}}
+\newcommand{\Wnpy}[1]{W_{#1, +, y}}
+\newcommand{\Wnox}[1]{W_{#1, 0, x}}
+\newcommand{\Wipx}{W_{i, +, x}}
+\newcommand{\Wipy}{W_{i, +, y}}
+\newcommand{\Vpx}{V_{+,x}}
+\newcommand{\Vpy}{V_{+,y}}
+\newcommand{\Wippx}{(W_i)_{+, x}}
+\newcommand{\Wippy}{(W_i)_{+, y}}
+\newcommand{\Wippxt}{(W_i)^t_{+, x}}
+\newcommand{\Wipxo}{W_{i, +, \xo}}
+\newcommand{\Win}[1]{W_{#1}}
+\newcommand{\Wi}{\Win{i}}
+\newcommand{\Wiox}{W_{i,0,x}}
+\newcommand{\What}{\hat{W}}
+\newcommand{\Whatnp}[1]{\hat{W}_{#1, +}}
+\newcommand{\Vhatnp}[1]{\hat{V}_{#1, +}}
+\newcommand{\Whatdp}{\Whatnp{d}}
+\newcommand{\Whatno}[1]{\hat{W}_{#1, 0}}
+\newcommand{\WhatnoSn}[1]{\hat{W}_{#1, 0, S_{#1}}}
+\newcommand{\Whatdo}{\Whatno{d}}
+\newcommand{\vxy}{v_{x,y}}
+\newcommand{\vx}{v_{x}}
+\newcommand{\vbarx}{\overline{v}_{x}}
+\newcommand{\vbar}{\overline{v}}
+\newcommand{\vxxo}{v_{x, \xo}}
+\newcommand{\vbarxxo}{\overline{v}_{x, \xo}}
+\newcommand{\vxtvx}{v_{x+t\vx}}
+\newcommand{\vxn}{v_{x_n}}
+\newcommand{\gx}{g_x}
+\newcommand{\hxn}{h_{x_n}}
+\newcommand{\hx}{h_x}
+\newcommand{\gxxo}{g_{x, \xo}}
+\newcommand{\gxtvx}{g_{x + t\vx}}
+\newcommand{\gxn}{g_{x_n}}
+\newcommand{\xtvx}{x+t\vx}
+\newcommand{\xn}{x_{n}}
+\newcommand{\htildexxo}{\tilde{h}_{x, \xo}}
+
+\newcommand{\Ktilde}{\tilde{K}}
+
+
+\DeclareMathOperator{\rowsupp}{row-supp}
+\DeclareMathOperator{\nnz}{nnz}
+\DeclareMathOperator{\Span}{span}
+\DeclareMathOperator{\relu}{relu}
+%\DeclareMathOperator{\relus}{r}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\poly}{poly}
+\DeclareMathOperator{\range}{range}
+%\DeclareMathOperator{\dim}{dim}
+
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We examine the theoretical properties of enforcing priors provided by generative deep neural networks via empirical risk minimization. In particular we consider two models, one in which the task is to invert a generative neural network given access to its last layer and another in which the task is to invert a generative neural network given only compressive linear observations of its last layer.  We establish that in both cases, in suitable regimes of network layer sizes and a randomness assumption on the network weights, that the non-convex objective function given by empirical risk minimization does not have any spurious stationary points. That is, we establish that with high probability, at any point away from small neighborhoods around two scalar multiples of the desired solution, there is a descent direction. Hence, there are no local minima, saddle points, or other stationary points outside these neighborhoods.  These results constitute the first theoretical guarantees which establish the favorable global geometry of these non-convex optimization problems, and they bridge the gap between the empirical success of  enforcing deep generative priors and a rigorous understanding of non-linear inverse problems\footnote{Extended abstract. Full version appears as arXiv:1705.07576, v3}.\\
+\end{abstract}
+
+\begin{keywords}
+deep learning, generative modeling, nonconvex optimization, compressed sensing
+\end{keywords}
+
+\section{Introduction}
+Exploiting the structure of natural signals and images has proven to be a fruitful endeavor across many domains of science. Breaking with the dogma of the Nyquist sampling theorem, which stems from worst-case analysis, \cite{CRT2005} and \cite{Donoho}, provided a theory and practice of compressed sensing (CS), which exploits the sparsity of natural signals to design acquisition strategies whose sample complexity is on par with the sparsity level of the signal at hand. On a practical level, compressed sensing has lead to significant reduction in the sample complexity of signal acquisition of natural images, for instance speeding up MRI imaging by a factor of 10. Beyond MRI, compressed sensing has impacted many if not all imaging sciences, by providing a general tool to exploit the parsimony of natural signals to improve acquisition speed, increase SNR and reduce sample complexity. CS has also lead to the development of the fields of matrix completion \citep{MC}, phase retrieval, \citep{CSV2013, CESV2011} and several other subfields \citep{BDC} which analogously exploit the sparsity of singular values of low rank matrices as well as sparsity in some basis. 
+
+Meanwhile, the advent of practical deep learning has significantly improved meaningful compression of images and acoustic signals. For instance, deep learning techniques are now the state of the art across most of computer vision, and have taken the field far beyond where it stood just a few years prior. The success of deep learning ostensibly stems from its ability to exploit the hierarchical nature of images and other signals. There are many techniques and add-on architectural choices associated with deep learning, but many of them are non-essential from a theoretical and, to an extent, practical perspective, with simple convolutional deep nets with Rectified Linear Units (ReLUs) achieving close to the state of the art performance on many tasks \citep{Simplicity}. The class of functions represented by such deep networks is readily interpretable as hierarchical compression schemes with exponentially many linear filters, each being a linear combination of filters in earlier layers. Constructing such compression schemes by hand would be quite tedious if not impossible, and the biggest surprise of deep learning is that simple stochastic gradient descent (SGD) allows one to efficiently traverse this class of functions subject to highly non-convex learning objectives. While this latter property has been empirically established in an impressive number of applications, it has so far eluded a completely satisfactory theoretical explanation.
+
+Optimizing over the weights of a neural network or inverting a neural network may both be interpreted as inverse problems \citep{Mallat}. Traditionally, rigorous understanding of inverse problems has been limited to the simpler setting in which the optimization objective is convex. More recently, there has been progress in understanding non-convex optimization objectives for inverse problems, in albeit analytically simpler situations than those involving multilayer neural networks. For instance, \cite{WrightPR} and \cite{Burer1} provide a global analysis of non-convex objectives for phase retrieval and community detection, respectively, ruling out adversarial geometries in these scenarios for the purposes of optimization.  %\textcolor{red}{Burer-Monteiro papers} provide guarantees for solving SDPs in a reduced variable space, by showing that the Burer-Monteiro factorization yields non-convex landscapes which do not have any spurious local minima. Such work, and many others \cite{WrightPR}, rigorously demonstrate that non-convexity in itself is not always malicious. %, and there are indeed large classes of non-convex functions that are efficiently optimizable in polynomial time for instance by the sum of squares hierarchy \textcolor{red}{citations}.
+
+Very recently, deep neural networks have been exploited to construct highly effective natural image priors, by training generative adversarial networks to find a Nash equilibrium of a non-convex game \citep{GAN}. The resulting image priors have proven useful in inverting hidden layers of lossy neural networks \citep{Yosinski} and performing super-resolution \citep{DLSR}. Naturally, one may ponder whether these generative priors may be leveraged to improve compressive sensing. Indeed, while natural images are sparse in the wavelet basis, a random sparse linear combination of wavelets is far less structured than say a real-world scene or a biological structure, illustrating that a generic sparsity prior is nowhere near tight. The generative priors provided by GANs have already been leveraged to improve compressed sensing in particular domains \citep{Price}. Remarkably, empirical results \citep{Price} dictate that given a dataset of images from a particular class, one can perform compressed sensing with 10X fewer measurements than what the sparsity prior alone would permit in traditional CS. As GANs and other neural network-based priors improve in modeling more diverse datasets of images, many scenarios in compressed sensing will benefit analogously. Moreover, using generative priors to improve signal recovery in otherwise underdetermined settings is not limited to linear inverse problems, and in principle these benefits should carry over to any inverse problem in imaging science. 
+
+In this paper we present the first global analysis of empirical risk minimization for enforcing generative multilayer neural network priors. In particular we show that under suitable randomness assumptions on the weights of a neural network and successively expansive hidden layer sizes, the empirical risk objective for recovering a latent code in $\mathbb{R}^k$ from $m$ linear observations of the last layer of a generative network, where $m$ is proportional to $k$ up to log factors, has no spurious local minima, in that there is a descent direction everywhere except possibly small neighborhoods around two scalar multiples of the desired solution. Our descent direction analysis is constructive and relies on novel concentration bounds of certain random matrices, uncovering some interesting geometrical properties of the landscapes of empirical risk objective functions for random ReLU'd generative multilayer networks. The tools developed in this paper may be of independent interest, and may in particular lead to global non-asymptotic guarantees regarding convergence of SGD for training deep neural networks. 
+
+%\section{Related theoretical work}
+%In related work, the authors of \cite{Price} also rigorously study inverting compressive linear observations under generative priors, by proving a restricted eigenvalue condition on the range of the generative neural network. However, they only provide a guarantee that is local in nature, in showing the global optimum of empirical risk is close to the desired solution.  The global properties of optimizing the objective function are not theoretically studied in \cite{Price}. In addition, \cite{Sanjeev} studied inverting neural networks given access to the last layer using an analytical formula that approximates the inverse mapping of a neural network. The results of \cite{Sanjeev} are in a setting where the neural net is not generative, and their procedure is at best approximate, and, since it requires observation of the last layer, it is not readily extendable to the compressive linear observation setting. Meanwhile, the optimization problem we study can yield exact recovery, which we observe empirically via gradient descent. Most importantly, in contrast to \cite{Price,Sanjeev}, we provide a global analysis of the non-convex empirical risk objective function and constructively exhibit a descent direction at every point outside a neighborhood of the desired solution and a negative scalar multiple of it. Our guarantees are non-asymptotic, and to the best of our knowledge the first of their kind.
+
+
+
+%\section{Old Introduction}
+
+%Exploiting the structure of images and natural signals has proven to be a fruitful endeavor across many domains of science. For instance, the wavelet transform, discovered by Daubechies and others \citep{daubechies1992ten}, led to the observation that natural images are sparse in the wavelet basis, enabling compression algorithms such as JPEG 2000 to tame the storage and transfer of the modern deluge of image and video data.   Principles of wavelet based image compression, combined with surprising advances in convex relaxation, have also opened the door to greatly improved signal acquisition strategies, which unlocked critical applications throughout the imaging sciences.  In particular, breaking with the dogma of the Nyquist sampling theorem, which stems from worst-case analysis, \cite{CRT2005,Donoho, donoho2009counting}, provided a theory and practice of compressed sensing (CS), which exploits the sparsity of natural signals in the wavelet basis to design acquisition strategies with drastically lower sample complexity --- that on par with the sparsity level of the signal at hand. In particular,  using the standard basis in lieu of the wavelet basis without loss of generality, they established that to recover a vector $x \in \mathbb{R}^n$ with $k < n$ non-zero entries from $m = O(k \log n)$ observations $\langle x, a_i \rangle, i = 1,2\ldots, m$, where $a_i$ are i.i.d gaussian, it suffices to minimize $\|x\|_1$ subject to the observations with high probability. On a practical level, compressed sensing has lead to significant reduction in the sample complexity of signal acquisition of natural images, for instance speeding up MRI imaging by an order of magnitude \citep{MRM:MRM21391}. Beyond MRI, compressed sensing has impacted many if not all imaging sciences, by providing a general tool to exploit the parsimony of natural signals to improve acquisition speed, increase SNR and reduce sample complexity. More broadly, the principled use of sparsity as a prior has led  to the development of the field of matrix completion \citep{MC}, breakthroughs in phase retrieval \citep{CSV2013, CESV2011} and blind deconvolution \citep{BDC}; and is at this point routinely utilized across applied mathematics and machine learning. %, \red{((such as with microscopy))},  (citations, rely paper by Bengio etc).
+
+%Meanwhile, the advent of practical deep learning \citep{Goodfellow-et-al-2016} has significantly improved machine understanding of image and audio data. For instance, deep learning techniques are now the state of the art across most of computer vision and have taken the field far beyond where it stood just a few years prior.  
+%%\textcolor{red}{might want to remove the following sentence. this is only kind of true and not the impressive part of deep learning} For instance, in the ImageNet Large-Scale Visual Recognition Competition, image classification approaches based on deep learning have achieved superhuman performance along certain metrics since 2015 \cite{he2015delving}. 
+%The success of deep learning ostensibly stems from its ability to exploit the hierarchical nature of images and other natural signals without explicit hand-engineering. There are many techniques and add-on architectural choices associated with deep learning, but many of them are non-essential from a theoretical and, to a large extent, practical perspective, with simple convolutional deep nets with Rectified Linear Units (ReLUs) achieving close to the state of the art performance on many tasks \citep{Simplicity}. The class of functions represented by such deep networks is readily interpretable as hierarchical compression schemes with exponentially many linear filters, each being a linear combination of filters in earlier layers. Constructing such compression schemes by hand would be quite tedious, if not impossible, and the biggest surprise and advantage of deep learning is that simple stochastic gradient descent (SGD) allows one to efficiently traverse this class of functions subject to potentially highly non-convex learning objectives. While this latter property has been empirically established in an impressive number of applications, it has so far eluded a completely satisfactory theoretical explanation.
+
+%%In particular, deep learning has lead to advances in practical techniques for compression of natural images, with deep learning approaches outperforming the wavelet based JPEG compression standards by 2-3X in recent works (citations). It is natural to consider whether such improvements in image compression via deep neural networks may be leveraged to improve signal acquisition strategies beyond that of traditional compressive sensing. Indeed, while a natural image is sparse in the wavelet basis, a random linear combination of wavelet basis vectors is too crude of an approximation of the high level structure in natural images. This example demonstrates that the prior of sparsity in the wavelet basis is nowhere near tight. Improvements in priors on natural images beyond wavelet based approaches, properly enforced, should enable reliable signal acquisition at ever lower sample complexities. 
+
+%In essence, compressive sensing, and its numerous extensions, consist of enforcing a sparsity prior to regularize the solution of an inverse problem. Thus, improvements in the state of the art of compressed sensing can come from better reconstruction algorithms, better design of signal measurements, or more sophisticated priors.  Virtually all of the tens of thousands of research articles in the umbrella field of compressive sensing have focused on the first two directions, taking the linear sparsity model as the de-facto prior for regularization.  Those two directions are fundamentally limited in that no approach at recovering a $k$-sparse signal with respect to a basis could succeed with fewer than $k$ measurements.
+%  However, as we argue with rigorous analysis in this paper, a prior that provides a lower-dimensional representation than sparsity could lead to drastically lower sample complexity and higher SNR.  Additionally, the sparsity prior of compressed sensing has permeated other fields with nonlinear measurement operators, such as phase retrieval.  Enforcing sparsity priors in phase retrieval has been met by fundamental limitations of theoretical computer science, with the theoretically optimal sample complexity of $O(k \log n)$ potentially being unobtainable via polynomial time algorithms \cite{barak2016nearly}, which have so far only produced $O(k^2 \log n)$ efficient reconstruction schemes \cite{li2013sparse}.  More sophisticated priors beyond sparsity have the potential to drastically lower the sample complexity of algorithms in phase retrieval and other problems.  
+ 
+% Meanwhile, there have been great strides in generative modeling of images in modern machine learning that go well beyond linear sparsity models. 
+%Such improvements in priors on natural images beyond wavelet based approaches, when properly enforced, should enable more aggressive regularization of inverse problems, leading to lower sample complexity and higher SNR than traditional compressed sensing approaches. 
+% In order to understand the potential for improving upon traditional compressive sensing, broadly speaking, as a function of advances in generative modeling, it is useful to reinterpret compressive sensing from the perspective of the field of generative modeling, a popular framework in machine learning which strives to sample from the probability distribution of natural images and other signals. Note that there is a duality between generative modeling and compression. Any compression scheme implicitly defines a generative model, by its inverse, and vice versa. In particular, wavelet based compression schemes implicitly define a generative model which attempts to sample from natural images via random sparse linear combinations of wavelet basis images.  This wavelet-based generative model is clearly too loose to capture the rich hierarchical structure of natural images, making it a sufficiently expressive yet very naive prior. 
+
+%Generative modeling has a rich history in machine learning, but only recent deep neural network based approaches to generative modeling have enabled the generation of realistic synthetic images in a variety of domains, for example by training generative adversarial networks (GANs) to find a Nash equilibrium of a non-convex game \citep{GAN, hong2017generative}; by training variational auto-encoders (VAEs) \citep{kingma2013auto, rezende2014stochastic}; and by training autoregressive models like PixelCNN \citep{oord2016pixel}, which generate pixels one-at-a-time by sampling from appropriate conditional probability distributions. GANs and VAEs map a low dimensional latent code space to a higher dimensional embedding space of images or other natural signals. For instance, if we equip the latent code space with a Gaussian distribution, the goal of generative adversarial training is to produce a deep neural network generator whose push-forward distribution is the distribution of natural images or another class of natural signals. %Because of this structure, it is easier to solve optimization problems related to GANs and VAEs than autoregressive models. 
+%Impressively, in-between the original posting of this paper and the current version of the manuscript, deep generative modeling has advanced to the point of producing high-resolution synthetic, yet extremely photorealistic, images of celebrity faces \citep{karras2017progressive}.  Further, continuous motion in the latent code space of the associated deep generative models has allowed for interpolation and continuous deformation of the resulting faces, even exhibiting equivariant properties with arithmetic operations in the latent code space corresponding to semantically meaningful image variations \citep{radford2015unsupervised}.  
+
+
+%A strong theoretical justification for using neural networks as signal priors has been lacking.  In particular, there is a need for a coherent explanation for several empirical observations detailing the success of optimization in a latent code space.  
+
+
+
+%The scope of application of deep generative modeling to regularizing inverse problems is vast. These more sophisticated priors are recently emerging in empirical applications of many fields of imaging, such as medical imaging \citep{yang2017dagan, kelly2017deep, hammernik2017learning, quan2017compressed, dar2017transfer, adler2018learned,moeskops2017adversarial,wolterink2017generative, nie2017medical, mahmood2017unsupervised, kohl2017adversarial, mahapatra2017retinal, dai2017scan, xue2017segan}, microscopy \citep{rivenson2017deep},  inpainting \citep{mao2016image, yeh2017semantic}, superresolution \citep{sonderby2016amortised, ledig2016photo,johnson2016perceptual}, compressed sensing \citep{lohit2017convolutional, liu2017high, mousavi2015deep, mousavi2017learning}, image manipulation \citep{zhu2016generative}, and many more.  See \cite{lucas2018using} for a review of deep learning for inverse problems in imaging. Importantly, approaches that regularize inverse problems using deep generative models, have empirically been shown to improve over sparsity-based approaches, advancing the state of the art in several fields. For instance, in Magnetic Resonance Imaging, deep generative networks have enabled image reconstruction that is qualitatively of higher diagnostic quality and higher SNR than traditional compressive sensing allows, and is additionally two orders of magnitude faster than sparsity-based approaches due to the utilization of GPUs in applying convolutional neural networks \citep{mardani2017deep, mardani2017recurrent}.  This development is significant because of the tremendous potential clinical applications of diagnostic-quality real-time MRI visualization.  
+%Deep generative models have also empirically been used directly for compression \citep{rippel2017real}. 
+%In the case of compressed sensing, optimization of an empirical risk objective over the latent code space has been empirically shown to recover images from 10x fewer linear compressive measurements than sparsity-based approaches \citep{Price}. 
+%%Other empirical work has also shown that the latent code corresponding to images in the range of a generator can be recovered in a way that is robust to noise.  
+%%Alternatively put, this study and others show that generative networks can in some cases be empirically inverted, from full or compressive measurements of their output.
+%%In \cite{}, the authors empirically show that the latent code for the output of a celebrity-face GAN can be recovered exactly using the direct optimization of empirical risk.  Further, they provide empirical evidence that this approach is robust to noise.  Alternatively put, this work shows that generative models can be empirically inverted.  In \cite{}, the authors empirically show that the latent code corresponding approximately to an image can be empirically recovered from compressive measurements, such as random Gaussian or low-frequency Fourier measurements.  They further show that empirical risk minimization in the latent code space can succeed with 10x less data than conventional sparsity-based compressed sensing approaches.  Alternatively put, generative networks can be empirically inverted even from compressive measurements of their output.  
+
+
+
+%As the quality and reach of deep generative modeling continues to increase, signal recovery in many scenarios will benefit analogously. 
+
+
+%\red{MORE}. Neural networks that act as priors are now pervasive across the field of imaging, and they have shown improvements over sparsity-based approaches. In fact, the superior generative modeling ability of deep neural networks has already advanced the state of the art in practical applications of many fields. For instance, in Magnetic Resonance Imaging, deep generative networks have enabled image reconstruction that is qualitatively of higher diagnostic quality and higher SNR than traditional compressive sensing allows, and is additionally two orders of magnitude faster than sparsity-based approaches due to the utilization of GPUs in applying convolutional neural networks.  This development is significant because of the tremendous potential clinical applications of diagnostic-quality real-time MRI visualization. The use of deep generative modeling has in fact empirically improved the state of the art in several applications of inverse problems, such as other medical imaging contexts \cite{}, inpainting \cite{}, super resolution \cite{}, compressed sensing \cite{}, image manipulation \cite{}, and more.  See \cite{} for a review of deep learning for inverse problems in imaging.  The literature in neural-network priors is almost entirely empirical in nature. As with the rest of machine learning, the state of empirics is far ahead of the state of theory.  
+
+%While natural images are indeed approximately sparse in the wavelet basis, a random sparse linear combination of wavelets is far less structured than a real-world scene or a biological structure, illustrating that a generic sparsity prior is nowhere near tight. The generative priors provided by neural networks can be more successful because they are tighter than sparsity priors. As a result, they have improved the state of the art in many fields.
+
+%At a mathematical level, a vital step in using neural networks as signal priors is the operation of projecting onto the manifold of natural images.  In some cases, a neural network is trained to directly implement this projection operator \cite{}.  In others, projection is implemented as an explicit optimization problem over the latent code space of a GAN.  In \cite{}, the output of a neural network is used as a warm start to an explicit optimization in latent code space.
+
+
+
+%As with the rest of machine learning, in the field of deep generative modeling for regularizing inverse problems, or as we refer to it the field of deep compressive sensing, empirics is far ahead of the state of theoretical justification. In this paper we initiate the rigorous study of enforcing deep generative models as priors on the solutions to inverse problems, by providing a theory of compressive sensing that goes beyond linear sparsity and into the realm of applying deep neural network based generative priors. In particular we show that under suitable randomness assumptions on the weights of a neural network and successively expansive hidden layer sizes, the empirical risk objective for recovering a latent code in $\mathbb{R}^k$ from $m$ linear observations of the last layer of a generative network, where $m$ is proportional to $k$ up to log factors, has no spurious local minima or saddle points, in that there is a descent direction everywhere except possibly small neighborhoods around two scalar multiples of the desired solution.  Our descent direction analysis is constructive; based on deterministic conditions on the neural network weights and the measurements; and relies on novel concentration bounds of certain random matrices, uncovering some interesting geometric properties of the landscapes of empirical risk objective functions for random ReLU'd generative multilayer networks. For a generative network that achieves a greater degree of compression, the proposed scheme would enable lower sample complexity and higher SNR.  If a generative model can compress a signal to a latent code dimensionality $k$ much less then the signal's sparsity level, then compressed sensing with the generative prior may significantly outperform compressed sensing with sparsity prior in terms of sample complexity.
+ 
+
+ %\textcolor{red}{Burer-Monteiro papers} provide guarantees for solving SDPs in a reduced variable space, by showing that the Burer-Monteiro factorization yields non-convex landscapes which do not have any spurious local minima. Such work, and many others \cite{WrightPR}, rigorously demonstrate that non-convexity in itself is not always malicious. %, and there are indeed large classes of non-convex functions that are efficiently optimizable in polynomial time for instance by the sum of squares hierarchy \textcolor{red}{citations}.
+
+%\blue{Very recently, deep neural networks have been exploited to construct highly effective natural image priors, by training generative adversarial networks (GANs) to find a Nash equilibrium of a non-convex game \cite{GAN}. The resulting image priors have proven useful in inverting hidden layers of lossy neural networks \cite{Yosinski} and performing super-resolution \cite{DLSR}. Naturally, one may ponder whether these generative priors may be leveraged to improve compressive sensing. Indeed, while natural images are sparse in the wavelet basis, a random sparse linear combination of wavelets is far less structured than say a real-world scene or a biological structure, illustrating that a generic sparsity prior is nowhere near tight. The generative priors provided by GANs have already been leveraged to improve compressed sensing in particular domains \cite{Price}. Remarkably, empirical results by \cite{Price} dictate that given a dataset of images from a particular class, one can perform compressed sensing with 10X fewer measurements than what the sparsity prior alone would permit in traditional CS. As GANs and other neural network-based priors improve in modeling more diverse datasets of images, many scenarios in compressed sensing will benefit analogously. Moreover, using generative priors to improve signal recovery in otherwise underdetermined settings is not limited to linear inverse problems, and in principle these benefits should carry over to any inverse problem in imaging science. }
+
+%In this paper we present the first theoretical justification with global guarantees for enforcing deep generative priors.  In particular we show that under suitable randomness assumptions on the weights of a neural network and successively expansive hidden layer sizes, the empirical risk objective for recovering a latent code in $\mathbb{R}^k$ from $m$ linear observations of the last layer of a generative network, where $m$ is proportional to $k$ up to log factors, has no spurious local minima \red{or saddle points}, in that there is a descent direction everywhere except possibly small neighborhoods around two scalar multiples of the desired solution. Our descent direction analysis is constructive; based on deterministic conditions on the neural network weights and the measurements; and relies on novel concentration bounds of certain random matrices, uncovering some interesting geometric properties of the landscapes of empirical risk objective functions for random ReLU'd generative multilayer networks. The tools developed in this paper may be of independent interest, and may in particular enable global non-asymptotic analysis regarding convergence of SGD for training deep neural networks. 
+
+\subsection{Related theoretical work}
+%Latent code optimizations, and the optimizating the weights of a network during training, can both be considered inverse problems \citep{Mallat}. This paper's tools, such as the novel nonasymptotic concentration results for high dimensional Gaussians followed by a ReLU, may be of independent interest, in particular being amenable for establishing global non-asymptotic analysis regarding convergence of SGD for training deep neural networks. Our work also relates to recent trends in optimization. Traditionally, rigorous understanding of inverse problems has been limited to the simpler setting in which the optimization objective is convex. 
+There has been much recent progress in analysis of non-convex formulations for inverse problems, albeit in analytically simpler situations than those involving multilayer neural networks. For instance, the \cite{WrightPR} and \cite{Burer1} provide a global analysis of non-convex objectives for phase retrieval and community detection, respectively, ruling out adversarial geometries in these scenarios for the purposes of optimization.  Additionally, rigorous recovery guarantees for nonconvex formulations exist for phase retrieval \citep{wirtinger, chen2015solving}, blind deconvolution \citep{li2016rapid, ma2017implicit,  huang2017blind}, robust subspace recovery \citep{maunu2017well}, discrete joint alignment \citep{chen2016projected}, and more.   
+
+In related work, the authors of \cite{Price} also study inverting compressive linear observations under generative priors, by proving a restricted eigenvalue condition on the range of the generative neural network. However, they only provide a local guarantee by showing the global minimzier of empirical risk is close to the desired solution.  The work does not establish why the global minimum of the nonconvex problem can be reached at all.   In addition, \cite{Sanjeev} studied inverting neural networks given access to the last layer using an analytical formula that approximates the inverse mapping of a neural network. The results of \cite{Sanjeev} are in a setting where the neural net is not generative, and their procedure is at only approximate, and, since it requires observation of the last layer, it is not readily extendable to the compressive linear observation setting. Meanwhile, the optimization problem we study can yield exact recovery, which we observe empirically via gradient descent. Most importantly, in contrast to \cite{Price} and \cite{Sanjeev}, we provide a global analysis of the non-convex empirical risk objective function and constructively exhibit a descent direction at every point outside a neighborhood of the desired solution and a negative scalar multiple of it. Our guarantees are non-asymptotic, and to the best of our knowledge the first of their kind.
+
+
+\subsection{Main Results}
+
+We consider the inverse problem of recovering a vector $y_0 \in \R^{n}$ from $m \ll n$ linear measurements. To resolve the inherent ambiguity from undersampling, we assume, as a prior, that the vector belongs to the range of a $d$-layer generative neural network $G: \R^k \to \R^{n}$, with $k<n$.  To recover the vector $y_0= G(\xo)$, we attempt to find the latent code $\xo \in \R^k$ corresponding to it.  
+We consider a generative network modeled by $G(x) = \relu(\Win{d} \ldots \relu (\Win{2} \relu(\Win{1} \xo)) \ldots )$, where $\relu(x) = \max(x, 0)$ applies entrywise, $W_i \in \R^{n_i \times n_{i-1}}$, $n_i$ is the number of neurons in the $i$th layer, and $k=n_0 < n_1 < \cdots < n_d = n$.  
+ We consider linear measurements of $G(\xo)$ given by the sampling matrix $A \in \R^{m \times n}$ and consider $k < m \ll n$.    The problem at hand is:
+\begin{alignat*}{2}
+	&\text{Let: } &&\xo \in \R^{k}, A\in \R^{m \times n}, \Wi \in \R^{n_i \times n_{i-1} } \text{ for } i=1\ldots d,\\
+	& &&G(x) = \relu(\Win{d} \ldots \relu (\Win{2} \relu(\Win{1} \xo)) \ldots ),\\
+	& &&y_0 = G(\xo),\\
+	&\text{Given: } && W_1\ldots W_d, A,  \text{  and  observations  } A y_0 ,\\
+	&\text{Find: } &&\xo.
+\end{alignat*}
+This problem can be viewed in two ways: (1) as above, given compressive measurements of a vector with the prior information that it belongs to the output of a generative neural network, find that vector;
+%by first estimating its latent code $\xo$ and then computing $G(\xo)$; 
+or (2), given compressive observations of the output of a generative neural network, find the latent code corresponding to the network's output by inverting the neural network and compression simultaneously.  
+
+As a way to solve the above problem, we consider minimizing the empirical risk objective
+\begin{align}
+f(x) := \frac{1}{2} \Bigl \| A G(x) - A y_0 \Bigr\|_2^2. \label{defn-f}
+\end{align}
+As this objective is nonconvex, there is no \textit{a priori} guarantee of efficiently finding the global minimum \citep{Murty1987}.   Approaches such as gradient descent could in principle get stuck in local minima, instead of finding the desired global minimizer $\xo$.  
+
+In this paper, we consider a fully-connected generative network $G:\R^k \to \R^n$ with Gaussian weights and no bias term, along with a Gaussian sampling matrix $A \in \R^{m \times n}$.  We show that under appropriate conditions and with high probability, $f$ has a strict descent direction everywhere outside two small neighborhoods of $\xo$ and a negative multiple of $\xo$.  We assume that the network is sufficiently \textit{expansive} at each layer, $n_i = \Omega(n_{i-1} \log n_{i-1})$, and that there are a sufficient number of measurements, $m = \Omega(k d \log (n_1 \cdots n_d))$.  Let $D_v f(x)$ be the unnormalized one-sided directional derivative of $f$ at $x$ in the direction $v$: $D_v f(x) = \lim_{t \to 0^+} \frac{f(x + t v) - f(x)}{t}$.  Our main result is as follows:
+  
+\begin{theorem} \label{thm-multi-layer-XX}
+Fix $\eps >0$ such that $K_1 d^8 \eps^{1/4} \leq 1$, and let $d \geq 2$.  Assume $n_i \geq c n_{i-1} \log n_{i-1}$ for all $i = 1 \ldots d$ and $m > c d  k \log \Pi_{i=1}^d n_i$.  Assume that for each $i$, the entires of $W_i$ are i.i.d. $\mathcal{N}(0, 1/n_i)$, and the entries of $A$ are i.i.d. $\mathcal{N}(0, 1/m)$ and independent from $\{W_i\}$.
+Then, on an event of probability at least $1 -  \sum_{i=1}^d \ctilde n_i e^{-\gamma n_{i-1} }- \ctilde e^{-\gamma m}$, we have the following. For all nonzero $x$ and $\xo$, there exists $\vxxo \in \R^k$ such that the one-sided directional derivatives of $f$ satisfy
+\begin{alignat*}{2}
+&D_{-\vxxo} f(x) <0, \quad & & \forall x  \not\in  \calB(\xo, K_2 d^{3} \eps^{1/4} \|\xo\|_2) \cup \calB(-\zetacheck_d \xo, K_2 d^{13} \eps^{1/4} \|\xo\|_2) \cup \{0\},\\
+&D_v f(0) < 0, & &\forall v \neq 0,
+\end{alignat*}
+where $\rho_d$ is a positive number that converges to $1$ as $d \to \infty$.
+  Here, $c$ and $\gamma^{-1}$ are constants that depend polynomially on $\eps^{-1}$, and $\ctilde, K_1, K_2$ are universal constants.
+\end{theorem}
+In particular, under the assumptions of the theorem, with high probability there are no local optima or critical points outside of the two specified neighborhoods.  Also, note that while the weights of any layer of the network are assumed to be i.i.d. Gaussian, there is no assumption on the independence between $W_i$ and $W_j$ for $i \neq j$.
+
+This theorem will be proven by showing the sufficiency of two deterministic conditions on $G$ and $A$, and then by showing that Gaussian $G$ and $A$ of appropriate sizes satisfy these conditions with the appropriate probability.
+%In this paper, we introduce deterministic conditions on the neural network $G$ and on the sampling matrix $C$ that guarantees that $f$ has a strict descent direction at any point outside a ball around $\xo$ and a negative multiple thereof.  Under these conditions, any convergent gradient descent scheme must converge to approximately one of these multiples of $\xo$.  %These conditions are motivated by the development of the Restricted Isometry Property for compressed sensing with a sparsity priory.
+%We show that these conditions are satisfied with high probability when $G$ and $C$ are i.i.d. Gaussian matrices of appropriate sizes.
+The first deterministic condition is on the spatial arrangement of the network weights within each layer.  We say that the matrix $W \in \R^{n \times k}$ satisfies the \textit{Weight Distribution Condition} with constant $\eps$ if for all nonzero $x,y \in \R^k$, 
+\begin{align}
+\Bigl \| \sum_{i=1}^n \indwx \indwy \cdot w_i w_i^t  - \Qxy \Bigr \| \leq \eps,  \text{ with } \Qxy = \frac{\pi - \theta_0}{2 \pi} I_k + \frac{\sin \theta_0}{2\pi}  \Mxyhat, \label{WDC}
+\end{align}
+where $w_i \in \R^k$ is the $i$th row of $W$; $\Mxyhat \in \R^{k \times k}$ is the matrix\footnote{A formula for $\Mxyhat$ is as follows.  If $\theta_0 = \angle(\xhat, \yhat) \in (0, \pi)$ and $R$ is a rotation matrix such that $\xhat$ and $\yhat$ map to $e_1$ and $\cos \theta_0 \cdot e_1 + \sin \theta_0 \cdot e_2$ respectively, then $\Mxyhat = R^t \begin{pmatrix} \cos \theta_0 & \sin \theta_0 & 0 \\ \sin \theta_0 & - \cos \theta_0 & 0 \\ 0 & 0 & 0_{k-2} \end{pmatrix} R$, where $0_{k-2}$ is a $k-2 \times k-2$ matrix of zeros.  If $\theta_0 = 0$ or $\pi$, then $\Mxyhat = \xhat \xhat^t$ or $- \xhat \xhat^t$, respectively.} such that $\xhat \mapsto \yhat$, $\yhat \mapsto \xhat$, and $z \mapsto 0$ for all $z \in \Span(\{x,y\})^\perp$;  $\xhat = x/\|x\|_2$  and $\yhat = y /\|y\|_2$;  $\theta_0 = \angle(x, y)$; and $1_S$ is the indicator function on $S$.  The norm in the left hand side of \eqref{WDC} is the spectral norm.  Note that an elementary calculation\footnote{To do this calculation, take $x=e_1$ and $y = \cos \theta_0\cdot e_1 + \sin \theta_0 \cdot e_2$ without loss of generality.  Then each entry of the matrix can be determined analytically by an integral that factors in polar coordinates.} gives that $\Qxy = \E[\sum_{i=1}^n \indwx \indwy \cdot w_i w_i^t ]$ for $w_i \sim \mathcal{N}(0, I_k/n)$.  As the rows $w_i$ correspond to the neural network weights of the $i$th neuron in a layer given by $W$, the WDC provides a deterministic property under which the set of neuron weights within the layer given by $W$ are distributed approximately like a Gaussian.  The WDC could also be interpreted as a deterministic property under which the  neuron weights are distributed approximately like a uniform random variable on a sphere of a particular radius.  Note that if $x=y$, $\Qxy$ is an isometry up to a factor of $1/2$.
+
+The second deterministic condition is that the compression matrix acts like an isometry on pairs of differences of vectors in the range of $G: \R^k \to \R^n$. We say that the compression matrix $A \in \R^{m \times n}$ satisfies the \textit{Range Restricted Isometry Condition (RRIC)} with respect to $G$ with constant $\eps$ if for all $x_1, x_2, x_3, x_4 \in \R^k$,
+\begin{align}
+\Bigl| \Bigl \langle A \bigl( G(x_1) - G(x_2) \bigr), A \bigl( G(x_3) - G(x_4) \bigr) \Bigr\rangle  &- \Bigl \langle  G(x_1) - G(x_2) ,  G(x_3) - G(x_4)  \Bigr \rangle \Bigr| \notag \\&\leq \eps \| G(x_1) - G(x_2) \|_2  \| G(x_3) - G(x_4) \|_2.
+\end{align}
+We can now state our main deterministic result.
+
+\begin{theorem} \label{thm-multi-layer-deterministic}
+Fix $\eps >0$ such that $K_1 d^8 \eps^{1/4} \leq 1$, and let $d \geq 2$.  Suppose that $G$ is such that $W_i$ has the  WDC with constant $\eps$ for all $i = 1 \ldots d$.  Suppose $A$ satisfies the RRIC with respect to $G$ with constant $\eps$.  Then, for all nonzero $x$ and $\xo$, there exists $\vxxo \in \R^k$ such that the one-sided directional derivatives of $f$ satisfy
+\begin{alignat*}{2}
+&D_{-\vxxo} f(x) <0, \quad & & \forall x  \not\in  \calB(\xo, K_2 d^{3} \eps^{1/4} \|\xo\|_2) \cup \calB(-\zetacheck_d \xo, K_2 d^{13} \eps^{1/4} \|\xo\|_2) \cup \{0\},\\
+&D_y f(0) < 0, & &\forall y \neq 0,
+\end{alignat*}
+where $\rho_d$ is a positive number that converges to $1$ as $d \to \infty$,  and $K_1$ and $K_2$ are universal constants.
+\end{theorem}
+
+In the case that $A = I_n$, the RRIC is trivially satisfied, and we get the following corollary about inverting multilayer neural networks.
+\begin{corollary}[Approximate Invertibility of Multilayer Neural Networks]
+If $G$ is a $d$-layer neural network such that $W_i$ satisfies the WDC with constant $\eps$ for all $i = 1 \ldots d$, then the function $f(x) = \|G(x) - G(\xo)\|_2$ has no stationary points outside of a neighborhood around $\xo$ and $-\rho_d \xo$. 
+\end{corollary}
+
+In the case of a Gaussian network with Gaussian measurements, the WDC and RRIC are satisfied with high probability if the network is sufficiently expansive and there are a sufficient number of measurements. 
+\begin{proposition} \label{thm-multi-layer}
+Fix $0 < \eps < 1$.  Assume $n_i \geq c n_{i-1} \log n_{i-1}$ for all $i = 1 \ldots d$ and $m > c d  k \log \Pi_{i=1}^d n_i$.  Assume the entires of $W_i$ are i.i.d. $\mathcal{N}(0, 1/n_i)$, and the entries of $A$ are i.i.d. $\mathcal{N}(0, 1/m)$.  
+Then, $W_i$ satisfies the WDC with constant $\eps$ for all $i$ and $A$ satisfies the RRIC with respect to $G$  with constant $\eps$ with probability at least $1 -  \sum_{i=1}^d \ctilde n_i e^{-\gamma n_{i-1} }- \ctilde e^{-\gamma m}$.  Here, $c$ and $\gamma^{-1}$ are constants that depend polynomially on $\eps^{-1}$, and $\ctilde$ is a universal constant.
+\end{proposition}
+As stated after Theorem \ref{thm-multi-layer-XX}, no assumption is made on the independence between $W_i$ and $W_j$ for $i \neq j$.
+While Proposition \ref{thm-multi-layer} is stated for $A \in \R^{m \times n}$ with i.i.d. Gaussian entries, it also applies in the case of any random matrix that satisfies the following concentration of measure condition:
+\begin{align*}
+\PP \bigl(| \|Ax\|_2^2  -  \|x\|_2^{2} | \geq \epsilon \|x\|_2^2 \bigr) \leq 2 e^{-m c_0(\epsilon)},
+\end{align*}
+for any fixed $x \in \R^n$, where $c_0(\epsilon)$ is a positive constant depending only on $\epsilon$.   In particular, Proposition \ref{thm-multi-layer} and hence Theorem \ref{thm-multi-layer-XX} extends to the case of where the entries of $A$ are independent Bernoulli random variables (and the entries of $W_i$ are Gaussian).  See \cite{Baraniuk2008} for more.  
+
+
+%\subsection{Discussion}
+
+%In this paper, we provide the first rigorous global analysis of the efficacy of enforcing generative neural network priors.  We show that if a generative neural network has Gaussian weights and is sufficiently expansive at each layer, then, with high probability, the empirical risk objective applied to the network output has no spurious local minima or saddle points outside two small neighborhoods around the global optimum and a negative reflection of it.  Further, if the output of the network is subject to random Gaussian compressive measurements, then the same conclusion holds with information theoretically optimal sample complexity with respect to the latent code dimensionality.  That is, a convergent gradient descent scheme will approximately invert the generative network, even in the presence of a sufficient number of compressive measurements.  
+  
+
+
+%As this theoretical work is the first of its kind, it leaves open many important questions deserving further research.  Because any particular generative network is unlikely to contain an observed image \textit{exactly}, it is important to establish a similar guarantee to Theorem \ref{thm-multi-layer-XX} in the case that the observed image is not in the range of the generative network.  This line of work includes establishing noise tolerance and robustness to outliers, both of which have been established for sparsity-based compressed sensing. Such results would provide even further theoretical support for several empirical observations about enforcing generative priors via an optimization over latent code space \citep{Price, zhu2016generative}, including empirical robustness of inverting generative models \citep{lipton2017precise}.  In particular, it could help explain the significant observation that generative priors can mitigate against adversarial examples \citep{ilyas2017robust, song2017pixeldefend}, which are minor and sometimes imperceptible modifications to images that lead to catastrophic misclassification by neural networks \citep{szegedy2013intriguing}.  Robustness against adversarial examples is important for the security of machine learning systems \citep{yuan2017adversarial, akhtar2018threat}, in particular those that will be part of self-driving cars.  
+
+
+%In this work, we assume that weights of the generative network are modeled by Gaussians.  There is empirical evidence justifying this assumption for trained neural networks \citep{Sanjeev}.  Additionally, previous theoretical work with neural networks, in the area of classification, has also studied Gaussian networks \citep{giryes2016deep}.  As was the case with compressed sensing, where theoretical developments with Gaussians inspired subsequent theory with more realistic measurement models, the novel results of this paper motivate additional theoretical  with more complicated assumptions on the weights of generative networks.  Further, while the generative model assumed in this paper captures key structural elements of real neural networks (each layer acting as a nonlinear function of a linear transformation), this work also motivates establishing similar results for more complicated network structures, including bias terms, convolutional layers, max-pooling, and more.  
+
+%Most importantly, we provide in this paper a theoretical framework for studying the enforcement of deep generative priors via empirical risk as a means of regularization on inverse problems. Besides compressive sensing with linear measurements, there are a myriad of inverse problems that may benefit from such an approach. One particularly exciting example is the field of phase retrieval, which is critical in the biological sciences for X-ray crystallography and modern techniques like XFEL-imaging, which is a promising approach that may lead to breakthroughs in understanding of proteins and other molecular structures. Phase retrieval involves recovering vectors from quadratic observations, and enforcing linear sparsity priors subject to such quadratic measurements has been met with potentially fundamental limitations of polynomial time algorithms. In particular, while the theoretically optimal sample complexity of sparse phase retrieval is $O(k \log n)$, it is potentially unobtainable via polynomial time algorithms \citep{barak2016nearly}, which have so far only produced $O(k^2 \log n)$ efficient reconstruction schemes \citep{li2013sparse}. This bottleneck in sample complexity makes improvements in signal priors critical for the field of phase retrieval to advance. More significantly, the regime of using generative modeling as a means of regularization opens new doors for improving the workflow of biological scientists. In modern phase retrieval, modeling assumptions which aid in lowering sample complexity and increasing SNR are all hand-coded, making the process extremely tedious. In contrast, deep generative modeling simply requires obtaining a dataset of previously reconstructed molecular structures, which are easily available in extensive databases amassed over the years of practice of crystallography \citep{velankar2009pdbe}. One may envision training generative models on such datasets and using the resulting neural network priors to regularize the inverse problem of phase retrieval, tabula rasa, and potentially more effectively than hand-modeling ever could, as has been witnessed in the field of computer vision. This makes possible recovering the structure of biological molecules without explicit modeling, freeing up scientists to focus on innovating on new imaging modalities instead of grappling with the tedium of hand-coding their prior knowledge to solve the resulting inverse problems. More broadly, combining the power of deep generative modeling with modern methods of optimization and signal recovery, allows potentially paradigm shifting improvements to the empirical sciences, by taking a data-driven artificial intelligence approach to signal recovery. 
+
+
+
+   
+
+% Acknowledgments---Will not appear in anonymized version
+\acks{PH is partially supported by NSF DMS-1464525.}
+
+
+\bibliography{refs}
+
+
+
+\appendix
+
+
+
+
+
+\end{document}

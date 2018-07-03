@@ -1,0 +1,60 @@
+%!TEX root = main.tex
+\vspace{-1.6pt}
+\section{Results} \label{sec:results}
+\vspace{-1.22pt}
+We consider the optimization of a function $f$ over a compact, connected subset $\X \subset \M$,
+   \vspace*{-4pt} \[
+\min_{x \in \X \subset \M} f(x),\vspace*{-6pt}
+\] with access to a (noisy) first-order oracle $\{ \nabla f_n(x) \}_{n \geq 1}$. Given a sequence of iterates $\{x_n\}_{n\geq0}$  in~$\mathcal{M}$ produced from the first-order optimization of $f$,
+\begin{align}
+ x_{n} = R_{x_{n-1}} \left(-\gamma_n \nabla f_{n} \left(x_{n-1} \right)\right), \label{eq:grad_desc}\vspace*{-6pt}
+\end{align}
+that are converging to a \emph{strict} local minimum of $f$, denoted by $x_\star$, we consider (and analyze the convergence of) a streaming average of iterates:
+\begin{align}
+ \tilde{x}_{n} = R_{\tilde{x}_{n-1}} \left(\frac{1}{n} R_{\tilde{x}_{n-1}}^{-1}\left(x_{n}\right)\right). \label{eq:ave_grad_desc}\vspace*{-6pt}
+\end{align}
+Here we use $R_x$ to denote a retraction mapping (defined formally in \mysec{background}), which provides a natural means of moving along a vector (such as the gradient) while restricting movement to the manifold.
+As an example, when $\M = \mathbb{R}^d$  we can take $R_x$ as vector addition by $x$. In this setting, \eq{grad_desc} reduces to the standard gradient update $x_n = x_{n-1} - \gamma_n \nabla f_n(x_{n-1})$ and \eq{ave_grad_desc} reduces to the ordinary average $\tilde{x}_n = \tilde{x}_{n-1} + \frac{1}{n}(x_{n} - \tilde{x}_{n-1})$.
+In the update in \eq{grad_desc}, we will always consider step-size sequences of the form $\gamma_n \!\!=\! \frac{C}{n^\alpha}$ for $C\!>\!0$ and $\alpha \in \left(\frac{1}{2}, 1\right)$, which satisfy the usual stochastic approximation step-size rules $\sum_{i=1}^\infty \!\gamma_i\!=\!\infty$ and $\sum_{i=1}^\infty \!\gamma_i^2\!<\!\!\infty$ \citep[see, e.g.,][]{BenPriMet90}.
+
+Intuitively, our main result
+states that if the iterates $x_n$ converge to $x_\star$
+at a slow $O(\gamma_n)$ rate, their streaming Riemannian average will converge to $x_\star$ at the the optimal $O(\frac{1}{n})$ rate. This result requires  several technical assumptions, which are standard generalizations of those appearing in the Riemannian optimization and stochastic approximation literatures (detailed in \mysec{assumptions}). The critical assumption we make is that all iterates remain bounded in $\X$---where the manifold behaves well and the algorithm is well-defined (Assumption~\ref{assump:manifold}).
+The notion of slow convergence to an optimum is formalized in the following assumption:
+\vspace*{-6pt}
+\begin{assumption}\label{assump:slowrate}
+  If $\Delta_n = R_{x_\star}^{-1}(x_n)$ for a sequence of iterates evolving in \eq{grad_desc}, then
+  \[ \E[\Vert \Delta_n \Vert^2] = O(\gamma_n). \]
+\end{assumption}
+\vspace*{-4pt}
+Assumption~\ref{assump:slowrate} can be verified in a variety of optimization problems, and
+we provide such examples in \mysec{application}. As $x_\star$ is unknown, $\Delta_n$ is not computable but is primarily a tool for our analysis. Importantly, $\Delta_n$ is a tangent vector in $T_{x_\star} \M$. Note also that the norm $\Vert \Delta_n \Vert$  is locally equivalent to the geodesic distance $d(x_n,x_\star)$ on $\M$ (see \mysec{background}). 
+
+
+We use $\Sigma$ to denote the covariance of the noisy gradients at the optima $x_\star$.
+Formally, our main convergence result regarding Polyak-Ruppert averaging in the manifold setting is as follows (where Assumptions~\ref{assump:manifold} through \ref{assump:noiseLip} will be presented later):
+\begin{theorem} \label{thm:main}
+  Let Assumptions \ref{assump:slowrate}, \ref{assump:manifold}, \ref{assump:strongconvpoint},
+  \ref{assump:HessianLip}, \ref{assump:noiseunbiased},
+  and  \ref{assump:noiseLip}
+  hold for the iterates evolving according to \eq{grad_desc} and \eq{ave_grad_desc}.
+    Then $\tilde{\Delta}_n = R_{x_{\star}}^{-1}(\tilde{x}_n)$ satisfies:
+  \begin{align}
+   \sqrt{n} \tilde{\Delta}_n \overset{D}{\to} \mathcal{N}(0, \Hess f(x_\star)^{-1} \Sigma \Hess f(x_\star)^{-1}). \notag
+  \end{align}
+  If we additionally assume a bound on the fourth moment of the iterates---of the form $\mathbb{E}[\Vert \Delta_n \Vert^4] = O(\gamma_n^2)$---then a
+  non-asymptotic result holds:
+  \begin{align}
+    \mathbb{E}[\Vert \tilde{\Delta}_n \Vert^2] \leq \frac{1}{n} \tr[\Hess f(x_\star)^{-1} \Sigma \Hess f(x_\star)^{-1}] + O(n^{-2\alpha}) + O(n^{\alpha-2}). \notag
+  \end{align}
+  \end{theorem}
+We make several remarks regarding this theorem:
+\begin{itemize}
+\vspace*{-6pt}
+  \item The asymptotic result in Theorem \ref{thm:main} is a generalization of the classical asymptotic result of \citet{polyak1992acceleration}. In particular, the leading term has variance $O(\frac{1}{n})$ \textit{independently} of the step-size choice $\gamma_n$. In the presence of strong convexity, SGD can achieve the $O(\frac{1}{n})$ rate with a carefully chosen step size, $\gamma_n = \frac{C}{\mu n}$ (for $C=1$). However, the result is fragile: too small a value of $C$ can lead to an arbitrarily slow convergence rate, while too large a $C$ can lead to an ``exploding,'' non-convergent sequence \citep{NemJudLan08}. In practice determining $\mu$ is often as difficult as the problem itself.
+ \vspace*{-6pt}
+ \item Theorem \ref{thm:main} implies that the distance  (measured in $T_{x_\star} \M$) of the streaming average $\tilde{x}_n$ to the optimum,
+  asymptotically saturates the Cramer-Rao bound on the manifold $\M$ \citep{smi05, Bou13}---asymptotically achieving the statistically optimal covariance\footnote{Note the estimator $\tilde{\Delta}_n$ is only asymptotically unbiased, and hence the Cramer-Rao bound is only meaningful in the asymptotic limit. However, this result can also be understood as saturating the H\`{a}jek-Le Cam local asymptotic minimax lower bound \citep[Ch. 8]{van1998asymptotic}.}. SGD, even with the carefully calibrated step-size choice of $\gamma_n = \frac{1}{\mu n}$, does not achieve this optimal asymptotic variance \citep{NevHas73}.
+  \vspace*{-6pt}
+\end{itemize}
+We exhibit two applications of this general result in \mysec{application}. Next, we introduce the relevant background and assumptions that are necessary to prove our theorem.

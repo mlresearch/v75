@@ -1,0 +1,128 @@
+%!TEX root = main.tex
+
+\section{Preliminaries}
+In this section, we will review some well-known results on~\gd~and~\nag~in the strongly convex setting, 
+and existing results on convergence of~\gd~to second-order stationary points. 
+% The pseudocode for these algorithms is given in Algorithms~\ref{algo:gd} and~\ref{algo:AGD} respectively.
+
+% \cnote{Show gradient descent in equation}
+
+\subsection{Notation}
+Bold upper-case letters ($\A, \B$) denote matrices and bold lower-case letters ($\x, \y$) denote vectors. 
+For vectors $\norm{\cdot}$ denotes the $\ell_2$-norm. For matrices, $\norm{\cdot}$ denotes the spectral norm and $\lambda_{\min}(\cdot)$ denotes the minimum eigenvalue.
+For $f: \R^d \rightarrow \R$, $\grad f(\cdot)$ and  $\hess f(\cdot)$ denote its gradient and Hessian respectively, and $f^\star$ denotes its global minimum.
+% Other than Section \ref{sec:related}, 
+We use $O(\cdot), \Theta(\cdot), \Omega(\cdot)$ to hide absolute constants, and $\tilde{O}(\cdot), \tilde{\Theta}(\cdot), \tilde{\Omega}(\cdot)$ to hide absolute constants and polylog factors for all problem parameters. 
+% \praneeth{I think it will be cleaner to make the dependence on smoothness parameters in Table~\ref{tab:main} and edit this statement} \jccomment{Then I also need to add function value dependence, maybe too complicated to compare}.\praneeth{The issue with this is that $O()$ is not just hiding constants but also problem dependent parameters. May be mention this explicitly in the caption to the table.} 
+% We let $\ball^{(d)}_\x(r)$ denote the d-dimensional ball centered at $\x$ with radius $r$; when it is clear from context, we simply denote it as $\ball_\x(r)$. We use $\proj_{\mathcal{X}}(\cdot)$ to denote projection onto the set $\mathcal{X}$. Distance and projection are always defined in a Euclidean sense.
+
+
+% \pn{Talk about ignoring $\log d$ factors in notation.}
+
+\subsection{Convex Setting}\label{sec:prelim_convex}
+% \begin{figure}[t]
+% \begin{minipage}{0.5\textwidth}
+% 	\begin{algorithm}[H]
+% 	\caption{\gd($\x_0, \eta$)}\label{algo:gd}
+% 	\begin{algorithmic}[1]
+% 		\For{$t = 0, 1, \ldots, T $}
+% 		\State $\x_{t+1} \leftarrow \x_t - \eta \grad f (\x_t)$
+% 		\EndFor
+% 		\State \textbf{return} $\x_T$
+% 	\end{algorithmic}
+% 	\end{algorithm}
+% 	\vspace{0.5cm}
+% \end{minipage}
+% \begin{minipage}{.5\textwidth}
+
+% \end{minipage}
+% \end{figure}
+To minimize a function $f(\cdot)$,~\gd ~performs the following sequence of steps:
+\begin{equation*}
+\x_{t+1} = \x_{t}- \eta \grad f(\x_t).
+\end{equation*}
+The suboptimality of~\gd~and the improvement achieved by~\nag~can be clearly illustrated for the case of smooth and strongly convex functions. %The definitions of smoothness and strong convexity are as follows.
+\begin{definition}\label{def:smooth}
+A differentiable function $f(\cdot)$ is \textbf{$\ell$-smooth (or $\ell$-gradient Lipschitz)} if:
+\begin{equation*}
+\norm{\grad f(\x_1) - \grad f(\x_2)} \le \ell \norm{\x_1 - \x_2} \quad \forall \; \x_1, \x_2.
+\end{equation*}
+\end{definition}
+\noindent
+The gradient Lipschitz property asserts that the gradient can not change too rapidly in a small local region.
+\begin{definition}\label{def:convex}
+A twice-differentiable function $f(\cdot)$ is \textbf{$\alpha$-strongly convex} if
+$\lambda_{\min}(\hess f(\x)) \ge \alpha, \;  \forall \; \x$.
+% $f(\x_2) \ge f(\x_1) + \la \grad f(\x_1), \x_2 - \x_1 \ra + \frac{\alpha}{2}\norm{\x_2 - \x_1}^2, \quad \forall \; \x_1, \x_2.$
+\end{definition}
+Let $\fstar \defeq \min_{\y}f(\y)$. A point $\x$ is said to be \textbf{$\epsilon$-suboptimal} if $f(\x)  \le  \fstar + \epsilon$. The following theorem gives the convergence rate of GD and AGD for smooth and strongly convex functions.
+\begin{theorem}[\cite{nesterov2004introductory}]\label{thm:gd_convex}
+Assume that the function $f(\cdot)$ is $\ell$-smooth and $\alpha$-strongly convex. Then, for any $\epsilon>0$,
+the iteration complexities to find an $\epsilon$-suboptimal point are as follows:
+\begin{itemize}
+\item GD with $\eta  = 1/\ell$: \quad $O((\ell/\alpha) \cdot \log ((f(\x_0) - \fstar)/\epsilon))$
+\item AGD (Algorithm~\ref{algo:AGD}) with $\eta = 1/\ell$ and $\theta = \sqrt{\alpha/\ell}$:
+\quad$O(\sqrt{\ell/\alpha} \cdot \log ((f(\x_0) - \fstar)/\epsilon))$.
+\end{itemize}
+% ~\gd~with $\eta = \frac{1}{\ell}$ will output an \ESP ~in iterations:
+% \begin{equation*}
+% O\left(\frac{\ell}{\alpha}\log \frac{f(\x_0) - \fstar}{\epsilon}\right).
+% \end{equation*}
+\end{theorem}
+
+The number of iterations of GD depends linearly on the ratio $\ell/\alpha$, which is called the condition number of $f(\cdot)$ since $\alpha \I \preceq\hess f(\x) \preceq \ell \I $. Clearly $\ell \geq \alpha$ and hence condition number is always at least one. Denoting the condition number by ${\cn}$, we highlight two important aspects of~\nag: (1) the momentum parameter satisfies $\theta = 1/\sqrt{\cn}$ and (2) \nag~improves upon GD by a factor of $\sqrt{\cn}$. 
+% The following theorem gives the convergence rate of~\nag~for these problems.
+% \begin{theorem}[\cite{nesterov2004introductory}]\label{thm:agd_convex}
+% Assume that the function $f(\cdot)$ is $\ell$-smooth and convex. Then, for any $\epsilon>0$,~\nag~with $\eta = \frac{1}{\ell}$ and $\theta = \Theta(\sqrt{\frac{\alpha}{\ell}}) $ will output an~\ESP~in iterations:
+% \begin{equation*}
+% O\left(\sqrt{\frac{\ell}{\alpha}}\log \frac{f(\x_0)-\fstar }{\epsilon}\right).
+% \end{equation*}
+% \end{theorem}
+% \noindent
+% Note that the rate here improves upon that of~\gd~by a factor of $\sqrt{\frac{\ell}{\alpha}}$ i.e., squareroot of the condition number.
+%say something about condition number.
+
+\subsection{Nonconvex Setting}
+For nonconvex functions finding global minima is NP-hard in the worst case. The best one can hope for in this setting is convergence to stationary points. There are various levels of stationarity.
+\begin{definition}
+$\x$ is an \textbf{\EFSP} of function $f(\cdot)$ if $\norm{\grad f(\x)} \le \epsilon$.
+\end{definition}
+\noindent
+As mentioned in Section~\ref{sec:intro}, for most nonconvex problems encountered in practice, a majority of first-order stationary points turn out to be saddle points. Second-order stationary points require not only zero gradient, but also positive semidefinite Hessian, ruling out most saddle points.
+%Therefore, this paper focus on finding second-order stationary point.
+%In order to discuss Hessian-related properties meaningfully, we first need to assert Hessian smoothness condition.
+Second-order stationary points are meaningful, however, only when the Hessian is continuous.
+% second order stationary points which means that in addition to being first order stationary points, the Hessian at these points is almost positive semidefinite. This is meaningful only if the Hessian does not change arbitrarily (and perhaps have large negative eigenvalues) in a small neighborhood around this point. In other words, finding second order stationary points is meaningful only if the Hessian is continuous.
+%\cnote{Should we talk the case where gradient is Lipschitz but Hessian is not?}
+% \begin{theorem}[\citep{nesterov1998introductory}]\label{thm:grad_smooth}
+% Assume that the function $f(\cdot)$ is $\ell$-smooth. Then, for any $\epsilon>0$, gradient descent will output an \EFSP ~in iterations:
+% \begin{equation*}
+% \frac{\ell(f(\x_0) - f^\star)}{\epsilon^2}.
+% \end{equation*}
+% \end{theorem}
+\begin{definition}\label{def:HessianLip}
+A twice-differentiable function $f(\cdot)$ is \textbf{$\rho$-Hessian Lipschitz} if:
+\begin{equation*}
+\norm{\hess f(\x_1) - \hess f(\x_2)} \le \rho \norm{\x_1 - \x_2} \quad \forall \; \x_1, \x_2.
+\end{equation*}
+\end{definition}
+%\noindent
+% For Hessian Lipschitz functions, we recall the definition of second order stationary points from~\cite{nesterov2006cubic}.
+\begin{definition}[\cite{nesterov2006cubic}]\label{def:SOSP}
+For a $\rho$-Hessian Lipschitz function $f(\cdot)$, $\x$ is an \textbf{\ESSP} if:
+% $\norm{\grad f(\x)} \le \epsilon$ and $\lambda_{\min}(\hess f(\x)) \ge - \sqrt{\rho \epsilon}$.
+\begin{equation*}
+\norm{\grad f(\x)} \le \epsilon \quad\text{and}\quad \lambda_{\min}(\hess f(\x)) \ge - \sqrt{\rho \epsilon}.
+\end{equation*}
+\end{definition}
+\noindent
+The following theorem gives convergence rate of perturbed~\gd~to second-order stationary points.
+%See~\cite{jin2017escape} for a detailed description of the algorithm.
+\begin{theorem}[\citep{jin2017escape}]\label{thm:perturbed_GD}
+Assume that the function $f(\cdot)$ is $\ell$-smooth and $\rho$-Hessian Lipschitz. Then, for any $\epsilon>0$, perturbed GD outputs an \ESSP ~w.h.p in iterations:
+\begin{equation*}
+\otilde{\frac{\ell(f(\x_0) - \fstar)}{\epsilon^2}}.
+\end{equation*}
+\end{theorem}
+\noindent
+Note that this rate is essentially the same as that of~\gd~for convergence to first-order stationary points. In particular, it only has polylogarithmic dependence on the dimension.

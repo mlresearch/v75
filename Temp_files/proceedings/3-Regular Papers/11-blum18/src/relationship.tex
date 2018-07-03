@@ -1,0 +1,58 @@
+\section{Relationship between Active Testing and Query Testing}
+\label{sec:relationship}
+The following Lemma from VC theory shows that when doing non-tolerant testing, the distribution can be assumed to have a finite support with size bounded by a function of the VC-dimension of the concept class.
+\begin{lemma}
+\label{lm:D'}
+There exists an absolute constant $c$ satisfying the following property. Let $\calC$ be a concept class over  domain $X$ with VC-dimension $d$. Let $f$ be any function that is $\epsilon$-far from class $\calC$ with respect to distribution $\calD$ over $X$. Let $\calD'$ be the uniform distribution over a random iid sample from $\calD$ of size at least $\lceil\frac{cd}{\epsilon}\log\frac{1}{\epsilon}\rceil$. Then it holds that $f$ is $\frac{\epsilon}{2}$-far from class $\calC$ with respect to distribution $\calD'$ with probability at least $\frac{9}{10}$ over the random choice of the sample.
+\end{lemma}
+
+Therefore, when we perform non-tolerant testing in the active model, we can first sample $\lceil\frac{cd}{\epsilon}\log\frac{1}{\epsilon}\rceil$ unlabeled examples and choose $\calD'$ to be the uniform distribution over these examples. The \emph{active} testing task over $\calD'$ is almost the same as \emph{query} testing, because the active tester can query arbitrary points in the support of $\calD'$, leading to the following Lemma.
+
+\begin{lemma}
+\label{thm:unlabeled}
+Let $\calC$ be a concept class on ground set $X$ with VC-dimension $d$. Suppose $\epsilon\in(0,\frac{1}{2})$. Suppose there is a non-tolerant query tester $\calA$ with margin $\frac{\epsilon}{2}$ using at most $q$ queries on an \emph{arbitrarily} given distribution with finite support. Suppose all the queries tester $\calA$ makes lie in the support of the distribution.
+%\footnote{For $\tot$ and $\da$, we can assume without loss of generality that the algorithm never queries examples outside the support of the distribution, but this is not without loss of generality for $\pt$, because $f\in\calC$ is stronger than $\exists g\in\calC,\dist_{\calD}(f,g)=0$.} 
+Then, there is a non-tolerant active tester $\calB$ with margin $\epsilon$ using at most $O(q)$ queries on $O(\frac{d}{\epsilon}\log\frac{1}{\epsilon})$ unlabeled examples for an arbitrary distribution \emph{unknown} to tester $\calB$.
+\end{lemma}
+
+%Obviously, as pointed out by \citet{BBBY12},  a $\pt_{\calD}(f\ac,\epsilon)$ algorithm implies a $\pt_{\calD}(f\qu,\epsilon)$ algorithm with the same query complexity when $\calD$ is known to the algorithm, since it can always then create unlabeled data on its own; this also holds for $\tot$ and $\da$.  Here, we show a theorem in the reverse direction for bounds that are worst-case over distributions $\calD$.  
+%that has the reverse direction of the previous statement when $\calD$ is arbitrary rather than fixed. 
+%Specifically, we show in Theorem \ref{thm:unlabeled} that a $\pt_{\calD}(f\qu,\frac{\epsilon}{2})$ algorithm can induce a $\pt_{\calD}(f\ac,\epsilon)$ algorithm with (except for a constant factor) the same query complexity and reasonable unlabeled sample complexity, under the assumption that the $\pt_{\calD}(f\qu,\frac{\epsilon}{2})$ algorithm never queries examples outside the support of $\calD$, which holds in all normal cases. We extend the theorem to $\da$ in Theorem \ref{thm:reductiontoquery}.
+
+%As \citet{BBBY12} have pointed out, in the task of testing unions of $d$ intervals in the query testing framework, any known distribution can be reduced to uniform distribution on $[0,1]$ by its CDF. Our following theorem shows that once we can deal with arbitrary distributions for query testing, we can automatically deal with unknown distributions for active testing, improving a previous upper bound on unlabeled sample complexity in \citep{BBBY12}.
+
+Since \citet{BBBY12} have an algorithm in the query testing framework that can distinguish $f\in\interval(d)$ and $f\notin\interval_\calD(d,\epsilon)$ for arbitrarily given distribution $\calD$ using $O(\frac{1}{\epsilon^4})$ queries and the tester only makes queries in the support of $\calD$, there is an algorithm in the active testing framework that can distinguish $f\in\interval(d)$ and $f\notin\interval_{\calD}(d,\epsilon)$ using $O(\frac{1}{\epsilon^4})$ queries on $O(\frac{d}{\epsilon}\log\frac{1}{\epsilon})$ unlabeled examples, even when the distribution $\calD$ is unknown, according to Lemma \ref{thm:unlabeled}. Here, the unlabeled sample complexity is $O(\frac{d}{\epsilon}\log\frac{1}{\epsilon})$, an improvement from $O(\frac{d^2}{\epsilon^6})$ (implicit) in their original paper.
+
+The query tester $\calA$ in Lemma \ref{thm:unlabeled} is required to query only points in the support of the distribution. This requirement can be removed if $\calA$ accepts $f$ when $f$ has distance 0 to $\calC$ with respect to the distribution, because in this case the values of $f$ for points outside the support contain no information useful for the tester. The following Lemma shows that such a tester in the distribution-free model implies a passive tester over arbitrary unknown distributions.
+\begin{lemma}
+\label{lm:distributionfreenontolerant}
+Suppose we have a non-tolerant distribution-free tester with margin $\frac{\epsilon}{2}$ and sample complexity $s$ for class $\calC$ with VC-dimension $d$, and the tester accepts $f$ when $f$ has distance 0 to the class $\calC$. Then there is a non-tolerant passive tester with margin $\epsilon$ and sample complexity $O(s)$ for arbitrary unknown distribution $\calD$ with no massive points\footnote{We say $x_0$ is a massive point if $\Pr_{x\sim \calD}[x=x_0]>0$.}.
+\end{lemma}
+\begin{proof}
+Imagine we are performing non-tolerant testing in the passive model. The tester first obtains a sample $S$ of size $s$. When $s<\lceil\frac{cd}{\epsilon}\log\frac{1}{\epsilon}\rceil$, where $c$ is defined in Lemma \ref{lm:D'}, we enlarge $S$ to a bigger sample $S'$ of size $\lceil\frac{cd}{\epsilon}\log\frac{1}{\epsilon}\rceil$, though only $S$ is revealed to the tester. When $s\geq \lceil\frac{cd}{\epsilon}\log\frac{1}{\epsilon}\rceil$, we simply define $S'=S$. The testing task is then transformed to a testing task over distribution $\calD'$ uniform over $S'$ with margin $\frac{\epsilon}{2}$ and success probability at least $(\frac 23)/(\frac 9{10})=\frac{20}{27}$, according to Lemma \ref{lm:D'}. We then perform distribution-free testing with sample $S$. Note that the distribution $\calD$ has no massive points, so with probability 1 no queries made by the distribution-free tester lie in $S'\backslash S$ and thus the queries provide no information useful for the distribution-free tester. Therefore, we can assume the tester gets value 0 for all the queries it makes outside $S$.
+\end{proof}
+
+Lemmas \ref{lm:D'}, \ref{thm:unlabeled}  and \ref{lm:distributionfreenontolerant} can be naturally generalized to the tolerant case as follows.
+%\begin{proof}
+%Algorithm $\calB$ first draws $N=O(\frac{d}{\epsilon}\log\frac{1}{\epsilon})$ unlabeled examples: $x_1,x_2,\cdots,x_N$. We use $\calS$ to denote the uniform distribution over these unlabeled examples. By VC Theory, we know if $\forall g\in\calC,\dist_{\calD}(f,g)>\epsilon$, then with probability at least $\frac{5}{6}$, $\forall g\in\calC,\dist_{\calS}(f,g)>\frac{\epsilon}{2}$. So algorithm $\calB$ only needs to call algorithm $\calA$ to distinguish $f\in\calC$ and $\forall g\in\calC,\dist_{\calS}(f,g)>\frac{\epsilon}{2}$ with probability at least $\frac{5}{6}$. By the Union Bound, algorithm $\calB$ succeeds with probability at least $\frac{2}{3}$.
+%\end{proof}
+
+\begin{lemma}
+There exists an absolute constant $c$ satisfying the following property. Let $\calC$ be a concept class over  domain $X$ with VC-dimension $d$. Let $f$ be any function that has distance $\alpha$ to class $\calC$ with respect to distribution $\calD$ over $X$. Let $\calD'$ be the uniform distribution over a random iid sample from $\calD$ of size at least $\lceil\frac{cd}{\epsilon^2}\log\frac{1}{\epsilon}\rceil$. Then it holds that $f$ has distance within $\alpha\pm\epsilon$ to class $\calC$ with respect to distribution $\calD'$ with probability at least $\frac{9}{10}$ over the random choice of the sample.
+\end{lemma}
+
+\begin{lemma}
+\label{thm:reductiontoquery}
+Let $\calC$ be a concept class on ground set $X$ with VC-dimension $d$. Suppose $\epsilon\in (0,\frac{1}{2})$. Suppose there is a tolerant query tester $\calA$ with additive error $\frac \epsilon 2$ using at most $q$ queries on an \emph{arbitrarily} given distribution with finite support. Then, there is a tolerant active tester $\calB$ with additive error $\epsilon$ using at most $O(q)$ queries on $O(\frac{d}{\epsilon^2}\log\frac{1}{\epsilon})$ unlabeled examples for an arbitrary distribution \emph{unknown} to tester $\calB$.
+\end{lemma}
+
+\begin{lemma}
+\label{lm:distributionfreetolerant}
+Suppose we have a tolerant distribution-free tester with additive error $\frac{\epsilon}{2}$ and sample complexity $s$ for class $\calC$ with VC-dimension $d$. Then there is a tolerant passive tester with additive error $\epsilon$ and sample complexity $O(s)$ for arbitrary unknown distribution $\calD$ with no massive points.
+\end{lemma}
+%The unlabeled sample complexity of the algorithm is improved to $O(\frac{d}{\epsilon}\log\frac{1}{\epsilon})$ by our Theorem \ref{thm:unlabeled}.
+
+
+
+%In the active tolerant testing model, given a distribution $\mathcal{D}$, to test the concept class $\dintervals$ is to distinguish $f\in\interval_\mathcal{D}(d,\alpha_1)$ and $f\notin\interval_\mathcal{D}(d,\alpha_2)$ for any given parameters $\alpha_1<\alpha_2$, where $\interval_\mathcal{D}(d,\alpha)$ is the class of functions $f$ satisfying $\exists g\in \mathcal{I}(d)$ s.t. $\dist_{\mathcal{D}}(f,g)\leq \alpha$. When $\calD$ is the uniform distribution on unit interval $[0,1]$, we omit it for short.
+

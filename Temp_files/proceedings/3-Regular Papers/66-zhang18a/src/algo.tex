@@ -1,0 +1,55 @@
+\section{Proposed algorithm: \ragd}
+\begin{algorithm}[hbtp]
+	\caption{Riemannian-Nesterov($x_0, \gamma_0, \{h_k\}_{k=0}^{T-1}, \{\beta_k\}_{k=0}^{T-1}$)} \label{alg:riemannian-ag}
+	\SetAlgoLined
+	\SetKwInput{KwData}{Parameters}
+	\KwData{initial point $x_0\in\mathcal{X}$, $\gamma_0>0$, step sizes $\{h_k\le\frac{1}{L}\}$, shrinkage parameters $\{\beta_k>0\}$}
+	initialize $v_0 = x_0$\\
+	\For{$k=0,1,\dots,T-1$}{
+		Compute $\alpha_k\in(0,1)$ from the equation
+		$\alpha_k^2 = h_k\cdot\left((1-\alpha_k)\gamma_k + \alpha_k\mu\right)$\\
+		Set $\overline{\gamma}_{k+1} = (1-\alpha_k)\gamma_k + \alpha_k\mu$\\
+\nl	\label{ln:y_k}	Choose $y_k = \Exp_{x_k}\left(\frac{\alpha_k\gamma_k}{\gamma_k+\alpha_k\mu}\Exp_{x_k}^{-1}(v_k)\right)$\\
+		Compute $f(y_k)$ and $\nabla f(y_k)$\\
+\nl	\label{ln:x_k+1}	Set $x_{k+1} = \Exp_{y_k}\left(-h_k\nabla f(y_k)\right)$\label{eq:x-k+1} \\ 
+\nl	\label{ln:v_k+1}	Set $v_{k+1} = \Exp_{y_k}\left(\frac{(1-\alpha_k)\gamma_k}{\overline{\gamma}_{k+1}} \Exp_{y_k}^{-1}(v_k) - \frac{\alpha_k}{\overline{\gamma}_{k+1}} \nabla f(y_k)\right)$\label{eq:v-k+1}\\ 
+		Set $\gamma_{k+1} = \frac{1}{1+\beta_k}\overline{\gamma}_{k+1}$
+	}
+	{\bf Output:} $x_T$
+\end{algorithm}
+
+\begin{figure}[hbt]
+	\centering \def\svgwidth{200pt}
+	\input{figures/alg1.pdf_tex} \def\svgwidth{200pt} 
+	\input{figures/alg1-2.pdf_tex}
+	\caption{Illustration of the geometric quantities in Algorithm \ref{alg:riemannian-ag}. \textbf{Left:} iterates and minimizer $x^*$ with $y_{k}$'s tangent space shown schematically. \textbf{Right:} the inverse exponential maps of relevant iterates in $y_{k}$'s tangent space. Note that $y_k$ is on the geodesic from $x_k$ to $v_k$ (Algorithm \ref{alg:riemannian-ag}, Line \ref{ln:y_k}); $\Exp_{y_k}^{-1}(x_{k+1})$ is in the opposite direction of $\mathrm{grad} f(y_k)$ (Algorithm \ref{alg:riemannian-ag}, Line \ref{ln:x_k+1}); also note how $\Exp_{y_k}^{-1}(v_{k+1})$ is constructed (Algorithm \ref{alg:riemannian-ag}, Line \ref{ln:v_k+1}).}
+\end{figure}
+
+Our proposed optimization procedure is shown in Algorithm \ref{alg:riemannian-ag}. We assume the algorithm is granted access to oracles that can efficiently compute the exponential map and its inverse, as well as the Riemannian gradient of function $f$. In comparison with Nesterov's accelerated gradient method in vector space \citep[p.76]{nesterov2004introductory}, we note two important differences: first, instead of linearly combining vectors, the update for iterates is computed via exponential maps; second, we introduce a paired sequence of parameters $\{(\gamma_k, \overline{\gamma}_k)\}_{k=0}^{T-1}$, for reasons that will become clear when we analyze the convergence of the algorithm. 
+
+Algorithm \ref{alg:riemannian-ag} provides a general scheme for Nesterov-style algorithms on Riemannian manifolds, leaving the choice of many parameters to users' preference. To further simplify the parameter choice as well as the analysis, we note that the following specific choice of parameters
+\[ \gamma_0\equiv\gamma = \frac{\sqrt{\beta^2+4(1+\beta)\mu h}-\beta}{\sqrt{\beta^2+4(1+\beta)\mu h}+\beta}\cdot \mu, \qquad h_k\equiv h, \forall k\ge 0, \qquad \beta_k\equiv \beta > 0, \forall k\ge 0, \]
+which leads to Algorithm \ref{alg:constant-step}, a constant step instantiation of the general scheme. We leave the proof of this claim as a lemma in the Appendix.
+
+\begin{algorithm}[hbtp]
+	\caption{Constant Step Riemannian-Nesterov($x_0, h, \beta$)}  \label{alg:constant-step}
+	\SetAlgoLined
+	\SetKwInput{KwData}{Parameters}
+	\KwData{initial point $x_0\in\mathcal{X}$, step size $h\le\frac{1}{L}$, shrinkage parameter $\beta > 0$}
+	initialize $v_0 = x_0$\\
+	set $\alpha = \frac{\sqrt{\beta^2+4(1+\beta)\mu h}-\beta}{2}$,~ $\gamma = \frac{\sqrt{\beta^2+4(1+\beta)\mu h}-\beta}{\sqrt{\beta^2+4(1+\beta)\mu h}+\beta}\cdot \mu$,~ $\overline{\gamma} = (1+\beta)\gamma$\\
+	\For{$k=0,1,\dots,T-1$}{
+		Choose $y_k = \Exp_{x_k}\left(\frac{\alpha\gamma}{\gamma+\alpha\mu}\Exp_{x_k}^{-1}(v_k)\right)$\\
+		Set $x_{k+1} = \Exp_{y_k}\left(-h\nabla f(y_k)\right)$ \\ 
+		Set $v_{k+1} = \Exp_{y_k}\left(\frac{(1-\alpha)\gamma}{\overline{\gamma}} \Exp_{y_k}^{-1}(v_k) - \frac{~\alpha~}{~\overline{\gamma}~} \nabla f(y_k)\right)$
+	}
+	{\bf Output:} $x_T$
+\end{algorithm}
+
+We move forward to analyzing the convergence properties of these two algorithms in the following two sections. In Section \ref{sec:general-analysis}, we first provide a novel generalization of Nesterov's estimate sequence to Riemannian manifolds, then show that if a specific tangent space distance comparison inequality (\ref{eq:base-change-assumption}) always holds, then Algorithm \ref{alg:riemannian-ag} converges similarly as its vector space counterpart. In Section \ref{sec:constant-step-analysis}, we establish sufficient conditions for this tangent space distance comparison inequality to hold, specifically for Algorithm \ref{alg:constant-step}, and show that under these conditions Algorithm \ref{alg:constant-step} converges in $O\left(\sqrt{\frac{L}{\mu}}\log(1/\epsilon)\right)$ iterations, a faster rate than the $O\left(\frac{L}{\mu}\log(1/\epsilon)\right)$ complexity of Riemannian gradient descent.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "colt2018"
+%%% End:

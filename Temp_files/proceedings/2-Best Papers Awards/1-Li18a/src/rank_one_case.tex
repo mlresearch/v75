@@ -1,0 +1,124 @@
+\section{Proof Overview and Rank-1 Case}\label{sec:rank1}
+\newcommand{\Pustar}{(\Id - \Id_{\vecgt})}
+
+In this section, we demonstrate the key ideas of our proofs and give an analysis of the rank-1 case as a warm-up. 
+The main intuition is that the iterate $U_t$ stays approximately low-rank in the sense that:
+\begin{enumerate}
+	\item[(a)] The $(r+1)$-th singular value $\sigma_{r+1}(U_t)$ \textup{remains small} for any $t\ge 0$;
+	\item[(b)] The top $r$ singular vectors and singular values of $U_tU_t^\top$ converge to those of $\bXg$ in logarithmic number of iterations. 
+\end{enumerate}
+Propositions (a) and (b) can be clearly seen when the number of observations $m$ approaches infinity and $A_1,\dots, A_m$ are Gaussian measurements. Let's define the population risk $\bar{f}$ as 
+\begin{align}\label{eq_test_error}
+\bar{f}(U_t) = \Exp_{(A_i)_{k\ell} \sim N(0,1)}\left[f(U_t)\right] = \|U_tU_t^\top- \bXg\|_F^2
+\end{align}
+In this case, the matrix $M_t$ (defined in ~\eqref{eqn:Mt}) corresponds to $U_tU_t^\top - \bXg$, and therefore the update rule for $U_t$ can be simply rewritten as 
+\begin{align*}
+U_{t+1} & = U_t - \eta \nabla \bar{f}(U_t) = U_t - \eta(U_tU_t^\top - \bXg)U_t \\
+& = U_t(\Id - \eta U_t^\top U_t)+ \eta \bXg U_t
+\end{align*}
+Observe that the term $\eta \bXg U_t$ encourages the column span of $U_{t+1}$ to move towards the column span of $\bXg$, which causes the phenomenon in Proposition (b). On the other hand, the term $U_t(\Id - \eta U_tU_t^\top)$ is performing a contraction of all the singular values of $U_t$, and therefore encourages them to remain small. 
+As a result, $U_t$ decreases in those directions that are orthogonal to the span of $\bXg$, because there is no positive force to push up those directions.
+
+So far, we have described intuitively that the iterates of GD on the population risk remains approximately low-rank. 
+Recall that the difficulty was that the empirical risk $f$ doesn't uniformly concentrate well around the population risk $\bar{f}$.\footnote{Namely, we don't have uniform convergence results in the sense that $|f(U)-\bar{f}(U)|$ is small for all matrices $U$.  (For examples, for many matrices we can have $f(U) = 0$ but $\bar{f}(U) \gg 0$ because we have more variables than observations.)} However, the uniform convergence can occur, at least to some extent, in the restricted set of approximately low-rank matrices! In other words, since the gradient descent algorithm only searches a limited part of the whole space, we only require restricted uniform convergence theorem such as restricted isometry property. 
+Motivated by the observations above, a natural meta proof plan is that:
+\begin{enumerate}
+	\item[1.] The trajectory of the iterates of GD on the population risk stays in the set of approximately low-rank matrices.
+	\item[2.] The trajectory of the empirical risk behaves similarly to that of the population risk in the set of approximately low-rank matrices.
+\end{enumerate}
+It turns out that implementing the plan above quantitatively can be technically challenging: the distance from the iterate to the set of low-rank matrices can accumulate linearly in the number of steps. Therefore we have to augment the plan with a strong result about the rate of convergence: 
+\begin{enumerate}
+	\item[3.] The iterates converge to the true solution $\bXg$ fast enough before its effective rank increases.
+\end{enumerate}
+For the rest of this section, we demonstrate a short proof of the rank-1 case to implement the intuitions described above.
+We note that the results of the rank-$r$ case in Section~\ref{sec:mainproof} is significantly tighter than the results presented in this section.
+The analysis involves more delicate techniques to control the growth of the top $r$ eigenvectors, and requires a much stronger convergence analysis.
+
+
+\subsection{Warm-up: Rank-1 Case}
+
+In this subsection, we assume that $\bXg = \vecgt \vecgt^{\top}$ for $\vecgt \in \R^{d\times 1}$ and that $\norm{\vecgt} = 1$. 
+We decompose the iterates $U_t$ into the subspace of $\vecgt$ and its complement:
+\begin{align}
+	U_t & = \Id_{\vecgt}U_t +  \Pustar U_t\nonumber \\
+	 & := \vecgt r_t^{\top} + E_t\label{eqn:repre}
+\end{align}
+where we denote by $r_t:= U_t^{\top} \vecgt$ and  $E_t := \Pustar U_t$.
+\footnote{Observe that we have restricted the column subspace of the signal term $R_t = \vecgt r_t^{\top}$, so that $R_tR_t^{\top}$ is always a multiple of $\bXg$.
+In section \ref{sec:mainproof}, we will introduce an adaptive subspace instead to decompose $U_t$ into the signal and the error terms.}
+
+In light of the meta proof plan discussed above,  we will show that the spectral norm and Frobenius norm of the ``error term'' $E_t$ remains small throughout the iterations, whereas the ``signal'' term $u^\star r_t^\top$ grows exponentially fast (in the sense that the norm of $r_t$ grows to 1.) Note that any solution with $\|r_t\|=1$ and $E_t =0$ will give exact recovery, and for the purpose of this section we will show that $\|r_t\|$ will converges approximately to 1 and $E_t$ stays small. 
+
+
+
+
+
+
+Under the representation~\eqref{eqn:repre}, from the original update rule~\eqref{eqn:def-Ut}, we derive the update for $E_t$:
+	\begin{align}
+E_{t+1} &= (\Id - \Id_{\vecgt}) \cdot (\Id - \eta M_t) U_t \nonumber\\&= E_t - \eta \cdot \Pustar M_t U_t \label{eqn:update-et}
+\end{align}
+
+Throughout this section, we assume that the set of measurement matrices $(A_1,\dots, A_m)$ satisfies $(4,\delta)$-RIP with $\delta \le c$ where $c$ is a sufficiently small absolute constant (e.g., $c=0.01$ suffices). 
+\begin{thm}\label{thm:rank1} In the setting of this subsection, suppose $\alpha \le \delta \sqrt{ \frac {1} d \log{\frac 1 {\delta}}}$ and $\eta \lesssim  c\delta^2\log^{-1} (\frac 1 {\delta \alpha})$.
+			Then after $T = \Theta(\log{\frac 1 {\alpha \delta}} / \eta)$ iterations, we have:
+	\[ \normFro{U_{T} U_{T}^{\top} - \bXg} \le O(\delta\log{\frac 1 {\delta}}) \]
+\end{thm}
+
+As we already mentioned, Theorem \ref{thm:rank1} is weaker than Theorem~\ref{thm:intro-main} even for the case with $r=1$. In Theorem~\ref{thm:intro-main} (or Theorem~\ref{thm:technical-main}), the final error depends linearly on the initialization, whereas the error here depends on the RIP parameter. Improving Theorem~\ref{thm:rank1} would involve finer inductions, and we refer the readers to Section~\ref{sec:mainproof} for the stronger results.
+
+The following Proposition gives the growth rate of $E_t$ in spectral norm and Euclidean norm, in a typical situation when $E_t$ and $r_t$ are bounded above in Euclidean norm.
+The proof is presented in Section \ref{sec_proof_rank1}.
+
+\begin{prop}[Error dynamics]\label{prop:rank1_Et}
+	In the setting of Theorem~\ref{thm:rank1}. Suppose that $\normFro{E_t} \le 1/2$ and $\norm{r_t}^2 \le 3/2$.
+	Then $E_{t+1}$ can be bounded by
+	\begin{align}
+	\normFro{E_{t+1}}^2 &\le \normFro{E_t}^2 + 2\eta \delta \norm{E_t U_t^{\top}}  + 9\eta^2 \label{eqn:etfro}.\\
+	\norm{E_{t+1}} & \le (1 + 2\eta\delta) \norm{E_t} + 2\eta\delta \norm{r_t}. \nonumber
+	\end{align}
+\end{prop}
+
+A recurring technique in this section, as alluded before, is to establish the approximation
+\begin{align*}
+U_{t+1} = U_t - \eta M_t U_t \approx U_t - \eta (U_tU_t-\bXg)U_t
+\end{align*}
+As we discussed in Section~\ref{sec:prelim}, if $U_tU_t-\bXg$ is low-rank, then the approximation above can be established by Lemma~\ref{lem:RIP3} and Lemma~\ref{lem:property_1}. However, $U_tU_t-\bXg$ is only approximately low-rank, and we therefore we will decompose it into
+\begin{align}
+U_t U_t^{\top} - \bXg = \underbrace{(U_t U_t^{\top} - \bXg - E_t E_t^{\top})}_{\textup{rank} \le 4} + \underbrace{E_tE_t^\top}_{\textup{second-order in $E_t$}} \label{eqn:decompose}
+\end{align}
+Note that $U_t U_t^{\top} - \bXg - E_t E_t^{\top} = \|r_t\|^2 u^\star {u^\star}^\top + u^\star r_t^\top E_t^\top + E_tr_t{u^\star}^\top - \bXg$ has rank at most 4, and therefore we can apply Lemma~\ref{lem:RIP3} and Lemma~\ref{lem:property_1}. For the term $E_tE_t^\top$, we can afford to use other looser bounds (Lemma~\ref{lem:RIP4} and~\ref{lem:property_2}) because $E_t$ itself is small. 
+
+The next Proposition shows that the signal term grows very fast, when the signal itself is not close to norm 1 and the error term $E_t$ is small. 
+\begin{prop}[Signal dynamics]\label{prop:rank1_Rt}
+In the same setting of Proposition~\ref{prop:rank1_Et}, we have, 
+	\begin{align}\label{eq:rank1_Rt_dynamic}
+		\bignorm{r_{t+1} - (1 + \eta(1 - \norm{r_t}^2)) r_t} \le
+		\eta \norm{E_t}^2 \norm{r_t} +  2\eta\delta(\norm{E_t} + \norm{r_t}).
+	\end{align}
+\end{prop}
+
+The following proposition shows that $\|r_t\|$ converges to 1 approximately and $E_t$ remains small by inductively using the two propositions above. 
+
+\begin{prop}[Control $r_t$ and $E_t$ by induction]\label{prop:induction}
+In the setting of Theorem~\ref{thm:rank1}, when the number of iterations is $T = \Theta(\log(\frac 1 {\alpha\delta})) / \eta)$,
+	\begin{align}
+		& \norm{r_T} = 1\pm O(\delta) \\
+		& \normFro{E_T}^2 \lesssim \delta^2\log(1/\delta) 	\end{align}
+\end{prop}
+
+The proofs of the above Propositions are in Section \ref{sec_proof_rank1}.
+Theorem~\ref{thm:rank1} follows from Proposition~\ref{prop:induction} straightforwardly. 
+
+\begin{proof}[Proof of Theorem~\ref{thm:rank1}]
+Using the conclusions of Proposition~\ref{prop:induction}, we have
+	\begin{align*}
+	\bignormFro{U_T U_T^{\top} - \bXg}^2
+	&= (1 - \norm{r_T}^2)^2 + 2 \norm{E_T r_T}^2 + \normFro{E_T E_T^{\top}}^2 \\
+	&\le (1 - \norm{r_T}^2)^2 + 2 \norm{E_T}^2 \norm{r_T}^2 + \normFro{E_T}^4 \\
+	&\le O(\delta^2) + O(\delta^2\log^2{\frac 1{\delta}}) +
+	O(\delta^4 \log^2(\frac 1 {\delta}))
+	= O(\delta^2\log^2{\frac 1 {\delta}})
+	\end{align*}
+\end{proof}
+

@@ -1,0 +1,321 @@
+\documentclass[final]{colt2018} % Anonymized submission
+% \documentclass{colt2017} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[Exponential Convergence of Testing Error for Stochastic Gradient Methods]{Exponential Convergence of Testing Error\\
+ for Stochastic Gradient Methods}
+\usepackage{times}
+\usepackage{color}
+\usepackage{stmaryrd}
+\usepackage{enumitem} 
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{stmaryrd}
+\usepackage{stackengine}
+\SetSymbolFont{stmry}{bold}{U}{stmry}{m}{n}
+\usepackage[mathcal]{eucal}
+
+
+%\usepackage[ thmmarks, thref]{ntheorem}
+
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+
+ % Three or more authors with the same address:
+  \coltauthor{\Name{Loucas Pillaud-Vivien} \Email{loucas.pillaud-vivien@inria.fr}\\
+   \Name{Alessandro Rudi} \Email{alessandro.rudi@inria.fr}\\
+   \Name{Francis Bach} \Email{francis.bach@inria.fr}\\
+   \addr INRIA - D\'epartement d'Informatique de l'ENS \\
+  Ecole Normale Sup\'erieure, CNRS, INRIA, PSL Research University
+  }
+
+
+\include{additional_defs_colt}
+
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We consider binary classification problems with positive definite kernels and square loss, and study the convergence rates of stochastic gradient methods. We show that while the excess testing \emph{loss} (squared loss) converges slowly to zero as the number of observations (and thus iterations) goes to infinity, the testing \emph{error} (classification error) converges exponentially fast if low-noise conditions are assumed. To achieve these rates of convergence we show sharper high-probability bounds with respect to the number of observations for stochastic gradient descent.
+\end{abstract}
+
+\begin{keywords}
+SGD, positive-definite kernels, margin condition, binary classification.
+\end{keywords}
+
+\section{Introduction}
+
+Stochastic gradient methods are now ubiquitous in machine learning, both from the practical side, as a simple algorithm that can learn from a single or a few passes over the data~\citep{bottou2005line}, and from the theoretical side, as it leads to optimal rates for estimation problems in a variety of situations~\citep{nemirovsky1983problem,polyak1992acceleration}.
+
+They follow a simple principle~\citep{robbins:monro:1951}: to find a minimizer of a function~$F$ defined on a vector space from noisy gradients, simply follow the negative stochastic gradient and the algorithm will converge to a stationary point, local minimum or global minimum of $F$ (depending on the properties of the function $F$), with a rate of convergence that decays with the number of gradient steps  $n$ typically as  $O(1/\sqrt{n})$, or $O(1/n)$ depending on the assumptions which are made on the problem \citep[see, e.g.,][]{polyak1992acceleration,nesterov2008confidence,nemirovski2009robust,shalev2007pegasos,xiao2010dual,gradsto,newsto,daft}.
+ 
+  
+
+ On the one hand, these rates are optimal for the estimation of the minimizer of a function given access to noisy gradients~\citep{nemirovsky1983problem}, which is essentially the usual machine learning set-up where the function~$F$ is the expected \emph{loss}, e.g., logistic or hinge for classification, or least-squares for regression, and the noisy gradients are obtained from sampling a single pair of observations.
+
+On the other hand, although these rates as $O(1/\sqrt{n})$ or $O(1/n)$ are optimal, there are a variety of extra assumptions that allow for faster rates, even exponential rates.
+
+ First, for stochastic gradient from a finite pool, that is for $F= \frac{1}{k} \sum_{i=1}^k F_i$,   a sequence of  works starting from SAG~\citep{roux2012stochastic}, SVRG~\citep{johnson2013accelerating}, SAGA~\citep{defazio2014saga}, have shown explicit exponential convergence. However, these results, once applied to machine learning where the function $F_i$ is the loss function associated with the $i$-th observation of a finite training data set of size $k$, say nothing about the loss on unseen data (test loss). The rates we present in this paper are on \emph{unseen} data.
+
+ Second, assuming that at the optimum all stochastic gradients are equal to zero, then for strongly-convex problems (e.g., linear predictions with low-correlated features), linear convergence rates can be obtained for test losses~\citep{solodov1998incremental,schmidt2013fast}. However, for supervised machine learning, this has limited relevance as having zero gradients for all stochastic gradients at the optimum essentially implies prediction problems with no uncertainty (that is, the output is a deterministic function of the input). Moreover, we can only get an exponential rate for strongly-convex problems and thus this imposes a parametric noiseless problem, which limits the applicability (even if the problem was noiseless, this can only reasonably be in a non-parametric way with neural networks or positive definite kernels). Our rates are   on noisy problems and on infinite-dimensional problems where we can hope that we approach the optimal prediction function with large numbers of observations. For prediction functions described by a reproducing kernel Hilbert space, and for the square loss, the excess testing loss  (equal to testing loss minus the minimal testing loss over all measurable prediction functions) is known to converge to zero at a subexponential rate typically greater than $O(1/n)$~\citep{dieuleveut2016nonparametric,daft}, these rates being optimal for the estimation of testing losses.
+ 
+ 
+ 
+ Going back to the origins of supervised machine learning with binary labels, we will not consider getting to the optimal  testing \emph{loss} (using a  convex surrogate such as logistic, hinge or least-squares) but the testing \emph{error} (number of mistakes in predictions), also referred to as the 0-1 loss.
+
+ It is known that the excess testing error (testing error minus the minimal testing error over all measurable prediction functions) is upper bounded by a function of the excess testing loss~\citep{zhang2004statistical,bartlett2006convexity}, but always with a loss in the convergence rate (e.g., no difference or taking square roots). Thus a slow rate in $O(1/n)$ or $O(1/\sqrt{n})$ on the excess loss leads to a slow(er) rate on the excess testing error.
+
+ Such general relationships between excess loss and excess error have been refined with the use of \emph{margin conditions}, which characterize  how hard the prediction problems are~\citep[see, e.g.,][]{mammen1999smooth}. Simplest input points are points where the label is deterministic (i.e., conditional probabilities of the label are equal to zero or one), while hardest points are the ones where the conditional probabilities are equal to $1/2$. Margin conditions quantify the mass of input points which are hardest to predict, and lead to improved transfer functions from testing losses to testing errors, but still no exponential convergence rates~\citep{bartlett2006convexity}.
+ 
+In this paper, we consider the strongest margin condition, that is conditional probabilities are bounded away from $1/2$, but not necessarily equal to $0$ or $1$. This assumption on the learning problem has been used in the past to show that regularized empirical (convex) risk minimization leads to exponential convergence rates~\citep{audibert2007fast,koltchinskii2005exponential}. Our main contribution is to show that stochastic gradient descent also achieves similar rates (see an empirical illustration in Figure \ref{fig:plots} in the Appendix \ref{ap:experiments}). This requires several side contributions that are interesting on their own, that is, a new and simple formalization of the learning problem that allows exponential rates of estimation (regardless of the algorithms used to find the estimator) and a new  concentration result for averaged stochastic gradient descent (SGD) applied to least-squares, which is finer than existing work~\citep{newsto}.
+ 
+The paper is organized as follows: in \mysec{setup}, we present the learning set-up, namely binary classification with positive definite kernels, with a particular focus on the relationship between errors and losses. Our main results rely on a generic condition for which we give concrete examples in \mysec{examples}. In \mysec{sgd}, we present our version of stochastic gradient descent, with the use of tail averaging~\citep{jain2016parallelizing}, and provide new  deviation inequalities, which we apply in \mysec{expo} to our learning problem, leading to exponential convergence rates for the testing errors. We conclude in \mysec{conc} by providing several avenues for future work. Finally, synthetic experiments illustrating our results can be found in Section \ref{ap:experiments} of the Appendix.
+
+\paragraph{Main contributions of the paper.} We would like to underline that our main contributions are in the two following results; (a) we show in Theorem \ref{th:errortail} the exponential convergence of stochastic gradient descent on the testing error, and (b) this result strongly rests on a new deviation inequality stated in Corollary \ref{co:SGDtailaveraged} for stochastic gradient descent for least-square problems. This last result is interesting on its own and gives an improved high-probability result which does not depend on the dimension of the problem and has a tighter dependence on the strongly convex parameter --through the effective dimension of the problem, see \citet{caponnetto2007optimal,dieuleveut2016nonparametric}.
+
+
+\section{Problem Set-up}
+\label{sec:setup}
+
+
+In this section, we present the general machine learning set-up, from generic assumptions to more specific assumptions.
+
+\subsection{Generic assumptions}
+
+We consider a measurable set $\X$  and a probability distribution~$\rho$ on data $(x,y) \in \X \times \{-1,1\}$; we denote by $\rhox$ the marginal probability on $x$, and by $\rho(\pm 1|x)$ the conditional probability that $y=\pm1$ given $x$. We have $\E(y | x) = \rho(1|x) - \rho(-1|x)$. Our main margin condition is the following (and independent of the learning framework):
+
+\bas\label{asm:separability} 
+$ | \E (y | x) | \geqslant \delta$ almost surely for some $\delta \in (0,1]$.
+\eas
+
+This margin condition (often referred to as a low-noise condition) is commonly used in the theoretical study of binary classification~\citep{mammen1999smooth,audibert2007fast,koltchinskii2005exponential}, and usually takes the following form:  
+$\forall \delta>0,\ \P(  |\E(y|x) | < \delta ) = O( \delta^\alpha)$ for $\alpha >0$. Here, however, $\delta$ is a fixed constant. Our stronger margin condition \asm{asm:separability} is necessary to show exponential convergence rates but we give also explicit rates in the case of the latter low-noise condition. This extension is derived in Appendix~\ref{ap:weakmargin} and more precisely in Corollary~\ref{co:weakmargin}. 
+%
+Note that the smaller the $\alpha$, the larger the mass of inputs with hard-to-predict labels. Our condition corresponds to $\alpha = +\infty$, and simply states that for all inputs, the problem is never totally ambiguous, and the degree of non-ambiguity is bounded from below by $\delta$. When $\delta = 1$, then the label $y \in \{-1,1\}$ is a deterministic function of $x$, but our results apply for all $\delta \in (0,1]$ and thus to noisy problems (with low noise). Note that problems like image classification or object recognition are well characterized by \asm{asm:separability}. Indeed, the noise in classifying an image between two disparate classes (cars/pedestrians, bikes/airplanes) is usually way smaller that $1/2$.
+
+We will consider learning functions in a reproducing kernel Hilbert space (RKHS) $\H$ with kernel function $K: \X \times \X \to \rb$ and dot-product $\langle \cdot , \cdot \rangle_\H$. We make the following standard assumptions on~$\H$: 
+
+\bas\label{asm:kernel-bounded}  
+$\H$ is a separable Hilbert space and there exists $R > 0$, such that  for all $x \in \X$, $K(x,x) \leqslant R^2$.
+\eas
+For $x \in \X$, we consider the function $K_x: \X \to \rb$ defined as $K_x(x') = K(x,x')$. We have the classical reproducing property for $g \in \H$, $g(x) = \langle g, K_x \rangle_\H$~\citep{Cristianini2004,smola-book}.
+We will consider other norms, beyond the RKHS norm $\| g \|_\H$, that is the $L_2$-norm (always with respect to $\rhox$), defined as 
+$\| g\|_{L_2}^2 = \int_{\X} g(x)^2 d\rhox(x)$, as well as the $L_\infty$-norm  $\| \cdot \|_{L_\infty}$ on the support of $\rhox$. A key property is that \asm{asm:kernel-bounded} implies $\| g\|_{L_\infty} \leqslant R \| g\|_\H$. 
+
+%Since we want to perform non-parametric estimation, we assume:
+%\bas\label{asm:H-dense}
+% $\H$ is dense in $L_2$.
+%\eas
+%This density assumption is satisfied by a wide variety of kernels~(see, e.g., \cite{micchelli2006universal}), and, as detailed in \mysec{examples}, by kernels leading to Sobolev spaces.
+%Note that it could be relaxed by considering  the closure $\bar{\H}$ of $\H$ in $L^2$ in  subsequent developments. 
+
+
+
+Finally, we will consider observations with standard assumptions:
+
+\bas\label{asm:data-iid}
+The observations $(x_n,y_n) \in \X \times \{-1,1\}, n \in \N^*$ are independent and identically distributed with respect to the distribution $\rho$.
+\eas
+
+\subsection{Ridge regression}
+In this paper, we focus primarily on least-squares estimation to obtain estimators. We define $g_\ast$ as the minimizer over $L_2$ of 
+$$ \E  ( y - g(x) )^2 = \int_{\X \times \{-1,1\}} ( y - g(x) )^2 d\rho(x,y) .$$
+We always have $g_\ast(x) = \E(y|x) = \rho(1|x) - \rho(-1|x)$, but we
+\emph{do not require} $g_\ast \in \H$. We also consider the ridge regression problem \citep{caponnetto2007optimal} and denote by $g_\lambda$  the unique (when $\lambda > 0$) minimizer in $\H$ of 
+$$ \E  ( y - g(x) )^2  + \lambda \| g\|_\H^2  .$$
+%
+The function $g_\lambda$ always exists for $\lambda >0$ and is always an element of $\H$. 
+%
+% Finally, we define $\Phg$ as the orthonormal projector for the $L_2$ norm on $\H$ of $g_* = \E(y|x)$. It verifies $\Phg = {\text{argmin}_{g \in \bar{\H}^{L_2}}} \| g-g_*  \|^2_{L_2}$. Note that if $\H$ is dense in $L_2$, then there is no need to define $\Phg$ because $\Phg = g_* = \E(y|x)$.
+%
+When $\H$ is dense in $L_2$ our results depend on the $L_\infty$-error $\|g_\lambda - g_\ast\|_\infty$, which is weaker than $\|g_\lambda - g_\ast\|_\H$ which itself only exists when $g_\ast \in \H$ (which we do not assume).
+%
+When $\H$ is not dense we simply define $\Phg$ as the orthonormal projector for the $L_2$ norm on $\H$ of $g_* = \E(y|x)$ so that our bound will the depend on $\|g_\lambda - \Phg\|_\infty$. Note that $\Phg$ is the minimizer of $\E (y - g(x))^2$ with respect to $g$ in the closure of $\H$ in~$L_2$.
+
+
+
+
+Moreover our  main technical  assumption is: 
+\bas\label{asm:flambda-correct-sign} 
+There exists $\lambda>0$ such that almost surely, 
+$ \displaystyle \sign( \E(y|x) ) g_\lambda(x) \geqslant \frac{\delta}{2}$. 
+\eas
+
+In the assumption above, we could replace $\delta/2$ by any multiplicative constants in $(0,1)$ times$\delta$ (instead of $1/2$). Note that with \asm{asm:flambda-correct-sign}, $\lambda$ depends on $\delta$ and on the probability measure $\rho$, which are both fixed (respectively by \asm{asm:separability} and the problem), so that $\lambda$ is fixed too. It implies that for any estimator $\hat{g}$ such that 
+$\| g_\lambda - \hat{g}\|_{L_\infty} < \delta / 2
+$, the predictions from~$\hat{g}$ (obtained by taking the sign of $\hat{g}(x)$ for any $x$), are the same as the sign of the optimal prediction $\sign(\E(y|x))$. Note that a  sufficient condition is $\| g_\lambda - \hat{g}\|_{\H} < \delta/(2R)$ (which does not assume that $g_\ast \in \H$), see next subsection. 
+
+
+Note that more generally, for all problems for which \asm{asm:separability} is true and ridge regression (in the population case) is so that
+$
+\| g_\lambda - g_\ast\|_{L_\infty}
+$ tends to zero as $\lambda$ tends to zero then \asm{asm:flambda-correct-sign} is satisfied, since 
+$\| g_\lambda - g_\ast\|_{L_\infty}  \leqslant \delta/2$ for $\lambda$ small enough, together with \asm{asm:separability} then implies \asm{asm:flambda-correct-sign}.
+
+In  \mysec{examples}, we provide concrete examples where  \asm{asm:flambda-correct-sign} is satisfied and we then present the SGD algorithm and our convergence results. Before we relate excess testing losses to excess testing errors.
+
+\subsection{From testing losses to testing error}
+Here we provide some results that will be useful to prove exponential rates for classification with squared loss and stochastic gradient descent. First we define the 0-1 loss defining the classification error:
+$$\closs(g) = \rho(\{(x,y) : \sign(g(x)) \neq y \}),$$
+where $\sign u = +1$ for $u \geq 0$ and $-1$ for $u < 0$.
+In particular denote by $\closs^*$ the so-called {\em Bayes risk} $\closs^* = \closs(\condexp{y}{x})$ which is the minimum achievable classification error \citep{devroye2013probabilistic}.
+
+A well known approach to bound the testing errors by testing losses is \emph{via transfer functions}. In particular we recall the following result \citep{devroye2013probabilistic,bartlett2006convexity}, let $g_\ast(x)$ be equal to $\condexp{y}{x}$ a.e., then
+$$
+\closs(g) - \closs^* \leq \phi(\|g - g_\ast\|^2_{L^2}), \qquad \forall g \in L^2(d\rhox),
+$$ 
+with $\phi(u) = \sqrt{u}$ (or $\phi(u) = u^\beta$, with $\beta \in [1/2,1]$, depending on some properties of $\rho$ \citep{bartlett2006convexity}. While this result does not require \asm{asm:separability} or \asm{asm:flambda-correct-sign}, it does not readily lead to exponential rates since the squared loss excess risk has minimax lower bounds that are polynomial in $n$ \citep[see][]{caponnetto2007optimal}.
+
+Here we follow a different approach, requiring via \asm{asm:flambda-correct-sign} the existence of $g_\la$ having the same sign as $g_\ast$ and with  absolute value uniformly bounded from below. Then we can  bound the 0-1 error with respect to the distance in $\hh$ of the estimator $\widehat{g}$ from $g_\la$ as shown in the next lemma (proof in Appendix~\ref{sect:proof-A5-to-01}). This will lead to exponential rates when the distribution satisfies a margin condition  \asm{asm:separability} as we prove in the next section and in Section~\ref{sec:expo}. Note also that for the sake of completeness we recalled in Appendix \ref{sect:exp-rates-for-KRR} that exponential rates could be achieved for kernel ridge regression.
+
+\blm[From approximately correct sign to 0-1 error]\label{lm:appr-correct-sign-to-01}
+Let $q \in (0,1)$. Under \asm{asm:separability}, \asm{asm:kernel-bounded}, \asm{asm:flambda-correct-sign}, let $\widehat{g} \in \hh$ be a random function such that
+$ \nor{\widehat{g} - g_\la}_\hh < \frac{\delta}{2R}, \mbox{ with probability at least }1-q .$
+Then 
+$$ \closs(\widehat{g}) = \closs^*, \mbox{ with probability at least }1-q,\ \textrm{and in particular}\  \expect{\closs(\widehat{g}) - \closs^*} \leq q.$$
+\elm
+
+In the next section we provide sufficient conditions and explicit settings naturally satisfying~\asm{asm:flambda-correct-sign}.
+
+\section{Concrete Examples and Related Work}
+\label{sec:examples}
+In this section we illustrate specific settings that naturally satisfy \asm{asm:flambda-correct-sign}. We start by the following simple result showing that the existence of $g_\ast \in \hh$ such that $g_\ast(x) = \condexp{y}{x}$ a.e.~on the support of~$\rhox$, is sufficient to have \asm{asm:flambda-correct-sign} (proof in Appendix~\ref{sect:from-g-in-H-to-A5}). 
+\bp\label{prop:gstar-in-hh-gives-gla-good}
+Under \asm{asm:separability}, assume that there exists  $g_* \in \hh$
+such that $g_*(x) := \condexp{y}{x}$ on the support of $\rhox$, then for any $\delta$, there exists $\la > 0$ satisfying~\asm{asm:flambda-correct-sign}, that is,  $\ \displaystyle \sign( \E(y|x) ) g_\lambda(x) \geqslant \frac{\delta}{2}$.
+\ep  
+%
+We are going to use the proposition above to derive more specific settings. In particular we consider the case where the positive and negative classes are separated by a margin that is strictly positive. Let $\X \subseteq \R^d$ and denote by $\mathcal{S}$ the support of the probability $\rhox$ and by $\mathcal{S}_+ = \{x \in \X : g_*(x) > 0\}$ the part associated to the positive class, and by $\mathcal{S}_-$ the one associated with the negative class. Consider the following assumption:
+\bas\label{asm:margin}
+There exists $\mu > 0$ such that $\min_{x \in \mathcal{S}_+, x' \in \mathcal{S}_-} \|x - x'\| \geq \mu$.
+\eas
+%
+Denote by $W^{s,2}$ the Sobolev space of order $s$ defined with respect to the $L^2$ norm, on $\R^d$ \citep[see][and Appendix~\ref{sect:A5-examples}]{adams2003sobolev}. We also introduce the following assumption:
+\bas\label{asm:kernel-rich}
+$\X \subseteq \R^d$ and the kernel is such that $W^{s,2} \subseteq \hh$, with $s > d/2$.
+\eas
+An example of kernel such that $\hh = W^{s,2}$, with $s > d/2$ is the Abel kernel $K(x,x') = e^{-\frac{1}{\sigma}\|x-x'\|}$, for $\sigma > 0$.
+In the following proposition we show that if there exist two functions in $\hh$, one matching $\condexp{y}{x}$ on $\mathcal{S}_+$ and the second matching $\condexp{y}{x}$ on $\mathcal{S}_-$ and if the kernel satisfies \asm{asm:kernel-rich}, then \asm{asm:flambda-correct-sign} is satisfied. 
+%
+\bp\label{prop:2g-makes-gstar}
+Under \asm{asm:separability},~\asm{asm:margin},~\asm{asm:kernel-rich}, if there exist two functions $g_+^*, g_-^* \in W^{s,2}$ such that $g_+^*(x) = \condexp{y}{x}$ on $\mathcal{S}_+$ and $g_-^*(x) = \condexp{y}{x}$ on $\mathcal{S}_-$, then \asm{asm:flambda-correct-sign} is satisfied.
+\ep
+%
+Finally we are able to introduce another setting where \asm{asm:flambda-correct-sign} is naturally satisfied (the proof of the proposition above and the example below are given in Appendix~\ref{sect:A5-examples}).
+%
+\bex[Independent noise on the labels]\label{ex:independent-noise-on-labels}
+Let $\rhox$ be a probability distribution on $\X \subseteq \R^d$ and let $\mathcal{S}_+, \mathcal{S}_- \subseteq \X$ be a partition of the support of $\rho_\X$ satisfying $\rhox(S_+), \rhox(S_-) > 0$ and \asm{asm:margin}. Let $n \in \N^*$. For $1 \leq i \leq n$,  $x_i$ independently sampled from $\rhox$ and the label $y_i$ defined by the law 
+$$y_i = \begin{cases}
+\ \ \zeta_i & \textrm{if} ~ x_i \in S_+\\
+-\zeta_i & \textrm{if} ~ x_i \in S_-,
+\end{cases}$$ 
+with $\zeta_i$ independently distributed as $\zeta_i = -1$ with probability $p \in [0,1/2)$ and $\zeta_i = 1$ with probability $1-p$. Then \asm{asm:separability} is satisfied with $\delta = 1-2p$ and \asm{asm:flambda-correct-sign} is satisfied as soon as \asm{asm:kernel-bounded} and \asm{asm:kernel-rich} are, that is, the kernel is bounded and $\H$ is rich enough (see an example in Appendix \ref{sect:examples-for-glambda} Figure \ref{fig:example-A5}).
+\eex
+
+Finally note that the results of this section can be easily generalized from $\X = \R^d$ to any Polish space, by using a {\em separating} kernel \citep{de2014learning,rudi2014learning} instead of \asm{asm:kernel-rich}.
+
+\section{Stochastic Gradient descent}
+\label{sec:sgd}
+
+We now consider the stochastic gradient algorithm to solve the ridge regression problem with a fixed  strictly positive regularization parameter $\lambda$. 
+We consider solving the regularized problem with regularization $\|  g- g_0 \|_{\H}^2$ through stochastic approximation starting from a function $g_0 \in \H$ (typically~$0$).\footnote{Note that $g_0$ is the initialization of the recursion, and is not the limit of $g_\lambda$ when $\lambda$ tends to zero (this limit being~$\Phg$).} Denote by $F: \hh \to \R$, the functional
+$$ F(g)= \E (Y - g(X) )^2 = \E( Y - \langle K_X , g \rangle  )^2,$$
+where the last identity is due to the reproducing property of the RKHS $\hh$.
+Note that $F$ has the following gradient   $\nabla F(g) = - 2 \E \left[  (Y - \langle K_X , g \rangle)K_X  \right]$. We consider also  $F_\lambda = F + \lambda \| \cdot - g_0\|_\H^2$, for which $\nabla F_\lambda(g) = \nabla F(g) + 2 \lambda (g - g_0)$, and we have for each pair of observation $(x_n,y_n)$ that $F_\lambda (g)  = \E \big[ F_{n,\lambda}(g)\big] = \E (\langle g, K_{x_n}\rangle-y_n)^2 + \lambda \|g-g_0\|_\H^2 $, with
+ $F_{n,\lambda}(g) = (\langle g, K_{x_n}\rangle-y_n)^2 + \lambda \|g-g_0\|_\H^2$.
+ 
+ Denoting $\Sigma = \E \big[ K_{x_n} \otimes K_{x_n} \big]$ the covariance operator defined as a linear operator from $\H$ to $\H$ \citep[see][and references therein]{fukumizu2004dimensionality}, we have the optimality conditions for $g_\lambda$ and~$\Phg$:
+$$\Sigma g_\lambda - \E \left(y_n K_{x_n}\right) + \lambda ( g_\lambda - g_0) = 0,  \qquad \E \left[ \left(y_n - \Phg(x_n)\right)K_{x_n}\right] = 0,$$
+see \citet{caponnetto2007optimal} or Appendix~\ref{ap:optimality} for the proof of the last identity. 
+%
+ Let $(\gamma_n)_{n \geqslant 1}$ be a positive sequence; we consider the stochastic gradient recursion\footnote{The complexity of $n$ steps of the recursion is $O(n^2)$ if using kernel functions or $O(\tau n)$ when using explicit feature representations, with $\tau$ the complexity of computing dot-products  and adding feature vectors.} in $\H$ started at $g_0$:
+\eqal{\label{eq:firstSGD}
+{g}_n={g}_{n-1}-\frac{\gamma_n}{2} \nabla F_{n,\lambda}({g}_{n-1}) = {g}_{n-1}-\gamma_n \left[(\langle K_{x_n},{g}_{n-1}\rangle-y_n)K_{x_n} + \lambda ({g}_{n-1} - g_0) \right].
+}
+We are going to consider Polyak-Ruppert averaging \citep{polyak1992acceleration}, that is $\bar{g}_n = \frac{1}{n+1} \sum_{i=0}^{n} g_i$, as well as the tail-averaging estimate $\bar{g}_n^{\textrm {tail}} = \frac{1}{\lfloor n/2 \rfloor} \sum_{i=\lfloor n/2 \rfloor}^{n} g_i$, studied by \citet{jain2016parallelizing}. For the sake of clarity, all the results in the main text are for the tail averaged estimate but note that all of them have been also proved for the full average in Appendix \ref{ap:average}.
+
+As explained earlier (see Lemma~\ref{lm:appr-correct-sign-to-01}), we need to show the convergence of ${g}_n$ to $g_\lambda$ in $\H$-norm. We are going to consider two cases: (1) for the non-averaged recursion $(\gamma_n)$ is a decreasing sequence, with the important particular case  $\gamma_n = \gamma/n^\alpha$, for $\alpha \in [0,1]$; (2) for the averaged or tail-averaged functions $(\gamma_n)$ is a constant sequence equal to $\gamma$.
+%
+For all the proofs of this section see Appendix  \ref{sec:AppSGD}.
+%
+In the next subsection we reformulate the recursion in Eq.~(\ref{eq:firstSGD}) as a least-squares recursion converging to $g_\lambda$.
+
+\subsection{Reformulation as noisy recursion}
+
+We can first reformulate the SGD recursion equation in Eq.~(\ref{eq:firstSGD}) as a regular least-squares SGD recursion with noise,
+with the notation $\xi_n = y_n - \Phg (x_n)$, which satisfies $\E \big[ \xi_n K_{x_n}  \big] =0$. This is the object of the following lemma (for the proof see Appendix \ref{ap:SGDreformulation}.):
+
+\begin{lemma}
+\label{le:SGDrecursion}
+The SGD recursion can be rewritten as follows:
+\begin{align}
+\label{eq:SGDrecursion}
+    {g}_n - g_\lambda =  \big[
+I - \gamma_n   (  K_{x_n} \otimes K_{x_n} + \lambda I ) \big]
+  ( {g}_{n-1} - g_\lambda )   + \gamma_n \varepsilon_n,
+\end{align}
+%
+with the noise term $\varepsilon_k  =   \xi_k K_{x_k}   +   (\Phg(x_k)- g_\lambda(x_k)) K_{x_k} - \E \left[ (\Phg(x_k)- g_\lambda(x_k)) K_{x_k} \right] \in \H.$
+\end{lemma}
+%
+We are thus in presence of a least-squares problem in the Hilbert space $\H$, to estimate a function $g_\lambda \in \H$ with a specific noise $\varepsilon_n$ in the gradient and feature vector $K_{x}$. In the next section, we will consider the generic recursion above, which will require some bounds on the noise. In our setting, we have the following almost sure bounds and the noise (see Lemma \ref{le:noise} of  Appendix \ref{sec:AppSGD}):
+\begin{align*}
+ \| \varepsilon_n \|_\H &\leqslant R  ( 1 + 2 \| \Phg - g_\lambda\|_{L_\infty} )  \\
+\E \big[ \varepsilon_n \otimes \varepsilon_n \big]
+& \preccurlyeq 2 \left(1+\|\Phg- g_\lambda\|^2_\infty\right) \Sigma,
+\end{align*} 
+%
+where $\Sigma = \E \big[ K_{x_n} \otimes K_{x_n} \big]$ is the covariance operator.
+
+\subsection{SGD for general Least-Square problems}
+
+
+\input sgd.tex
+
+
+\section{Exponentially Convergent SGD for Classification error}
+\label{sec:expo}
+
+\input exp.tex
+
+
+
+% \section{Experiments}
+% \label{sec:expe}
+
+
+% \input simu.tex
+
+
+
+\section{Conclusion}
+\label{sec:conc}
+
+In this paper, we have shown that stochastic gradient could be exponentially convergent, once some margin conditions are assumed; and even if a weaker margin condition is assumed, fast rates can be achieved (see Appendix \ref{ap:weakmargin}). This is obtained by running averaged stochastic gradient on a least-squares problem, and proving new deviation inequalities.
+
+Our work could be extended in several natural ways: (a) our work relies on new concentration results for the least-mean-squares algorithm (i.e., SGD for square loss), it is natural to extend it to other losses, such as the logistic or hinge loss; (b) going beyond binary classification is also natural with the square loss~\citep{ciliberto2016consistent,NIPS2017_6634} or without~\citep{taskar2005learning}; (c)~in our experiments, we use regularization, but we have experimented with unregularized recursions, which do exhibit fast convergence, but for which proofs are usually harder~\citep{dieuleveut2016nonparametric}; finally, (d) in order to avoid the $O(n^2)$ complexity, extending the results of~\citet{rudi2017falkon,rudi2017generalization} would lead to a subquadratic complexity.
+
+
+% Acknowledgments---Will not appear in anonymized version
+\acks{We acknowledge support from the European Research Council (grant SEQUOIA 724063). We would like to thank Rapha\"el Berthier for useful discussions.}
+
+
+
+\bibliography{exp_rates}
+
+
+\appendix
+
+\input app.tex
+
+\end{document}

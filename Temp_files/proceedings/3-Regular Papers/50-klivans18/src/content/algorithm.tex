@@ -1,0 +1,263 @@
+%!TEX root = ../main.tex
+
+
+
+
+
+
+\section{Algorithm}
+In this section, we present and analyze our robust regression algorithms. %Our algorithms will find a solution to the SoS relaxation of a system of polynomial inequalities. The analysis of the algorithm will use SoS versions of the robust certifiability lemmas established in Section \ref{sec:robust-certifiability}. These polynomial inequalities will be slightly different for L1 and L2 regression (in the same way that the hypotheses of the certifiability results differ) so we present them in the following two subsections separately. However, the proofs are largely similar so we will only present them in full detail for the first part. 
+We begin by setting some notation that we will use throughout this section:
+\begin{enumerate}
+\item $\cD$ denotes the uncorrupted distribution on $\R^d \times \R$. In general, calligraphic letters will denote distributions on example-label pairs. $D = \cD_x$ will denote the marginal distribution on $x$. 
+
+\item We will write $X= ((x_1,y_1), (x_2,y_2), \ldots, (x_n,y_n))$ to denote the uncorrupted input sample of size $n$ drawn according to $\cD$. For some bound $B$ on the \emph{bit-complexity} of linear functions, we will write $\opt(\cD)$ for the optimum least squares error of any linear function of bit complexity $B$ on $\cD$. Recall that the bit complexity of a linear function is the number of bits required to write down all of its coefficients.  
+
+\item We will write $\widehat{\cD}$ for the uniform distribution on the sample $X$. $\widehat{D} = \widehat{\cD}_x$ will denote the marginal distribution on $x$. Note that our algorithm does not get direct access to $\cD$ or $\widehat{\cD}$. We will write $\opt(\widehat{\cD})$ for the optimum least squares error of any linear function of bit complexity $B$ on $\widehat{\cD}$.
+
+\item We will write $U = ((u_1, v_1), (u_2, v_2), \ldots, (u_n, v_n))$ to denote an $\eta$-corruption of $X$, i.e., $U$ is obtained by changing $\eta$ fraction of the example-label pairs. Our algorithm gets access to $U$. 
+\item For $\ell \in \R^d$, and $M > 0$, let $\ell_M:\R^d \to \R$ denote the truncated linear function defined as follows: 
+$$\ell_M (x) = \begin{cases} \iprod{\widehat{\ell},x} & \text{ if } |\iprod{\ell,x}| \leq M \\
+       \sign(\iprod{\ell,x}) \cdot M & \text{ otherwise.}
+       \end{cases}.$$
+
+\end{enumerate}
+
+% Our algorithm will attempt to find the whole description of the ``certificate'' as discussed in Section~\ref{sec:overview}. This certificate consists of $X'$ - a set of $n$ labeled samples intersecting $U$ in at least $1-\eta$ fraction of the samples and a linear function $\ell$ such that $\ell$ is a good regression hypothesis w.r.t. $X'$. Even though we know that $X$ is $(C,k)$-hypercontractive, we will \emph{not} impose such a condition on $X'$ at all.%, this property will play a role only in our analysis.
+% Thus, it will have as variables the regression hypothesis $\ell \in \R^d$, $X'$ a $n$ size sample and $w \in \zo^{n}$ which will denote the $\epsilon$ coupling of $X'$ with $U$. 
+
+%The polynomial inequalities that we write capture the ``test'' on the certificate as discussed in Section~\ref{sec:overview}: 1) $X'$ intersect $U$ in $(1-\eta)$ fraction of the samples 2)$\ell$ is a good regression hypothesis on the uniform distribution on $X'$.
+%We will begin with the case of our main interest - robust L2 regression.  
+\subsection{Robust Least Squares Regression} \label{sec:robust-L2-regression-algo}
+In this section, we present our Robust Least Squares Regression algorithm. The main goal of this section is to establish the following result. 
+
+
+\newcommand{\clip}{\mathsf{clip}}
+\begin{theorem} \label{thm:analysis-L2-linear-regression}
+Let $\cD$ be a distribution on $\R^d \times [-M,M]$ for some positive real $M$ such the marginal on $\R^d$ is $(C,k)$-certifiably hypercontractive distribution. Let $\opt_B(\cD) = \min_{\ell} \E_{\cD}[ (y - \iprod{\ell,x})^2]$ where the minimum is over all $\ell \in \R^d$ of bit complexity $B$. Let $\ell^{*}$ be any such minimizer. % of $\E_{(x,y) \sim \cD} (y - \iprod{\ell,x})^2$.
+
+Fix any even $k \geq 4$ and any $\epsilon > 0$. Let $X$ be an i.i.d. sample from $\cD$ of size $n \geq n_0 = \poly(d^k, B, M, 1/\epsilon)$. %for some $n_0 = \tilde{O}(d^{k/2}\log{(d)}^{k/2}) + O(1/\epsilon^2) \cdot (\E_{\cD} (y-\iprod{\ell^{*},x})^k/\eta +M^4 + B^2M^2 \log{(M)})$.
+Then, with probability at least $1-\epsilon$ over the draw of the sample $X$, given any $\eta$-corruption $U$ of $X$ and $\eta$ as input, there is a polynomial time algorithm (Algorithm \ref{alg:robust-regression-program}) that outputs a $\ell \in \R^d$ such that for $C = C(k/2)$, 
+\[
+\err_{\cD}(\ell_M) < (1 + O(C)\eta^{1-2/k}) \opt_B(\cD) + O(C) \eta^{1-2/k} \Paren{\E_{\cD} (y-\iprod{\ell^{*},x})^k}^{2/k} + \epsilon
+.
+%\E_{(x,y) \sim \cD} (y- f(x))^2 < (1 + O(C)\eta^{1-2/k}) \opt(\cD) + O(C) \eta^{1-2/k} \Paren{\E_{\cD} (y-\iprod{\ell^{*},x})^k}^{2/k} + \epsilon
+\] 
+\end{theorem}
+
+By an entirely analogous argument, we also get a similar guarantee for outlier-robust polynomial regression. We defer the details to Section \ref{sec:app-moved}.
+
+
+We need the boundedness assumption on the labels $y$ (that they lie in $[-M,M]$) and the bounded bit-complexity assumption on the linear functions ($B$) mainly to obtain generalization bounds for linear regression as are often used even for regression without corruptions. Further note that specializing the above to the case $k=4$ gives Theorem \ref{th:intro4}. 
+
+Following the outline described in the introduction, we first define a set of polynomial inequalities which will be useful in our algorithm: Let $\eta > 0$ be a parameter and consider the following system of polynomial inequalities in variables $w \in \R^n$, $\ell \in \R^d$, $x'_1,\ldots,x'_n \in \R^d$: 
+
+\begin{equation}
+  \cP_{U,\eta} = 
+  \left \{
+    \begin{aligned}
+      & \textstyle\sum_{i=1}^n w_i
+      = (1-\eta) \cdot n & &\\
+      & w_i^2
+      =w_i 
+      &\forall i\in [n]. &\\
+      & w_i \cdot (u_i - x'_i)
+       = 0
+      &\forall i\in [n]. &\\
+      & w_i \cdot (v_i - y'_i)
+      = 0
+      &\forall i\in [n]. &%\\
+     % & &\frac{1}{n} \sum_i w_i (y_i - \iprod{\ell,x})^2 &\leq \opt
+    \end{aligned}
+  \right \} \label{eq:polynomial-constraints-w}
+\end{equation}
+
+\ignore{
+\begin{equation}
+  \cA_{U,\eta} = 
+  \left \{ (w,\ell, X' = (x'_1,\ldots,x'_n)) \} \in \R^n \times \R^d \times (\R^d)^n \,:\, 
+    \begin{aligned}
+      &&
+      \textstyle\sum_{i=1}^n w_i
+      &= (1-\eta) \cdot n\\
+      &\forall i\in [n].
+      & w_i^2
+      & =w_i \\
+      &\forall i\in [n].
+      & w_i \cdot (x_i - x'_i)
+      & = 0\\
+      &\forall i\in [n].
+      & w_i \cdot (y_i - y'_i)
+      & = 0%\\
+     % & &\frac{1}{n} \sum_i w_i (y_i - \iprod{\ell,x})^2 &\leq \opt
+    \end{aligned}
+  \right \} \label{eq:polynomial-constraints-w}
+\end{equation}
+}
+
+
+
+
+
+
+
+
+
+
+
+%We describe this system of polynomial equations we will use as a test for our certificate next. Let $\cA_{U,\eta}$ denote the following system of polynomial inequalities. The subscripts explicitly identify the parameters of this system - in particular, this system on inequalities depends on the input sample $U$ in addition to the parameter $\eta$. % and $\opt$ that we assume are known. 
+
+ % To motivate the algorithm, consider the following corollary of Lemma \ref{lem:identifiability-least-squares-linear}:
+% \begin{corollary}
+% Let $\cD$ be the uniform distribution on $S = \{(x_1,y_1), \ldots,(x_n,y_n)\} \subseteq \R^d \times \R$ and suppose that the marginal $\cD_X$ of $\cD$ on $x$ is $k$-certifiably $C$-hypercontractive for some $C:[k] \to \R_+$ and for some even integer $k \geq 4$. Let $A \subseteq S$ with $|A| \geq (1-\epsilon) n$ and let $\cD'$ be the uniform distribution on $A$. 
+
+% Then, for any $\ell,\ell^* \in \R^d$ and any $\epsilon$ such that $2 C(k/2) \epsilon^{1-2/k} < 0.9$, we have:
+% \[
+% \err_{\cD}(\ell) \leq (1+O(C(k/2)) \epsilon^{1-2/k}) \cdot \err_{\cD'}(\ell) + O(C(k/2))\epsilon^{1-2/k} \cdot \Paren{\E_\cD (y-\iprod{\ell^{*},x})^k}^{2/k}\mper\]
+% %In the special ``realizable'' case where $y = \iprod{\ell^{*},x}$ for every $x$, we have that $\err_D(\ell) \leq (1+80Ck\epsilon^{1-2/k})\err_{D'}(\ell)$. 
+% \end{corollary}
+
+% The algorithm is the canonical relaxation of the following optimization problem: given a sample, find a $1-\epsilon$ fraction of the sample and a polynomial of degree $d$ that minimizes the $\ell_2$ squared error on the $1-\epsilon$ fraction of the sample.
+%The system of equations above takes as parameters, the corrupted input sample $U$ and $\eta$ - a bound on the fraction of corruptions in $U$. %In addition, it also assumes that $\opt$ - the L2 squared error of the best fitting hypothesis is known. This can easily be dropped by the standard ``doubling trick''. We will not do this here in the interest of simplicity. 
+
+Observe that this system is feasible: use $w_i = 1$ if $(x_i,y_i) = (u_i, v_i)$ and $0$ otherwise (i.e., $w_i = 1$ if and only if the $i$'th example was corrupted) and taking $(x_i', y_i') = (x_i,y_i)$ for all $i \in [n]$. 
+
+
+We are now ready to describe our algorithm for robust L2 regression. 
+
+% \begin{equation}
+% \cA = \Brac {\Set{\sum_i w_i = (1-\epsilon)n},
+%                                   \Set{w_i^2 = w_i \mid \forall i}, \frac{1}{(1-\epsilon)n} \sum_i w_i (y_i - \iprod{P,x^{\otimes t}})^2 \leq \opt}
+                                  
+% \end{equation}
+% denote the system of polynomial constraints in $w,P$.
+\begin{mdframed}
+  \begin{algorithms}[Algorithm for Robust L2 Linear Regression via sum-of-squares]
+    \label{alg:robust-regression-program}\mbox{}
+    \begin{description}
+    \item[Given:]
+    \begin{itemize}
+    \item $\eta$: A bound on the fraction of adversarial corruptions. 
+    \item $U$: An $\eta$-corruption of a labeled sample $X$ of size $n$ sampled from a $(C,k)$-certifiably hypercontractive distribution $\cD$.
+
+    %\item $\opt(D)$: bound on the error of the best fitting regression hypothesis for $D$, the uniform distribution on $X$.
+    \end{itemize}
+    %\item[Estimate:]
+     % $\ell \in \arg \min \E_{(x,y) \sim D} (y-\iprod{\ell,x})^2$. \mnote{Not sure what this means. Best to remove ...}
+    \item[Operation:]\mbox{}
+      \begin{enumerate}
+      \item 
+        Find a level-$k$ pseudo-distribution $\tmu$ that satisfies $\cP_{U,\eta}$ and minimizes $\pE_{\tmu}\left[\Paren{\frac{1}{n} \sum_{i = 1}^n (y_i' - \iprod{\ell,x_i'})^2}^{k/2}\right]$. Let $\widehat{\opt}_{SOS}$ be a positive real number so that $\widehat{\opt}_{SOS}^{k/2}$ is this minimum value. 
+      \item Output $\widehat{\ell} = \pE_{\tmu}\ell$.
+  \ignore{    \item Output $f:\R^d \rightarrow \R$ given by 
+      \[
+      f(x) = \begin{cases} \iprod{\widehat{\ell},x} &\text{ if } |\iprod{\widehat{\ell},x}| \leq M\\
+                           \sign(\iprod{\widehat{\ell},x}) \cdot M &\text{ otherwise.}  \end{cases} 
+                           \]}
+      \end{enumerate}
+    \end{description}    
+  \end{algorithms}
+\end{mdframed}
+
+\subsection{Analysis of the Algorithm}
+We now analyze the algorithm and prove Theorem \ref{thm:analysis-L2-linear-regression}. The analysis can be broken into two modular steps: (1) Bounding the \emph{optimization error} (roughly translates to bounding the empirical error) and (2) Bounding the \emph{generalization error}. Concretely, we break down the analysis into the following two steps. Let $\widehat{\opt}_k = \left((1/n) \sum_{i=1}^n (y_i - \iprod{\ell^*,x})^k\right)^{2/k}$ and $\opt_k(\cD) = \E_{(x,y) \cD}[ (y - \iprod{\ell^*,x})^k]^{2/k}$. 
+
+\begin{lemma}[Bounding the optimization error]\label{lm:opterror}
+Under the assumptions of Theorem \ref{thm:analysis-L2-linear-regression} (and following the above notations), with probability at least $1-\epsilon$, 
+$$\err_{\widehat{\cD}}(\widehat{\ell}) \leq (1 + C(k/2) \eta^{1-2/k} ) \cdot \widehat{\opt}_{SOS} + O(C(k/2)) \cdot \eta^{1-2/k} \cdot \widehat{\opt}_k.$$
+\end{lemma}
+
+\begin{lemma}[Bounding the generalization error]\label{lm:generror}
+Under the assumptions of Theorem \ref{thm:analysis-L2-linear-regression}, with probability at least $1-\epsilon$, the following hold:
+\begin{enumerate}
+\item $\widehat{\opt}_{SOS}  \leq \opt(\cD) + \epsilon$.
+
+\item $\err_{\cD}(\widehat{\ell}_M)) \leq \err_{\widehat{\cD}}(\widehat{\ell}) + \epsilon$.
+\end{enumerate}
+\end{lemma}
+
+Ideally, we would liked to also have $\widehat{\opt}_k \leq  \opt_k(\cD) + \epsilon$. Given such an inequality, Theorem \ref{thm:analysis-L2-linear-regression} would follow immediately from the above two lemmas. A small technical issue is that we cannot prove such an inequality as we don't have good control on the moments of $(y - \iprod{\ell^*,x})^k$. However, we can exploit the robust setting to get around this issue by essentially truncating large values - since the distribution with truncated values will be close in statistical distance to the actual distribution. We remark that the proof of Lemma \ref{lm:generror} follows standard generalization arguments for the most part. 
+
+We defer the proofs of the above lemmas and proceed to finish analyzing our algorithm. With Lemma \ref{lm:opterror}, \ref{lm:generror} in hand, we are now ready to prove our main theorem. We just need the following lemma to get around bounding $\widehat{\opt}_k$. 
+
+\begin{lemma} \label{lem:little-boundedness-fact}
+For every distribution $\cD$ on $\R^d \times \R$ such that $v = E_{\cD} (y - \iprod{\ell^{*},x})^k < \infty$, there exists a distribution $\cF$ such that $\|\cD-\cF\|_{TV} < \eta$ and $(y - \iprod{\ell^{*},x})^k$ is bounded absolutely bounded in the support of $\cF$  by $v/\eta$.
+\end{lemma}
+\begin{proof}
+Set $\cF = \cD \mid \left((y-\iprod{\ell^{*},x})^k \leq v/\eta\right)$. Then, by definition $\cF$ satisfies the property that $(y - \iprod{\ell^{*},x})^k$ is bounded by $v/\eta$ in the support of $\cF$. Further, by Markov's inequality, the probability of the event we conditioned on is at least $1-\eta$. This completes the proof.
+\end{proof}
+
+Observe that an $\eta$ corrupted sample from $\cD$ can be thought of as an $2\eta$ corrupted sample from $\cF$. Since $(y-\iprod{\ell^{*},x})^k$ is bounded in $\cF$, it allows us to use Hoeffding bound for concentration to show that the empirical expectation of $(y-\iprod{\ell^{*},x})^k$ converges to its expectation under $\cD$. 
+
+
+
+
+
+
+% Let H be a family of real-valued functions and let G = {x → L(h(x), f(x)): h ∈ H}
+% be the family of loss functions associated to H. Assume that Pdim(G) = d and that
+% the loss function L is bounded by M. Then, for any δ > 0, with probability at least
+% 1 − δ over the choice of a sample of size m, the following inequality holds for all
+% h ∈ H:
+% R(h) ≤ R(h) + M
+% 2d log em
+% d
+% m
+% + M
+% 
+% log 1
+% δ
+% 2m . (10.7)
+
+
+\begin{proof}[Proof of Theorem \ref{thm:analysis-L2-linear-regression}] Let $X$ be an i.i.d. sample from $\cD$ of size $n$ and $\hat{\cD}$ be the uniform distribution on $X$.
+Let $v = \E_{\cD} (y- \iprod{\ell^{*},x})^k$. Without loss of generality, by using Fact \ref{lem:little-boundedness-fact}, we can assume that $(y- \iprod{\ell^{*},x})^k$ is bounded above by $v/\eta$ in $\cD$. Using Hoeffding's inequality, if $n \geq v\log{(1/\delta)}/\eta \epsilon^2$, then with probability at least $1-\delta$, $\widehat{\opt}_k = \E_{\hat{\cD}} [(y - \iprod{\ell^{*},x})^k] \leq \E_{\cD} (y - \iprod{\ell^{*},x})^k + \epsilon = \opt_k + \epsilon.$
+
+Therefore, by Lemmas \ref{lm:opterror}, \ref{lm:generror}, and the above observation, we get that with probability at least $1 - O(\epsilon)$, 
+
+$\err_{\cD}(\ell_M) \leq (1 + O(C) \eta^{1-2/k}) \cdot \opt(\cD) + O(C) \eta^{1-2/k} \cdot \opt_k + O( C \epsilon).$
+The theorem now follows by choosing $\epsilon$ to be a sufficiently small constant times the parameter desired. 
+\end{proof}
+\ignore{
+Next, if $n \geq \tilde{\Theta}(d^{k/2} \log{(d)}^{k/2})$, then by Fact \ref{fact:hypercontractivity-preserved-under-sampling}, with probability at least $1-1/d$, uniform distribution $\hat{\cD}$ on $X$ is $(C,k)$-hypercontractive. Thus, Lemma \ref{lem:analysis-full-L2} applies to the uniform distribution on $X$ and combined with Lemma \ref{lem:error-of-output-is-small}, we have that $\hat{\ell}$ constructed by Algorithm \ref{alg:robust-regression-program} when run on input $U$ for any $\eta$ corruption of $X$ satisfies: 
+
+\[
+\err_{\hat{\cD}}(\hat{\ell}) < (1+O(C)\eta^{1-2/k})  \opt(\cD) + \epsilon + O(C) \eta^{1-2/k} \Paren{\frac{1}{n} \sum_{i = 1}^n (y_i - \iprod{\ell^{*},x})^k}^{2/k}  \mper
+\]
+
+Finally, consider the truncation $f = f_{\hat{\ell}}$ defined by 
+\[
+f (x) = \begin{cases} \iprod{\hat{\ell},x} & \text{ if } |\iprod{\hat{\ell},x}| \leq M \\
+       \sign(\iprod{\hat{\ell},x}) \cdot M & \text{ otherwise.}
+       \end{cases}
+\]
+
+Then, the square loss $(y-f(x))$ for any $(x,y)$ in the support of $\cD$ takes values in $[-2M,2M]$. Further, the bit complexity of $f$ is bounded above by $B + \log{(M)}$ since the bit complexity of  $\ell$ is at most $B$ giving a bound of $M^B$ on the size of the class of all such truncated linear functions.  Thus, we can apply Fact \ref{fact:standard-generalization-bound} to this class and obtain that if $n \geq O(\log{(1/\delta)} M^2 B \log{(M)}/\epsilon^2)$ then the error of $f_{\hat{\ell}}$ on $\cD$ is at most $\err_{\hat{\cD}}(\hat{\ell}) + \epsilon$ with probability at least $1- \delta$. This completes the proof. 
+
+
+% Fix any $\delta > 0$. Choose $n > L^5 d \log{(dT)}/\delta$ and let $X$ be an i.i.d. sample from $D_0$ of size $n$. 
+% Let $\opt = \min_{\ell} \frac{1}{n} \sum_{i = 1}^n (y_i - \iprod{\ell,x})^2$ and let $\ell^{*} \in \R^d$ be some linear function that achieves the optimal error. 
+
+% Let $U$ be any $\eta$-corruption of $X$. Let $\hat{\ell} = \pE_{\tmu}[\ell]$ for pseudo-distribution $\tmu$ of degree at least $k$ satisfying $\cA_{U,\eta, \opt}$.
+
+% Then, by Lemma \ref{lem:analysis-full-L2}, we have that $\hat{\ell}$ satisfies:
+
+% \[
+% \E_{(x,y) \sim X} (y-\iprod{\hat{\ell},x})^2 < (1+\epsilon^{1-2/k} O(C(k/2))\opt + O(Ck) \epsilon^{1-2/k} \Paren{\E_{(x,y) \sim X} (y-\iprod{\ell^{*},x})^k}^{2/k}  \mcom
+% \]
+
+% For any $x$, define $f_{\hat{\ell}}(x)$ as $f(x) = \iprod{\hat{\ell},x}$ if $|\iprod{\hat{\ell},x}| \leq 2L$ and $\sign(\iprod{\hat{\ell},x}) \cdot 2L$ otherwise. 
+
+% Then, it's easy to see that:
+% \[
+% \E_{(x,y) \sim X} (y-f_{\hat{\ell}}(x)^2 \leq \E_{(x,y) \sim X} (y-\iprod{\hat{\ell},x})^2 < (1+\epsilon^{1-2/k} O(C(k/2))\opt + O(Ck) \epsilon^{1-2/k} \Paren{\E_{(x,y) \sim X} (y-\iprod{\ell^{*},x})^k}^{2/k}  \mcom
+% \]
+
+
+
+
+% Then, by Fact \ref{fact:Gyorfi}, with probability at least $0.99$ over the draw of $X$, $\E_{(x,y) \sim D_0} (y - \clip_T(\iprod{\ell^{*},x}))^2 \leq \delta + $
+
+}
+
+

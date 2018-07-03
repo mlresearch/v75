@@ -1,0 +1,188 @@
+\section{Preliminaries}
+\label{sec:prob}
+
+We consider a multi-armed bandit setting with \ARMNUM arms.
+Arm payoffs are determined by $d$ \emph{attributes} or \emph{features};
+hence, arms are identified with vectors $\ArmV{i} \in \R^d$.
+The \ArmV{i} are (adversarially) fixed, and unknown to the agents
+and the principal.
+When arm $i$ is pulled, its current utility-relevant features are
+determined as $\ArmV{i} + \NoiseV$, where \NoiseV is a mean-zero
+independent continuous sub-Gaussian%
+\footnote{For simplicity of notation, we assume that the variance proxy
+  $\sigma^2$ is uniform across time steps.
+  The analysis extends easily when the variance proxy changes over time.}
+noise vector $\NoiseV \sim \Normal{\vc{0}}{\sigma^2 I_{d}}$.
+Here, $I_d$ denotes the $d \times d$ identity matrix.
+
+At each time $t$, a new user (or \emph{agent}) arrives,
+whose feature vector (which we also call his \emph{type})
+$\AgentV{t} \in \R^d$ is drawn from a known distribution \AgentDist.
+Depending on context, we will identify agents with their arrival time
+$t$ or their type \AgentV{t}.
+When agent $t$ pulls arm $\Pull{t} := i$,
+he and all future agents observe a vector
+$\ObsV{t} = \ArmV{i} + \NoiseV[t]$ for arm $i$,
+and his reward is $\AgentV{t} \cdot \ObsV{t}$,
+i.e., agents have linear preferences.
+Although the model is linear, it permits additional flexibility
+through the addition of derived attributes that are nonlinear
+transformation of some original attribute vector.
+One can simply define $\Ag{j} = h_j(\AgV)$ for some known
+nonlinear functions $h_j$ and $j=d+1,\ldots,d'$, and then increase the
+number of attributes to $d'$.
+
+For each time $t$ and arm $i$, let \NumPull{t}{i} be the number of
+times that arm $i$ has been pulled (strictly) before time $t$.
+An agent at time $t$ estimates arm $i$'s attribute vector as the
+average of vectors observed during the arm's past pulls:
+$\ArmEV{t}{i} = \frac{1}{\NumPull{t}{i}+1} \cdot
+(\ArmEV{0}{i} + \sum_{t'<t: \Pull{t'} = i} \ObsV{t'})$;
+here, \ArmEV{0}{i} is a single draw $\ArmV{i} + \NoiseV$ for arm $i$.
+(In other words, we assume each arm is pulled once for free at time 0.)
+For a justification of the assumption that agents can observe
+the actual noisy vectors \ObsV{t'} of past pulls, see
+Section~\ref{sec:introduction}.
+  
+Since each user only pulls an arm once, users are \emph{myopic}:
+in the absence of incentives, user $t$ will pull an arm from
+$\argmax_i \AgentV{t} \cdot \ArmEV{t}{i}$.
+To incentivize users to explore more, the principal can offer
+\emph{payments} $\Pay{t}{i}$ to user $t$ for pulling arm $i$.
+Then, user $t$ will pull an\footnote{We assume that ties are broken in
+  favor of an arm with largest payment \Pay{t}{i}.}
+% ; this assumption is
+%   only for notational convenience, and can of course be avoided by
+%   raising payments infinitesimally.
+%   \pfcomment{In the finite preference setting this is clear, but it's a little bit delicate when there are continuum preferences, since regardless of the payment we offer there may always be support within our preference distribution for a $\theta$ that causes a tie.  In this continuum setting it should instead be possible to perturb infinitessimally so that we avoid ties with probability 1.}  
+% }
+arm $i$ maximizing $(\Pay{t}{i} + \AgentV{t} \cdot \ArmEV{t}{i})$.
+The principal cannot observe \AgentV{t},
+and only knows the distribution \AgentDist from which it is drawn.
+Her goal is to reduce both the cumulative
+\emph{regret} experienced by all users up to time $T$,
+and the total \emph{payment} she makes to the users.
+
+We define the regret at time $t$ as
+$\Regret{t} = (\max_{i} \AgentV{t} \cdot \ArmV{i}) - \AgentV{t} \cdot \ArmV{\Pull{t}}$,
+and the cumulative regret up to time $T$ as
+$\TotalRegret{T} = \sum_{t=1}^{T} \Regret{t}$.
+Similarly, $\PayA{t} = \Pay{t}{\Pull{t}}$ is the actual incentive
+payment at time $t$,
+and the cumulative payment up to time $T$ is
+$\TotalPay{T} = \sum_{t=1}^{T} \PayA{t}$.
+More formally, the principal's goal is to find a policy
+\POLICY for offering payments under which both the cumulative expected
+regret
+$\Expect{\TotalRegret{T}}$ the cumulative expected payment
+$\Expect{\TotalPay{T}}$ are small.
+
+We assume above that the distribution $\AgentDist$ over preference
+vectors is known to the principal.
+In practice, a principal would estimate this distribution from agents'
+selections and the attribute estimates and offered payments on which
+they were based.
+While we do not show it, we hypothesize that our regret guarantees
+only change by constants as long as the principal's estimate of the
+conditional probability of pulling an arm is correct to within a
+constant factor.
+
+% \pfedit{
+% We assume above that the distribution $\AgentDist$ over preference vectors is known.
+% In practice, one would estimate this from agents' selections and attribute estimates $\ArmEV{t}{i}$
+% and offered payments $\Pay{t}{i}$ at the time of selection.  
+% In the process of doing such an estimation procedure, one could also select nonlinear transformations of existing attributes (increasing $d$) to improve the predictive accuracy of the assumed linear model.   
+% Our analysis assumes such a procedure has already been conducted.
+% This assumption is most appropriate when the number of dimensions $d$ is small relative to the number of items $N$, so that the time required to estimate the distribution over preference vectors is small relative to the time required to learn about items.
+% }
+%\pfcomment{One modeling assumption I don't say anything about is that $\AgentDist$ is known.  I thought about adding some text saying that it can actually be estimated from user selections as we go, which is true, but it isn't clear that we can learn it much quicker than the item attributes, in general.  Another tact is to argue that our method is robust to mis-estimation of this, which seems true intuitively, but I'm not sure how to argue it here.  Probably it is possible to desgin an algorithm that learns this distribution along with item attributes.}
+
+To support the formulation of our results and the analysis,
+we define the following additional notation.
+We let
+$\Best{\AgV} \in \argmax_i \AgV \cdot \ArmV{i}$
+and
+$ \Second{\AgV} \in \argmax_{i \neq \Best{\AgV}} \AgV \cdot \ArmV{i}$
+denote the (indices of) the best and second-best arms for an agent
+with attribute vector \AgV,
+breaking ties arbitrarily (but consistently).
+Notice that based on Assumption~\ref{A1} below,
+\Best{\AgV} is unique with probability 1.
+
+% \dkdelete{This behavior may be recovered if agents are Bayesian and
+%   share a common non-informative prior distribution that is constant
+%   over $\mathbb{R}^m$ and know $\sigma^2$.  In this case, the
+%   posterior distribution on $u_{i}$ at time $t$ is multivariate normal
+%   with mean $u_{i,t}$, and the expected value of $\theta_t \cdot u_i$
+%   under this posterior conditioned on $\theta_t$ is $\theta_t \cdot
+%   u_{i,t}$ (see Equation 2.13 in Section 2.5, \cite{Ge04}).
+%   Alternatively, one may simply take our assumption that agents use
+%   the average as their estimate of an attribute value directly without
+%   such a Bayesian justification.}
+% \dkcomment{I wonder what's the best way to discuss this.}
+
+% \paragraph{Properties of \AgentDist}
+Our algorithms rely on the following three assumptions on the agent distribution
+\AgentDist.
+
+\begin{assumption}[Compact Support] \label{A2}
+\AgentDist has a compact support set contained in $[0,\Diam]^d$.
+\end{assumption}
+
+Let $\MinProb = \min_{i} \Prob[\AgV \sim \AgentDist]{\Best{\AgV} = i}$
+denote the minimum (over all arms) fraction of users that prefer any
+particular arm.
+
+\begin{assumption}[Every arm is someone's best] \label{A3}
+Each arm $i$ has a strictly positive proportion of users for whom $i$
+is the best arm; that is, $\MinProb > 0$.
+\end{assumption}
+
+%Let $\FirstTwo{i}{i'} = \Set{\AgV}{\Best{\AgV} = i, \Second{\AgV} = i'}$
+%be the set of agent attribute vectors whose best arm is $i$ and
+%second-best arm is $i'$.
+% Let $F_{i,i'}$ be the cumulative distribution function,
+% $F_{i,i'}(z) = \Prob[\AgV \sim \AgentDist]{\AgV \in \FirstTwo{i}{i'}
+%   \mbox{ and } (\ArmV{i}-\ArmV{i'}) \cdot \AgV \leq z}$
+% of $(\ArmV{i}-\ArmV{i'}) \cdot \AgV$,
+% on $\AgV \in \Omega_{i,i^{'}}$.
+% In words, $F_{i,i'}$ is the distribution of the \emph{strength} of the
+% preference of a random agent for arm $i$ over arm $i'$
+
+% $\Best{\AgV} \in \argmax_i \AgV \cdot \ArmV{i}$
+% and
+% $ \Second{\AgV} \in \argmax_{i \neq \Best{\AgV}} \AgV \cdot \ArmV{i}$
+
+Let \AlmostTied{z} be the cumulative distribution function (CDF)
+$\AlmostTied{z} = \Prob[\AgV \sim \AgentDist]{%
+  (\ArmV{\Best{\AgV}}-\ArmV{\Second{\AgV}}) \cdot \AgV \leq z}$.
+In words, \AlmostTied{z} is the CDF of the \emph{strength} of the
+preference of a random agent for his best arm over his second-best arm.
+
+\begin{assumption}[Not too many near-ties] \label{A1}
+Near-ties have vanishing probability; 
+that is, there exist constants $\TieCutoff > 0, \TieDensity$ such that 
+$\AlmostTied{z} \leq \TieDensity \cdot z$ for all $z \leq \TieCutoff$.
+\end{assumption}
+
+Assumption~\ref{A1} implies that ties happen with probability $0$.
+One special case of interest we discuss below is $\TieDensity = 0$.
+This case arises when there is a cutoff
+\TieCutoff such that only a measure-zero set of agents has two best arms
+within utility \TieCutoff of each other.
+In particular, $\TieDensity = 0$ happens whenever \AgentDist is supported on a finite set of types,
+and each type has a unique best arm.
+
+\paragraph{Roles of parameters:}
+Our problem setting is characterized by many parameters.
+Of these, we consider \ARMNUM, $\MinProb \leq 1/\ARMNUM$ and $T$ to be
+the key parameters, and also give some prominence to
+\TieDensity to illustrate an interesting phenomenon.
+On the other hand, we consider
+$\sigma, \Diam, d$, and \TieCutoff to be constant.
+We track all parameters through most of our proofs,
+but report final results in terms of only the key parameters,
+except where we illustrate a specific point.
+In particular, we consider $d$ a constant, because users
+typically evaluate products (or restaurants, etc.) by a small number of
+relevant features.

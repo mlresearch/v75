@@ -1,0 +1,495 @@
+\section{Preliminaries}\label{app:Freedman}
+
+Our analysis relies on the following Freedman's inequality.
+\begin{lemma}[\citep{BeygelzimerLaLiReSc11}]
+\label{lem:freedman}
+Let $X_1, \ldots, X_n \in \fR$ be a sequence of random variables such that 
+$X_i \leq R$ and $\E[X_i | X_{i-1}, \ldots, X_1] = 0$ for all $i \in [n]$.
+Then for any $\delta \in (0,1)$ and $\lambda \in [0, 1/R]$, with probability at least $1-\delta$, we have
+\[
+\sum_{i=1}^n X_i \leq (e-2)\lambda V + \frac{\ln(1/\delta)}{\lambda}
+\]
+where $V = \sum_{i=1}^n \E[X_i^2 | X_{i-1}, \ldots, X_1]$.
+Specifically, picking $\lambda = \min\left\{\sqrt{\frac{\ln(1/\delta)}{V}}, \frac{1}{R}\right\}$,
+we have $\sum_{i=1}^n X_i  \leq 2\sqrt{V\ln(1/\delta)} + R\ln(1/\delta)$.
+\end{lemma}
+
+%\section{Relation between Two Notions of Variation}
+
+The following lemmas relates the two variation notions we use.
+\begin{lemma}
+\label{lemma:variation_relation}
+  For any interval $\calI$, $\var_\calI \leq \bvar_\calI$. 
+\end{lemma}
+
+\begin{proof}
+  Let $\pi$ be any policy, 
+  \begin{align*} 
+    |\calR_t(\pi) - \calR_{t-1}(\pi)| 
+    & = \bigabs{ \E_{(x,r)\sim \calD_t}[r(\pi(x))] - \E_{(x,r)\sim \calD_{t-1}}[r(\pi(x))] }\\
+    & = \left| \int_{[0,1]^K}\int_{\calX} (\calD_{t}(x,r)-\calD_{t-1}(x,r)) r(\pi(x))dxdr \right| \\
+    & \leq \int_{[0,1]^K}\int_{\calX} \bigabs{\calD_{t}(x,r)-\calD_{t-1}(x,r)} dxdr \\
+    & = \TVD{\calD_{t}-\calD_{t-1}}. 
+  \end{align*}
+  Thus, $\max_{\pi\in\Pi}|\calR_t(\pi) - \calR_{t-1}(\pi)| \leq \TVD{\calD_{t}-\calD_{t-1}}$. Summing over $\calI$ gives $\var_\calI\leq \bvar_\calI$. 
+\end{proof}
+
+
+\section{Exp4.S Algorithm and Proofs}\label{app:Exp4.S}
+
+\LinesNumberedHidden
+\begin{algorithm}[H]
+\DontPrintSemicolon
+\caption{Exp4.S}\label{alg:Exp4.S}
+{\bf Input}: largest interval length of interest $L$ \\ 
+Define $\eta = \sqrt{\nicefrac{\ln(NL)}{LK}}$ and $\mu = \nicefrac{1}{NL}$ \\
+Initialize $P_t \in \Delta^\Pi$ to be the uniform distribution over policies. \\
+\For{$t=1, \ldots, T$} {
+     see $x_t$, play $a_t \sim p_t$ where $p_t(a) = \sum_{\pi: \pi(x_t) = a} P_t(\pi), \;\forall a\in[K]$ \\
+     receive $r_t(a_t)$ and construct $\wh{c}_t(a) = \frac{1 - r_t(a)}{p_t(a)}\one\{a = a_t\}, \;\forall a\in[K]$ \\
+     set $\tilde{P}_{t+1}(\pi) \propto P_t(\pi)\exp(-\eta \wh{c}_t(\pi(x_t))), \;\forall \pi \in \Pi$ \\
+     set $P_{t+1}(\pi) = (1-N\mu)\tilde{P}_{t+1}(\pi) + \mu,  \;\forall \pi \in \Pi$ \\
+}
+\end{algorithm}
+
+The Exp4.S algorithm is presented in Algorithm~\ref{alg:Exp4.S},
+which is a direct generalization of Exp3.S~\citep{AuerCeFrSc02}.
+Note that we use loss estimates $\wh{c}_t$ instead of reward estimate $\ips_t$
+in the multiplicative update, and naturally we define $c_t = \one - r_t$.
+
+\begin{proof}[Proof of Theorem~\ref{thm:Exp4.S}]
+Using the fact $e^{-y} \leq 1-y+y^2$ for any $y \geq 0$, $\ln(1+y) \leq y$ and $c_t(a) \in [0,1]$, we have
+\begin{align*}
+&\ln \left( \sum_{\pi' \in \Pi} P_t(\pi') \exp( -\eta \wh{c}_t(\pi'(x_t)) ) \right) 
+\leq \ln \left( \sum_{\pi' \in \Pi} P_t(\pi') (1 -\eta \wh{c}_t(\pi'(x_t)) + \eta^2 \wh{c}_t(\pi'(x_t))^2 \right)\\
+&= \ln \left(1 - \eta {c}_t(a_t) + \eta^2 \wh{c}_t(a_t) c_t(a_t) \right) 
+\leq  - \eta {c}_t(a_t)  + \eta^2 \wh{c}_t(a_t). 
+\end{align*}
+On the other hand, we have for any fixed $\pi$, 
+\begin{align*}
+\ln \left( \sum_{\pi' \in \Pi} P_t(\pi') \exp( -\eta \wh{c}_t(\pi'(x_t)) ) \right) 
+&= \ln\left( \frac{P_t(\pi) \exp( -\eta \wh{c}_t(\pi(x_t)) )}{\tilde{P}_{t+1}(\pi)}  \right) \\
+&= \ln\left( \frac{P_t(\pi)(1-N\mu)  }{P_{t+1}(\pi)-\mu} \right)  -\eta \wh{c}_t(\pi(x_t))  \\
+&\geq \ln(1-N\mu) + \ln\left( \frac{{P}_t(\pi) }{{P}_{t+1}(\pi)} \right)  -\eta \wh{c}_t(\pi(x_t))  \\
+&\geq -2N\mu + \ln\left( \frac{{P}_t(\pi) }{P_{t+1}(\pi)} \right)  -\eta \wh{c}_t(\pi(x_t))  
+\end{align*}
+where the last step is by the fact $N\mu \leq \frac{1}{2}$ and thus
+$\ln(\frac{1}{1-N\mu}) = \ln(1 + \frac{N\mu}{1-N\mu}) \leq \ln(1 + 2N\mu) \leq 2N\mu$.
+Combining the above two displayed equations, summing over $t\in\calI$, telescoping and rearranging gives
+\[
+\sum_{t\in\calI} c_t(a_t) - \wh{c}_t(\pi(x_t))  \leq 
+\frac{\ln(1/\mu) + 2LN\mu}{\eta} + \eta \sum_{t\in\calI}\wh{c}_t(a_t).
+\]
+Taking the expectation on both sides, using the fact $\E_{a_t\sim p_t}[\wh{c}_t(a_t)] \leq K$,
+and plugging $c_t(a) = 1 - r_t(a)$, $\eta$ and $\mu$ finish the proof.
+\end{proof}
+
+\begin{proof}[Proof of Corollary~\ref{cor:Exp4.S}]
+We first partition $[1, T]$ evenly into $T/L$ intervals,
+then within each interval, further partition it into several subintervals
+so that $\calD_t$ remains the same on each subinterval.
+Since the number of switches is at most $S-1$, 
+this process results in at most $T/L + S$ subintervals, each with length at most $L$.
+We can now apply Theorem~\ref{thm:Exp4.S} to each subinterval and
+sum up the regrets to get the claim bounds.
+\end{proof}
+
+%\section{Proof of Theorem~\ref{thm:AdaEG}}
+
+\section{Proofs for \AdaEG}\label{app:AdaEG2}
+Before we prove the theorems, we first define some notations that facilitate the analysis. These notations are used throughout Appendix~\ref{app:AdaEG2},~\ref{app:AdaILTCB2}, and~\ref{app:AdaBIN}. In \AdaEG and \AdaILTCB, we define $\flag_t=(t\geq T_i+L) \text{ or } (j>1 \text{ and }\test(t)=\true)$, where $i$ and $j$ are the epoch and block indices $t$ is in. 
+This is exactly the condition that triggers the rerun of the algorithm. In all three algorithms, we let $B(i,j)\triangleq [T_i+1, T_i+2^{j-1}-1]$; sometimes when $i, j$ are already specified, we simply write $B$. Note that when $j=1$, $B=[T_i+1, T_i]$, which is an empty set. In this case, instead of defining $\beta_B$ (which is used in \AdaEG and \AdaBIN) to be infinity, we let it to be zero. This just makes some analysis easier. 
+
+Below we state a few useful lemmas before proving the main theorem.
+\begin{lemma}
+  For any interval $\calI$ such that $\Delta_\calI \leq v$, we have for
+  any sub-intervals $\calI_1, \calI_2 \subseteq \calI$ and any $\pi \in \Pi$, 
+  \[
+  |\calR_{\calI_1}(\pi) - \calR_{\calI_2}(\pi)| \leq v. 
+  \]
+  \label{lemma:var-bound}
+\end{lemma}
+
+\begin{proof}
+  The proof involves noticing for that any two rounds $s,t \in \calI$
+  and $\pi \in \Pi$, $|\calR_s(\pi) - \calR_t(\pi)| \leq
+  v$. This is easily seen using triangle
+  inequality, since assuming $s < t$, 
+
+  \begin{align*}
+    |\calR_s(\pi) - \calR_t(\pi)| &\leq \sum_{\tau=s+1}^t
+    |\calR_{\tau}(\pi) - \calR_{\tau-1}(\pi)| \leq \sum_{\tau \in
+    \calI} |\calR_{\tau}(\pi) - \calR_{\tau-1}(\pi)| \leq v. 
+  \end{align*}
+
+  The lemma is now immediate, since 
+
+  \begin{align*}
+    |\calR_{\calI_1}(\pi) - \calR_{\calI_2}(\pi)| &\leq
+    \frac{1}{|\calI_1|}\, \frac{1}{|\calI_2|}\, \sum_{s \in \calI_1}
+    \sum_{t \in \calI_2} |\calR_s(\pi) - \calR_t(\pi)| \leq v.
+  \end{align*}
+\end{proof}
+
+\begin{definition}[$\evt 1$]
+Define $\evt 1$ to be the following event: for all $\calI\subseteq [1,T]$ and all $\pi\in\Pi$, 
+\begin{align}
+\left\vert \avgR_{\calI}(\pi)-\calR_{\calI}(\pi) \right\vert \leq \beta_\calI. \label{eq:concentration2} 
+\end{align}
+\end{definition}
+Recall $\ips_t(a) = \frac{r_t(a)}{p_t(a)} \one\{a = a_t\} \leq 1/\mu$ and
+$\E_t[\ips_t(\pi(x_t))] = \calR_t(\pi),  \E_t[\ips_t(\pi(x_t))^2] \leq 1/\mu$.
+By Freedman's inequality (Lemma~\ref{lem:freedman}) and a union bound, 
+we have with probability at least $1-\delta/2$, $\evt 1$ holds. 
+
+\begin{lemma}
+\label{lemma:at most one rerun}
+Consider an interval $\calI$ where $\abs{\calI}\leq L$ and $\Delta_\calI \leq v$. If $\evt 1$ holds, then there is at most one $t\in \calI$ such that $\flag_t=\true$ ($\flag_t$ is defined at the beginning of Appendix~\ref{app:AdaEG2}).
+\end{lemma}
+\begin{proof}
+Let there be multiple such time instances. Let $t^\p, t\in \calI$ be two consecutive ones and $t^\p<t$. 
+Note that $\flag_t=\true$ has two possible cases: $t\geq t^\p+L$ or $(j>1 \text{ and }\test(t)=\true)$. 
+The former case cannot happen because $\abs{\calI}\leq L$. Now assume the latter. Let $i,j$ be the epoch and block index at time $t$ respectively. Define $A=[t-\ell+1,t]$ to be the interval that makes $\test(t)$ return \true, and define $B=[t^\p+1, t^\p+2^{j-1}-1]$. Then $\test(t)=\true$ implies 
+\begin{align}
+\avgR_{A}(\hat{\pi}_{A}) > \avgR_{A}(\hat{\pi}_B) + 2\beta_{A} + 2\beta_{B} + 4v. \label{eqn:test fail}
+\end{align}
+By the optimality of $\hat{\pi}_B$, We have 
+\begin{align}
+\avgR_{B}(\hat{\pi}_{A}) \leq \avgR_{B}(\hat{\pi}_B). \label{eqn:optimality of pi t}
+\end{align}
+Combining Eq.~\eqref{eqn:test fail} and Eq.~\eqref{eqn:optimality of pi t}, we see that either $\pi=\hat{\pi}_{A}$ or $\pi=\hat{\pi}_{B}$ will make the following inequality hold: 
+\begin{align}
+\bigabs{\avgR_{A}(\pi)-\avgR_{B}(\pi)} > \beta_{A} +\beta_{B} + 2v. \label{eqn:one side larger}
+\end{align}
+Thus, 
+\begin{align*}
+\bigabs{\calR_{A}(\pi)-\calR_{B}(\pi)}&\geq \bigabs{\avgR_{A}(\pi) - \avgR_{B}(\pi)} - \beta_{A} - \beta_{B}  \tag{by \eqref{eq:concentration2}} \\
+& > \beta_{A} + \beta_{B} + 2v - \beta_{A}- \beta_{B} \geq 2v. \tag{by \eqref{eqn:one side larger}}
+\end{align*}
+On the other hand, by Lemma~\ref{lemma:var-bound}, we actually have $\bigabs{\calR_{A}(\pi)-\calR_{B}(\pi)} \leq v$, which leads to a contradiction. Thus we can conclude that such $t$ does not exist. 
+
+\end{proof}
+
+%\begin{lemma}
+%\label{lemma:beta three times}
+%In \AdaEG, let $i, j$ be the epoch and block index at time $t$, where $j\geq 2$. Let $1\leq \ell\leq t-T_i$, we have $\beta_{[T_i+1, T_i+2^{j-1}-1]}\leq 2\beta_{[t-\ell+1,t]}$. 
+%\end{lemma}
+%\begin{proof}
+%Recall $t\leq T_i+2^j-1$. By definition, 
+%\begin{align*}
+%\beta_{[T_i+1, T_i+2^{j-1}-1]}&=2\sqrt{\frac{\ln(4T^2N/\delta)}{\mu\times(2^{j-1}-1)}}+\frac{\ln(4T^2N/\delta)}{\mu\times(2^{j-1}-1)}\\
+%&\leq 2\sqrt{\frac{3\ln(4T^2N/\delta)}{\mu \times(2^{j}-1)}}+\frac{3\ln(4T^2N/\delta)}{\mu\times(2^{j}-1)} \tag{$\frac{2^j-1}{2^{j-1}-1}\leq 3$} \\
+%&\leq 3\beta_{[T_i+1, t]} \leq 3\beta_{[t-\ell+1, t]}. 
+%\end{align*}
+%\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:AdaEG2}]
+We condition on $\evt 1$. When this event holds true, by Lemma~\ref{lemma:at most one rerun}, there is at most one $t\in \calI$ such that $\flag_t$ is \true (that is, rerun triggered at $t$). 
+With this fact, we can focus on the case in which $\flag_t$ is \false for all $t\in\calI$. If there is actually a $t^\p\in\calI$ such that $\flag_{t^\p}=\textit{True}$, 
+we can divide $\calI$ into $\calI_1 \cup \{t^\p\} \cup \calI_2$ and bound the regret in $\calI_1$ and $\calI_2$ separately. 
+The total regret on $\calI$ would then be bounded by their sum plus $1$, which is still of the same order.  
+
+We will also use the fact (proven in Lemma~\ref{lemma:var-bound})
+that by the condition $\var_\calI \leq v$, we have
+for any $\calI_1, \calI_2 \subset \calI$ and $\pi \in \Pi$,
+\begin{equation}\label{eq:difference_in_R2}
+|\calR_{\calI_1}(\pi) - \calR_{\calI_2}(\pi)|\leq v.
+\end{equation}
+
+Let $\calI=[s,e]$. For any $t\in \calI$, define $\ell_t=2^{\floor{\log_2(t-s+1)}}$ (i.e., $\ell_t$ is the longest $\ell\in\{1,2,4,8,\ldots\}$ such that $[t-\ell+1, t]\subseteq\calI$). Now focus on a specific $t$ that is in epoch $i$ and block $j$. Denote $A=[t-\ell_t+1,t], B=[T_i+1, T_i+2^{j-1}-1]$. Assuming the case described above (i.e., for all $\tau\in\calI$, $\flag_\tau=\false$), we have for $j>1$ and  any $\pi\in \Pi$, 
+\begin{align*}
+\calR_t(\pi)&\leq \calR_{A}(\pi) + v 
+\leq \avgR_{A}(\pi) + \beta_{A} + v \tag{by \eqref{eq:difference_in_R2} and \eqref{eq:concentration2}}\\
+&\leq \avgR_{A}(\hat{\pi}_{A}) + \beta_{A} + v \tag{by the optimality of $\hat{\pi}_{A}$}\\
+&\leq \avgR_{A}(\hat{\pi}_{B}) + 3\beta_{A} + 2\beta_{B} + 5v \tag{$\test(t)=\false$}\\
+&\leq \calR_{A}(\hat{\pi}_{B}) + 4\beta_{A} + 2\beta_B + 5v 
+\leq \calR_{t}(\hat{\pi}_{B}) + 4\beta_{A} + 2\beta_B + 6v. \tag{by \eqref{eq:concentration2} and \eqref{eq:difference_in_R2}}
+\end{align*}
+Note that $\beta_B=\order(\beta_A)$ because $ \abs{B}=2^{j-1}-1\geq \frac{2^j-1}{3} \geq \frac{t-T_i}{3} \geq \frac{\ell_t}{3} = \frac{\abs{A}}{3}$. 
+
+Now using this bound for all $t\in \calI$ and noting that there is at most one round with $j=1$, we can bound the sum of conditional expected regrets by 
+\begin{align*}
+\sum_{t \in \calI} \E_t[ r_t(\pi(x_t)) - r_t(a_t)]
+&\leq {\sum_{t\in\calI} (\calR_t(\pi_t^\star)-\calR_t(\hat{\pi}_B) + K\mu)}\\
+&\leq \order\left({\sum_{t\in\calI} (v + \beta_{[t-\ell_t+1,t]} + K\mu)}\right)\\
+&=\tilde{\mathcal{O}}\left(\abs{\calI}v + \sum_{t\in\calI} \left(\sqrt{\frac{\ln(N/\delta)}{\mu\ell_t}} + \frac{\ln(N/\delta)}{\mu\ell_t} + K\mu\right)\right) \\
+&=\tilde{\mathcal{O}}\left( \abs{\calI}v + L^{\frac{1}{6}}\sqrt{K\abs{\calI}\ln(N/\delta)} + L^{\frac{1}{3}}\sqrt{K\ln(N/\delta)} \right),
+\end{align*}
+where in the last step we use the fact $|\calI|L^{-\frac{1}{3}} \leq L^{\frac{1}{6}}\sqrt{|\calI|}$ for $|\calI| \leq L$.
+Finally, applying Hoeffding-Azuma inequality finishes the proof.
+%In the case $\calI=\calI_1\cup \{t^\p\} \cup \calI_2$ where $\flag(t^\p)=\textit{True}$, the regret in $\calI$ can still be bounded by the same expression because $\sum_{i=1}^2 \tilde{\mathcal{O}}\left( \abs{\calI_i}v + L^{\frac{1}{6}}\sqrt{K\abs{\calI_i}\ln(N/\delta)} + L^{\frac{1}{3}}\sqrt{K\ln(N/\delta)} \right)+1 = \tilde{\mathcal{O}}\left( \abs{\calI}v + L^{\frac{1}{6}}\sqrt{K\abs{\calI}\ln(N/\delta)} + L^{\frac{1}{3}}\sqrt{K\ln(N/\delta)} \right)$.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%   appendis for ILTCB
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Omitted Details for \AdaILTCB}\label{app:AdaILTCB2}
+
+\begin{figure}[h]
+\begin{framed}
+\begin{center}
+{\bf Optimization Problem} (OP)
+\end{center}
+
+Given a time interval $\calI$ and minimum probability $\mu$, find $Q \in \Delta^\Pi$ such that
+for constant $B = 5 \times 10^5 $:
+\begin{equation}\label{eq:low_empirical_regret2}
+\sum_{\pi \in \Pi} Q(\pi) \whReg_\calI(\pi) \leq 2B K \mu
+\end{equation}
+\begin{equation}\label{eq:low_empirical_variance2}
+\forall \pi \in \Pi: ~\whV_\calI(Q, \pi) \leq 2 K + \frac{\whReg_\calI(\pi)}{B\mu}
+\end{equation}
+\end{framed}
+\caption{A subroutine for \AdaILTCB, adapted from~\citep{AgarwalHsKaLaLiSc14}}
+\label{fig:OP}
+\end{figure}
+
+The optimization problem (OP) needed for \AdaILTCB is included in Figure~\ref{fig:OP}.
+It is almost identical to the one proposed in~\citep{AgarwalHsKaLaLiSc14} except:
+1) Instead of returning a sub-distribution, our version returns an exact distribution.
+However, as discussed in~\citep{AgarwalHsKaLaLiSc14} this makes no real difference
+since given a sub-distribution which satisfies Eq.~\eqref{eq:low_empirical_regret2}
+and Eq.~\eqref{eq:low_empirical_variance2}, one can always put all the remaining 
+weight on the empirical best policy $\argmax_\pi \avgR_\calI(\pi)$ to obtain a distribution 
+that still satisfies those two constraints.
+2) The constant $B$ used in~\citep{AgarwalHsKaLaLiSc14} is $100$.
+It is also clear from the proof of~\citep{AgarwalHsKaLaLiSc14} that the value of this constant 
+does not affect the feasibility of (OP) nor the efficiency of finding the solution.
+
+Let $d = \ln(8T^2N^2/\delta)\ln(L)$. 
+Without loss of generality, below we assume $L \geq 4Kd$ so that 
+$\mu = \min\{\frac{1}{2K}, \sqrt{\frac{d}{KL}}\} = \sqrt{\frac{d}{LK}}$.
+Indeed, if $L < 4Kd$, then the bound in Theorem~\ref{thm:AdaILTCB2} holds trivially since $L \leq 2\sqrt{LKd}$.
+%We can thus ignore the first $k_0$ rounds where the algorithm plays uniformly at random since $k_0 \leq Kd \leq \sqrt{LKd}$.
+The fact $d/\mu  = LK\mu$ will be used frequently.
+We use $V_t$ as a shorthand for $V_{\{t\}}$, that is, $V_t(Q, \pi) = \E_{x \sim D_t^\calX} \left[ \frac{1}{Q^{\mu}(\pi(x) | x)} \right]$.
+
+We first state two lemmas that relates the variation of $\Reg_t(\pi)$ and $V_t(Q,\pi)$ to $\bvar$, and then two lemmas on the concentration bounds of empirical reward and empirical variance.
+%which are direct adaptations of Lemmas~10 and 11 of~\citep{AgarwalHsKaLaLiSc14} respectively.
+
+\begin{lemma}\label{lemma:variation and regret}
+For any interval $\calI$ such that $\bvar_\calI\leq v$, we have for any sub-intervals $\calI_1, \calI_2\subseteq \calI$ and any $\pi\in\Pi$, 
+\begin{align*}
+\bigabs{\Reg_{\calI_1}(\pi)-\Reg_{\calI_2}(\pi)} \leq 2v.
+\end{align*}
+\end{lemma}
+\begin{proof}
+%{lemma:var-bound2}
+Let $\pi_{\calI_1}^\star=\argmax_{\pi\in\Pi}\calR_{\calI_1}(\pi)$ and $\pi_{\calI_2}^\star=\argmax_{\pi\in\Pi}\calR_{\calI_2}(\pi)$. Then 
+\begin{align*}
+\Reg_{\calI_1}(\pi)-\Reg_{\calI_2}(\pi)=\calR_{\calI_1}(\pi_{\calI_1}^\star)-\calR_{\calI_1}(\pi)-\calR_{\calI_2}(\pi_{\calI_2}^\star)+\calR_{\calI_2}(\pi).
+\end{align*}
+By Lemma~\ref{lemma:var-bound}, we have
+\begin{align*}
+-\var_\calI\leq \calR_{\calI_2}(\pi)-\calR_{\calI_1}(\pi)\leq \var_\calI , 
+\end{align*}
+and 
+\begin{align*}
+-\var_\calI\leq \calR_{\calI_1}(\pi_{\calI_2}^\star)-\calR_{\calI_2}(\pi_{\calI_2}^*) \leq \calR_{\calI_1}(\pi_{\calI_1}^\star)-\calR_{\calI_2}(\pi_{\calI_2}^\star)\leq \calR_{\calI_1}(\pi_{\calI_1}^\star)-\calR_{\calI_2}(\pi_{\calI_1}^\star)\leq \var_\calI. 
+\end{align*}
+Combining them and using $\var_\calI\leq \bvar_\calI$ (Lemma~\ref{lemma:variation_relation}), we get the desired bound.
+\end{proof}
+
+\begin{lemma}\label{lemma:variation and TVD}
+For any interval $\calI$ such that $\bvar_\calI\leq v$, we have for any sub-intervals $\calI_1, \calI_2\subseteq \calI$, any distribution $Q$ over $\Pi$, and any $\pi\in\Pi$, 
+\begin{align*}
+\bigabs{V_{\calI_1}(Q,\pi)-V_{\calI_2}(Q,\pi)} \leq \frac{v}{\mu}.
+\end{align*}
+\end{lemma}
+\begin{proof}
+For any $s,t\in\calI$ (assuming $s<t$), any $Q$, and $\pi\in\Pi$, 
+\begin{align*}
+\bigabs{V_s(Q,\pi)-V_t(Q,\pi)} 
+& = \Bigg\vert\E_{\calD_s^\calX} \left[ \frac{1}{Q^\mu(\pi(x)|x)}\right] - \E_{\calD_t^\calX}\left[ \frac{1}{Q^\mu(\pi(x)|x)}\right]\Bigg\vert \\
+& = \Bigg\vert \int_{\calX} (\calD_s^\calX(x)-\calD_t^\calX(x)) \frac{1}{Q^\mu(\pi(x)|x)}dx \Bigg\vert \\
+& \leq \frac{1}{\mu} \int_\calX \bigabs{\calD_s^\calX(x)-\calD_t^\calX(x)}dx \\
+& \leq \frac{1}{\mu} \sum_{\tau=s+1}^t \TVD{\calD_\tau - \calD_{\tau-1}} \leq \frac{v}{\mu}. 
+\end{align*}
+Therefore, 
+\begin{align*}
+\bigabs{V_{\calI_1}(Q,\pi) - V_{\calI_2}(Q,\pi)} \leq \frac{1}{\abs{\calI_1}}\frac{1}{\abs{\calI_2}} \sum_{s\in\calI_1}\sum_{t\in\calI_2}\bigabs{V_s(Q,\pi)-V_t(Q,\pi)}\leq \frac{v}{\mu}. 
+\end{align*}
+
+\end{proof}
+
+
+\begin{lemma}\label{lem:variance_deviation2}
+With probability at least $1 - \delta/4$, \AdaILTCB ensures that for all distributions $Q \in \Delta^\Pi$,
+all $\pi \in \Pi$, all intervals $\calI$,
+\begin{equation}\label{eq:variance_deviation2}
+\whV_{\calI}(Q, \pi) \leq 6.4 V_\calI(Q, \pi) + \frac{80 LK}{|\calI|},
+\qquad
+V_\calI(Q, \pi) \leq 6.4 \whV_{\calI}(Q, \pi)  + \frac{80 LK}{|\calI|}.
+\end{equation}
+\end{lemma}
+\begin{proof}
+This is a consequence of the contexts being drawn independently. A
+similar argument of~\citep[Lemma 10]{AgarwalHsKaLaLiSc14} shows that
+with probability at least $1 - \delta/4$, the differences
+$\whV_{\calI}(Q, \pi) - 6.4 V_\calI(Q, \pi)$ and $V_\calI(Q, \pi) -
+6.4 \whV_{\calI}(Q, \pi)$ are both bounded by
+\[
+\frac{75\ln(N)}{\mu^2 |\calI|} + \frac{6.3\ln(8T^2N^2/\delta)}{\mu|\calI|}
+\leq \frac{75 LK}{|\calI|} + \frac{6.3d}{\mu|\calI|}
+= \frac{75 LK}{|\calI|} + \frac{6.3 LK\mu}{|\calI|}
+\leq \frac{80 LK}{|\calI|},
+\]
+which completes the proof.
+\end{proof}
+
+\begin{lemma}\label{lem:reward_deviation2}
+With probability at least $1 - \delta/4$, \AdaILTCB ensures that for all $\pi \in \Pi$
+and all intervals $\calI$, 
+\begin{equation}\label{eq:reward_deviation2}
+|\avgR_\calI(\pi) - \calR_\calI(\pi)| \leq \frac{\mu}{|\calI|\ln(L)} \sum_{t\in\calI} V_t(Q_t, \pi) + \frac{LK\mu}{|\calI|}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By~\citep[Lemma 11]{AgarwalHsKaLaLiSc14}, for any choice of $\lambda \in [0, \mu]$, 
+we have with probability at least $1 - \delta/4$, for all $\pi \in \Pi$
+and all intervals $\calI$,
+\[
+|\avgR_\calI(\pi) - \calR_\calI(\pi)| \leq \frac{\lambda}{|\calI|} \sum_{t\in\calI} V_t(Q_t, \pi) + \frac{\ln(8T^2N/\delta)}{\lambda|\calI|}.
+\]
+Picking $\lambda = \mu/\ln(L)$ and using the fact $\ln(8T^2N/\delta)\ln(L) \leq d$ and $d/\mu = LK\mu$ complete the proof.
+\end{proof}
+
+\begin{definition}[$\evt 2$]
+Let $\evt 2$ be the event that both Eq.~\eqref{eq:variance_deviation2} and~\eqref{eq:reward_deviation2} hold
+for all $\pi \in \Pi$, all intervals $\calI$ and all $Q \in \Delta^\Pi$. This event happens with probability at least $1-\delta/2$.
+\end{definition}
+
+Next we prove the following key lemma on the concentration of empirical regrets.
+
+\begin{lemma}\label{lem:regret_deviation2}
+Conditioning on $\evt 2$, for any $\pi \in \Pi$, any interval $\calI$ such that $|\calI|\leq L$, $\bvar_\calI\leq v$, and there is no rerun triggered in $\calI$ (i.e., $\forall t\in \calI, \flag_t=\false$), we have
+\begin{equation}\label{eq:regret_deviation2}
+\Reg_\calI(\pi) \leq 2\whReg_{\calI}(\pi) + \frac{D_1LK\mu}{|\calI|} + D_2v,
+\qquad
+\whReg_{\calI}(\pi) \leq 2\Reg_\calI(\pi) + \frac{D_1LK\mu}{|\calI|} + D_2v, 
+\end{equation}
+where $D_1 \triangleq 2\times 10^5$ and $D_2\triangleq 360$. 
+\end{lemma}
+
+\begin{proof}
+We prove the lemma by induction on the length of $\calI$.  For the
+base case $|\calI| = 1$, the bounds hold trivially since both
+$\Reg_{\calI}(\pi)$ and $\whReg_{\calI}(\pi)$ are bounded by $1/\mu =
+LK\mu/d \leq D_1LK\mu$.  Now assuming that the statement holds for any
+$\calI'$ such that $|\calI'| \leq L' < L$, we prove below it holds for
+any $\calI$ such that $|\calI| = L' + 1$ too.
+
+Let $\calI=[s,e]$ belong to epoch $i$ and block $j$. For every $t\in [s+1,e]$, define $\ell_t=2^{\floor{\log_2(t-s)}}$ (i.e., $\ell_t$ is the longest $\ell\in\{1,2,4,8,\ldots\}$ such that $[t-\ell, t-1]\subseteq\calI$). Based on the induction assumption, we first prove the property $ V_t(Q_t,\pi)\leq \frac{\Reg_\calI(\pi)}{2\mu} + \order\left(\frac{LK}{t-s+1}+\frac{v}{\mu}\right)$ for all $\pi$: when $t\in[s+1,e]$, 
+\begin{align}
+& V_t(Q_t,\pi)\leq V_{[t-\ell_t,t-1]}(Q_t,\pi) + \frac{v}{\mu} \tag{by Lemma~\ref{lemma:variation and TVD}} \\
+\leq\;& 6.4 \whV_{[t-\ell_t,t-1]}(Q_t, \pi)  + \frac{80 LK}{\ell_t} + \frac{v}{\mu}  \tag{by
+    Eq.~\eqref{eq:variance_deviation2}} \\ 
+\leq\;& 263 \whV_{[T_i+1, T_i+2^{j-1}-1]}(Q_t, \pi) + \frac{7.76\times 10^3LK}{\ell_t} + \frac{42v}{\mu}  \tag{by Line~\ref{line:ILTCB:check_var}}\\ 
+\leq\;& \frac{5.26\times 10^{-4}}{\mu}\whReg_{[T_i+1, T_i+2^{j-1}-1]}(\pi) + \frac{8.29\times 10^3LK}{\ell_t} + \frac{42v}{\mu}\tag{by
+  Eq.~\eqref{eq:low_empirical_variance2} and $L \geq \ell_t$}  \\ 
+\leq\;& \frac{2.11\times 10^{-3}}{\mu}\whReg_{[t-\ell_t,t-1]}(\pi) +\frac{8.82\times 10^3 LK}{\ell_t} + \frac{43v}{\mu}
+\tag{by Line~\ref{line:ILTCB:check_reg}}\\ 
+\leq\;& \frac{4.22\times 10^{-3}}{\mu} \Reg_{[t-\ell_t, t-1]}(\pi) + \frac{9.25 \times 10^3LK}{\ell_t} + \frac{44v}{\mu} \tag{by inductive assumption}\\  
+\leq\;& \frac{\Reg_\calI(\pi)}{2\mu} + \frac{1.9\times 10^4LK}{t-s+1} + \frac{45v}{\mu}; \tag{
+  by Lemma~\ref{lemma:variation and regret} and $t-s+1 \leq 2\ell_t$} \\ \label{eqn:V bounded by reg} 
+\end{align}
+when $t=s$, Eq.\eqref{eqn:V bounded by reg} also holds because $V_s(Q_s,\pi)\leq \frac{1}{\mu}\leq \frac{\sqrt{LK}}{t-s+1}$.  
+
+Let $\pi_\calI^\star = \argmax_{\pi} \calR_\calI(\pi)$ and
+$\whpi_\calI = \argmax_{\pi} \avgR_\calI(\pi)$. We will now establish
+the inductive hypothesis. For any $\pi$, $\Reg_\calI(\pi) -
+\whReg_{\calI}(\pi)$ is bounded by
+%
+\begin{align}
+&(\calR_\calI(\pi_\calI^\star) - \calR_\calI(\pi)) - (\avgR_\calI(\pi_\calI^\star) - \avgR_\calI(\pi)) \tag{by optimality of $\whpi_\calI$} \\
+\leq\;& \frac{\mu}{|\calI|\ln(L)} \sum_{t\in\calI}\left( V_t(Q_t, \pi) + V_t(Q_t, \pi_\calI^\star) \right) + \frac{2LK\mu}{|\calI|} \tag{by Lemma~\ref{lem:reward_deviation2}} \\
+\leq\;& \frac{1}{2}\Reg_\calI(\pi) + \left(\frac{3.8\times 10^4 LK\mu}{|\calI|\ln(L)}\sum_{t\in \calI} \frac{1}{t-s+1}\right) + \frac{2LK\mu}{|\calI|} + 90v
+   \tag{by Eq.~\eqref{eqn:V bounded by reg} and $\Reg_\calI(\pi_\calI^\star) = 0$} \\
+\leq\;& \frac{1}{2}\Reg_{\calI}(\pi)  + \frac{6\times 10^4LK\mu}{|\calI|} + 90v. \label{eqn:induction hyp 1}
+\end{align}
+%
+Rearranging proves the first
+statement of Eq.~\eqref{eq:regret_deviation2}.  Similarly, we can bound
+$\whReg_{\calI}(\pi) - \Reg_\calI(\pi)$ as follows:
+%
+\begin{align}
+&(\avgR_\calI(\whpi_\calI) - \avgR_\calI(\pi)) - (\calR_\calI(\whpi_\calI) - \calR_\calI(\pi))   \tag{by optimality of $\pi_\calI^\star$} \\
+\leq\;& \frac{\mu}{|\calI|\ln(L)} \sum_{t\in\calI}\left( V_t(Q_t, \pi) + V_t(Q_t, \whpi_\calI) \right) + \frac{2LK\mu}{|\calI|} \tag{by Lemma~\ref{lem:reward_deviation2}} \\
+\leq\;& \frac{1}{2}(\Reg_\calI(\pi) + \Reg_\calI(\whpi_\calI)) + \left(\frac{3.8\times 10^4 LK\mu}{|\calI|\ln(L)}\sum_{t\in \calI} \frac{1}{t-s+1}\right) + \frac{2LK\mu}{|\calI|} + 90v
+   \tag{by Eq.~\eqref{eqn:V bounded by reg} } \\
+\leq\;& \frac{1}{2}\Reg_{\calI}(\pi)  + \frac{9.9\times 10^4 LK\mu}{|\calI|} + 180v,
+\end{align}
+%
+where the last step is by applying Eq.~\eqref{eqn:induction hyp 1} to
+$\whpi_\calI$ and using the fact $\whReg_\calI(\whpi_\calI) = 0$.
+Rearranging proves the second
+statement of Eq.~\eqref{eq:regret_deviation2}, which completes the
+induction.
+\end{proof}
+
+\begin{lemma}
+\label{lemma:at most one rerun ILTCB}
+Consider an interval $\calI$ where $\abs{\calI}\leq L$ and $\bvar_\calI \leq v$. If the event $\evt 2$ holds, then there is at most one $t\in \calI$ such that $\flag_t=\true$.
+\end{lemma}
+\begin{proof}
+If there are multiple such time instances, let $t^\p, t\in \calI$ be consecutive ones, and let $i$ and $j$ be the epoch and block indices at time $t$. For $\flag(t)=\true$, there are two possibilities: $t\geq t^\p+L$ or $(j>1 \text{ and }\test(t)=\true)$. 
+The former would not happen because $\abs{\calI}\leq L$. 
+Thus the latter holds. Since $j>1$, we have $t\geq t^\p+2$. 
+By our construction, $\calI^\p\triangleq [t^\p+1, t-1]$ is an interval in which no rerun is triggered, and $\bvar_{\calI^\p}\leq v$ holds. 
+Using Lemma~\ref{lem:regret_deviation2} on $\calI^\p$, we have for any $1\leq \ell\leq t-t^\p-1$,
+%
+\begin{align*}
+\whReg_{[t^\p+1, t^\p+2^{j-1}-1]}(\pi) &\leq 2\Reg_{[t^\p+1, t^\p+2^{j-1}-1]}(\pi) + \frac{2\times 10^5 LK\mu}{2^{j-1}-1} + 360 v
+\tag{by Lemma~\ref{lem:regret_deviation2}} \\ 
+&\leq 2\Reg_{[t-\ell, t-1]}(\pi) + \frac{2\times 10^5 LK\mu}{2^{j-1}-1} + 364v \tag{by Lemma~\ref{lemma:variation and regret}} \\ 
+&\leq 4 \whReg_{[t-\ell, t-1]}(\pi) + \frac{8\times 10^5LK\mu}{\ell} + 1084v, \tag{by Lemma~\ref{lem:regret_deviation2} and $\ell\leq t-t^\p-1\leq 2^{j}-2$}
+\end{align*}
+%
+\begin{align*}
+\whReg_{[t-\ell, t-1]}(\pi) &\leq 2\Reg_{[t-\ell, t-1]}(\pi) + \frac{2\times 10^5 LK\mu}{\ell} + 360 v
+\tag{by Lemma~\ref{lem:regret_deviation2}} \\ 
+&\leq 2\Reg_{[t^\p+1, t^\p+2^{j-1}-1]}(\pi) + \frac{2\times 10^5 LK\mu}{\ell} + 364v \tag{by Lemma~\ref{lemma:variation and regret}} \\ 
+&\leq 4 \whReg_{[t^\p+1, t^\p+2^{j-1}-1]}(\pi) + \frac{1\times 10^6LK\mu}{\ell} + 1084v, \tag{by Lemma~\ref{lem:regret_deviation2} and $\ell\leq t-t^\p-1\leq 2^{j}-2$}
+\end{align*}
+%
+\begin{align*}
+\whV_{[t-\ell, t-1]}(Q, \pi) &\leq 6.4V_{[t-\ell, t-1]}(Q, \pi)  + \frac{80
+  LK}{\ell} \tag{by Eq.~\eqref{eq:variance_deviation2}} \\ 
+&\leq 6.4V_{[t^\p+1, t^\p+2^{j-1}-1]}(Q, \pi)  + \frac{80
+  LK}{\ell} + 6.4v \tag{by Lemma~\ref{lemma:variation and regret}} \\ 
+&\leq 41 \whV_{[t^\p+1, t^\p+2^{j-1}-1]}(Q, \pi) + \frac{1104 LK}{\ell} + 6.4v\tag{by Eq.~\eqref{eq:variance_deviation2} and $\ell\leq 2^j-2$}. \\ 
+\end{align*}
+%
+Therefore, at time $t$, $\test(t)$ should return \true, which contradicts our assumption.   
+\end{proof}
+
+
+We can now prove Theorem~\ref{thm:AdaILTCB2}.
+
+\begin{proof}[Proof of Theorem~\ref{thm:AdaILTCB2}]
+Conditioning on $\evt 2$, we can focus on the case when there is no rerun in $\calI$ (i.e., $\forall t\in\calI$, $\flag_t=\false$). This is because by Lemma~\ref{lemma:at most one rerun ILTCB}, there is at most one $t^\p\in\calI$ such that $\flag_{t^\p}=\true$. Suppose this $t^\p$ exists, we can decompose $\calI$ into $\calI_1\cup\{t^\p\}\cup\calI_2$, where $\flag_t=\false$ for all $t\in\calI_1$ or $\calI_2$, and then we can apply our proof to $\calI_1$ and $\calI_2$ separately. The regret in $\calI$ would then be bounded by their sum plus $1$, which is still of the same order. 
+
+With notation $s$, $\ell_t, i, j$ from the proof of Lemma~\ref{lem:regret_deviation2},
+for any $t \in \calI$ and $t \geq s+2$,
+we have
+%
+\begin{align*}
+&\sum_{\pi \in \Pi} Q_t(\pi) \Reg_\calI(\pi) \\
+&\leq \sum_{\pi \in \Pi} Q_t(\pi) \Reg_{[t-\ell_t, t-1]}(\pi)  + 2v  \tag{by Lemma~\ref{lemma:variation and regret}} \\
+&\leq 2 \sum_{\pi \in \Pi} Q_t(\pi) \whReg_{[t-\ell_t, t-1]}(\pi)  + \frac{D_1 LK\mu}{\ell_t} + (D_2+2)v  \tag{by Lemma~\ref{lem:regret_deviation2}} \\
+&\leq 2C_1 \sum_{\pi \in \Pi} Q_t(\pi) \whReg_{[T_i+1, T_i+2^{j-1}-1]}(\pi)  + (2C_2 + D_1)\frac{LK\mu}{\ell_t} + (2C_3+D_2+2)v \tag{by Line~\ref{line:ILTCB:check_reg_another}} \\
+&\leq 4B C_1  K \mu +  (2C_2 + D_1)\frac{LK\mu}{\ell_t} + (2C_3+D_2+2)v \tag{by Eq.~\eqref{eq:low_empirical_regret2}} \\
+&= \scO\left(\frac{LK\mu}{t-s + 1}+v\right). \tag{$L \geq \ell_t \geq (t-s+1)/2$}
+\end{align*}
+%
+Therefore, the sum of conditional expected regrets $\sum_{t \in \calI} \E_t[ r_t(\pi(x_t)) - r_t(a_t)]$ is bounded by
+%
+\begin{align*}
+LK\mu + (1-K\mu)\sum_{t\in \calI} \sum_{\pi \in \Pi} Q_t(\pi) \Reg_\calI(\pi)
+= \otil(\abs{\calI}v+LK\mu) = \otil\left(\abs{\calI}v+\sqrt{LK\ln(N/\delta)}\right).
+\end{align*}
+%
+The theorem now follows by an application of the Hoeffding-Azuma inequality.
+\end{proof}

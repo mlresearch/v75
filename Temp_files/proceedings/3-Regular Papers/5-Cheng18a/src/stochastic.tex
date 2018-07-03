@@ -1,0 +1,176 @@
+\label{app:stochastic}
+Here we state the underdamped Langevin MCMC algorithm with stochastic gradients. We will borrow notation and work under the assumptions stated in Section \ref{ss:stochasticgradient}.
+
+\begin{algorithm}[t] \label{alg:ulmcmcnoise}
+\caption{Stochastic Gradient Underdamped Langevin MCMC} 
+\SetKwInOut{Input}{Input}
+    \SetKwInOut{Output}{Output}
+        \Input{Step size $\delta<1$, number of iterations $n$, initial point $(x^{(0)},0)$, smoothness parameter $L$ and stochastic gradient oracle $\nh f(\cdot)$}
+
+    \For {$i=0,1,\ldots,n-1$} 
+      {
+		  Sample $(x^{i+1},v^{i+1})\sim Z^{i+1}(x^i,v^i)$
+        }
+   \end{algorithm} 
+\subsubsection*{Description of Algorithm \ref{alg:ulmcmcnoise}}
+The random vector $Z^{i+1}(x_i,v_i)\in \R^{2d}$, conditioned on $(x^i,v^i)$, has a Gaussian distribution with conditional mean and covariance obtained from the following computations:
+   \begin{align*}
+&\E{v^{i+1}} = v^i e^{-2 \d} - \frac{1}{2L}(1-e^{-2 \d}) \nh f(x^i)\\
+&\E{x^{i+1}}  = x^i + \frac{1}{2}(1-e^{-2 \d})v^i - \frac{1}{2L} \left( \d - \frac{1}{2}\left(1-e^{-2 \d}\right) \right) \nh  f(x^i)\\
+&\E{\left(x^{i+1} - \E{x^{i+1}}\right) \left(x^{i+1} - \E{x^{i+1}}\right)^{\top}}= \frac{1}{L } \left[\d-\frac{1}{4}e^{-4\d}-\frac{3}{4}+e^{-2\d}\right] \cdot I_{d\times d}\\
+&\E{\left(v^{i+1} - \E{v^{i+1}}\right) \left(v^{i+1} - \E{v^{i+1}}\right)^{\top}} = \frac{1}{L}(1-e^{-4 \d})\cdot I_{d\times d}\\
+&\E{\left(x^{i+1} - \E{x^{i+1}}\right) \left(v^{i+1} - \E{v^{i+1}}\right)^{\top}}= \frac{1}{2L} \left[1+e^{-4\d}-2e^{-2\d}\right] \cdot I_{d \times d}.
+\end{align*}   
+ The distribution is obtained by integrating the discrete underdamped Langevin diffusion \eqref{e:discretelangevindiffusionwithnoise} up to time $\delta$, with the specific choice of $\gamma=2$ and $u=1/L$. In other words, if $p^{(i)}$ is the distribution of $(x^i,v^i)$, then $Z^{i+1}(x^i,v^i) \sim p^{(i+1)} = \Phih_{\d} p^{(i)}$. Derivation is identical to the calculation in Appendix \ref{s:howtodiscretize} by replacing exact gradients $\nabla f(\cdot)$ with stochastic gradients $\nh f(\cdot)$. A key ingredient as before in understanding these updates is the next lemma which calculates the exactly the update at each step when we are given stochastic gradients.
+\begin{lemma}\label{lem:exactupdatesstochasticgradients}
+The solution $(\hat{x}_t,\hat{v}_t)$ of the stochastic gradient underdamped Langevin diffusion \eqref{e:discretelangevindiffusionwithnoise} is
+\begin{align*}
+\numberthis \label{e:vhatdynamics}
+\vh_t &= \vh_0 e^{-\gamma t} - u \left(\int_0^t e^{-\gamma(t-s)} \nh f(\xh_0) ds \right) + \sqrt{2\gamma u} \int_0^t e^{-\gamma (t-s)} dB_s\\
+\xh_t &= \xh_0 + \int_0^t \vh_s ds.
+\end{align*}
+\end{lemma}
+\begin{Proof} Note that they have the right initial values, by setting $t=0$. By taking derivatives, one can also verify that they satisfy the differential equation \eqref{e:discretelangevindiffusionwithnoise}.
+\end{Proof}
+
+\subsection{Discretization Analysis}
+In Theorem \ref{l:stochasticerrordecomposition}, we will bound the discretization error between the discrete process without noise in the gradients \eqref{e:discretelangevindiffusion} and the discrete process \eqref{e:discretelangevindiffusionwithnoise} starting from the same initial distribution.
+%In particular, we bound $W_2^2 (\Phit_\delta p_0,\Phih_\delta p_0 )$. This will be sufficient to get the convergence rate stated in Theorem \ref{t:stochasticconvergence}.
+\begin{lemma}\label{l:stochasticerrordecomposition}
+Let $q_0$ be some initial distribution. Let $\Phit_\delta$ and $\Phih_\delta$ be as defined in \eqref{d:phi} corresponding to the discrete time process without noisy gradients and discrete-time process with noisy gradients respectively. For any $1>\delta>0$, 
+$$W_2^2(\Phih_\delta q_0,q^*) = W_2^2(\Phit_\delta q_0, q^*) + \frac{5\delta^2d\sigma^2}{L^2}.$$
+\end{lemma}
+\begin{Proof}
+Taking the difference of the dynamics in \eqref{e:vtildedynamics} and \eqref{e:vhatdynamics}, and using the definition of $\nh f(x)$. We get that 
+\begin{align*}
+\numberthis \label{e:vhatisvtildeplusxi}
+\vh_\delta &= \vt_\delta + u\lrp{\int_0^\delta e^{-\gamma(s-\delta)} ds} \xi\\
+\xh_\delta &= \xt_\delta + u\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr} \xi,
+\end{align*}
+where $\xi$ is a zero-mean random variance with variance bounded by $\sigma^2 d$ and is independent of the Brownian motion. Let $\Gamma_1$ be the set of all couplings between $\Phit_\delta q_0$ and $q^*$ and let $\Gamma_2$ be the set of all couplings between $\Phih_\delta q_0$ and $q^*$. Let $\gamma_1(\theta,\psi)\in \Gamma_1$ be the optimal coupling between $\Phit_\delta q_0$ and $q^*$, i.e.
+$$\Ep{(\theta,\psi)\sim \gamma_1}{\|\theta-\psi\|_2^2} = W_2^2 (\Phit_\delta q_0,q^*).$$
+Let $\lrp{\cvec{\xt}{\wt},\cvec{x}{w}}\sim \gamma_1$. By the definition of $\gamma_1$ we have the marginal distribution of $\cvec{\xt}{\wt}\sim \Phit_\delta q_0$. Finally let us define the random variables
+$$\cvec{\xh}{\wh} \triangleq \cvec{\xt}{\wt} + u\cvec{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr}\xi}{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr + \int_0^\delta e^{-\gamma(s-\delta)} ds} \xi}.$$
+
+By \eqref{e:vhatisvtildeplusxi}, it follows that $\cvec{\xh}{\wh}\sim \Phih_\delta p_0$. Thus $\lrp{\cvec{\xh}{\wh},\cvec{x}{w}}$ defines a valid coupling between $\Phih_t q_0$ and $q^*$. Let us now analyze the distance between $q^*$ and $\nh_{\delta} q_0$,
+\begin{align*}
+& W_2^2(\Phih_\delta q_0, q^*)\\
+& \overset{(i)}{\leq}  \Ep{\gamma_1}{\lrn{\cvec{\xt}{\vt} + u\cvec{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr}\xi}{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr + \int_0^\delta e^{-\gamma(s-\delta)} ds} \xi} - \cvec{x}{v}}_2^2}\\
+& \overset{(ii)}{=} \Ep{\gamma_1}{\lrn{\cvec{\xt}{\vt}- \cvec{x}{v}}_2^2} + u\cdot\Ep{\gamma_1}{\lrn{\cvec{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr}\xi}{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr + \int_0^\delta e^{-\gamma(s-\delta)} ds} \xi}}_2^2}\\
+& \overset{(iii)}{\leq}  \Ep{\gamma_1}{\lrn{\cvec{\xt}{\vt}- \cvec{x}{v}}_2^2} + 4u^2\lrp{\lrp{\int_0^\delta \lrp{\int_0^r e^{-\gamma(s-r)} ds} dr}^2 + \lrp{\int_0^\delta e^{-\gamma(s-\delta)} ds}^2}d\sigma^2\\
+& \overset{(iv)}{\leq}  \Ep{\gamma_1}{\lrn{\cvec{\xt}{\vt}- \cvec{x}{v}}_2^2} + 4u^2\lrp{\frac{\delta^4}{4} + \delta^2}d\sigma^2\\
+& \overset{(v)}{\leq} W_2^2(\Phit_t q_0, q^*) + 5u^2\delta^2d\sigma^2,
+\end{align*}
+where $(i)$ is by definition of $W_2$, $(ii)$ is by independence and unbiasedness of $\xi$, $(iii)$  is by Young's inequality and because $\E{\|\xi\|_2^2}\leq d\sigma^2$, $(iv)$ uses the upper bound $e^{-\gamma(s-r)}\leq 1$ and $e^{-\gamma(s-t)}\leq 1$, and finally $(v)$ is by definition of $\gamma_1$ being the optimal coupling and the fact that $\delta\leq 1$. The choice of $u=1/L$ yields the claim.
+
+\end{Proof}
+Given the bound on the discretization error between the discrete processes with and without the stochastic gradient we are now ready to prove Theorem \ref{t:stochasticconvergence}.
+\begin{Proof}[Proof of Theorem \ref{t:stochasticconvergence}] 
+From Corollary \ref{c:exactconvergence}, we have that for any $i \in \{1,\ldots,n \}$
+$$W_2(\Phi_\d q^{(i)},q^*)\leq e^{- \delta/2\kappa}W_2(q^{(i)}, q^*).$$
+By the discretization error bound in Theorem \ref{t:discretizationerror} and the sandwich inequality \eqref{e:pqsandwich}, we get
+$$W_2(\Phi_\d q^{(i)}, \Phit_\d q^{(i)})\leq 2W_2(\Phi_\d p^{(i)}, \Phit_\d p^{(i)})\leq \d^2 \sqrt{\frac{8\ke}{5}}.$$
+By the triangle inequality for $W_2$, 
+\begin{align*}
+W_2(\Phit_\d q^{(i)}, q^*) & \le W_2(\Phi_\d q^{(i)}, \Phit_\d q^{(i)}) + W_2(\Phi_\d q^{(i)},q^*) \overset{(i)}{\le} \d^2 \sqrt{\frac{8\ke}{5}} + e^{-\delta/2\kappa}W_2(q^{(i)}, q^*) \\
+%& \overset{(ii)}{\leq} \d^2 \sqrt{\frac{208d}{5m}} + \left(1-\frac{\delta}{4\kappa}\right)W_2(q^{(i)}, q^*)
+\end{align*}
+Combining this with the discretization error bound established in Lemma \ref{l:stochasticerrordecomposition} we have,
+\begin{align*}
+W_2^2(\Phih_t q^{(i)},q^*) \le \left(e^{-\delta/2\kappa}W_2(q^{(i)},q^*) + \delta^2 \sqrt{\frac{8\ke}{5}} \right)^2 + \frac{5\delta^2d\sigma^2}{L^2}.
+\end{align*}
+By invoking Lemma \ref{l:dalalyanuseful} we can bound the value of this recursive sequence by,
+\begin{align*}
+W_2(q^{(n)},q^*) & \le e^{-n\delta/2\kappa} W_2(q^{(0)},q^*) + \frac{\delta^2}{1-e^{-\delta/2\kappa}}\sqrt{\frac{8\ke}{5}} \\ & \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad + \frac{5\delta^2d\sigma^2}{L^2\left(\delta^2 \sqrt{\frac{8\ke}{5}} + \sqrt{1-e^{-\delta/\kappa}}\sqrt{\frac{5\delta^2d\sigma^2}{L^2}}\right)}.
+\end{align*}
+By using the sandwich inequality (Lemma \ref{l:sandwich}) we get,
+\begin{align*}
+W_2(p^{(n)},p^*) & \le \underbrace{4e^{-n\delta/2\kappa} W_2(p^{(0)},p^*)}_{T_1} + \underbrace{\frac{4\delta^2}{1-e^{-\delta/2\kappa}}\sqrt{\frac{8\ke}{5}}}_{T_2} \\ & \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad + \underbrace{\frac{20\delta^2d\sigma^2}{L^2\left(\delta^2 \sqrt{\frac{8\ke}{5}} + \sqrt{1-e^{-\delta/\kappa}}\sqrt{\frac{5\delta^2d\sigma^2}{L^2}}\right)}}_{T_3}.
+\end{align*}
+We will now control each of these terms at a level $\varepsilon/3$. By Lemma \ref{lem:initialdistancebound} we know $W_2^2(p^{(0)},p^*) \le 3\left( \frac{d}{m} + \mathcal{D}^2 \right)$. So the choice,
+\begin{align*}
+n \le \frac{2\kappa}{\delta}\log\left( \frac{36 \left(\frac{d}{m} + \mathcal{D}^2 \right)}{\varepsilon}\right)
+\end{align*}
+ensures that $T_1$ is controlled below the level $\varepsilon/3$. Note that $1-e^{-\delta/2\kappa} \ge \delta/4\kappa$ as $\delta/\kappa <1$. So the choice $\delta <\varepsilon \kappa^{-1}\sqrt{5/479232(d/m+\mathcal{D}^2)} \le \varepsilon\kappa^{-1}\sqrt{5/18432 \ke}$ (by upper bound on $\ke$ in Lemma \ref{l:kineticenergyisbounded}) ensures,
+\begin{align*}
+T_2  \le \frac{16\delta^2 \kappa}{\delta}\sqrt{\frac{8\ke}{5}} \le \frac{\varepsilon}{3}.
+\end{align*}
+Finally $\delta \le \varepsilon^2\kappa^{-1}L^2/1440d\sigma^2$ ensures $T_3$ is bounded,
+\begin{align*}
+T_3  = \frac{20\delta^2d\sigma^2}{L^2\left(\delta^2 \sqrt{\frac{8\ke}{5}} + \sqrt{1-e^{-\delta/\kappa}}\sqrt{\frac{5\delta^2d\sigma^2}{L^2}}\right)} & \le \frac{20\delta^2d\sigma^2}{L^2\left(\delta^2 \sqrt{\frac{8\ke}{5}} + \sqrt{\frac{5\delta^3d\sigma^2}{2L^2\kappa}}\right)}  \le \frac{20\delta^2d\sigma^2}{L^2\sqrt{\frac{5\delta^3d\sigma^2}{2L^2\kappa}}} \le \frac{\varepsilon}{3}.
+\end{align*}
+This establishes our claim.
+%where $(i)$ follows from  discretization error bound in Theorem \ref{t:discretizationerror} and the contraction of the continuous time process established in Corollary \ref{c:exactconvergence},  $(ii)$ follows from the upper bound on $\ke$ established in Lemma \ref{l:kineticenergyisbounded} and because $e^{-x}\leq 1-\frac{x}{2}$ for $x\leq 1/2$. We will analyze the convergence in two cases.
+
+%\textbf{Case 1:} Suppose that $W_2(q^{(i)},q^*)\geq \varepsilon/4$, then by the choice of $\delta$, the discretization error is bounded by $\delta/8\kappa$ and we get
+%$$W_2(\Phit_\d q^{(i)}, q^*)\leq \left(1-\frac{\delta}{8\kappa}\right)W_2(q^{(i)},q^*) $$
+%Squaring both sides, we have 
+%\begin{align*}
+%W_2^2(\Phit_\d q^{(i)}, q^*) & \leq \left(1-\frac{\delta}{8\kappa} + \frac{\delta^2}{64\kappa^2}\right)W_2^2(q^{(i)},q^*)\\
+%& \leq \left(1-\frac{\delta}{16\kappa}\right) W_2^2(q^{(i)},q^*).
+%\end{align*}
+%
+%By the results of Lemma \ref{l:stochasticerrordecomposition} we also get that
+%\begin{align*}
+%W_2^2(\Phih_\d q^{(i)},q^*) & \leq  W_2^2(\Phit_\d q^{(i)},q) + 5\d^2 d \sigma^2\\
+%& \overset{(i)}{\leq}  \left(1-\frac{\d}{32\kappa}\right)W_2^2(q^{(i)}, q^*)\\
+%& \overset{(ii)}\leq  e^{-\frac{\delta}{32\kappa}} W_2^2(q^{(i)}, q^*)
+%\end{align*}
+%where $(i)$ is by the choice of $\delta \leq \frac{\varepsilon^2}{160 \kappa d \sigma^2}$ and $(ii)$ is by the inequality $e^{-x}\ge 1-x$ for $0<x<1$.
+%Thus, we have
+%$$W_2^2 (q^{(n)},q^*)\leq e^{-\frac{n\delta}{32\kappa}}W_2^2(q^{(0)},q^*)$$
+%By the Sandwich inequality establish as Lemma \ref{l:sandwich} we get
+%$$W_2^2 (p^{(n)},p^*)\leq 4 e^{-\frac{n\delta}{16\kappa}}W_2^2(p^{(0)},p^*)$$
+%The proof follows by setting the right hand side to equal $\varepsilon^2$.
+\end{Proof}
+
+
+%\subsection{Discretization Analysis}
+%In Theorem \ref{t:discretizationerrorwithnoise}, we will bound the discretization error between the discrete process without noise in the gradients \eqref{e:discretelangevindiffusion} and the discrete process \eqref{e:discretelangevindiffusionwithnoise} starting from the same initial distribution.
+%In particular, we bound $W_2^2 (\Phit_\delta p_0,\Phih_\delta p_0 )$. This will be sufficient to get the convergence rate stated in Theorem \ref{t:stochasticconvergence}.
+%\begin{theorem}\label{t:discretizationerrorwithnoise}
+%Let $\Phit_t$ and $\Phih_t$ be as defined in \eqref{d:phi} corresponding to the discrete time process without noisy gradients and discrete-time process with noisy gradients respectively. Let $p_0$ be any initial distribution and assume wlog that the step size $\delta\le 1$. As before we choose $u = 1/L$ and $\gamma = 2$. Then the distance between the processes is upper bounded by
+%$$W_2^2(\Phit_\d p_0,\Phih_\d p_0)\leq \frac{4d\sigma^2 \delta^2}{3L^2}.$$
+%\end{theorem}
+%\begin{Proof} We will once again use a standard synchronous coupling argument, in which $\Phit_\d p_0$ and $\Phih_\d p_0$ are coupled through the same initial distribution $p_0$ and common Brownian motion $B_t$. 
+%
+%First, we bound the error in velocity. By using the expression for $\vt_t$ and $\vh_t$ from Lemma \ref{l:explicitform} and \ref{lem:exactupdatesstochasticgradients}, we have 
+%\begin{align*}
+%\E{\eu{\vt_s -\vh_s }_2^2 } & \overset{(i)}{=} \mathbb{E} \left[ \left\lv u \int_0^s e^{-2(s-r)}\left( \tilde{\nabla} f(x_0) - \nh f(x_0) \right)dr\right\rv_2^2\right]\\
+%& = u^2 \mathbb{E} \left[ \left\lv  \int_0^s e^{-2(s-r)}\left( \tilde{\nabla} f(x_0) - \nh f(x_0) dr\right)\right\rv_2^2\right]\\
+%& \overset{(ii)}{\le} s u^2 \int_0^s \mathbb{E} \left[ \left\lv e^{-2(s-r)}\left( \tilde{\nabla} f(x_0) - \nh f(x_0) \right)\right\rv_2^2\right]dr\\
+%& \overset{(iii)}{\le} s u^2 \int_0^s \mathbb{E} \left[ \left\lv \left( \tilde{\nabla} f(x_0) - \nh f(x_0) \right)\right\rv_2^2\right]dr\\
+%& \overset{(iv)}{=} s u^2 \int_0^s \mathbb{E} \left[ \left\lv  \xi \right\rv_2^2\right]dr\\
+%%& = s u^2 \int_0^s \mathbb{E} \left[ \left\lv \left( \nabla f(x_r) - \nabla f(x_0) \right)\right\rv_2^2\right]dr + s u^2 \int_0^s \mathbb{E} \left[ \left\lv \xi \right\rv_2^2\right]dr \\ & \qquad \qquad  \qquad \qquad  + 2 s u^2 \int_0^s \mathbb{E} \left[ \langle \nabla f(x_r) - \nabla f(x_0) , \xi \rangle \right]dr\\
+%& \overset{(v)}{\le}  s u^2 \int_0^s d \sigma^2  dr  \le s^2u^2d \sigma^2,
+%%& \overset{(vi)}{\le} s u^2 L^2 \int_0^s \mathbb{E} \left[\left \lv x_r - x_0 \right \rv_2^2\right]dr + s^2u^2 d \sigma^2\\
+%%& \overset{(vii)}{=} s u^2 L^2 \int_0^s  \mathbb{E} \left[\left \lv \int_0^r v_w dw \right \rv_2^2\right]dr + s^2u^2 d \sigma^2\\
+%%& \overset{(viii)}{\le} s u^2 L^2\int_0^s r \left(\int_0^r \mathbb{E}\left[ \lv v_w \rv_2^2\right] dw\right)dr + s^2u^2 d \sigma^2\\
+%%& \overset{(ix)}{\le} s u^2 L^2 \ke \int_0^s r \left(\int_0^r dw\right) dr + s^2u^2 d \sigma^2\\
+%%& = \frac{s^4 u^2 L^2 \ke}{3} + s^2u^2 d \sigma^2,
+%\end{align*}
+%where $(i)$ follows from the Lemma \ref{l:explicitform} and \ref{lem:exactupdatesstochasticgradients} and $v_0=\vh_0$, $(ii)$ follows from application of Jensen's inequality, $(iii)$ follows as $\lvert e^{-4(s-r)}\rvert \le 1$, $(iv)$ is by the definition of $\nh f(\cdot)$ in Section \ref{ss:stochasticgradient}, $(v)$ is by the bound on the variance of $\xi$.
+%
+%
+%This completes the bound for the velocity variable. Next we bound the discretization error in the position variable:
+%\begin{align*}
+%\E{\eu{\xt_s - \xh_s}_2^2} & = \E{\eu{\int_0^s (\vt_r - \vh_r) dr}_2^2}\\
+%& \leq s\int_0^s \mathbb{E} \left[\lv \vt_r - \vh_r \rv_2^2\right]dr\\
+%& \le s \int_0^s \left(r^2u^2d\sigma^2\right)dr\\
+%& = \frac{s^4u^2d\sigma^2}{3},
+%\end{align*}
+%where the first line is by coupling through the initial distribution $p_0$, the second line is by Jensen's inequality and the third inequality uses the preceding bound. Setting $s = \delta$ and by our choice of $u= 1/L$ we have that the squared Wasserstein distance is bounded as
+%\begin{align*}
+%W^2_2(\Phit_\delta p_0,\tilde{\Phi} p_0) \le  \frac{d\sigma^2}{L^2}\left(\delta^2 + \frac{\delta^4}{3} \right).
+%\end{align*}
+%Given our assumption that $\delta$ is chosen to be smaller than 1, this gives the upper bound:
+%\begin{align*}
+%W^2_2(\Phit_\delta p_0,\Phih_\delta p_0) \le  \frac{4d\sigma^2 \delta^2}{3L^2}.
+%\end{align*}
+%\end{Proof}
+
+
+
+
+
+

@@ -1,0 +1,672 @@
+%\documentclass[anon,12pt]{colt2018} % Anonymized submission
+\documentclass[final, 12pt]{colt2018} % Include author names
+
+% The following packages will be automatically loaded:
+% amsmath, amssymb, natbib, graphicx, url, algorithm2e
+
+\title[More Adaptive Algorithms for Adversarial Bandits]{More Adaptive Algorithms for Adversarial Bandits}
+\usepackage{float}
+%\restylefloat{table}
+
+\usepackage{algorithm}
+\usepackage{times}
+\usepackage{makecell}
+\usepackage[final]{showlabels}
+%\usepackage{tablefootnote}
+\usepackage{threeparttable}
+\allowdisplaybreaks
+%\usepackage[ruled]{algorithm2e}
+ %vlined, ,linesnumbered
+\usepackage{bbm}
+\usepackage{enumerate}
+%\usepackage{amsmath,amsthm,amsfonts,amssymb,mathrsfs}
+%\addbibresource{main.bib}
+\newcommand{\p}{\prime}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+\newcommand{\inner}[1]{ \left\langle {#1} \right\rangle }
+\newcommand{\inn}[1]{ \langle {#1} \rangle }
+\newcommand{\absolute}[1]{ \left\lvert {#1} \right\rvert }
+\newcommand{\abs}[1]{ \lvert {#1} \rvert }
+\usepackage{amsmath}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\newcommand{\reg}{\text{\rm Reg}}
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{theorem}{Theorem}
+\newtheorem{cor}[theorem]{Corollary}
+%\newtheorem{remark}[theorem]{Remark}
+%\newtheorem{remark}{Remark}
+%\newtheorem{prop}{Proposition}
+%\newtheorem{definition}{Definition}
+%\newtheorem{assumption}{Assumption}
+ % Use \Name{Author Name} to specify the name.
+ % If the surname contains spaces, enclose the surname
+ % in braces, e.g. \Name{John {Smith Jones}} similarly
+ % if the name has a "von" part, e.g \Name{Jane {de Winter}}.
+ % If the first letter in the forenames is a diacritic
+ % enclose the diacritic in braces, e.g. \Name{{\'E}louise Smith}
+
+ % Two authors with the same address
+  % \coltauthor{\Name{Author Name1} \Email{abc@sample.com}\and
+  %  \Name{Author Name2} \Email{xyz@sample.com}\\
+  %  \addr Address}
+
+ % Three or more authors with the same address:
+ % \coltauthor{\Name{Author Name1} \Email{an1@sample.com}\\
+ %  \Name{Author Name2} \Email{an2@sample.com}\\
+ %  \Name{Author Name3} \Email{an3@sample.com}\\
+ %  \addr Address}
+
+
+ % Authors with different addresses:
+ \coltauthor{\Name{Chen-Yu Wei} \Email{chenyu.wei@usc.edu} \\
+ \addr University of Southern California
+ \AND
+ \Name{Haipeng Luo} \Email{haipengl@usc.edu}\\
+ \addr University of Southern California
+ }
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{abstract}
+\end{abstract}
+
+\begin{keywords}
+multi-armed bandit, semi-bandit, adaptive regret bounds, optimistic online mirror descent, increasing learning rate
+\end{keywords}
+
+\section{Introduction}
+\input{intro}
+
+\section{Problem Setup and Algorithm Overview}
+\label{section:notations}
+We consider the combinatorial bandit problem with semi-bandit feedback, which subsumes the classic multi-armed bandit problem. The learning process proceeds for $T$ rounds. In each round, the learner selects a subset of arms, denoted by a binary vector $b_t$ from a predefined action set $\mathcal{X}\subseteq \{0,1\}^K$, and suffers loss $b_t^\top \ell_t$, where $\ell_t \in [-1,1]^K$ is a loss vector decided by an adversary. The feedback received by the learner is the vector $(b_{t,1}\ell_{t,1}, \ldots, b_{t,K}\ell_{t,K})$,
+or in other words, the loss of each chosen arm. For simplicity, we assume that the adversary is oblivious and the loss vectors $\ell_1, \ldots, \ell_T$ are decided ahead of time independent of the learner's actions.
+
+The learner's goal is to minimize the {\it regret}, which is the gap between her accumulated loss and that of the best fixed action $b^*\in\mathcal{X}$. Formally the regret is defined as
+\begin{align*}
+\reg_T\triangleq \sum_{t=1}^T b_t^\top \ell_{t}- \sum_{t=1}^T b^{*\top}\ell_{t}, \text{ where } b^*\triangleq \min_{b\in\mathcal{X}} \sum_{t=1}^T b^\top \ell_{t}. 
+\end{align*}
+
+In the special case of multi-armed bandit, the action set $\mathcal{X}$ is $\{\mathbf{e}_1, \mathbf{e}_2, \ldots, \mathbf{e}_K\}$ where $\mathbf{e}_i$ denotes the $i$-th standard basis vector. In other words, in each round the learner picks one arm $i_t \in [K] \triangleq \{1,2,\ldots,K\}$ (corresponding to $b_t = \mathbf{e}_{i_t}$), and receives the loss $\ell_{t,i_t}$. We denote the best arm by $i^* \triangleq \min_{i \in [K]} \sum_{t=1}^T \ell_{t, i}$.
+
+%The OMD framework relies heavily on the notion of Bregman divergence. 
+\paragraph{Notation.}
+For a convex function $\psi$ defined on a convex set $\Omega$, the Bregman divergence of two points $u, v\in \Omega$ with respect to $\psi$ is defined as $D_{\psi}(u,v)\triangleq\psi(u)-\psi(v)-\inn{\nabla\psi(v), u-v}$. The log-barrier used in this work is of the form $\psi(u)=\sum_{i=1}^K \frac{1}{\eta_i}\ln \frac{1}{u_i}$ for some learning rates $\eta_1, \ldots, \eta_K \geq 0$ and $u \in \text{conv}(\mathcal{X})$, the convex hull of $\mathcal{X}$. With $h(y)\triangleq y-1-\ln y$, the Bregman divergence with respect to the log-barrier is: 
+%\begin{align*}
+$D_{\psi}(u,v)=\sum_{i=1}^K \frac{1}{\eta_i} \left(\ln \frac{v_i}{u_i} + \frac{u_i-v_i}{v_i}\right)=\sum_{i=1}^K \frac{1}{\eta_i} h\left(\frac{u_i}{v_i}\right).$
+%\end{align*}
+%where $h(y)\triangleq y-1-\ln y$. %Note that $h(y)$ is always positive, and is increasing when $y\geq 1$. 
+
+%Other notations we use in the paper are as below: $[N]$ denotes $\{1,2,\ldots, N\}$; for any $v=(v_1, \ldots, v_K)\in \mathbb{R}^K$, $v^2$ denotes the vector $(v_1^2, \ldots, v_K^2)$; for a binary vector $b\in \{0,1\}^K$, we write $i\in b$ if $b_i=1$; $\mathbf{1}$ is the all-one vector $(1,1,\ldots, 1)$; $\text{conv}(\mathcal{X})$ is the convex hull of $\mathcal{X}$; $\tilde{\mathcal{O}}(\cdot)$ is the big-O notation that can hide $(\ln T)^n$ factors for $n\in \mathbb{R}_+$, and $\tilde{\Omega}$ is the big-$\Omega$ notation that hides $(\ln T)^{-n}$. Although we also use $\Omega$ to denote $\text{conv}(\mathcal{X})$, it should be clear from the contexts which one we are referring to. 
+
+The all-zero and all-one vector are denoted by $\mathbf{0}$ and $\mathbf{1}$ respectively.
+$\Delta_K$ represents the ($K-1$)-dimensional simplex.
+For a binary vector $b$ we write $i\in b$ if $b_i=1$. 
+Denote by $K_0 = \max_{b \in \mathcal{X}}\|b\|_0$ the maximum number of arms an action in $\mathcal{X}$ can pick.
+Note that for MAB, $K_0$ is simply $1$.
+
+We define $\ell_0 = \mathbf{0}$ for notational convenience. 
+At round $t$, for an arm $i$ we denote its accumulated loss by $L_{t,i}\triangleq \sum_{s=1}^t \ell_{s,i}$,
+its average loss by $\mu_{t,i} \triangleq \frac{1}{t}L_{t,i}$,
+its (unnormalized) variance by $Q_{t,i}\triangleq \sum_{s=1}^t (\ell_{s,i}-\mu_{t,i})^2$,
+and its first-order path-length by $V_{t,i}\triangleq \sum_{s=1}^t \absolute{\ell_{s,i}-\ell_{s-1,i}}$. 
+%and its second-order path-length by $D_{t,i}\triangleq \sum_{s=1}^t (\ell_{s,i}-\ell_{s-1,i})^2$.
+For MAB, we define $\alpha_i(t)$ to be the most recent time when arm $i$ is picked prior to round $t$ ,
+that is, $\alpha_i(t) = \max\{s < t : i_s = i\}$ (or $0$ if the set is empty).
+%Similarly, in the analysis we define $\beta_i(t)$ to be the next time when arm $i$ is picked starting from round $t$,
+%that is, $\beta_i(t) = \min\{s \geq t : i_s = i\}$ (or $T+1$ if the set is empty). 
+
+\subsection{Algorithm Overview}
+As mentioned our algorithm falls into the OMD framework that operates on the set $\Omega = \text{conv}(\mathcal{X})$.
+The vanilla OMD formula for the bandit setting is $w_{t} = \argmin_{w\in\Omega} \{ \inn{w, \hat{\ell}_{t-1}}+D_{\psi}(w,w_{t-1}) \}$
+for some regularizer $\psi$ and some (unbiased) estimator $\hat{\ell}_{t-1}$ of the true loss $\ell_{t-1}$.
+The learner then picks an action $b_t$ randomly such that $\mathbb{E}[b_t] = w_t$, and constructs the next loss estimator $\hat{\ell}_t$ based on the bandit feedback.
+Our algorithm, however, requires several extra ingredients. The generic update rule is
+\begin{align}
+w_t &= \argmin_{w\in\Omega} \left\{ \inn{w, m_t}+D_{\psi_t}(w,w_t^\p) \right\},\label{eqn:update_rule_1}\\ 
+w_{t+1}^\p &= \argmin_{w\in\Omega} \left\{ \inn{w, \hat{\ell}_t+a_t}+D_{\psi_t}(w,w_t^\p) \right\}  \label{eqn:update_rule_2}.
+\end{align}
+
+\begin{algorithm}[t]
+\DontPrintSemicolon
+\caption{\small \textbf{B}arrier-\textbf{R}egularized with \textbf{O}ptimism and \textbf{AD}aptivity \textbf{O}nline \textbf{M}irror \textbf{D}escent (\textsc{\textbf{Broad-OMD}})}
+\label{alg:general}
+\textbf{Define}: $\Omega=\text{conv}(\mathcal{X})$, $\psi_t(w)=\sum_{i=1}^K \frac{1}{\eta_{t,i}}\ln\frac{1}{w_i}$. \\
+\textbf{Initialize}: $w_1^\p = \argmin_{w\in \Omega}\psi_1(w)$.\\
+\For{$t=1, 2, \ldots, T$}{
+   $w_t = \argmin_{w\in\Omega} \big\{ \inner{w,m_t} + D_{\psi_t}(w, w_t^\p)\big\}$. \\
+   Draw $b_t\sim w_t$, suffer loss $b_t^\top \ell_t$, and observe $\{b_{t,i}\ell_{t,i}\}_{i=1}^K$. \\
+   Construct $\hat{\ell}_t$ as an unbiased estimator of $\ell_t$. \\
+   Let $a_{t,i}=\begin{cases}
+       6\eta_{t,i}w_{t,i}(\hat{\ell}_{t,i}-m_{t,i})^2,  &\text{(Option I)}\\
+       0. &\text{(Option II)}
+       \end{cases}$\\
+   $w_{t+1}^\p=\argmin_{w\in\Omega} \big\{ \langle w,\hat{\ell}_t+ a_t\rangle  +D_{\psi_t}(w, w^\p_t) \big\}.$ 
+}    
+\end{algorithm}
+
+ \renewcommand{\arraystretch}{1.4}
+\begin{table}[t] 
+  \centering
+  \caption{Different configurations of \textsc{Broad-OMD} and regret bounds for MAB. 
+  See Section~\ref{section:notations} and the corresponding sections for the meaning of notation. 
+  For the last two rows, to obtain parameter-free algorithms one needs to apply a doubling trick to decrease the learning rate.}
+  \begin{threeparttable}
+  \begin{tabular}{ | c | c | c | c | c | c | }
+    \hline
+    Sec. & Option & $m_{t,i}$ & $\hat{\ell}_{t,i}$ & $\eta_{t,i}$ & $\mathbb{E}[\reg_T]$ in $\tilde{\mathcal{O}}$ \\ \hline
+    \ref{subsubsection:variation bound} & I & $\tilde{\mu}_{t-1,i}$ & $\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$ & fixed & $\sqrt{KQ_{T,i^*}}$ \\ \hline
+    \ref{subsubsection:path-length} &  I & $\ell_{\alpha_i(t),i}$ & $\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{\bar{w}_{t,i}}+m_{t,i}$ & increasing & $K\sqrt{V_{T,i^*}}$ \\ \hline
+    \ref{subsection:first_order_better_k} & II & $\ell_{\alpha_i(t),i}$ & $\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$ & fixed & $ \sqrt{K\sum_{i=1}^K V_{T,i}}$ \\  \hline
+   \ref{section:best of both worlds} & II & $\ell_{t,i_t}$ &  $\frac{\ell_{t,i}\mathbbm{1}\{i_t=i\}}{w_{t,i}}$ & fixed & $\min\{ \sqrt{KL_{T,i^*}}, \frac{K}{\Delta}\}$ \\ \hline
+  \end{tabular}
+  \end{threeparttable}
+  \label{table:summary}
+\end{table}
+
+Here, we still play randomly according to $w_t$, which is now updated to minimize its loss with respect to $m_t \in [-1,1]^K$, 
+an {\it optimistic prediction} of the true loss vector $\ell_t$,
+penalized by a Bregman divergence term associated with a {\it time-varying} regularizer $\psi_t$.
+In addition, we maintain a sequence of auxiliary points $w_t^\p$ that is updated using the loss estimator $\hat{\ell}_t$ and an extra {\it correction term} $a_t$.
+
+When $a_t = \mathbf{0}$, this is studied in~\citep{rakhlin2013online} under the name optimistic OMD. 
+When $a_t \neq \mathbf{0}$, the closest algorithm to this variant of OMD is its FTRL version studied by~\citet{steinhardt2014adaptivity}.
+However, while $\psi_t$ is fixed for all $t$ in~\citep{steinhardt2014adaptivity},\footnote{%
+\citet{steinhardt2014adaptivity} also uses the notation $\psi_t$, but it corresponds to putting $a_t$ into a fixed regularizer.}
+some of our results crucially rely on using time-varying $\psi_t$ (which corresponds to time-varying learning rate)
+and also the OMD update form instead of FTRL. 
+
+It is well known that the classic Exp3 algorithm falls into this framework with $m_t = a_t = \mathbf{0}$ and $\psi_t$ being the (negative) entropy.
+To obtain our results, first, it is crucial to use the log-barrier as the regularizer instead, that is, $\psi_t(w)=\sum_{i=1}^K \frac{1}{\eta_{t,i}}\ln\frac{1}{w_i}$
+for some individual and time-varying learning rates $\eta_{t,i}$.
+Second, we focus on two options of $a_t$.
+For results that depend on some quantity of only the best arm, we use a sophisticated choice of $a_t$ that we explain in details in Section~\ref{section:Option I}.
+For the other results we simply set $a_t = \mathbf{0}$.
+With the choices of $m_t, \hat{\ell}_t$, and $\eta_{t}$ open, we present this generic framework in Algorithm~\ref{alg:general}
+and name it \textsc{Broad-OMD} (short for Barrier-Regularized with Optimism and ADaptivity Online Mirror Descent).
+
+In Section~\ref{section:Option I} and~\ref{section:Option II} respectively, we prove general regret bounds for \textsc{Broad-OMD} 
+with Option I and Option II, followed by specific applications in the MAB setting achieved via specific choices of $m_{t}, \hat{\ell}_t$, and $\eta_{t}$.
+The results and the corresponding configurations of the algorithm are summarized in Table \ref{table:summary}.  
+
+
+
+\paragraph{Computational efficiency.} 
+The sampling step $b_t \sim w_t$ can be done efficiently as long as $\Omega$ can be described by a polynomial number of constraints.
+The optimization problems in the update rules of $w_t$ and $w_t'$ are convex and can be solved by general optimization methods.
+For many special cases, however, these two computational bottlenecks have simple solutions.
+Take MAB as an example, $w_t$ directly specifies the probability of picking each arm,
+and the optimization problems can be solved via a simple binary search~\citep{agarwal2017corralling}.
+
+
+\section{\textsc{Broad-OMD} with Option I}
+\label{section:Option I}
+In this section we focus on \textsc{Broad-OMD} with Option I.
+We first show a general lemma that update rules~\eqref{eqn:update_rule_1} and~\eqref{eqn:update_rule_2} guarantee,
+no matter what regularizer $\psi_t$ is used and what $a_t, m_t$, and $\hat{\ell}_t$ are.
+
+\begin{lemma}
+\label{thm:general_instantaneous}
+For the update rules~\eqref{eqn:update_rule_1} and~\eqref{eqn:update_rule_2}, if the following condition holds:
+\begin{align}
+\inn{w_t-w^\p_{t+1}, \hat{\ell}_t-m_t+a_t} \leq \inn{w_t, a_t}, \label{eqn:condition1} 
+\end{align}
+then for all $u\in \Omega$, we have
+\begin{align}
+\inn{w_t-u, \hat{\ell}_t}\leq D_{\psi_t}(u,w_t^\p)-D_{\psi_t}(u,w^\p_{t+1})+\inn{u,a_t}-A_t,\label{eqn:regret_bound:bregman}
+\end{align}
+where $A_t\triangleq D_{\psi_t}(w_{t+1}^\p, w_t)+D_{\psi_t}(w_t, w_t^\p)\geq 0$.
+\end{lemma}
+ 
+%The condition \eqref{eqn:condition1} is essentially the one stated in Theorem 3.1 of \cite{steinhardt2014adaptivity}, but we translate it from FTRL to OMD language. One can indeed see that the regret has a term $\inn{u,a_t}$ that adapts to the regret benchmark. 
+
+%Besides, the regularizers we use in our algorithm are \textit{log-barriers}. Therefore, we name this algorithm the Barrier-Regularized with Optimism and ADaptivity Online Mirror Descent, abbreviated \textsc{Broad-OMD}. The pseudocode is shown in Algorithm \ref{alg:general}. 
+
+%\textsc{Broad-OMD} can be applied to all combinatorial bandit problems with semi-bandit feedback. The classic multi-armed bandit problem is a special case of it. The algorithm is designed with the typical trick to feed unbiased loss estimators to a full-information algorithm. 
+
+%To see the usefulness of the bound in Lemma \ref{thm:general_instantaneous}, let's now assume that $\psi_t=\psi$ for all $t$, and assume \eqref{eqn:condition1} indeed holds. Then by telescoping and dropping negative terms, Lemma \ref{thm:general_instantaneous} implies $\sum_{t=1}^{T} \inn{w_t-u,\hat{\ell}_t}\leq D_{\psi}(u,w^\p_1)+\sum_{t=1}^T \inn{u,a_t}$. We note that the regret achieved by Optimistic OMD is $\sum_{t=1}^{T} \inn{w_t-u,\hat{\ell}_t}\leq D_{\psi}(u,w^\p_1)+\sum_{t=1}^T D_\psi(w_t, w_{t+1}^\p)$. One can see that the second term with \textsc{Broad-OMD} is adaptive to the regret comparator, while Optimistic-OMD's does not. 
+
+The important part of bound~\eqref{eqn:regret_bound:bregman} is the term $\inn{u,a_t}$, 
+which allows us to derive regret bounds that depend on only the comparator $u$.
+The key is now how to configure the algorithm such that condition~\eqref{eqn:condition1} holds, 
+while leading to a reasonable bound~\eqref{eqn:regret_bound:bregman} at the same time. 
+
+In the work of~\citep{steinhardt2014adaptivity} for full-information problems, $a_t$ can be defined as $a_{t,i} = \eta_{t,i}(\ell_{t,i}-m_{t,i})^2$,
+which suffices to derive many interesting results.
+However, in the bandit setting this is not applicable since $\ell_t$ is unknown.
+The natural first attempt is to replace $\ell_t$ by $\hat{\ell}_t$, but one would quickly realize the common issue in the bandit literature:
+$\hat{\ell}_{t,i}$ is often constructed via inverse propensity weighting, and thus $(\hat{\ell}_{t,i}-m_{t,i})^2$ can be of order $1/w_{t,i}^2$, which is too large.
+
+Based on this observation, our choice for $a_t$ is $a_{t,i}=6\eta_{t,i}w_{t,i}(\hat{\ell}_{t,i}-m_{t,i})^2$ (the constant $6$ is merely for technical reasons). 
+The extra term $w_{t,i}$ can then cancel the aforementioned large term $1/w_{t,i}^2$ in expectation, similar to the classic trick done in the analysis of Exp3~\citep{auer2002nonstochastic}.
+
+%More precisely, with the above choice of $a_{t,i}$ and $\hat{\ell}_{t,i}$, we have 
+%\begin{align}
+%\mathbb{E}_{b_t}[\inn{u,a_t}]=\mathbb{E}_{b_t}\left[ \sum_{i=1}^K 18\eta u_i(\ell_{t,i}-m_{t,i})^2 \frac{\mathbbm{1}\{i\in b_t\}}{w_{t,i}} \right]=18\sum_{i=1}^K \eta_{t,i}u_{i}(\ell_{t,i}-m_{t,i})^2.\label{eqn:no_explode}
+%\end{align}
+%Inserting this into \eqref{eqn:regret_bound:a_t_neq_0}, we see that the regret bound here is only related to the estimation errors on the coordinates the benchmark takes (i.e., $u$), rather than those the learner chooses (i.e., $b_t$). This is essentially what \textit{adaptivity} means. 
+
+%After we add this $w_{t,i}$, we turn to worry about whether \eqref{eqn:condition1} can hold, because now its right-hand side is tighter. By some standard analysis in OMD, the left-hand side of \eqref{eqn:condition1} can often be bounded by a constant times \sloppy$(\hat{\ell}_{t}-m_t+a_t)^\top {\nabla^{-2}\psi_t(w_t)}(\hat{\ell}_{t}-m_t+a_t)$. The value of this quantity is smaller as the regularizer $\psi_t$ is more curved (i.e., larger Hessian). Therefore, in order to make \eqref{eqn:condition1} hold, we are forced to use the log-barrier regularizer instead of the commonly used negative-entropy regularizer. 
+
+Note that with a smaller $a_t$, condition~\eqref{eqn:condition1} becomes more stringent.
+The entropy regularizer used in~\citep{steinhardt2014adaptivity} no longer suffices to maintain such a condition.
+Instead, it turns out that the log-barrier regularizer used by \textsc{Broad-OMD} addresses the issue, as shown below.
+
+\begin{theorem}
+\label{lemma:MAB_condition}
+If the following three conditions hold for all $t,i$: 
+(i) $\eta_{t,i}\leq \frac{1}{162}$,
+(ii) $w_{t,i}\abs{\hat{\ell}_{t,i}-m_{t,i}}\leq 3$,
+(iii) $\sum_{i=1}^K \eta_{t,i}w_{t,i}^2(\hat{\ell}_{t,i}-m_{t,i})^2\leq \frac{1}{18},$
+then \textsc{Broad-OMD} with $a_{t,i}=6\eta_{t,i}w_{t,i}(\hat{\ell}_{t,i}-m_{t,i})^2$ guarantees condition~\eqref{eqn:condition1}.
+%\begin{align}
+%\inn{w_t-w_{t+1}^\p, \hat{\ell}_t-m_t+ a_t} \leq \inn{w_t, a_t}. \label{eqn:condition_hold}
+%\end{align}
+Moreover, it guarantees for any $u\in \Omega$ (recall $h(y) = y - 1 - \ln y \geq 0$), 
+\begin{align}
+\sum_{t=1}^T \inn{w_t-u, \hat{\ell}_t}\leq \sum_{i=1}^K \left( \frac{\ln\frac{w^\p_{1,i}}{u_i}}{\eta_{1,i}} + \sum_{t=1}^T \left(\frac{1}{\eta_{t+1,i}}-\frac{1}{\eta_{t,i}}\right)h\left(\frac{u_i}{w_{t+1,i}^\p}\right) \right) +\sum_{t=1}^T \inn{u,a_t}. \label{eqn:regret_bound:a_t_neq_0} 
+\end{align}
+\end{theorem}
+
+The three conditions of the theorem are usually trivially satisfied as we will show.
+Note that $h(\cdot)$ is always non-negative. Therefore, if the sequence $\{\eta_{t,i}\}_{t=1}^{T+1}$ is non-decreasing for all $i$,\footnote{%
+One might notice that $\eta_{T+1, i}$ is not defined here.
+Indeed this term is artificially added only to make the analysis of Section~\ref{subsubsection:path-length} more concise, and $\eta_{T+1,i}$ can be any positive number.
+In Algorithm~\ref{alg:increasing} we give it a concrete definition.
+} 
+the term $\sum_{t=1}^T \left(\frac{1}{\eta_{t+1,i}}-\frac{1}{\eta_{t,i}}\right)h\left(\frac{u_i}{w_{t+1,i}^\p}\right)$ in bound~\eqref{eqn:regret_bound:a_t_neq_0} 
+is non-positive. For some results we can simply discard this term, while for others, this term becomes critical.
+On the other hand, the term $\ln\frac{w^\p_{1,i}}{u_i}$ appears to be infinity if we want to compare with the best fixed action (where $u_i = 0$ for some $i$).
+However, this can be simply resolved by comparing with some close neighbor of the best action in $\Omega$ instead, similar to~\citep{foster2016learning, agarwal2017corralling}.
+
+One can now derive different results using Theorem~\ref{lemma:MAB_condition} with specific choices of $\hat{\ell}_t$ and $m_t$.
+As an example, we state the following corollary by using a variance-reduced importance-weighted estimator $\hat{\ell}_t$ as in~\citep{rakhlin2013online}.
+\begin{cor}
+\label{cor:clear_corollary}
+\textsc{Broad-OMD} with $a_{t,i}=6\eta_{t,i}w_{t,i}(\hat{\ell}_{t,i}-m_{t,i})^2$, any $m_{t,i} \in [-1, 1]$, $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i\in b_t\}}{w_{t,i}}+m_{t,i}$, and \sloppy $\eta_{t,i}=\eta \leq \frac{1}{162K_0}$ enjoys the following regret bound:
+%(for MAB, the last constraint can be $\eta_{t,i}=\eta\leq\frac{1}{162}$) 
+%Under the same settings and conditions as in Theorem \ref{lemma:MAB_condition}, if $\eta_{t,i}=\eta$ for all $t,i$, and $\hat{\ell}_t$ is constructed as $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i\in b_t\}}{w_{t,i}}+m_{t,i}$, then \textsc{Broad-OMD} enjoys the following regret bound:
+\begin{align*}
+\mathbb{E}\left[\reg_T\right]= \mathbb{E}\left[ \sum_{t=1}^T \inn{b_t-b^*, \ell_t} \right] \leq \frac{K\ln T}{\eta} + 6\eta\mathbb{E}\left[\sum_{t=1}^T \sum_{i: i\in b^*} (\ell_{t,i}-m_{t,i})^2\right] +\mathcal{O}(K_0). 
+\end{align*}
+%For MAB, the last $\mathcal{O}(K)$ term can be replaced by $\mathcal{O}(1)$. 
+\end{cor}
+%\begin{proof}{\textbf{(sketch)}}
+%Picking $u=b^*$ in \eqref{eqn:regret_bound:a_t_neq_0}, then we have: 
+%\begin{align*}
+%\mathbb{E}_{b_t}[\inn{u,a_t}]=C\eta\mathbb{E}_{b_t}\left[ \sum_{i=1}^K u_{i}w_{t,i}\times \frac{(\ell_{t,i}-m_{t,i})^2\{i\in b_t\}}{w_{t,i}^2} \right]=C\eta\sum_{i: i\in b^*} (\ell_{t,i}-m_{t,i})^2. 
+%\end{align*}
+%Also note the facts $\mathbb{E}\left[\sum_{t=1}^T \inn{w_t-u, \hat{\ell}_t}\right]=\mathbb{E}\left[ \sum_{t=1}^T \inn{b_t-b^*, \ell_t} \right]$, and $\mathbb{E}[B]=\mathcal{O}(1)$. Putting everything into \eqref{eqn:regret_bound:a_t_neq_0}, we get the desired bound.
+%\end{proof}
+%Here let's see what benefits does the bound \eqref{eqn:regret_bound:a_t_neq_0} bring to us. Assume for now that $\eta_{t,i}=\eta$ for all $t, i$, and the unbiased estimator $\hat{\ell}_t$ is constructed as $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i\in b_t\}}{w_{t,i}}+m_{t,i}$ for a general $m_{t,i}$. Picking $u=b^*$, then $\mathbb{E}_{b_t}[\inn{u,a_t}]=C\eta\mathbb{E}_{b_t}\left[ \sum_{i=1}^K u_{i}w_{t,i}\times \frac{(\ell_{t,i}-m_{t,i})^2\{i\in b_t\}}{w_{t,i}^2} \right]=C\eta \sum_{i=1}^K u_{i}(\ell_{t,i}-m_{t,i})^2=C\eta\sum_{i: i\in b^*} (\ell_{t,i}-m_{t,i})^2$. Furthermore, note that $\mathbb{E}\left[\sum_{t=1}^T \inn{w_t-u, \hat{\ell}_t}\right]=\mathbb{E}\left[ \sum_{t=1}^T \inn{b_t-b^*, \ell_t} \right]$. Thus, taking expectation on both sides of \eqref{eqn:regret_bound:a_t_neq_0} yields
+%\begin{align}
+%\mathbb{E}\left[ \sum_{t=1}^T \inn{b_t-b^*, \ell_t} \right] \leq \frac{K\ln T}{\eta} + C\eta\sum_{t=1}^T \sum_{i: i\in b^*} (\ell_{t,i}-m_{t,i})^2 +\mathcal{O}(1). 
+%\end{align}
+%if we ignore the negative terms and use the fact $\mathbb{E}[B]=\mathcal{O}(1)$. 
+
+One can see that the expected regret in Corollary \ref{cor:clear_corollary} only depends on the squared estimation error of $m_t$ for the actions that $b^*$ chooses! This is exactly the counterpart of results in~\citep{steinhardt2014adaptivity}, but for the more challenging combinatorial semi-bandit problem. 
+Note that our dependence on $K_0$ is also optimal~\citep{audibert2013regret}.
+
+In the following subsections, we invoke Theorem \ref{lemma:MAB_condition} with different choices of $\hat{\ell}_{t}$ and $m_t$ to obtain various more concrete adaptive bounds. %Although Theorem \ref{lemma:MAB_condition} is true for all combinatorial semi-bandit problems, 
+For simplicity, we state these results only in the MAB setting, but they can be straightforwardly generalized to the semi-bandit case. 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Variation Bounds  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Variance Bound}
+\label{subsubsection:variation bound}
+Our first application of \textsc{Broad-OMD} is an adaptive bound that depends on the variance of the best arm, that is, a bound of order $\tilde{\mathcal{O}}\left(\sqrt{KQ_{T,i^*}}\right)=\tilde{\mathcal{O}}\left(\sqrt{K\sum_{t=1}^T(\ell_{t,i^*}-\mu_{T,i^*})^2}\right)$.  
+According to Corollary~\ref{cor:clear_corollary}, if we were able to use $m_t = \mu_T$, with a best-tuned $\eta$ the bound is obtained immediately.
+The issue is of course that $\mu_T$ is unknown ahead of time. 
+In fact, even setting $m_t = \mu_{t-1}$ is infeasible due to the bandit feedback.
+
+Fortunately this issue was already solved by~\citet{hazan2011better} via the ``reservoir sampling'' technique. 
+%For the details of this technique, the readers are referred to \citep{hazan2011better}. 
+The high level idea is that one can spend a small portion of time on estimating $\mu_{t}$ on the fly. More precisely, by performing uniform exploration with probability $\min\left\{1, \frac{MK}{t}\right\}$ at time $t$ for some parameter $M$, one can obtain an estimator $\tilde{\mu}_{t}$ of $\mu_t$  such that $\mathbb{E}[\tilde{\mu}_{t}] = \mu_{t}$ and $\text{Var}[\tilde{\mu}_{t,i}]\leq \frac{Q_{t,i}}{Mt}$ (see~\citep{hazan2011better} for details). 
+Then we can simply pick $m_t=\tilde{\mu}_{t-1}$ %and construct $\hat{\ell}_t$ as $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$. 
+and prove the following result.
+\begin{theorem}
+\label{cor:variance_bound}
+\textsc{Broad-OMD} with reservoir sampling~\citep{hazan2011better}, $a_{t,i}=6\eta_{t,i}w_{t,i}(\hat{\ell}_{t,i}-m_{t,i})^2$, $m_{t,i}=\tilde{\mu}_{t-1,i}$, $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$, and $\eta_{t,i}=\eta\leq \frac{1}{162}$ guarantees
+\begin{align*}
+\mathbb{E}\left[\reg_T\right]= \mathcal{O}\left(\frac{K\ln T}{\eta}+\eta Q_{T,i^*} + K(\ln T)^2\right).
+\end{align*}
+With the optimal tuning of $\eta$, the regret is thus of order $\tilde{\mathcal{O}}\left(\sqrt{KQ_{T,i^*}}+K\right)$.
+\end{theorem}
+
+\subsection{Path-length Bound}
+\label{subsubsection:path-length}
+
+Our second application is to obtain path-length bounds.
+The counterpart in the full-information setting is a bound in terms of the second-order path-length $\sum_{t=1}^T(\ell_{t,i^*}-\ell_{t-1,i^*})^2$~\citep{steinhardt2014adaptivity}. 
+Again, in light of Corollary~\ref{cor:clear_corollary}, if we were able to pick $m_t = \ell_{t-1}$ the problem would be solved.
+The difficulty is again that $\ell_{t-1}$ is not fully observable.
+
+%However in the bandit setting, to get a path-length bound like this seems to be a much more challenging problem, and it is still not clear how to achieve this bound or whether it is possible at all. The difficulty lies in that the learner only observes the loss of one arm in each round, and thus the full-information approach that lets $m_{t,i}=\ell_{t-1,i}$ for all $i$ \citep{chiang2012online, rakhlin2013online, steinhardt2014adaptivity} is no longer feasible. 
+
+While it is still not clear how to achieve such a second-order path-length bound or whether it is possible at all,
+we propose a way to obtain a slightly weaker first-order path-length bound 
+$\tilde{\mathcal{O}}\left(K\sqrt{V_{T,i^*}}\right)=\tilde{\mathcal{O}}\Big(K\sqrt{\sum_{t=1}^T\abs{\ell_{t,i^*}-\ell_{t-1,i^*}}}\Big)$.
+Note that in the worst case this is $\sqrt{K}$ times worse than the optimal regret $\tilde{\mathcal{O}}(\sqrt{TK})$.
+
+%Fortunately, we can still obtain some weaker path-length bounds. In this section, an algorithm achieving the expected regret of \sloppy$\tilde{\mathcal{O}}\left(K\sqrt{V_{T,i^*}}\right)=\tilde{\mathcal{O}}\left(K\sqrt{\sum_{t=1}^T\abs{\ell_{t,i^*}-\ell_{t-1,i^*}}}\right)$ is introduced. This bound is weaker in the sense that it is a first-order rather than a second-order bound, and its dependency on $K$ is slightly worse than an ordinary MAB algorithm. We will see another path-length bound that achieves $\tilde{\mathcal{O}}\left(\sqrt{K\sum_{i=1}^K V_{T,i}}\right)$ in Section \ref{section:Option II}. 
+
+The idea is to set $m_{t,i}$ to be the most recent observed loss of arm $i$, that is, $m_{t,i}=\ell_{\alpha_i(t),i}$, where $\alpha_i(t)$ is defined in Section \ref{section:notations}.
+%, and let $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$. 
+While the estimation error $(\ell_{t,i}-\ell_{\alpha_i(t),i})^2$ could be much larger than $(\ell_{t,i}-\ell_{t-1,i})^2$, the quantity we aim for, 
+observe that %if $t-\alpha_i(t)$ is small, the two estimation errors should be close; and 
+if $t-\alpha_i(t)$ is large, it means that arm $i$ has bad performance before time $t$ so that the learner seldom draws arm $i$.
+In this case, the learner might have accumulated negative regret with respect to arm $i$, which can potentially be used to compensate the large estimation error. 
+
+To formalize this intuition, we go back to the bound in Theorem~\ref{lemma:MAB_condition} and examine the key term $\sum_{t=1}^T \inn{u, a_t}$
+after plugging in $u = \mathbf{e}_i$ for some arm $i$, $m_{t,i}=\ell_{\alpha_i(t),i}$, and $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$. 
+We assume $\eta_{t,i}=\eta$ for simplicity and also use the fact $w_{t,i}\abs{\hat{\ell}_{t,i}-m_{t,i}}\leq 2$.
+We then have
+\begin{align}
+\sum_{t=1}^T \inn{u,a_t}&=6\eta\sum_{t=1}^T w_{t,i}(\hat{\ell}_{t,i}-\ell_{\alpha_i(t),i})^2 \leq 12\eta\sum_{t=1}^T \abs{\hat{\ell}_{t,i}-\ell_{\alpha_i(t),i}}
+= 12\eta\sum_{t: i_t=i} \frac{\abs{\ell_{t,i}-\ell_{\alpha_i(t),i}} }{w_{t,i}} \nonumber \\
+&\leq 12\eta\sum_{t: i_t=i} \frac{\sum_{s=\alpha_i(t)+1}^t \abs{\ell_{s,i}-\ell_{s-1,i}} }{w_{t,i}}  
+\leq12\eta \left(\max_{t\in[T]} \frac{1}{w_{t,i}}\right) V_{T,i}. \label{eqn:path_length_trick}
+\end{align}
+%where $\beta_{i}(t)$ is also defined in Section \ref{section:notations}, and $T_i$ is the last round arm $i$ is drawn in the whole horizon. 
+
+%One can observe that the path length of arm $i$ is penalized with a larger factor (i.e., larger $\frac{1}{w_{\beta_i(t),i}}$) when it is less often drawn around time $t$ (i.e., smaller $w_{\beta_i(t),i}$). Similar to what we just described, this large factor has the chance to be compensated by previously accumulated negative regret. 
+
+Therefore, the term $\sum_{t=1}^T \inn{u,a_t}$ is close to the first-order path-length but with an extra factor $\max_{t\in[T]} \frac{1}{w_{t,i}}$.
+To cancel this potentially large factor, we adopt the increasing learning rate schedule recently used in~\citep{agarwal2017corralling}. 
+The idea is that the term $h\big(\frac{u_i}{w_{t+1,i}^\p}\big)$ in Eq.~\eqref{eqn:regret_bound:a_t_neq_0} is close to $\frac{1}{w_{t+1,i}}$ if $u_i$ is close to $1$.
+If we increase the learning rate whenever we encounter a large $\frac{1}{w_{t+1,i}}$, 
+then $\Big(\frac{1}{\eta_{t+1,i}}-\frac{1}{\eta_{t,i}}\Big)h\Big(\frac{u_i}{w_{t+1,i}^\p}\Big)$ becomes a large negative term in terms of $\frac{-1}{w_{t+1,i}}$,
+which exactly compensates the term $\sum_{t=1}^T \inn{u,a_t}$.
+
+To avoid the learning rates increased by too much, 
+similarly to~\citep{agarwal2017corralling} we use some individual threshold ($\rho_{t,i}$) to decide when to increase the learning rate
+and update these thresholds in some doubling manner. 
+Also, we mix $w_t$ with a small amount of uniform exploration to further ensure that it cannot be too small.
+The final algorithm, call \textsc{Broad-OMD+}, is presented in Algorithm~\ref{alg:increasing} (only for the MAB setting for simplicity).
+We prove the following theorem.
+%The idea is to let the $-D_\psi(u,w_{t+1}^\p)$ term in Lemma \ref{thm:general_instantaneous} come into help. Similar to \citep{agarwal2017corralling}, with this increasing learning rate mechanism, we need to control the magnitude of the loss estimator $\hat{\ell}_t$, so we mix a small enough probability (i.e., $\frac{1}{KT}\mathbf{1}$) to $w_t$.  We rewrite our algorithm as \textsc{Broad-OMD+} in Algorithm \ref{alg:increasing}. We write it in the MAB setting for simplicity, and we also fix the choices of $a_t$, $\hat{\ell}_t$ in the algorithm. 
+
+
+\begin{algorithm}[t]
+\DontPrintSemicolon
+\caption{\textsc{Broad-OMD}+ (specialized for MAB)}
+\label{alg:increasing}
+\textbf{Define:} $\kappa=e^{\frac{1}{\ln T}}$, $\psi_t(w)= \sum_{i=1}^K \frac{1}{\eta_{t,i}} \ln \frac{1}{w_{i}}$. \\
+\textbf{Initialize}: $w^\p_{1, i} = 1/K$, $\rho_{1, i} = 2K$ for all $i \in [K]$.\\
+\For{$t=1, 2, \ldots, T$}{
+   $w_t = \argmin_{w\in\Delta_K} \big\{ \inner{w,m_t} + D_{\psi_t}(w, w_t^\p)\big\}$. \\
+   $\bar{w}_{t} = (1-\frac{1}{T})w_{t} + \frac{1}{KT}\mathbf{1}$. \\
+   Draw $i_t\sim \bar{w}_t$, suffer loss $\ell_{t,i_t}$, and let $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{\bar{w}_{t,i}}+m_{t,i}$.\\
+   Let $a_{t,i}=6\eta_{t,i}w_{t,i}(\hat{\ell}_{t,i}-m_{t,i})^2$.
+   \\
+   $w_{t+1}^\p=\argmin_{w\in\Delta_K} \big\{ \langle w,\hat{\ell}_t+a_t\rangle  +D_{\psi_t}(w, w^\p_t) \big\}.$ \\
+   \For{$i=1, \ldots, K$}{
+      \lIf{$\frac{1}{\bar{w}_{t,i}} > \rho_{t,i}$}{
+         $\rho_{t+1,i}=\frac{2}{\bar{w}_{t,i}}$, $\eta_{t+1,i}=\kappa\eta_{t,i}$. 
+      }
+      \lElse{
+         $\rho_{t+1,i}=\rho_{t,i}$, $\eta_{t+1,i}=\eta_{t,i}$.
+      }
+   }
+}    
+\end{algorithm}
+
+%One can verify that even with the above modifications, Lemma \ref{thm:general_instantaneous} and \ref{lemma:MAB_condition} still hold because we do not change the definitions of $w_t$ or $w_{t+1}^\p$ (i.e., update rules \eqref{eqn:update_rule_1}, \eqref{eqn:update_rule_2} remain the same). Based on them, we can prove the following theorem. 
+\begin{theorem}
+\label{thm:path_length}
+\textsc{Broad-OMD+} with $m_{t,i}=\ell_{\alpha_i(t), i}$ and $\eta_{1,i}=\eta\leq \frac{1}{810}$ guarantees 
+\begin{align*}
+\mathbb{E}\left[\reg_T \right] \leq \frac{2K\ln T}{\eta} + \mathbb{E}[\rho_{T+1,i^*}]\left( \frac{-1}{40\eta\ln T} + 90\eta V_{T,i^*} \right) + \mathcal{O}\left( 1 \right)
+\end{align*}
+when $T\geq 3$. Picking $\eta = \min\Big\{\frac{1}{810}, \frac{1}{60\sqrt{V_{T,i^*} \ln T}}\Big\}$ so that the second term is non-positive leads to $\mathbb{E}\left[\reg_T \right] = \tilde{\mathcal{O}}\left( K\sqrt{V_{T,i^*}}+K \right)$. 
+\end{theorem}
+
+\section{\textsc{Broad-OMD} with Option II}
+\label{section:Option II}
+%As mentioned, \textsc{Broad-OMD} with $a_t=\mathbf{0}$ is simply an optimistic OMD with the log-barrier regularizer. However, we will see its several interesting applications that were not exploited in previous works. The following lemma holds for general semi-bandit problems. 
+
+In this section, we move on to discuss \textsc{Broad-OMD} with Option II, that is, $a_t = \mathbf{0}$. 
+We also fix $\eta_{t,i} = \eta$, although in the doubling trick discussed later, different values of $\eta$ will be used for different runs of  \textsc{Broad-OMD}.
+Again we start with a general lemma that holds no matter what regularizer $\psi_t$ is used and what $m_t$ and $\hat{\ell}_t$ are.
+
+\begin{lemma}
+\label{lemma:simple_lemma}
+For the update rules~\eqref{eqn:update_rule_1} and~\eqref{eqn:update_rule_2} with $a_t=\mathbf{0}$, we have for all $u\in \Omega$, 
+\begin{align*}
+\inn{w_t-u, \hat{\ell}_t}\leq D_{\psi_t}(u,w_t^\p)-D_{\psi_t}(u,w^\p_{t+1})+\inn{w_t-w_{t+1}^\p, \hat{\ell}_t-m_t}-A_t, 
+\end{align*}
+where $A_t\triangleq D_{\psi_t}(w_{t+1}^\p, w_t)+D_{\psi_t}(w_t, w_t^\p)\geq 0$.
+\end{lemma}
+
+The proof is standard as in typical OMD analysis. The next theorem then shows how the term $\inn{w_t-w_{t+1}^\p, \hat{\ell}_t-m_t}$ is further bounded
+when $\psi_t$ is the log-barrier as in \textsc{Broad-OMD}. 
+
+\begin{theorem}
+\label{lemma:second_order_regret_bound}
+If the following three conditions hold for all $t,i$: 
+(i) $\eta \leq \frac{1}{162}$,
+(ii) $w_{t,i}\abs{\hat{\ell}_{t,i}-m_{t,i}}\leq 3$,
+(iii) $\eta\sum_{i=1}^K w_{t,i}^2(\hat{\ell}_{t,i}-m_{t,i})^2\leq \frac{1}{18}$
+(same as those in Theorem \ref{lemma:MAB_condition}), %and furthermore assume $\{\eta_{t,i}\}$ are non-decreasing for all $i$,
+then \textsc{Broad-OMD} with $a_t=\mathbf{0}$ guarantees for any $u\in \Omega$, 
+\begin{align}
+\sum_{t=1}^T \inn{w_t-u, \hat{\ell}_t}\leq \sum_{i=1}^K  \frac{\ln \frac{w^\p_{1,i}}{u_i}}{\eta}  +3\eta\sum_{t=1}^T\sum_{i=1}^K w_{t,i}^2(\hat{\ell}_{t,i}-m_{t,i})^2-\sum_{t=1}^T A_t. \label{eqn:second_order_regret_bound}
+\end{align}
+For MAB, the last term can further be lower bounded by $\sum_{t=1}^T A_t \geq \frac{1}{48\eta}\sum_{t=2}^T \sum_{i=1}^K\frac{(w_{t,i}-w_{t-1,i})^2}{w_{t-1,i}^2}$.
+\end{theorem}
+
+In bound~\eqref{eqn:second_order_regret_bound}, 
+the first term can again be bounded by $\frac{K \ln T}{\eta}$ via picking an appropriate $u$.
+The last negative term is useful when we use the algorithm to play games, which is discussed in Section~\ref{subsection:games}.
+The second term is the key term, which, compared to the key term $\sum_{t=1}^T \inn{u,a_t}$ in Eq.~\eqref{eqn:regret_bound:a_t_neq_0} for \textsc{Broad-OMD} with Option I,
+has an extra $w_{t,i}$ and is in terms of all arms instead of the arms that $u$ picks.
+As a comparison to Corollary~\ref{cor:clear_corollary}, if we pick $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i\in b_t\}}{w_{t,i}}+m_{t,i}$,
+we obtain an expected regret bound in terms of $\mathbb{E}\left[ \sum_{t=1}^T \sum_{i \in b_t} (\ell_{t,i} - m_{t,i})^2 \right] = 
+\mathbb{E}\left[ \sum_{t=1}^T \sum_{i =1}^K w_{t,i} (\ell_{t,i} - m_{t,i})^2 \right]$,
+which is not as easy to interpret as the bound in Corollary~\ref{cor:clear_corollary}.
+However, in the following subsections we will discuss in details how to apply bound~\eqref{eqn:second_order_regret_bound} to obtain more concrete results.
+
+%if we select $\eta_{t,i}=\eta$, and $u=\left(1-\frac{1}{T}\right)\mathbf{e}_{i^*}+\frac{1}{T}w_1^\p$, which makes $\frac{w_{1,i}^\p}{u_i}\leq T$, then it implies
+%\begin{align}
+%\sum_{t=1}^T\inn{w_t-\mathbf{e}_{i^*}, \hat{\ell}_t} \leq \frac{K\ln T}{\eta} + 3\eta\sum_{t=1}^T \sum_{i=1}^K w_{t,i}^2(\hat{\ell}_{t,i}-m_{t,i})^2 + B,  \label{eqn:double_trick_bound1}
+%\end{align}
+%where $B=\sum_{t=1}^T \inn{-\frac{1}{T}\mathbf{e}_{i^*}+\frac{1}{KT}\mathbf{1}, \hat{\ell}_t}$. 
+
+Before that, we point out that since the bound is now in terms of all arms, % instead of the comparator $u$,
+we can in fact apply a doubling trick to make the algorithm parameter-free!
+The idea is that 
+%The benefit of \eqref{eqn:double_trick_bound1} is that the first two terms on the right-hand side is independent of the regret comparator $\mathbf{e}_{i^*}$, 
+%and thus we can use the standard doubling trick to tune the learning rate: 
+as long as the observable term $3\eta\sum_{s=1}^t \sum_{i=1}^K w_{s,i}^2(\hat{\ell}_{s,i}-m_{s,i})^2$ becomes larger than $\frac{K\ln T}{\eta}$ at some round $t$, 
+we half the learning rate $\eta$ and restart the algorithm. 
+This avoids the need for optimal tuning done in Section~\ref{section:Option I}.
+%Besides, $\mathbb{E}[B]=\mathcal{O}(1)$ for any $i^*$, 
+%so we can fairly ignore the $B$ term in \eqref{eqn:double_trick_bound1} if we only care about the expected regret. 
+We formally present the algorithm in Algorithm \ref{alg:doubling} (in Appendix~\ref{app:doubling_trick}) and show its regret bound below.
+
+\begin{theorem}
+\label{thm:doubling_trick_theorem}
+If conditions (ii) and (iii) in Theorem~\ref{lemma:second_order_regret_bound} hold, then Algorithm \ref{alg:doubling} guarantees
+\begin{align*}
+\mathbb{E}[\reg_T]=\mathcal{O}\left(\sqrt{(K\ln T)\mathbb{E}\left[\sum_{t=1}^T\sum_{i=1}^Kw_{t,i}^2(\hat{\ell}_{t,i}-m_{t,i})^2\right]}+K_0K\ln T\right).
+\end{align*}
+\end{theorem}
+In the following subsections, we instantiate Theorem~\ref{lemma:second_order_regret_bound} or~\ref{thm:doubling_trick_theorem} with different $m_{t}$ and $\hat{\ell}_t$. Again, for simplicity we only focus on the MAB setting. 
+
+\subsection{Another Path-length Bound}
+\label{subsection:first_order_better_k}
+If we configure \textsc{Broad-OMD} with Option II in the same way as in Section~\ref{subsubsection:path-length},
+that is, $m_{t,i}=\ell_{\alpha_i(t),i}$ and $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$.
+Then the key term in Eq.~\eqref{eqn:second_order_regret_bound} can be bounded as follows:
+\begin{align}
+&\sum_{t=1}^T \sum_{i=1}^K  w_{t,i}^2(\hat{\ell}_{t,i}-m_{t,i})^2= \sum_{t=1}^T\sum_{i=1}^K (\ell_{t,i}-\ell_{\alpha_i(t),i})^2\mathbbm{1}\{i_t=i\} 
+= \sum_{i=1}^K \sum_{t:i_t=i} (\ell_{t,i}-\ell_{\alpha_i(t),i})^2 \nonumber \\
+&\leq 2 \sum_{i=1}^K \sum_{t:i_t=i} \abs{\ell_{t,i}-\ell_{\alpha_i(t),i}} 
+\leq 2 \sum_{i=1}^K \sum_{t:i_t=i} \sum_{s=\alpha_i(t)+1}^t\abs{\ell_{s,i}-\ell_{s-1,i}} \leq 2 \sum_{i=1}^K V_{T,i}. \label{eqn:path_length_calculation_1}
+\end{align}
+Unlike Eq.~\eqref{eqn:path_length_trick}, this is bounded even without the help of negative regret, but the price is that now the regret depends on the sum of all arms' path-length. With this calculation, we obtain the following corollary.
+\begin{cor}
+\label{cor:path_length_bound_1}
+\textsc{Broad-OMD} with $a_{t,i}=0$, $m_{t,i}=\ell_{\alpha_i(t),i}$, $\hat{\ell}_{t,i}=\frac{(\ell_{t,i}-m_{t,i})\mathbbm{1}\{i_t=i\}}{w_{t,i}}+m_{t,i}$, and $\eta_{t,i}=\eta\leq \frac{1}{162}$ guarantees 
+\begin{align*}
+\mathbb{E}\left[\reg_T\right]\leq\mathcal{O}\left(\frac{K\ln T}{\eta}\right) + 6\eta\sum_{i=1}^K V_{T,i} -\mathbb{E}\left[\sum_{t=2}^{T} \sum_{i=1}^K\frac{(w_{t,i}-w_{t-1,i})^2}{48\eta w_{t-1,i}^2} \right]\leq \mathcal{O}\left( \frac{K\ln T}{\eta} + \eta\sum_{i=1}^K V_{T,i}  \right). 
+\end{align*}
+Using the doubling trick (Algorithm~\ref{alg:doubling}), we achieve expected regret $\tilde{\mathcal{O}}\left(\sqrt{K\sum_{i=1}^K V_{T,i}} + K\right)$.
+\end{cor}
+
+%Similarly to the discussion in the introduction, 
+This new path-length bound could be $\sqrt{K}$ times better than the one in Section~\ref{subsubsection:path-length} in some cases,
+but $\sqrt{T}$ times larger in others.
+The extra advantage, however, is the negative term in the regret,\footnote{%
+In fact, similar negative term, coming from the term $A_t$ in Lemma~\ref{thm:general_instantaneous}, also exists (but is omitted) in the bound of Theorem~\ref{thm:path_length}.
+However, it is not clear to us how to utilize it in the same way as in Section~\ref{subsection:games} if we also want to exploit the other negative term coming from increasing learning rates.
+} 
+explicitly spelled out in Corollary~\ref{cor:path_length_bound_1},
+which we discuss next.
+
+\subsubsection{Fast convergence in bandit games}
+\label{subsection:games}
+
+It is well-known that in a repeated two-player zero-sum game, 
+if both players play according to some no-regret algorithms,
+then their average strategies converge to a Nash equilibrium~\citep{freund1999adaptive}.
+Similar results for general multi-player games have also been discovered.
+The convergence rate of these results is governed by the regret bounds of the learning algorithms,
+and several recent works (such as those mentioned in the introduction) have developed adaptive algorithms with regret much smaller than the worst case $\mathcal{O}(\sqrt{T})$ 
+by exploiting the special structure in this setup,
+which translates to convergence rates faster than $1/\sqrt{T}$ in computing equilibriums.
+
+%Here we investigate the application of \textsc{Broad-OMD} with path-length bound in multi-player repeated games. The game proceeds in rounds: in each round, every player takes an action and receives some utility, which is jointly determined by the actions of all players in that round. The goal of each player is to maximize his/her own accumulated utility. 
+
+%It is known that if all players use no-regret algorithms to play the game, their average strategies converge to some sort of equilibrium, with the convergence rate governed by the regret bounds. One question that arises is whether there exists some family of algorithms such that if all players use algorithms from that family, the convergence can be faster. Researches in this line can be found in, e.g., \citep{daskalakis2015near, rakhlin2013optimization, syrgkanis2015fast, foster2016learning}. 
+
+One way to obtain such fast rates is exactly via path-length regret bounds as shown in~\citep{rakhlin2013optimization, syrgkanis2015fast}. In these works, the convergence rate $1/T$ is achieved when the players have full-information feedback. 
+We generalize their results to the bandit setting, and show that convergence rate of $ 1/T^{\frac{3}{4}} $ can be obtained. Though faster than $1/\sqrt{T}$, it is still slower than $1/T$ compared to the full-information setting, which is due to the fact that in bandit we only have first-order instead of second-order path-length bound. We detail the proofs and the remaining open problems in Appendix~\ref{appendix:game}. 
+%For simplicity we only consider two-player zero-sum games, but the generalization to multi-player games is straightforward.
+
+%While there are still many open problems in this area, especially when the players receive bandit feedback, our \textsc{Broad-OMD} with path-length bound indeed provides faster convergence rate in this kind of games. For simplicity, below we consider only two-player zero-sum repeated games. 
+
+%Specifically, the game is defined by an unknown matrix $G\in[-1,1]^{M\times N}$
+%where entry $G(i,j)$ specifies the loss (or reward) for Player 1 (or Player 2) if Player 1 picks row $i$ while Player 2 picks column $j$.
+%The players play the game repeatedly for $T$ rounds.
+%At round $t$, Player 1 randomly picks a row $i_t \sim x_t$ for some $x_t \in \Delta_M$
+%while Player 2 randomly picks a column $j_t \sim y_t$ for some $y_t \in \Delta_N$.
+%In~\citep{syrgkanis2015fast}, the feedbacks they receive are the vectors $Gy_t$ and $x_t^\top G$ respectively.
+%As a natural extension to the bandit setting, we consider a setting where the feedbacks are the scalar values $\mathbf{e}_{i_t}^\top Gy_t$
+%and $x_t^\top G\mathbf{e}_{j_t}$ respectively, that is, the expected loss/reward for the players' own realized actions (over the opponent's randomness). 
+
+%It is clear that each player is essentially facing an MAB problem and thus can employ an MAB algorithm.
+%Specifically, if both players apply Exp3 for example, their expected average strategies converge to a Nash equilibrium at rate $1/\sqrt{T}$.
+%However, if instead Player 1 applies \textsc{Broad-OMD} configured as in Corollary~\ref{cor:path_length_bound_1},
+%then her regret has a path-length term that can be bounded as follows:
+%\begin{align*}
+%\sum_{i=1}^K \sum_{t=2}^T\left| \mathbf{e}_{i}^\top Gy_t -  \mathbf{e}_{i}^\top Gy_{t-1}\right|
+%\leq \sum_{i=1}^K \sum_{t=2}^T\left\| \mathbf{e}_{i}^\top G \right\|_\infty \|y_t - y_{t-1}\|_1 \leq K \sum_{t=2}^T \|y_t - y_{t-1}\|_1,
+%\end{align*}
+%which is closely related to the negative regret term in Corollary~\ref{cor:path_length_bound_1}
+%for Player 2 if she also employs the same \textsc{Broad-OMD}.
+%The cancellation of these terms then lead to faster convergence rate.
+%Under this setting, we can define the regret for the two players: 
+%\begin{gather*}
+%\text{Reg}_T^1 \triangleq \sum_{t=1}^T \mathbf{e}_{i_t}^\top G\mathbf{e}_{j_t} -\sum_{t=1}^T\min_{x\in \Delta_M} x^\top G\mathbf{e}_{j_t},\\
+%\text{Reg}_T^2 \triangleq \sum_{t=1}^T \max_{y\in \Delta_N} \mathbf{e}_{i_t}^\top Gy -\sum_{t=1}^T \mathbf{e}_{i_t}^\top G\mathbf{e}_{j_t}.
+%\end{gather*}
+%The following theorem show that if the two players both run \textsc{Broad-OMD} with $a_t=\mathbf{0}$ and use $\mathbf{e}_{i_t}^\top Gy_t$ or $x_t^\top G\mathbf{e}_{j_t}$ as their loss/reward at round $t$, then the convergence rate is faster than $\tilde{\Theta}(T^{-\frac{1}{2}})$. 
+%\begin{theorem}
+%\label{thm:fast_convergence_theorem}
+%For the setting described above, if both players run \textsc{Broad-OMD} configured as in Corollary~\ref{cor:path_length_bound_1} except that $\eta_{t,i}=\eta= (M+N)^{-\frac{1}{4}}T^{-\frac{1}{4}}$, then their expected average strategies converge to Nash equilibriums at the rate of $\tilde{\mathcal{O}}\left((M+N)^{\frac{5}{4}}/T^{\frac{3}{4}}\right)$, that is,
+%\begin{align*}
+%\max_{y\in \Delta_N} \mathbb{E}[\bar{x}]^\top Gy \leq \text{\rm Val} + \tilde{\mathcal{O}}((M+N)^{\frac{5}{4}}/T^{\frac{3}{4}}) \quad\text{and}\quad
+%\min_{x\in \Delta_M}x^\top G\mathbb{E}[\bar{y}] \geq \text{\rm Val} - \tilde{\mathcal{O}}((M+N)^{\frac{5}{4}}/T^{\frac{3}{4}}),
+%\end{align*}
+%where $\bar{x}=\frac{1}{T}\sum_{t=1}^T x_t, \bar{y}=\frac{1}{T}\sum_{t=1}^T y_t$ and 
+%$\text{\rm Val}= \min\limits_{x\in \Delta_M}\max\limits_{y\in \Delta_N} x^\top Gy = \max\limits_{y\in \Delta_N}\min\limits_{x\in \Delta_M} x^\top Gy$.
+%\end{theorem}
+
+%When one player uses \textsc{Broad-OMD} while the other uses a \textit{stable} algorithm (defined in the following theorem), the one using \textsc{Broad-OMD} can have expected regret better than $\tilde{\mathcal{O}}(\sqrt{T})$. 
+
+%\begin{theorem}
+%\label{theorem:better_for_stable}
+%Under the described setting, if Player 1 uses \textsc{Broad-OMD} with $a_t=\mathbf{0}$, while Player 2 uses a $\kappa$-stable algorithm, that is, an algorithm with $\norm{y_t-y_{t-1}}_1=\mathcal{O}(\kappa)$ for all $t$. Then Player 1 with learning rate $\tilde{\Theta}(\kappa^{-\frac{1}{2}}T^{-\frac{1}{2}})$ guarantees $\mathbb{E}[\text{Reg}_T^1]=\tilde{\mathcal{O}}(M\sqrt{T\kappa})$. 
+%\end{theorem}
+%For example, if Player 2 uses the vanilla Exp3 with learning rate proportional to $\frac{1}{\sqrt{T}}$, then $\kappa=\mathcal{O}\left(\frac{1}{\sqrt{T}}\right)$, and Player 1 can have $\tilde{\mathcal{O}}(T^{\frac{1}{4}})$ regret by selecting $\tilde{\Theta}(T^{-\frac{1}{4}})$ learning rate; if both players runs \textsc{Broad-OMD} with $\tilde{\Theta}(T^{-\frac{1}{3}})$ learning rate, then they can both achieve $\tilde{\mathcal{O}}(T^{\frac{1}{3}})$ regret (omitting the dependency on $M$ or $N$ for simplicity).  
+
+%As shown by the theorem, we obtain convergence rate faster than $1/\sqrt{T}$,
+%but still slower than the $1/T$ rate compared to the full-information setup of~\citep{syrgkanis2015fast},
+%due to the fact that we only have first-order instead of second-order path-length bound.
+
+%Note that~\citet{rakhlin2013optimization} also studies two-player zero-sum games with bandit feedback
+%but with an unnatural restriction that in each round the players play the same strategy for four times.
+%\citet{foster2016learning} greatly weakened the restriction, but their algorithm only converges to some approximation of Val.
+%For further comparisons, the readers are referred to the comparisons to~\citep{syrgkanis2015fast}
+%in \citep{foster2016learning}.
+%^We also point out that the question raised in \citep{rakhlin2013optimization} remains open: if the players only receive the realized loss/reward $\mathbf{e}_{i_t}^\top G\mathbf{e}_{j_t}$ as feedback (a more natural setup), can the convergence rate to Val be faster than $1/\sqrt{T}$?
+%When every player only receives bandit feedbacks (i.e., in each round a player only observes the utility/expected utility corresponding to the action he/she takes), this problem is less understood. \cite{rakhlin2013optimization} proposed an algorithm in two-player zero-sum games such that if both players use this algorithm, their convergence rate can be of order $\tilde{\mathcal{O}}(1/T)$. However, they have the strong assumption that in each round the players play the same strategy for four times, and each time observe the expected utility as the feedback. \cite{foster2016learning} greatly weakened the above assumption, requiring that in each round, every player only plays once and only receives the realized utility as the feedback; however, the convergence notion they defined is different from previous works: they considered the convergence to an \textit{approximate} equilibrium. Below we give another result for the bandit feedback scenario and establish a $\tilde{O}(1/T^{\frac{3}{4}})$ convergence rate, which is incomparable to previous results. For simplicity, we consider only two-player zero-sum games. The convergence notion we use is more similar to \citep{rakhlin2013optimization, syrgkanis2015fast}'s, that is, convergence to the exact game value or exact minimax/maximin strategies. 
+
+\subsection{Adapting to Stochastic Bandits}
+\label{section:best of both worlds}
+Our last application is to obtain an algorithm that simultaneously enjoys near optimal regret in both adversarial and stochastic setting. 
+Specifically, the stochastic setting we consider here is as follows: there exists an arm $a^*$ and some fixed gap $\Delta > 0$ such that 
+$\mathbb{E}_{\ell_t}\left[\ell_{t,i}-\ell_{t,a^*} | \ell_1, \ldots, \ell_{t-1}\right]\geq \Delta$ for all $i \neq a^*$ and $t\in[T]$.
+In other words, arm $a^*$'s expected loss is always smaller than those of other arms by a fixed amount.
+The classic i.i.d. MAB~\citep{lai1985asymptotically} is clearly a special case of ours.
+Unlike the i.i.d. setting, however, we require neither independence nor identical distributions.
+
+Note that $a^*$ can be different from the empirically best arm $i^*$ defined in Section~\ref{section:notations}. 
+The expected regret in this setting is still with respect to $i^*$ and further takes into consideration the randomness over losses. 
+In other words, we care about $\mathbb{E}_{\ell_1, \ldots, \ell_T}\left[\mathbb{E}_{i_1, \ldots, i_T}[\text{Reg}_T]\right]$, abbreviated as $\mathbb{E}[\text{Reg}_T]$ still.  
+
+We invoke \textsc{Broad-OMD} with $a_t=\mathbf{0}$, $\hat{\ell}_{t,i}=\frac{\ell_{t,i}\mathbbm{1}\{i_t=i\}}{w_{t,i}}$ being the typical importance-weighted unbiased estimator,
+and a somewhat special choice of $m_{t}$: $m_{t,i}=\ell_{t,i_t}$ for all $i$. 
+%This $\hat{\ell}_{t}$ is just the vanilla inverse propensity weighted estimator without the prediction term, and therefore it is still an unbiased estimator of $\ell_{t}$. The more curious part is $m_{t}$. 
+This choice of $m_t$ is seemingly invalid since it depends on $i_t$, which is drawn after we have constructed $w_t$ based on $m_t$ itself.
+However, note that because $m_t$ now has identical coordinates, we have
+$w_t = \argmin_{w\in\Delta_K} \big\{ \inner{w,m_t} + D_{\psi_t}(w, w_t^\p)\big\} = \argmin_{w\in\Delta_K} \big\{D_{\psi_t}(w, w_t^\p)\big\} = w_t'$, independent of the actual value of $m_t$.
+Therefore, the algorithm is still valid and is in fact equivalent to the vanilla log-barrier OMD of~\citep{foster2016learning}.
+Also note that we cannot define $\hat{\ell}_{t}$ as in previous sections (in terms of $m_t$) since it is not an unbiased estimator of $\ell_t$ anymore (due to the randomness of $m_t$).
+
+%In \textsc{Broad-OMD}, $m_{t}$ is used to construct $w_{t}$, and then $i_t$ is further drawn based on $w_t$. Therefore, it seems unreasonable to define $m_t$ based on $i_t$. However, with this special choice of $m_t$, we claim that without knowing $i_t$, the learner can still successfully construct the correct $w_t$. This is simply because $m_t$'s components are all the same, so $w_t$ will always be the same as $w_t^\p$. We more formally prove this fact in Lemma \ref{lemma:same_point}. Therefore, the player just plays $w_t^\p$, and the algorithm proceeds just like the vanilla log-barrier OMD! So what is the benefit of this set of choices? 
+
+Although the algorithm is the same, using our analysis framework we actually derive a tighter bound in terms of the following quantity based on
+Theorem~\ref{lemma:second_order_regret_bound}:
+$\sum_{t=1}^T\sum_{i=1}^K w_{t,i}^2(\hat{\ell}_{t,i}-\ell_{t,i_t})^2=\sum_{t=1}^T\sum_{i=1}^K (\ell_{t,i}\mathbbm{1}\{i_t=i\}-w_{t,i}\ell_{t,i_t})^2$.
+It turns out that based on this quantity alone, one can derive both a ``small-loss'' bound for the adversarial setting and a logarithmic bound for the stochastic setting
+as shown below.
+We emphasize that the doubling trick of Algorithm~\ref{alg:doubling} is essential to make the algorithm parameter-free,
+which is another key difference from~\citep{foster2016learning}.
+
+%It turns out the benefit is in the analysis: the introduction of this $m_{t}$ tightens the regret bound for log-barrier OMD for free! Note that Theorem \ref{lemma:second_order_regret_bound} is still valid, and now the regret depends on a term $\sum_{t=1}^T\sum_{i=1}^K w_{t,i}^2(\hat{\ell}_{t,i}-\ell_{t,i_t})^2=\sum_{t=1}^T\sum_{i=1}^K (\ell_{t,i}\mathbbm{1}\{i_t=i\}-w_{t,i}\ell_{t,i_t})^2$.The following theorem shows that the regret having this term has both-of-both-world implications. 
+
+\begin{theorem}
+\label{thm:best of both}
+\textsc{Broad-OMD} with $a_t = 0$, $m_{t,i}=\ell_{t,i_t}$, $\hat{\ell}_{t,i}=\frac{\ell_{t,i}\mathbbm{1}\{i_t=i\}}{w_{t,i}}$, and
+the doubling trick (Algorithm~\ref{alg:doubling}), guarantees 
+\begin{equation}\label{eqn:new_excess_loss_bound}
+\mathbb{E}\left[\reg_T\right]=\mathcal{O}\left(\sqrt{(K\ln T)\mathbb{E}\left[ \sum_{t=1}^T\sum_{i=1}^K (\ell_{t,i}\mathbbm{1}\{i_t=i\}-w_{t,i}\ell_{t,i_t})^2 \right]} + K\ln T \right).
+\end{equation}
+This bound implies that in the stochastic setting, we have $\mathbb{E}\left[\reg_T\right] = \mathcal{O}\left(\frac{K\ln T}{\Delta}\right)$, while in the adversarial setting, we have 
+%$\mathbb{E}\left[\reg_T\right] = \mathcal{O}\left(\sqrt{KL\ln T} + K\ln T\right)$, where $L\triangleq \mathbb{E}\left[\sum_{t=1}^T \ell_{t,i_t}^2 \right]$. %\leq \sum_{t=1}^T \norm{\ell_t}_\infty^2$. 
+$\mathbb{E}\left[\reg_T\right] = \mathcal{O}\left(\sqrt{KL_{T,i^*}\ln T}+K\ln T\right)$ assuming non-negative losses.
+%If we further assume losses are non-negative, i.e., $\ell_{t,i}\in [0,1]$ for all $t,i$, then we further have the small-loss bound $\mathcal{O}\left(\sqrt{KL_{T,i^*}\ln T}+K\ln T\right)$ in the adversarial setting. 
+
+\end{theorem}
+
+\section{Conclusions and Discussions}
+In this work we develop and analyze a general bandit algorithm using techniques such as optimistic mirror descent, log-barrier regularizer, increasing learning rate, and so on.
+We show various applications of this general framework, obtaining several more adaptive algorithms that improve previous works.
+Future directions include 1) improving the dependence on $K$ for the path-length results; 2) obtaining second-order path-length bounds;
+3) generalizing the results to the linear bandit problem.
+
+\paragraph{Acknowledgement.}
+CYW is grateful for the support of NSF Grant \#1755781. The authors would like to thank Chi-Jen Lu for posing the problem of bandit path-length, and to thank Chi-Jen Lu and Yi-Te Hong for helpful discussions in this direction. 
+
+\bibliography{colt2018-sample} 
+\input{appendix}
+\end{document}

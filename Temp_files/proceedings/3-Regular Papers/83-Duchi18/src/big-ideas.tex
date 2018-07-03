@@ -1,0 +1,550 @@
+% -*- Mode: latex -*-
+
+\section{The big ideas}
+\label{sec:big-ideas}
+
+The main contributions of this paper are
+twofold: (i) the construction of lower bounds for batched convex
+optimization and (ii) the construction of matching---in terms of the sample
+size $n$, though quite far from tight in dimension $d$---upper bounds
+through algorithmic developments.  At this point, the algorithms we develop
+should be seen more as intellectual contributions rather than practically
+useful tools, but we believe it interesting to further understand this area
+and that these serve as a useful first step in that direction.
+
+\subsection{Achieving reasonable convergence rates}
+
+We begin by giving a heuristic description of the convergence guarantees we
+might hope to achieve
+by describing the idea of the algorithm for smooth strongly convex
+functions ($\ffamily_{H,\lambda}$) and first-order oracles ($\ofamilyf$).
+Our algorithms are sequential, in that in each batch
+or round they collect (stochastic) gradient information, then update and
+make a decision. Each algorithm maintains a box of radius $r_t$ over
+iterations $t$, call this $\mc{B}_t = c_t + [-r_t/2, r_t/2]^d$ for some
+center $c_t \in \R^d$. Then within an iteration, the algorithm chooses a
+number of points $x_1, x_2, \ldots, x_m$, distributed around $B_t$, and
+computes estimated gradients $\what{\nabla} f(x_1), \what{\nabla} f(x_2),
+\ldots, \what{\nabla} f(x_m)$. If these gradients were accurate, then for
+each $x \in \{x_1, \ldots, x_m\}$, the standard cutting plane bound
+guarantees that $x\opt \in \{y \mid \<\nabla f(x), y - x\> \le 0\}$. Of
+course, we cannot so precisely cut space, but we can guarantee that (with
+high probability)
+\begin{equation*}
+  x\opt \in \{y \mid \<\what{\nabla} f(x), y - x\> \le \mathsf{d}(x, y)\}
+\end{equation*}
+for a distance-like function $\mathsf{d}$. Once we know we can cut off these
+regions of the space, we may construct a new center $c_{t + 1}$ and box
+$\mc{B}_{t + 1} = c_t + [-r_{t+1}/2, r_{t+1}/2]^d$ containing $x\opt$ with
+high probability. For a graphical illustration, see
+Figure~\ref{fig:cutting-planes}, which shows the current box $\mc{B}_0$ on
+the left with approximate gradients and contours of $f$, and the updated box
+$\mc{B}_1$ on the right, with points that the algorithm has cut shaded gray.
+
+\begin{figure}[ht]
+  \begin{center}
+    \begin{tabular}{cc}
+%%       \begin{overpic}[width=.45\columnwidth]{%,grid]{%
+%%           ../Julia/random-grads}
+%%         \put(9,50){$x_1$}
+%%         \put(46,85){$x_2$}
+%%         \put(82,49){$x_3$}
+%%         \put(47,12){$x_4$}
+%%         \put(18,41){$-\what{\nabla}f(x_1)$}
+%%         \put(47,61){$-\what{\nabla}f(x_2)$}
+%%       \end{overpic} &
+      \begin{overpic}[width=.4\columnwidth]{%,grid]{%
+          fig/cut-hyperplanes}
+        \put(9,50){$x_1$}
+        \put(46,85){$x_2$}
+        \put(82,49){$x_3$}
+        \put(47,12){$x_4$}
+        \put(18,41){$-\what{\nabla}f(x_1)$}
+        \put(47,61){$-\what{\nabla}f(x_2)$}
+      \end{overpic} &
+      \begin{overpic}[width=.4\columnwidth]{%,grid]{%
+          fig/cut-box}
+        \put(16,44.5){$x_1$}
+        \put(47,84.5){$x_2$}
+        \put(82.5,49){$x_3$}
+        \put(47,11.5){$x_4$}
+        % \put(18,41){$-\what{\nabla}f(x_1)$}
+        % \put(47,61){$-\what{\nabla}f(x_2)$}
+      \end{overpic} \\
+      (a) & (b)
+    \end{tabular}
+    \caption{\label{fig:cutting-planes} Illustration of upper bound argument
+      and algorithm on contours of the function $f(x) = \half \ltwo{x}^2$
+      for $x \in \R^2$. (a) Points $x_1, \ldots, x_4 \in \R^2$ at locations
+      in box, with stochastic gradients $\what{\nabla} f(x_i)$ represented
+      for each $x$.  Hyperplanes they support, $\{y \in \R^2 \mid \langle
+      \what{\nabla} f(x), y - x\rangle = 0 \}$, denoted as dotted red lines.  (b) A box containing the
+      points the algorithm is \emph{confident} enough to cut off, containing
+      most of the area allowed by the hyperplanes $\what{\nabla} f(x)$
+      define.}
+  \end{center}
+\end{figure}
+
+The key insight is that the updated radius $r_t$ is nearly contracting, in
+that
+\begin{equation}
+  \label{eqn:radius-recursion}
+  r_{t + 1} \le \nu r_t^\beta
+\end{equation}
+for some $\beta > 0$ and $\nu < 1$. The
+recursion~\eqref{eqn:radius-recursion} for the radius $r_t$ then, by a
+calculation, implies that
+\begin{equation}
+  \label{eqn:weird-contraction}
+  r_t \le \nu^\frac{\beta^t - 1}{\beta - 1} r_0^{\beta^t}
+\end{equation}
+for $\beta \neq 1$, and is $r_t \le \nu^t r_0$ when $\beta = 1$. The size
+of $\beta$ of course governs the rate of convergence of the
+sequence~\eqref{eqn:radius-recursion}, where $\beta > 1$ guarantees
+superlinear convergence of $r_t$ to zero, whereas if $\beta < 1$, we require
+$\nu$ to be near zero to guarantee that $r_t$ is small enough. Indeed, in
+our setting, $\beta < 1$, while because of the sampling we perform in each
+round, the contraction multiplier $\nu$ scales as an inverse polynomial
+in $n$, so that we may take $\nu = n^{-c}$ for some constant $c > 0$.
+The question then becomes, compared to the fully sequential case, how large
+must $t$ be to achieve the ``standard'' accuracy.  In the convex
+optimization scenarios we consider, the optimal accuracy given $n$ gradient
+samples is of order $n^{-1}$, so simplifying
+expression~\eqref{eqn:weird-contraction} by assuming $r_0 = 1$, we must find
+$\nu$ sufficiently small and $t$ sufficiently large that
+$\nu^{\frac{\beta^t - 1}{\beta - 1}} \lesssim n^{-1}$, the typical
+rate of convergence for convex minimization.
+
+Let us solve for the number of iterations necessary in this case, where we
+note that at $t = \infty$ we require that $\nu^{-\frac{1}{\beta - 1}} \le
+n^{-1}$, and for $\nu = n^{-c}$ this implies we must choose our
+sampling schemes such that $\frac{c}{1 - \beta} \ge 1$.  Making this
+concrete, let us assume we wish to have $t$ large enough that $n^{-c
+  \frac{\beta^t - 1}{\beta - 1}} \le A n^{-1}$ for some constant $A >
+1$. This occurs if and only if
+\begin{equation*}
+  \log A - \log n
+  \ge -c \frac{\beta^t - 1}{\beta - 1} \log n
+  ~~ \mbox{iff} ~~
+  \left(1 - \frac{c}{1 - \beta}\right)
+  + \frac{c \beta^t}{1 - \beta} \le \frac{\log A}{\log n},
+\end{equation*}
+which, using that $\frac{c}{1 - \beta} \ge 1$, is in turn implied by
+\begin{equation*}
+  \beta^t \le \frac{1 - \beta}{c} \frac{\log A}{\log n}
+  ~~ \mbox{or} ~~
+  t \ge \frac{\log \log n - \log \log A}{-\log \beta}
+  + \frac{\log(1 - \beta)}{\log \beta}
+  - \frac{\log c}{\log \beta}.
+\end{equation*}
+In our sequential optimization setting, the exponents $\beta$ and $c$
+depend on problem dimension, so that $\beta = \frac{d}{d + k}$ for
+a small integer $k$. In this case, $-\log \beta = \log \frac{d + k}{d} =
+\log(1 + \frac{k}{d}) \approx \frac{k}{d}$.
+%, and $-\log(1 - \beta) \approx \log \frac{d + k}{k}$. 
+For simplicity in intuition, we may set $A = e$, and
+in the case to which our subsequent analysis applies, we take the sampling
+exponent $c = 1 - \beta$; the preceding requirement then becomes
+\begin{equation*}
+  t \ge \frac{\log \log n}{-\log \beta} \approx
+  \frac{d}{k} \log \log n.
+\end{equation*}
+That is, after order $d \log \log n$ iterations, it is possible to achieve
+radius accuracy of order $n^{-1}$.
+
+
+
+\subsection{Lower bounds on optimality}
+\label{sec:main-lbidea}
+
+\newcommand{\fndist}{\mathsf{d}_{\rm opt}}
+
+Our lower bound construction begins with the familiar Le Cam's method for
+proving lower bounds in statistical and stochastic
+optimization~\citep{Tsybakov09,AgarwalBaRaWa12,Duchi17}. The idea is due to
+\citeauthor{AgarwalBaRaWa12}: given convex functions $f$ and $g$, the
+separation between them is
+\begin{equation*}
+  %\label{eqn:fn-sep}
+  \fndist(f, g)
+  \defeq \inf_{x \in \domain}
+  \left\{f(x) + g(x) \right\}
+  - \inf_{x\opt \in \domain} f(x\opt) - \inf_{x\opt \in \domain} g(x\opt).
+\end{equation*}
+The key to this construction is that if we have a point $x$ optimizing $f$
+to accuracy $\half \fndist(f, g)$, that is, $f(x) \le \inf_{x\opt \in
+  \domain} f(x\opt) + \half\fndist(f, g)$, then $g(x) \ge \inf_{x\opt \in
+  \domain} g(x\opt) + \half \fndist(f, g)$.  Thus, an argument with Markov's
+inequality (see \citet[Eq.~(18)]{AgarwalBaRaWa12} or
+\citet[Ch.~4.1]{Duchi17}) implies that for any two
+distributions $P_-$ and $P_+$, functions $f_-, f_+ \in \ffamily$, and estimator
+$\what{x}$ based on observations from the distribution $P_v$, we have
+\begin{equation}
+  \label{eqn:le-cam-lower-bound}
+  \minimax_M(\ffamily, \ofamily)
+  \ge
+  \max_{v \in \{-, +\}}
+  \E_{P_v}[f_v(\what{x}) - f_v\opt]
+  \ge \frac{\fndist(f_-, f_+)}{4}
+  \left(1 - \tvnorm{P_- - P_+}\right),
+\end{equation}
+where $\tvnorm{P_- - P_+} = \sup_A |P_-(A) - P_+(A)|$ denotes the usual
+variation distance between distributions. For more details, please refer to Section~\ref{sec:proof-lbmain-outline}.
+Inequality~\eqref{eqn:le-cam-lower-bound} is the starting point of our
+strategy for lower bounds: we will construct a pair of functions $f_-$ and
+$f_+$ for which $\fndist$ is reasonably large, but for which the
+distributions of associated observations are close in $\tvnorm{\cdot}$.
+
+\begin{figure}[t]
+	\begin{center}
+		\begin{tabular}{cc}
+			%%       \begin{overpic}[width=.45\columnwidth]{%,grid]{%
+			%%           fig/random-grads}
+			%%         \put(9,50){$x_1$}
+			%%         \put(46,85){$x_2$}
+			%%         \put(82,49){$x_3$}
+			%%         \put(47,12){$x_4$}
+			%%         \put(18,41){$-\what{\nabla}f(x_1)$}
+			%%         \put(47,61){$-\what{\nabla}f(x_2)$}
+			%%       \end{overpic} &
+			\begin{overpic}[width=.35\columnwidth]{%,grid]{%
+					fig/pack-square}
+				%        \put(9,50){$x_1$}
+				%        \put(46,85){$x_2$}
+				%        \put(82,49){$x_3$}
+				%        \put(47,12){$x_4$}
+				%        \put(18,41){$-\what{\nabla}f(x_1)$}
+				%        \put(47,61){$-\what{\nabla}f(x_2)$}
+			\end{overpic} &
+			\begin{overpic}[width=.35\columnwidth]{%,grid]{%
+					fig/pack-circle}
+				%        \put(16,44.5){$x_1$}
+				%        \put(47,84.5){$x_2$}
+				%        \put(82.5,49){$x_3$}
+				%        \put(47,11.5){$x_4$}
+				% \put(18,41){$-\what{\nabla}f(x_1)$}
+				% \put(47,61){$-\what{\nabla}f(x_2)$}
+			\end{overpic}
+		\end{tabular}
+		\caption{\label{fig:pack-set} Recursively
+			constructed packing sets $\Uone$ (red), $\Utemp{1}{2}$ (blue). Left: packing in $\ell_\infty$-norm. Right:
+			packing in $\ell_2$-norm.}
+	\end{center}
+\end{figure}
+
+Our proof is somewhat delicate, as we must control the amount of
+interactivity allowed the optimization procedures.  We construct functions
+at multiple scales, where each scale corresponds to a round or batch of data
+in the method being used for optimization. We do this by first constructing
+a nested sequence of packings of $\domain$ that we use to define our
+``difficult'' functions. For a given multiplier $0 < \eta < 1$ and values
+$\half > \delta_1 \ge \delta_2 \ge \cdots \ge \delta_M$, each satisfying
+$\delta_t \le \frac{\eta}{4} \delta_{t - 1}$, we let the set $\Uone$ be a
+maximal $2\delta_1$-packing of the set $[\delta_1, 1 - \delta_1]^d$ with
+respect to the $\ell_p$ norm, meaning that for points $u, u' \in \Uone$, we
+have $\norm{u - u'}_p \ge 2\delta_1$ whenever $u \neq u'$.  Additionally, for
+any vector $u \in \domain$, we define the set $\mc{U}_u^{(t)}$ as a maximal
+$2\delta_t$-packing of the $\ell_p$ ball $\ballp{u}{\eta \delta_{t- 1} -
+  \delta_t}$ in $\ell_p$-norm. Consider the collection of \emph{all} sequences
+$u_1, u_2, \ldots, u_M$ defined recursively as elements in the chain
+\begin{equation}
+  \label{eqn:defining-sequence-of-u}
+  u_t \in \mc{U}^{(t)}_{u_{t-1}}.
+\end{equation}
+Because $\norm{u_t - u_t'}_p \ge 2 \delta_t$ for any pair $u_t \neq u_t' \in
+\mc{U}^{(t)}_{u_{t-1}}$, all of the balls $\ballp{u_t}{\eta \delta_{t}}$ are disjoint, and a volume argument (Lemma~\ref{lem:packingno}) shows that the
+cardinality of $\mc{U}^{(t)}_{u_{t-1}}$ is at least $(\frac{\eta \delta_{t - 1}}{4 \delta_{t}})^d$.
+%while the ratio
+%$\vol(\ballp{u_t}{\eta \delta_{t-1} - \delta_t}) / \vol(
+%\ballp{u_{t+1}}{\eta \delta_t - \delta_{t-1}})$ is exponential in the
+%dimension $d$. 
+See Figure~\ref{fig:pack-set} for an illustration of this
+sequential construction.
+
+
+Our idea, similar to one of \citet{SmithThUp17}, is that for any path
+$u_{1:M}$ in the chain~\eqref{eqn:defining-sequence-of-u}, we can construct
+a pair of functions $f_{u_{1:M}}^{-1}$ and $f_{u_{1:M}}^{+1}$ such that
+\begin{equation}
+  \label{eqn:function-pair-dist}
+  f^{+1}_{u_{1:M}}(x)
+  = f^{-1}_{u_{1:M}}(x)
+  ~~ \mbox{for~all~} x \not \in \ballp{u_M}{\delta_M},
+  ~~ \mbox{and}~~
+  \fndist(f^{+1}_{u_{1:M}}, f^{-1}_{u_{1:M}}) \asymp
+  \delta_M^\kappa, 
+\end{equation}
+for a constant $\kappa \in \{1, 2\}$, depending on the function class that 
+we consider.
+Additionally, we have that if $u_{1:M}$ and $\wt{u}_{1:M}$ are sequences
+in our construction~\eqref{eqn:defining-sequence-of-u} for which
+$u_1 = \wt{u}_1, \ldots, u_t = \wt{u}_t$ with $u_{t + 1} \neq \wt{u}_{t + 1}$,
+then the functions are equal except in a $\delta_t$-sized region around
+$u_t$, the $t$th element in the chain, satisfying
+\begin{equation}
+  \label{eqn:function-value-same}
+  f^{v}_{u_{1:M}}(x)
+  = f^{v'}_{\wt{u}_{1:M}}(x)
+  ~~ \mbox{for~} x \not \in \ballp{u_t}{\delta_t} ~~\mbox{and}~
+  v, v' \in \{\pm 1\}.
+\end{equation}
+To construct the functions, we begin with the base function $\ftnuone(x)
+\defeq \linf{x - u_1}$. Then, recursively, we define $\ftninut(x) = a_t
+\linf{x - u_t} + b_t$ for appropriately chosen scalars $\alpha_t$ and
+$\beta_t$, defining $\ftnut (x) \defeq \max \{ \ftnutmone (x), \ftninut (x) \}$. 
+See Figure~\ref{fig:con-lip} for an illustration. In
+the case that we desire our functions to be smooth and strongly convex, we
+instead begin with $\ftnuone(x) = \half \ltwo{x - u_1}^2$, and then recurse
+via a ``smoothed'' maximum $\ftnut(x) \defeq \algmaxsmth\{ \ftnutmone,
+a_t \ltwo{x - u_t}^2 + b_t\}$. (See
+Figure~\ref{fig:con-smo} for an illustration, and Appendix~\ref{sec:constsscvx} for details.) 
+A careful calculation then shows that these
+functions satisfy our desired properties of function closeness, and even
+more, %that for a constant $\kappa \in \{1, 2\}$, depending on the function class
+%we consider,
+\begin{equation}
+  \label{eqn:function-value-difference}
+  |f^{v}_{u_{1:M}}(x)
+  - f^{v'}_{\wt{u}_{1:M}}(x)|
+  \le K_t \cdot \delta_t^\kappa
+  ~~~ \mbox{for~all~} x \in \domain
+\end{equation}
+whenever $u_{1:t} = \wt{u}_{1:t}$, where $K_t$ is a problem-dependant
+constant. For more details about function construction, please refer to
+Appendices~\ref{sec:proof-lbmain-const} and \ref{sec:constsscvx}.
+
+\begin{figure}[t]
+  \begin{center}
+    \begin{tabular}{cc}
+%%       \begin{overpic}[width=.45\columnwidth]{%,grid]{%
+%%           fig/random-grads}
+%%         \put(9,50){$x_1$}
+%%         \put(46,85){$x_2$}
+%%         \put(82,49){$x_3$}
+%%         \put(47,12){$x_4$}
+%%         \put(18,41){$-\what{\nabla}f(x_1)$}
+%%         \put(47,61){$-\what{\nabla}f(x_2)$}
+%%       \end{overpic} &
+      \begin{overpic}[width=.4\columnwidth]{%,grid]{%
+          fig/con-lip}
+%        \put(9,50){$x_1$}
+%        \put(46,85){$x_2$}
+%        \put(82,49){$x_3$}
+%        \put(47,12){$x_4$}
+        \put(75,25){\small $h_1(x)$}
+        \put(20,25){\small $h_2(x)$}
+        \put(62,52){\vector(1,-1){10}}
+        \put(48,52){\vector(-1,-1){10}}
+        \put(50,55){\small $f(x)$}
+      \end{overpic} &
+      \begin{overpic}[width=.4\columnwidth]{%,grid]{%
+          fig/con-lip-final}
+        \put(80,25){\small $f_1(x)$}
+        \put(15,25){\small $f_2(x)$}
+ %       \put(80,40){\vector(1,-1){10}}
+  %      \put(48,52){\vector(-1,-1){10}}
+%        \put(16,44.5){$x_1$}
+%        \put(47,84.5){$x_2$}
+%        \put(82.5,49){$x_3$}
+%        \put(47,11.5){$x_4$}
+        % \put(18,41){$-\what{\nabla}f(x_1)$}
+        % \put(47,61){$-\what{\nabla}f(x_2)$}
+      \end{overpic} \\
+      (a) & (b)
+    \end{tabular}
+    \caption{\label{fig:con-lip} Construction of Lipschitz convex functions.
+      (a) Function $f(x) = \frac{1}{3}|x|$, $h_1(x) = \frac{1}{9}|x-0.15| +
+      \frac{1}{12}$ and $h_2(x) = \frac{1}{9}|x+0.15| + \frac{1}{12}$. All
+      are Lipschitz, with Lipschitz constants $\frac{1}{3}$, $\frac{1}{9}$,
+      and $\frac{1}{9}$, respectively.  (b) Functions $f_1(x) = \max\{f(x),
+      h_1(x)\}$ and $f_2(x) = \max\{f(x), h_2(x)\}$.  Noticeably, the
+      function $f_1(x)$ and $f_2(x)$ are different only within the region $x
+      \in [-.5, .5]$. Functions $f_1$ and $f_2$ are indistinguishable based
+      only on function value/gradient information calculated outside $[-.5,
+        .5]$.}
+  \end{center}
+\end{figure}
+\begin{figure}[t]
+  \begin{center}
+    \begin{tabular}{cc}
+%%       \begin{overpic}[width=.45\columnwidth]{%,grid]{%
+%%           fig/random-grads}
+%%         \put(9,50){$x_1$}
+%%         \put(46,85){$x_2$}
+%%         \put(82,49){$x_3$}
+%%         \put(47,12){$x_4$}
+%%         \put(18,41){$-\what{\nabla}f(x_1)$}
+%%         \put(47,61){$-\what{\nabla}f(x_2)$}
+%%       \end{overpic} &
+      \begin{overpic}[width=.4\columnwidth]{%,grid]{%
+          fig/con-smo}
+%        \put(9,50){$x_1$}
+%        \put(46,85){$x_2$}
+%        \put(82,49){$x_3$}
+%        \put(47,12){$x_4$}
+        \put(80,45){$f_1(x)$}
+        \put(20,15){$f_2(x)$}
+        \put(20, 40){$\max \{f_1(x), f_2(x)\}$}
+      \end{overpic} &
+      \begin{overpic}[width=.4\columnwidth]{%,grid]{%
+          fig/con-smo-final}
+        \put(80,45){$f_1(x)$}
+        \put(20,15){$f_2(x)$}
+        \put(50, 40){$f(x)$}
+%        \put(16,44.5){$x_1$}
+%        \put(47,84.5){$x_2$}
+%        \put(82.5,49){$x_3$}
+%        \put(47,11.5){$x_4$}
+        % \put(18,41){$-\what{\nabla}f(x_1)$}
+        % \put(47,61){$-\what{\nabla}f(x_2)$}
+      \end{overpic} \\
+      (a) & (b)
+    \end{tabular}
+    \caption{\label{fig:con-smo} The \emph{smooth} technique for
+      construction of strongly convex and smooth functions. (a) Function
+      $f_1(x) = (x-1)^2 + 14$ and $f_2(x) = 2x^2$. (b) A smoothed version of
+      the maximum $\max\{f_1, f_2\}$, with gradients interpolated in the
+      region $x \in [2, 4]$.}
+  \end{center}
+\end{figure}
+
+\subsubsection{The information recursion}
+\label{sec:main-inforec}
+
+These functions are then hard to distinguish for iterative procedures:
+suppose a procedure, by querying the function $f_{u_{1:M}}$, has
+``identified'' $u_{1:t}$, but is oblivious to $u_{t+1:M}$. Then, given batch
+of $n$ points at which to compute function information, it is possible to
+distinguish two different functions only if one samples a point near
+$u_{t+1}$, which has exponentially small probability.  Let us extend this
+heuristic a bit to give intuition for the lower bounds we prove. Consider a
+batch-based algorithm, querying $n$ points in computational round $t$,
+attempting to distinguish functions $f_{u_{1:t},u_{t+1}}$ and
+$f_{u_{1:t},\wt{u}_{t+1}}$. As the functions are identical outside of
+$\ballp{u_t}{\delta_t}$, we may consider sampling procedures that without
+loss of generality sample only in the ball $\ballp{u_t}{\delta_t}$.  Now,
+consider the amount of information that function evaluation queries can
+release when function values are perturbed by (say) mean-zero Gaussian
+noise.  In this case, we know that the difference in function values scales
+as $\delta_t^\kappa$ by inequality~\eqref{eqn:function-value-difference},
+and the KL-divergence
+\begin{equation}
+  \label{eqn:kl-heuristic}
+  \dkl{\normal(f_{u_{1:t},u_{t+1}}(x), 1)}{
+    \normal(f_{u_{1:t},\wt{u}_{t+1}}(x), 1)}
+  = \half (f_{u_{1:t},u_{t+1}}(x) - 
+  f_{u_{1:t},\wt{u}_{t+1}}(x))^2 \lesssim \delta_t^{2\kappa},
+\end{equation}
+where $\kappa \in \{1, 2\}$ corresponds to the case in which we optimize a
+Lipschitz convex function ($\kappa = 1$) or strongly convex and smooth convex
+function ($\kappa = 2$). 
+
+By a careful argument we do not detail here, we can actually consider
+allocation of points to the slightly larger region
+$\ball{u_t}{\delta_{t-1}}$, dividing $\ball{u_t}{\delta_{t-1}}$ into
+sub-balls of radius $\delta_t$; the number of such regions is $R_t =
+(\frac{\delta_{t-1}}{\delta_t})^d$ by a volume argument.  By the pigeonhole
+principle, in at least one of these regions, the procedure can collect a
+sample size of at most $n / R_t$. In the typical proofs of
+information-theoretic lower
+bounds~\citep{Tsybakov09,AgarwalBaRaWa12,Duchi17}, the goal is to choose the
+separation between distributions, $\tvnorm{P_0 - P_1}$ in Le Cam's
+method~\eqref{eqn:le-cam-lower-bound}, to be a constant so as to guarantee a
+reasonable lower bound. In this case, recalling the
+KL-bound~\eqref{eqn:kl-heuristic}, we see that the ``information'' released
+in round $t$ of a sequential sampling procedure is constant over the
+least-sampled region whenever
+\begin{equation*}
+  \delta_t^{2\kappa} \cdot \frac{n}{R_t} = 1.
+\end{equation*}
+Now, we use our volume argument to note that $R_t = (\delta_{t-1} /
+\delta_t)^d$, and substituting above, this yields the ``information'' bound
+we iterate in our argument, that is,
+\begin{equation*}
+  \delta_t^{2\kappa} \cdot \frac{n \delta_t^d}{\delta_{t-1}^d} = 1
+  ~~ \mbox{or} ~~
+  \delta_t = n^{-\frac{1}{d+2\kappa}} \delta_{t-1}^\frac{d}{d + 2k}.
+\end{equation*}
+By inspection, beginning from $\delta_0 = 1$, this recursion has the
+solution
+\begin{equation}
+  \delta_M = n^{-\frac{1}{2\kappa} \left(1 - \left(\frac{d}{d + 2\kappa}\right)^M
+    \right)}.
+  \label{eqn:heuristic-recursion}
+\end{equation}
+Of course, this iteration requires very delicate conditioning arguments,
+which we perform in Appendix~\ref{sec:proof-lbmain-inforec}.  Finally, to
+prove a lower bound, we require that the functions themselves are separated
+according to our optimization distance.  With that in mind, we also show
+that our construction satisfies $\fndist(f^{+1}_{u_{1:M}}, f^{-1}_{u_{1:M}})
+\ge \delta_M^\kappa$, where as usual, $\kappa \in \{1, 2\}$ corresponds to
+the Lipschitz or strongly convex case. Thus, we can find the optimum of $f$
+to accuracy only $\delta_M$ using $M$ rounds, and the function error must
+scale as $\delta_M^\kappa$, which is our desired result.
+
+
+%% We provide some intuition for the minimax rates, for the case of
+%% zeroth-order oracles.  Suppose a procedure $\alg$, by querying the true
+%% function $\ftnuv$, has ``identified'' $u_{1:t-1}$, but is oblivious to
+%% $u_{t:M}$.  Then, given a batch of $n$ points at which to compute function
+%% information, it is possible to distinguish two different functions $\ftnuv$
+%% and $\ftnuvtildet$ only if one samples a point near $u_{t-1}$.  Now consider
+%% a batch-based algorithm, querying $n$ points in round $t$, attempting to
+%% find $u_t$.  As the functions are identical outside of $\Bptmone$, we may
+%% (nearly w.l.o.g.) consider a sampling scheme that samples $n$ points in
+%% the ball $\Bptmone$.
+%% %By Lemma~\ref{lem:packingno}, $|\Ut| = \Omega((\frac{\delta_{t-1}}{\delta_{t}})^d)$.
+%% By the pigeonhole principle, for at least one $u_t'$, the procedure can
+%% collect a sample size of at most $n / |\Ut|$ in $\ballp{u_t'}{\delta_t}$.
+%% In the ``worst'' case, the true $u_t = u_t'$, the lightly-sampled ball.
+%% Now, with $n$ samples in round $t$ the procedure identified $u_t$, and given
+%% $n / |\Ut|$ samples in $\Bpt$ one must seek $u_{t+1}$.
+
+%% Now, consider the amount of information about $u_{t+1}$ that function
+%% evaluation queries in round $t$ can release, when function values are
+%% perturbed by i.i.d.\ mean-zero Gaussian noise. In this case, by
+%% Eq.~\eqref{eqn:function-value-difference}, we know that the difference in
+%% function values scales as $\delta_{t}^\kappa$, and the KL-divergence
+%% \begin{equation}
+%% \label{eqn:kl-heuristic}
+%% \dkl{\normal(\ftnuv(x), \sigma^2)}{
+%% 	\normal(\ftnuvtildetpone(x), \sigma^2)}
+%% \asymp (\ftnuv(x) - \ftnuvtildetpone(x))^2 
+%% \lesssim \delta_{t}^{2\kappa},
+%% \end{equation}
+%% where $\kappa \in \{1, 2\}$ corresponds to the case in which we optimize a
+%% Lipschitz convex function ($\kappa = 1$) or strongly convex and smooth convex
+%% function ($\kappa = 2$).
+
+%% In the typical proofs of
+%% information-theoretic lower
+%% bounds~\citep{Tsybakov09,AgarwalBaRaWa12,Duchi17}, the goal is to choose the
+%% separation between distributions, $\tvnorms{\probuv - \probuvtildetpone}$ in Le Cam's
+%% method~\eqref{eqn:le-cam-lower-bound}, to be a constant so as to guarantee a
+%% reasonable lower bound. In this case, recalling the
+%% KL-bound~\eqref{eqn:kl-heuristic}, we see that the ``information'' about $u_{t+1}$ revealed
+%% in round $t$ of a sequential sampling procedure is constant over the
+%% least-sampled region whenever
+%% \begin{equation}
+%% \label{eq:info-intuition}
+%% \delta_t^{2\kappa} \cdot \frac{n}{|\Ut|} = 
+%% \frac{n \delta_t^{d+2\kappa}}{\delta_{t-1}^d} = 1,
+%% ~~ \mbox{or} ~~
+%% \delta_t = n^{-\frac{1}{d+2\kappa}} \delta_{t-1}^\frac{d}{d + 2\kappa},
+%% \end{equation}
+%% where $|\Ut| = (\frac{\delta_{t-1}}{\delta_{t}})^d$ can be obtained from a volume argument.
+%% By inspection, beginning from $\delta_0 = 1$, this recursion \eqref{eq:info-intuition} has the
+%% solution
+%% \begin{equation*}
+%% \delta_M = n^{-\frac{1}{2\kappa} \left(1 - \left(\frac{d}{d + 2\kappa}\right)^M
+%% 	\right)}.
+%% %\label{eqn:heuristic-recursion}
+%% \end{equation*}
+%% Note, from Eq~\eqref{eqn:function-pair-dist}, 
+%% our construction satisfies $\fndist(\ftnuvm,\ftnuvp) \asymp \delta_M^\kappa$.
+%% Using Eq~\eqref{eqn:le-cam-lower-bound}, we can check that the rate agrees with Eq~\eqref{eqn:minmax-rate}, as desired.
+%% Thus, we can find the optimum of $f$ to accuracy
+%% only $\delta_M$ using $M$ rounds, and the function error must scale as
+%% $\delta_M^\kappa$.
+
+%% Of course, this iteration requires very delicate conditioning arguments based on mathematical induction, which we perform in the Appendix~\ref{sec:proof-lbmain-inforec}. 

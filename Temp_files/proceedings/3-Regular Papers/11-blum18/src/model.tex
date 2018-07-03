@@ -1,0 +1,100 @@
+\section{Property Testing Background and Models}
+\label{sec:model}
+\subsection{Query Testing (Standard Property Testing)}
+Given functions $f$ and $g$ over domain $X$, we define the distance between $f$ and $g$ with respect to distribution $\calD$ over $X$ to be
+\begin{equation}
+\dist_\calD(f,g)=\Pr_{x\sim\calD}[f(x)\neq g(x)].
+\end{equation}
+Given a class $\calC$ of functions over domain $X$ and a margin $\epsilon$, a \emph{property tester} distinguishes the case that the input function $f$ is in the class $\calC$ from the case that $f$ is $\epsilon$-far from $\calC$:
+\begin{enumerate}
+\item if $f\in\calC$, the tester accepts $f$ with probability at least $\frac{2}{3}$;
+\item if $\forall g\in\calC,\dist_\calD(f,g)>\epsilon$, the tester rejects $f$ with probability at least $\frac{2}{3}$.
+\end{enumerate}
+\citet{RS96} first studied the property testing model assuming $X$ is finite and $\calD$ is uniform. We call the testing model of \citet{RS96} as \emph{query testing}, because the tester makes queries to access $f$, i.e., the tester asks for the value of $f(x)$ for some $x\in X$ for each query it makes.
+
+\citet{PRR06} first studied the \emph{tolerant} version of property testing: given an additional parameter, the threshold $\alpha$, to distinguish a function $\alpha$-close to the class from a function $(\alpha+\epsilon)$-far from the class. In other words, 
+\begin{enumerate}
+\item if $\exists g\in \calC,\dist_\calD(f,g)\leq\alpha$, the tester accepts $f$ with probability at least $\frac{2}{3}$;
+\item if $\forall g\in\calC,\dist_\calD(f,g)>\alpha+\epsilon$, the tester rejects $f$ with probability at least $\frac{2}{3}$.
+\end{enumerate}
+They showed tolerant testers for clustering and for monotonicity in the query testing model. \citet{FF05} showed the existence of classes of binary functions that are efficiently query-testable in the non-tolerant case but are not efficiently query-testable in the tolerant case.
+
+\citet{PRR06} also considered a similar task called distance approximation: estimating the distance from the function to the class so that with probability at least $\frac 23$ the output is within $\pm\epsilon$ to the true distance. Note that distance approximation with additive error $\epsilon$ implies tolerant testing with margin $2\epsilon$ with the same query complexity. Based on this observation, all the tolerant testers we design in this paper actually perform distance approximation (so we don't need the parameter $\alpha$) because distance approximation is a slightly more convenient model for our presentation.
+\subsection{Passive Testing (Sample-Based Testing)}
+\label{subsec:passive}
+\citet{GGR98} first studied testers with the ability to obtain a random sample in addition to making queries so that the tester can potentially work on arbitrary distributions (see Section \ref{subsec:distributionfree} for distribution-free testing), although their algorithmic results remained in the query testing framework over the uniform distribution.
+\citet{KR98} developed the first \emph{passive} testers, testers that don't make queries and only rely on the random i.i.d.\ sample to access the input function $f$, for a variety of classes with sub-learning sample complexity. \citet{GR13} advanced the study of passive testers by providing several general positive results as well as by revealing relations with other testing models.
+
+\emph{Proper} learning implies testing, simply by testing using the output hypothesis, but passive testing can be substantially harder than \emph{improper} learning. \citet{GGR98} pointed out that the class of $k$-term-DNF is NP-hard for non-tolerant passive testing while it is efficiently PAC learnable via $k$-CNF \citep{PV88}, if we require testing and learning on an arbitrary distribution.
+
+The general hardness of \emph{tolerant} passive testing based on hardness of improper \emph{agnostic} learning can be implied from the recent work by \citet{KL18}. They considered the task of refutation: for any fixed distribution $\calD$ over domain $X$, given a sample of example-label pairs $\{(x_i,y_i)\}$ and margin $\epsilon>0$, to distinguish the following two cases:
+\begin{enumerate}
+\item accept when every $(x_i,y_i)$ is i.i.d.\ from some distribution $\calD'$ over $X\times\{0,1\}$ with marginal on $X$ being $\calD$ and $\exists f\in\calC,\Pr_{(x,y)\sim\calD'}[f(x)\neq y]\leq\frac 12-\epsilon$;
+\item reject when every $x_i$ is i.i.d.\ from $\calD$ and every $y_i$ is i.i.d.\ from the uniform distribution over $\{0,1\}$.
+\end{enumerate}
+They showed that a refutation algorithm for distribution $\calD$ with margin $\epsilon$ and sample complexity $s$ implies an improper agnostic learning algorithm for the same distribution with error $3\epsilon$ and sample complexity $O(\frac{s^3}{\epsilon^2})$. We show in Appendix \ref{sec:refutation} that the refutation algorithm can be reduced to a tolerant passive tester for arbitrary unknown distributions with threshold $\alpha=\frac 12-\frac{3\epsilon}4$, margin $\frac{\epsilon}{2}$, and sample complexity $\Omega(s)$, implying that tolerant passive testing for arbitrary unknown distributions can't be substantially more sample-efficient than improper agnostic learning for any distribution $\calD$ (with some reasonable assumptions about the distribution $\calD$). %The reduction also has a uniform-distribution version (Lemma \ref{}), implying the hardness of tolerant passive testing over the uniform distribution.
+
+%\citet{Vad17} showed that if one can perform refutation, i.e., distinguishing a function in the class from a random function, using a sample of size $s$, then one can also do improper PAC learning with sample complexity $O(\poly(s))$.  \citet{KL18} showed similar results for the tolerant (agnostic) case. They used a different definition of refutation: distinguishing a function having distance $\frac 12-\epsilon$ to the class from a random function, and showed that if one can perform refutation using a sample of size $s(\epsilon)$, then one can also do improper agnostic learning with sample complexity $O(\frac{\left(s(\frac\epsilon 2)\right)^3}{\epsilon^2})$.\footnote{One difference between the two results is that \citet{Vad17} assumes that the distribution is arbitrary while the result by \citet{KL18} is distribution-specific. } Note that passive testing implies refutation with the same sample complexity both in the non-tolerant and the tolerant case, assuming the concept class has a finite VC-dimension and the distribution has no massive points so that a random function has distance $\frac 12$ to it with probability 1. Therefore these results imply that passive testing can't be substantially more sample-efficient than improper learning.
+
+\subsection{Active Testing}
+Both query testing and passive testing have shortcomings. The assumption of query testing that the tester can make queries to arbitrary points in the domain is usually impractical, while passive testing is too restrictive: for the tolerant case, passive testing can't be substantially more sample-efficient than agnostic learning (recall Section \ref{subsec:passive}).
+
+To avoid both shortcomings, \citet{BBBY12} proposed the active testing model where the tester first receives an unlabeled random i.i.d.\ sample and then makes queries to points in the sample. While the size of the unlabeled sample might be comparable to the labeled sample complexity for learning, the number of queries the tester makes should be substantially smaller.
+%large (but is still required to be polynomial in the VC-dimension of the class), the number of queries the tester makes should be substantially smaller than the sample complexity for learning. 
+They showed (non-tolerant) active testers for unions of $d$ intervals and for linear separators.
+\subsection{Distribution-Free Testing}
+\label{subsec:distributionfree}
+Distribution-free testing \citep{GGR98} considers testers that work on arbitrary unknown distributions with the ability to obtain random i.i.d.\ sample in addition to making queries. \citet{HK03} designed distribution-free testers for low-degree multivariate polynomials, monotone functions, and several other classes.
+
+The difference between distribution-free testing and passive testing (over arbitrary unknown distributions) is that distribution-free testers have the ability to make queries while passive testers don't. However, the query ability is helpful only when we do \emph{non-tolerant} testing where the tester is only required to accept functions in the class, rather than functions having distance 0 to the class with respect to the unknown distribution. For \emph{tolerantly} testing binary functions, we show that distribution-free testing implies passive testing with the same sample complexity (see Section \ref{sec:relationship} Lemmas \ref{lm:distributionfreenontolerant} and \ref{lm:distributionfreetolerant}) and thus the hardness for tolerant passive testing extends automatically to tolerant distribution-free testing.
+
+
+
+%\subsection{Property Testing, Tolerant Testing and Distance Approximation}
+%Suppose we have a ground set $X$ and a distribution $\calD$ over $X$. For any two binary functions $f,g\in\{0,1\}^X$, we define their distance to be $\dist_{\calD}(f,g)=\Pr_{x\sim \calD}[f(x)\neq g(x)]$. 
+
+%Suppose we also have a concept class $\calC\subseteq\{0,1\}^X$. Given a function $f\in\{0,1\}^X$ and a margin $\epsilon$ as input, the task of property testing $\pt_{\calD}(f,\epsilon)$ \citep{RS96} is to distinguish the case that $f$ belongs to class $\calC$ from the case that $f$ is $\epsilon$-far from $\calC$. In other words, $\forall f$,
+%\begin{enumerate}
+%\item if $f\in\calC$, the algorithm outputs ``YES'' with probability at least $\frac{2}{3}$;
+%\item if $\forall g\in\calC,\dist_{\calD}(f,g)>\epsilon$, the algorithm outputs ``NO'' with probability at least $\frac{2}{3}$.
+%\end{enumerate}
+%A property testing algorithm may be randomized, and in this case, the goal is to output the correct answer with probability at least $\frac{2}{3}$. The success probability can be boosted to $1-\delta$ by repeating the algorithm for $O(\log\frac{1}{\delta})$ times and taking the majority.
+
+%The function $f$ can be given to the algorithm in many different ways. In the \emph{query testing} framework \citep{RS96}, the algorithm can query the value of $f(x)$ for any $x\in X$. In this framework, we say the algorithm has \emph{query access} to $f$, or has access to $f\qu$. The query complexity of the algorithm, as a function of $\frac{1}{\epsilon}$, is measured by the maximum number of queries needed by the algorithm.
+
+%\citet{BBBY12} argued that the query testing framework is not realistic for machine learning practice. They proposed the \emph{active testing} framework, in which the algorithm first requests $N$ unlabeled examples $x_1,x_2,\cdots,x_{N}\in X$ sampled independently according to $\calD$ and can only choose to query $f(x_i)$ for $1\leq i\leq N$. In this framework, we say the algorithm has \emph{active access} to $f$, or has access to $f\ac$. The maximum value of $N$, as a function of $\frac{1}{\epsilon}$, is called the \emph{unlabeled sample complexity}. The query complexity is still defined as a function of $\frac{1}{\epsilon}$ measuring the maximum number of queries needed by the algorithm.
+
+%\citet{GGR98} and \citet{KR98} studied an even more strict way of accessing $f$, called \emph{passive access}, in which the algorithm is given the label of an example chosen independently at random from $\calD$ for each query the algorithm makes. 
+
+%Tolerant testing $\tot_{\calD}(f,\alpha,\epsilon)$ \citep{PRR06} is a similar task to property testing. The only difference is that besides the margin $\epsilon$, we are given another parameter $\alpha$ as input, and we are asked to distinguish the case that $f$ is $\alpha$-close to $\calC$ from the case that $f$ is $(\alpha+\epsilon)$-far from $\calC$. %following two cases:
+%\begin{enumerate}
+%\item $\exists g\in\calC,\dist_{\calD}(f,g)\leq \alpha$;
+%\item $\forall g\in\calC,\dist_{\calD}(f,g)>\alpha+\epsilon$.
+%\end{enumerate} 
+%The query complexity of tolerant testing is still measured as a function of $\frac{1}{\epsilon}$ \citep{PRR06}. 
+
+%A natural generalization of tolerant testing is distance approximation, in which we are only given the function $f$ and the margin $\epsilon$ as input and required to output $\hat\alpha$ as an approximation of the distance from $f$ to $\calC$ up to an additive error $\epsilon$. More specifically, the goal of $\da_{\calD}(f,\epsilon)$ is to output $\hat\alpha$ such that $\forall f$,
+%\begin{enumerate}
+%\item $\forall \alpha$ such that $\exists g\in\calC,\dist_{\calD}(f,g)\leq \alpha$, it holds with probability at least $\frac{2}{3}$ that $\hat\alpha\leq \alpha+\epsilon$;
+%\item $\forall \alpha$ such that $\forall g\in\calC,\dist_{\calD}(f,g)>\alpha$, it holds with probability at least $\frac{2}{3}$ that $\hat\alpha> \alpha-\epsilon$.
+%\end{enumerate}
+
+%The success probability of a distance approximation algorithm can be boosted to $1-\delta$ by repeating it $O(\log\frac{1}{\delta})$ times and taking the median. 
+
+%Because for any $\calD$ and $\epsilon$, it's clear that a $\da_{\calD}(f,\frac{\epsilon}{2})$ algorithm implies a $\tot_{\calD}(f,\alpha,\epsilon)$ algorithm with the same query and unlabeled sample complexity \citep{PRR06}, we focus on distance approximation rather than tolerant testing throughout the paper.
+
+%For all of the above examples, the distribution $\calD$ appears in the subscript meaning that the distribution is fixed and known to the algorithm. In this paper, we will consider a more general case, for example $\pt(f\qu,\epsilon,\calD)$, in which the distribution $\calD$ is arbitrarily given to the algorithm as input. When the algorithm has active or passive access to $f$, it's possible to consider an even more general case, for example $\pt(f\ac,\epsilon)$, in which the distribution $\calD$ is unknown to the algorithm (but implicitly given to the algorithm when accessing $f$).
+
+
+
+
+%We use $q^{\text{query}}(\epsilon)$ and $q^{\text{active}}(\epsilon)$ to denote the maximum number of queries needed in the query testing model and the active testing model, respectively. \citet{BBBY12} showed that $q^{\text{query}}(\epsilon)\leq q^{\text{active}}(\epsilon)$ always holds for non-tolerant property testing, which can be easily generalized to tolerant testing and distance approximation. They also showed for non-tolerant property testing that when $\calC$ is the class of dictator functions and $\calD$ is the uniform distribution over $\{0,1\}^p$, there is a testing algorithm in the query testing framework whose query complexity $q^{\text{query}}(p,\epsilon)$ does not grow with respect to $p$, while every testing algorithm in the active testing framework requires $q^{\text{active}}(p,\epsilon)=\Omega(\log p)$ queries for any fixed $0<\epsilon<\frac{1}{2}$.
+
+%In this paper, however, we will show in Theorem \ref{thm:unlabeled} a reversed inequality that $q^{\text{active}}(\epsilon)=O(q^{\text{query}}(\frac{\epsilon}{2}))$ when we are required to do testing on \emph{arbitrary} distribution $\calD$ and the queries are required to lie in the support of $\calD$ (when we have query access)\footnote{We can assume without loss of generality that the queries all lie in the support of $\calD$ when we do tolerant testing and distance approximation, but we cannot assume this for non-tolerant property testing. The reason is that $f\in\calC$ is stronger than $\exists g\in\calC,\dist_{\calD}(f,g)=0$.}, uncovering the relationship between query access and active access.
+
+
+%Similar to Theorem \ref{thm:unlabeled}, we have the following theorem in tolerant testing. Its proof is a simple modification of the proof to Theorem \ref{thm:unlabeled}.
+
+
+
+

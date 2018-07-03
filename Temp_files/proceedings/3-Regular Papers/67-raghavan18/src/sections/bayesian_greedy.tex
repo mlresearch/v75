@@ -1,0 +1,164 @@
+We now turn our attention to externalities at an individual level. We interpret exploration as a potential externality imposed on the current user of a system by future users, since the current user would prefer the learner to take the action that appears optimal.  One could avoid such externalities by running the greedy algorithm, which does just that, but it is well known that the greedy algorithm performs poorly in the worst case.  In this section, we build on a recent line of work analyzing the conditions under which inherent data diversity leads the greedy algorithm to perform well.
+
+We analyze the expected performance of the greedy algorithm under small random perturbations of the context vectors. We focus on greedy algorithms that consume new data in batches, rather than every round. We consider both Bayesian and frequentist versions, \bg and \fg. Our main result is that for any specific problem instance, both algorithms match the Bayesian regret of any algorithm on that particular instance up to polylogarithmic factors. We also prove that under the same perturbation assumptions, LinUCB achieves regret $\tilde{O}(T^{1/3})$ for each realization of $\theta$, which implies a worst-case Bayesian regret of $\tilde{O}(T^{1/3})$ for the greedy algorithms. Finally, we repurpose our analysis to derive a positive result in the group setting, implying that the impossibility result of Section~\ref{sec:impossibility} breaks down when the data is sufficiently diverse.
+
+\xhdr{Setting and notation.}
+We consider a Bayesian version of linear contextual bandits, with 
+$\theta$ drawn from a known
+multivariate Gaussian prior
+    $\prior = \mc N(\pmt, \pvt)$,
+with $\pmt \in \R^d$ and invertible $\pvt \in \R^{d\times d}$.
+
+
+To capture the idea of data diversity, we assume the context vectors on each round $t$ are generated using the following \emph{perturbed context generation} process:  First, a tuple $(\mu_{1,t} \LDOTS \mu_{K,t} )$ of \emph{mean context vectors} is drawn independently from some fixed distribution $\D_\mu$ over $(\R\cup \{\perp\})^K$, where $\mu_{a, t} = \perp$ means action $a$ is not available. For each available action $a$, the context vector is then $x_{a,t} = \mu_{a,t} + \varepsilon_{a, t}$, where $\varepsilon_{a, t}$ is a vector of random noise. Each component of
+    $\varepsilon_{a, t}$
+is drawn independently from a zero-mean Gaussian with standard deviation $\rho$.
+We refer to $\rho$ as the \emph{perturbation size}. In general, our regret bounds deteriorate if $\rho$ is very small.
+Together we refer to a distribution $\D_\mu$, prior $\prior$, and perturbation size $\rho$ as a \textit{problem instance}.
+
+We make several technical assumptions. First, the distribution $\D_\mu$ is such that each context vector has bounded $2$-norm, i.e., $\|\mu_{a,t}\|_2 \le 1$. It can be arbitrary otherwise. Second, the perturbation size needs to be sufficiently small,  $\rho\leq 1/\sqrt{d}$.
+Third, the realized reward $r_{a,t}$ for each action $a$ and round $t$ is
+    $r_{a,t} = x_{a,t}\tran \theta + \eta_{a,t}$,
+the mean reward $x_{a,t}\tran \theta$ plus standard Gaussian noise $\eta_{a,t}\sim \mc N(0, 1)$.\footnote{Our analysis can be easily extended to handle reward noise of fixed variance, i.e.,
+    $\eta_{a,t}\sim \mc N(0, \sigma^2)$.
+\fg would not need to know $\sigma$. \bg would need to know either $\Sigma$ and $\sigma$ or just $\Sigma/\ \sigma^2$.}
+
+The history up to round $t$ is denoted by the tuple $h_t = ((x_{1}, r_1) \LDOTS (x_t, r_t))$.
+
+\xhdr{The greedy algorithms.}
+For the batch version of the greedy algorithm, time is divided in batches of $Y$ consecutive rounds each. When forming its estimate of the optimal action at round $t$, the algorithm may only use the history up to the last round of the previous batch, denoted $t_0$.
+
+\bg forms a posterior over $\theta$ using prior $\prior$ and history $h_{t_0}$.  In round $t$ it chooses the action that maximizes reward in expectation over this posterior. This is equivalent to choosing
+\begin{align}\label{eq:BG-est-defn}
+ a_t = \argmax_a  x_{a,t}\tran \, \bmt, \quad
+    \text{where $\bmt := \Exp[\theta \mid h_{t_0}] $ }.
+\end{align}
+
+\fg~does not rely on any knowledge of the prior. It chooses the best action according to the least squares estimate of $\theta$, denoted $\fmt$, computed with respect to history $h_{t_0}$:
+\begin{align}\label{eq:FG-est-defn}
+ \textstyle a_t = \argmax_a  x_{a, t}\tran \, \fmt, \quad
+\text{where $\fmt = \argmin_{\theta'} \sum_{\tau = 1}^{t_0} ((\theta') \tran
+x_{\tau} - r_{\tau})^2$}.
+\end{align}
+
+\subsection{Main Results}
+
+We first state our main results before describing the intuition behind them. We  state  each theorem  in terms of the main relevant parameters $T$, $K$, $d$, $Y$, and $\rho$.
+First, we prove that in expectation over the random perturbations, both greedy algorithms favorably compare to any other algorithm.
+
+\begin{theorem}
+With perturbed context generation, there is some
+  $Y_0 = \polylog(d, T)/\rho^2$
+such that with batch duration $Y\geq Y_0$, the following holds. Fix any bandit algorithm, and let $R_0(T)$ be its Bayesian regret on a particular problem instance. Then on that same instance,
+\begin{OneLiners}
+\item[(a)] \bg has Bayesian regret at most
+    $Y \cdot R_0(T/Y) + \tilde O(1/T)$,
+\item[(b)]\fg has Bayesian regret at most
+    $Y \cdot R_0(T/Y) + \tilde O(\sqrt{d}/\rho^2).$
+\end{OneLiners}
+\label{thm:main-greedy}
+\end{theorem}
+
+Our next result asserts that the Bayesian regret for LinUCB and both greedy algorithms is on the order of (at most) $T^{1/3}$. This result requires additional technical assumptions.
+
+\begin{theorem}
+Assume that the maximal eigenvalue of the covariance matrix $\Sigma$ of the prior $\prior$ is at most $1$,%
+\footnote{In particular, if $\prior$ is independent across the coordinates of
+$\theta$, then the variance in each coordinate is at most $1$.}
+and the mean vector satisfies
+    $\|\pmt\|_2\geq 1+\sqrt{3 \log T} $.
+With perturbed context generation,
+\begin{OneLiners}
+\item[(a)] With appropriate parameter settings, LinUCB has Bayesian regret
+    $\tilde O(d^2\,K^{2/3}\;T^{1/3}/\rho^2)$.
+\item[(b)]If $Y\geq Y_0$ as in Theorem~\ref{thm:main-greedy}, then both \bg and \fg have Bayesian regret at most
+    $\tilde O(d^2\,K^{2/3}\;T^{1/3}/\rho^2)$.
+\end{OneLiners}
+\label{thm:main-worst-case}
+\end{theorem}
+
+The assumption $\|\pmt\|_2\geq 1+\sqrt{3 \log T} $ in Theorem~\ref{thm:main-worst-case} can be replaced with $d \ge \log T/\log \log T$.
+We use Theorem~\ref{thm:main-worst-case}(b) to derive an ``approximately prior-independent" result for \fg. (For clarity, we state it for independent priors.) The bound in Theorem~\ref{thm:main-worst-case}(b) deteriorates if $\prior$ gets very sharp, but it suffices if $\prior$ has standard deviation on the order of (at least) $T^{-2/3}$.
+
+\begin{corollary}
+Assume that the prior $\prior$ is independent over the components of $\theta$, with variance $\kappa^2\leq 1$ in each component. Suppose the mean vector satisfies
+    $\|\pmt\|_2\geq 1+\sqrt{3 \log T} $.
+With perturbed context generation, if $Y\geq Y_0$ as in Theorem~\ref{thm:main-greedy}, then \fg has Bayesian regret at most
+    $\tilde O(d^2\,K^{2/3}\;T^{1/3}/\rho^2)$
+as long as $\kappa\geq T^{-2/3}$.
+\label{cor:sharp-priors}
+\end{corollary}
+
+Finally, we derive a positive result on group externalities. We find that with perturbed context generation, the minority Bayesian regret of the greedy algorithms (i.e., the Bayesian regret incurred on minority rounds) is small compared to the minority Bayesian regret of any algorithm, whether run on the full population \emph{or} on the minority alone. This sidesteps the impossibility result of Section~\ref{sec:impossibility}.
+
+\begin{theorem}
+Assume $Y\geq Y_0$ as in Theorem~\ref{thm:main-greedy} and perturbed context generation. Fix any bandit algorithm and instance, and let $R_{\min}(T)$ be the minimum of its minority Bayesian regrets when it is only run over minority rounds or when it is run over the full population. Both greedy algorithms run on the full population achieve minority Bayesian regret at most
+    $Y\cdot R_{\min}(T) + \tilde O(\sqrt{d}/\rho^2)$.
+  \label{thm:main-greedy-externalities}
+\end{theorem}
+
+\subsection{Key Techniques}
+\label{sec:bayesian_greedy-key}
+
+The key idea behind our approach is to show that, with perturbed context generation, \BayesGreedy collects data that is informative enough to
+``simulate'' the history of contexts and rewards from the run of any other algorithm ALG over fewer rounds. This implies that it remains competitive with ALG since it has at least as much information and makes myopically optimal decisions. \looseness=-1
+
+We use the same technique to prove a similar simulation result for \FreqGreedy. To treat both algorithms at once, we define a template that unifies them. A bandit algorithm is called \emph{\GreedyStyle} if it divides the timeline in batches of Y consecutive rounds each, in each round $t$ chooses some estimate $\theta_t$ of $\theta$, based only on the data from the previous batches, and then chooses the best action according to this estimate, so that
+   $a_t = \argmax_a \theta_t\tran x_{a,t}$.
+ For a batch that starts at round $t_0+1$, the \emph{batch history} is the tuple
+ $((x_{t_0+\tau},\,r_{t_0+\tau}):\; \tau\in [Y])$,
+ and the \emph{batch context matrix} is the matrix $X$ whose rows are vectors
+ $(x_{t_0+\tau}:\; \tau\in [Y])$;
+ here $[Y] = \{1, \cdots, Y\}$. Similarly to the ``empirical covariance matrix",
+ we define the \emph{batch covariance matrix} as $X\tran X$.
+
+Let us formulate what we mean by ``simulation". We want to use the data collected from a single batch in order to simulate the reward for any one context $x$. More formally, we are interested in the randomized function that takes a context $x$ and outputs an independent random sample from $\mathcal{N}(\theta\tran x, 1)$. We denote it $\Rew(\cdot)$; this is the realized reward for an action with context vector $x$.
+
+
+
+\begin{definition}
+Consider batch $B$ in the execution of a \GreedyStyle algorithm. Batch history $h_B$ can simulate $\Rew()$ up to radius $R>0$ if there exists a function
+    $g: \{\text{context vectors}\}\times \{ \text{batch histories $h_B$}\} \to \R$
+such that $g(x,h_B)$ is identically distributed to $\Rew(x)$ conditional on the batch context matrix, for all $\theta$ and all context vectors $x\in \R^d$ with $\|x\|_2\leq R$.
+\label{def:simulation}
+\end{definition}
+
+Let us comment on how it may be possible to simulate $\Rew(x)$. For intuition, suppose that
+    $x = \tfrac12\, x_1 + \tfrac12\, x_2$.
+Then $(\tfrac12\, r_1 + \tfrac12\, r_2 + \xi)$ is distributed
+as $\mathcal{N}(\theta\tran x, 1)$ if $\xi$ is drawn independently
+from $\mathcal{N}(0, \tfrac12)$. Thus, we can define
+    $g(x,h) = \tfrac12\, r_1 + \tfrac12\, r_2 + \xi$
+in Definition~\ref{def:simulation}. We generalize this idea and
+show that a batch history can simulate $\Rew$ as long as the batch covariance
+matrix
+has a sufficiently
+large minimum eigenvalue, which holds with high probability
+when the batch size is large. \looseness=-1
+
+
+\begin{lemma}
+ With perturbed context generation,
+  there is some $Y_0 = \polylog(d, T)/\rho^2$ and
+  $R = O(\rho \sqrt{d\log(TKd)}) $ such that with probability at least
+  $1-T^{-2}$ any batch history from a
+  \GreedyStyle algorithm can
+    simulate $\Rew()$ up to radius $R$, as long as
+    $Y\geq Y_0$.
+    \label{lem:simulation}
+\end{lemma}
+
+If the batch history of an algorithm can simulate $\Rew$, the algorithm has enough information to simulate the outcome of a fresh round of any other algorithm
+$\ALG$. Eventually, this allows us to use a coupling argument in which
+we couple a run of \bg with a slowed-down run of $\ALG$, and prove
+that the former accumulates at least as much information as the
+latter, and therefore the Bayesian-greedy action choice is, in
+expectation, at least as good as that of $\ALG$. This leads to
+Theorem~\ref{thm:main-greedy}(a). We extend this argument to a
+scenario in which both the greedy algorithm and $\ALG$ measure regret
+over a randomly chosen subset of the rounds, which leads to
+Theorem~\ref{thm:main-greedy-externalities}.
+
+To extend these results to \fg, we consider a hypothetical algorithm that receives the same data as \fg, but chooses actions based on the (batched) Bayesian-greedy selection rule. We analyze this hypothetical algorithm using the same technique as above, and then argue that its Bayesian regret cannot be much smaller than that of \fg. Intuitively, this is because the two algorithms form
+almost identical estimates of $\theta$, differing only in the fact that the hypothetical algorithm uses the $\prior$ as well as the data. We show that this difference amounts to effects on the order of $1/t$, which add up to a maximal difference of $O(\log T)$ in Bayesian regret.
+

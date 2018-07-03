@@ -1,0 +1,37 @@
+% !TEX root = paper.tex
+
+\subsection{OBAMA Algorithm and Proof of \pref{thm:bandit_multiclass}}
+
+\begin{algorithm}[h]
+\caption{}
+\label{alg:bandit_multiclass}
+\begin{algorithmic}[1]
+\Procedure{OBAMA}{decision set $\cW$, smoothing parameter $\mu$.}
+\State Let $\cA$ be \pref{alg:mixing_multiclass} initialized with $\cW$ and $\mu$.
+\For{$t=1,\ldots,n$}
+\State Obtain $x_t$, pass it to $\cA$ and let $\zh_t \in \R_K$ be the output of $\cA$.
+\State Play $\yh_t \sim p_t := \mb{\sigma}(\zh_t)$ and obtain $\ind[\yh_t \neq y_t]$.
+\State Define $\tilde{y}_t \in \R^K$ as $\tilde{y}_t(k) := \frac{\ind[k = \yh_t]\ind[\hy_t = y_t]}{p_t(\yh_t)}$ for $k \in [K]$ and pass it as feedback to $\cA$.
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\label{app:bandit_multiclass_proofs}
+\begin{proof}[Proof of \pref{thm:bandit_multiclass}]
+First, note that an easy calculation on the softmax function $\mb{\sigma}$ implies that for all $k \in [K]$, $p_t(k) \geq \frac{(1-\mu) \exp(-2BR) + \mu}{K}$. So, defining $L = \frac{K}{(1-\mu) \exp(-2BR) + \mu}$, we have $\|\tilde{y}_t\|_1 \leq L$. Thus, \pref{thm:multiclass_logistic_regret} applied to $\cA$ guarantees that for any $W \in \cW$, 
+\[\sum_{t=1}^{n}\ls(\zh_t,\tilde{y}_t) - \sum_{t=1}^{n}\ls(Wx_t,\tilde{y}_t) \leq{} 5LdK\cdot{}\log\prn*{\tfrac{BRn}{dK} + e} + 2\mu{}\sum_{t=1}^n \|\tilde{y}_t\|_1.\]
+Fix a round $t$ and let $\En_t[\cdot]$ denote expecation conditioned on $\yh_1, \yh_2, \ldots, \yh_{t-1}$. The construction of the feedback vectors $\tilde{y}_t$ via importance weighting guarantees $\En_t[\tilde{y}_t] = \mb{1}_{y_t}$, where $\mb{1}_k$ denotes the indicator vector supported on coordinate $k$. Hence, $\En_t[\ell(\zh_t, \tilde{y}_t)] = \ell(\zh_t, y_t) = -\log(p_t(y_t))$ and $\En_t[\ell(Wx_t, \tilde{y}_t)] = \ell(Wx_t, y_t)$. Furthermore, it is easy to check that $\En_t[\|\tilde{y}_t\|_1] = 1$. Thus, we conclude that
+\[\sum_{t=1}^{n}\En[-\log(p_t(y_t))] - \sum_{t=1}^{n}\ls(Wx_t,y_t) \leq{} 5LdK\cdot{}\log\prn*{\tfrac{BRn}{dK} + e} + 2\mu{}n.\]
+
+Now if we set $\mu = 0$, then the right-hand side is bounded by $O(dK^2\exp(2BR)\log\prn*{\tfrac{BRn}{dK} + e})$. If we set $\mu = \sqrt{\frac{dK^2\log\prn*{\tfrac{BRn}{dK} + e}}{n}}$, the right-hand side is bounded by $O\left(\sqrt{dK^2\log(\tfrac{BRn}{dK} + e)n}\right)$. Choosing the setting of $\mu$ that gives the smaller upper bound, and the fact that the log loss upper bounds the probability of making a mistake (because $-\log(p_t(y_t)) \geq 1 - p_t(y_t)$), we get the stated bound on the expected number of mistakes.
+\end{proof}
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "paper"
+%%% End:

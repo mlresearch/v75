@@ -1,0 +1,372 @@
+% !TEX root = main.tex
+
+\section{Using Deterministic Conditions for Matrix Completion}
+\label{app:matrix}
+In this section, we prove Theorem~\ref{thm:asymmetric_local}.
+
+We use Lemma~\ref{lem:deterministc_main} and the techniques in \citep{GeJZ17} to show that all local minima of the non-convex objective functions are close to the ground truth.
+%As in the original proof, 
+We first restate the objective functions: Equation~\eqref{eqn:symmetricobj} for the symmetric case and Equation~\eqref{eqn:asymmetricobj} for the asymmetric case.
+\begin{align*}
+\min \; f(U) &= \frac{1}{2}\|UU^\top - \Ms\|_W^2 + Q(U),  \tag{\ref{eqn:symmetricobj}} \\
+\min \; f(U, V) &= 2\|UV^\top - \Ms\|_W^2 + \frac{1}{2} \|U^\top U-V^\top V\|_F^2 + Q(U,V), \tag{\ref{eqn:asymmetricobj}}
+\end{align*}
+where $x_+ = \max\{x,0\}$, $Q(U) = \lambda \sum_{i=1}^n (\normtwo{U_i} - \alpha)_+^4$, and $Q(U,V) = \lambda_1 \sum_{i=1}^{n_1} (\normtwo{U_i} - \alpha_1)_+^4 +\lambda_2\sum_{i=1}^{n_2} (\normtwo{V_i} - \alpha_2)_+^4$.
+
+We start with an overview of the analysis in \citep{GeJZ17} in Appendix~\ref{app:matrix-overview}.
+Because Lemma~\ref{lem:tangent} is no longer true in the semi-random setting, we cannot use the proof of \cite{GeJZ17} in a black-box way.
+We will handle symmetric (Appendix~\ref{app:matrix-symmetric}) and asymmetric (Appendix~\ref{app:matrix-asymmetric}) cases separately.
+
+\subsection{Overview of the Analysis in \citep{GeJZ17}}
+\label{app:matrix-overview}
+
+We give a brief overview of the techniques in \citep{GeJZ17}. The materials in this section are independent of the concentration bounds, so they remain valid in the semi-random model.
+
+\paragraph{Measuring Distance between Matrices.} The first problem in analyzing Objective~\eqref{eqn:symmetricobj} is that the optimal solution is not unique: given a matrix $\Ms = \Us(\Us)^\top$, for any orthonormal matrix $R$ we also have $\Ms = (\Us R)(\Us R)^\top$. To take this symmetry into account, we define the distance between two matrices as follows:
+
+\begin{definition}\label{def:difference}
+Given matrices $U, \Us \in \R^{n\times r}$, their difference is defined to be $\Delta = U - \Us R$, where $R\in \R^{r\times r}$ is an $r\times r$ orthonormal matrix that minimizes $\|U - \Us R\|_F^2$.
+\end{definition}
+
+The benefit of this definition of distance is summarized in the following lemma:
+
+\begin{lemma}[Lemma 6 in \citep{GeJZ17}]
+\label{lem:normconnect}
+Given matrices $U, \Us \in \R^{n\times r}$, let $M = UU^\top$ and $\Ms = \Us(\Us)^\top$, let $\Delta$ be the difference defined in Definition~\ref{def:difference}, then
+\[
+\|\Delta\Delta^\top\|_F^2 \le 2\|M - \Ms\|_F^2,
+\]
+and
+\[
+\sigs_r\|\Delta\|_F^2 \le \frac{1}{2(\sqrt{2}-1)} \|M - \Ms\|_F^2.
+\]
+\end{lemma}
+
+The lemma states that when $\Delta$ is large, $M$ is also far from $\Ms$. This would not be true if we simply defined $\Delta = U - \Us$ without considering the best rotation of $\Us$.
+From now on, we will always assume $\Us$ is {\em aligned} with $U$ in the sense that $R = I$ and $\Delta = U - \Us$ (this can be guaranteed by choosing the appropriate global optimum that $U$ is comparing to). 
+
+\paragraph{Main Proof for the Symmetric Case.}
+First, we introduce notations for the Hessian. The Hessian of $f(U)$ is a 4-th order tensor (because the variable $U$ is a matrix). For an $n\times r$ matrix $X$, we use $[\nabla^2 f(U)](X)$ to denote the quadratic form of the Hessian evaluated at $X$. The Hessian is positive semidefinite (PSD), iff $[\nabla^2 f(U)](X) \ge 0$ for every $X$.
+
+The main idea of \cite{GeJZ17} is to focus on the direction of $\Delta$:
+To prove $UU^\top = \Ms$, instead of using $\nabla f(U) = 0$ and $\nabla^2 f(U)$ is PSD, it is sufficient to work with $\inner{\nabla f(U), \Delta} = 0$ and $[\nabla^2 f(U)](\Delta) \ge 0$.
+%Intuitively, this direction brings us closer to the global optimum $\Us$.
+The next lemma, which is the main lemma in \citep{GeJZ17}, derives a particular inequality that is very useful in proving convergence.
+Lemma~\ref{lem:gjzmain_sym} is proved by simplifying the second-order term $[\nabla^2 f(U)](\Delta)$ given that the first-order term $\inner{\nabla f(U), \Delta}$ is 0.
+
+\begin{lemma}[Lemma 7 in \citep{GeJZ17}]
+\label{lem:gjzmain_sym}
+Let $M = UU^\top$ and $\Delta$ is the difference of $U$ and $\Us$ as in Definition~\ref{def:difference}, if $U$ is a local minimum of Objective \eqref{eqn:symmetricobj}, then
+\[
+0 \le [\nabla^2 f(U)](\Delta) = \|\Delta\Delta^\top\|_W^2 - 3\|M-\Ms\|_W^2 + ([\nabla^2 Q(U)](\Delta) -4\inner{\nabla Q(U),\Delta}).
+\]
+\end{lemma}
+
+To see why this inequality is useful intuitively, assume the regularizer term is 0 (the current vector is incoherent so the incoherence regularizer is not active), and assume further the $W$-norms are very close to Frobenius norm (which is essentially guaranteed by Lemmas~\ref{lem:tangent}~and~\ref{lem:Delta_mc} when entries are observed randomly), then we have
+\[
+\|\Delta\Delta^\top\|_F^2 - 3\|M-\Ms\|_F^2 \ge 0.
+\]
+However, by Lemma~\ref{lem:normconnect} we know $\|\Delta\Delta^\top\|_F^2 \le 2\|M-\Ms\|_F^2$, so the only way this equation can hold is if $\|M-\Ms\|_F = 0$, and therefore, all local optima are global.
+
+Finally, we state the lemma that shows the regularizer term is indeed small.\footnote{
+The constant in Lemma~\ref{lem:extra_bound_symmetric} is slightly different from that of \citep{GeJZ17}, but it follows from the same proof by choosing a larger universal constant $C$.}
+
+\begin{lemma}[Lemma 11 in \citep{GeJZ17}]
+\label{lem:extra_bound_symmetric}
+Let $U$ and $\Delta$ be defined as above.
+Choose $\alpha^2 = \frac{C\mu r\sigs_1}{n}$ and $\lambda = \frac{C^2 n}{\mu r\kappa^\star}$ where $C$ is a large enough universal constant, then we have
+\[
+([\nabla^2 Q(U)](\Delta) -4\inner{\nabla Q(U),\Delta}) \le 0.1\sigs_r \|\Delta\|_F^2.
+\]
+\end{lemma}
+
+\paragraph{Reduction from Asymmetric Case to the Symmetric Case.}
+
+To handle asymmetric matrices, \citep{GeJZ17} gives a way to essentially reduce asymmetric matrices to symmetric matrices. 
+
+For variables $U,V$ and optimal solution $\Us,\Vs$, we define the following matrices:
+\[
+Z = 
+\begin{pmatrix}
+ U\\
+ V
+\end{pmatrix}; \;
+Z^\star = 
+\begin{pmatrix}
+ \Us\\
+ \Vs
+\end{pmatrix}; \quad
+N = ZZ^\top; \; N^\star = (Z^\star)(Z^\star)^\top.
+\]
+
+In the asymmetric setting, we consider $\Delta=\begin{pmatrix}
+ \Delta_U\\
+ \Delta_V
+\end{pmatrix}$ as the difference between $Z$ and $Z^\star$ as in Definition~\ref{def:difference}, and we also rotate $Z^\star$ so that $\Delta = Z-Z^\star$.
+
+Roughly speaking, we want to design an objective function that reduces the asymmetric case to a symmetric matrix completion problem with variables $Z$ and ground truth $N^\star$.
+This is impossible if we only focus on the term $2 \|UV^\top - \Ms\|_W^2$, because it does not depend on the diagonal blocks of $(N - N^\star)$.
+Since we cannot observe the diagonal blocks of $N^\star$, we try to add a term so that the Hessian of $f(Z)$ acts like a block identity tensor on $N$.
+The additional term $\frac{1}{2} \|U^\top U-V^\top V\|_F^2$ is introduced for exactly this purpose.
+%\begin{lemma}\label{lem:symmetricconvert}
+%We have
+%\[2\|UV^\top - \Ms\|_W^2 + \frac{1}{2} \|U^\top U-V^\top V\|_F^2 = \frac{1}{2}\|N-N^\star\|_{\bar{W}}^2,\]
+%In particular, $\|\bar{W} - J\| = 2\|W-J\|$.
+%\end{lemma}
+%
+%The lemma follows from direct calculation. This lemma justifies why we need the additional term $\frac{1}{2} \|U^\top U-V^\top V\|_F^2$: it fills in the diagonal blocks for the matrix $N$, $N^\star$. Using this lemma, we can rewrite the objective function as
+%\[
+%\min f(Z) = \frac{1}{2}\|ZZ^\top - N^\star\|_{\bar{W}}^2 + Q(Z). 
+%\]
+%Here $Q(Z) = Q(U,V) =: Q_1(U)+Q_2(V)$ is the same regularizer. The formula is then essentially the same as Equation \eqref{eqn:symmetricobj}, and indeed \cite{GeJZ17} proved a very similar main lemma:
+
+Let $Q(Z) = Q(U,V)$ be the same regularizer as in Objective~\eqref{eqn:asymmetricobj}. \cite{GeJZ17} proved the following lemma:
+
+\begin{lemma}[Essentially Lemma 16 in \citep{GeJZ17}]
+\label{lem:gjzmain_asym}
+Let $Z$, $Z^\star$, $N$, $N^\star$, and $\Delta$ be defined as above, if $Z$ is a local minimum of Objective~\eqref{eqn:asymmetricobj}, then
+\[
+0 \le [\nabla^2 f(Z)](\Delta) \le \|\Delta\Delta^\top\|_{\bar{W}}^2 - 3\|N-N^\star\|_{\bar{W}}^2 + ([\nabla^2 Q(Z)](\Delta) -4\inner{\nabla Q(Z),\Delta}).
+\]
+where
+\[
+\bar{W} = \begin{pmatrix}
+J & 2W - J \\
+2W^\top - J & J
+\end{pmatrix}.
+\]
+\end{lemma}
+
+Similar to the symmetric case, Lemma~\ref{lem:gjzmain_asym} is proved by simplifying the second-order term $[\nabla^2 f(Z)](\Delta)$ given that the first-order term $\inner{\nabla f(Z), \Delta}$ is 0.
+
+Notice that we have $\|\bar{W} - J\| = 2\|W-J\|$.
+If our preprocessing algorithm guarantees that $W$ is close to $J$, then $\bar W$ is close to $J$ as well.
+
+Finally, we have a corresponding lemma that shows the regularization term is small.
+
+\begin{lemma}[Lemma 22 in \citep{GeJZ17}]\label{lem:extra_bound_asymmetric}
+Let $Z$ and $\Delta$ be defined as above.
+Choose $\alpha_1^2 = \frac{C\mu r\sigs_1}{n_1},\alpha_2^2 = \frac{C\mu r\sigs_1}{n_2}$ and $\lambda_1 = \frac{C^2 n_1}{\mu r\kappa^\star},\lambda_2 = \frac{C^2 n_1}{\mu r\kappa^\star}$ where $C$ is a large enough universal constant, then we have
+\[
+([\nabla^2 Q(Z)](\Delta) -4\inner{\nabla Q(Z),\Delta}) \le 0.1\sigs_r \|\Delta\|_F^2.
+\]
+\end{lemma}
+
+
+
+\subsection{Proof of Our Symmetric Case}
+\label{app:matrix-symmetric}
+We first prove a variant of Lemma 9 in \citep{GeJZ17} in the semi-random model. Lemma~\ref{lem:symmetricnormbound} shows that any local minima of Objective~\eqref{eqn:symmetricobj} have bounded row norms.
+
+\newcommand{\grad}{\nabla}
+\newcommand{\poly}{\mbox{poly}}
+
+\begin{lemma} \label{lem:symmetricnormbound}
+When the weight matrix $W$ satisfies $\norminf{W} \le n$, choose $\alpha^2 = \frac{C\mu r\sigs_1}{n}$ and $\lambda = \frac{C^2 n}{\mu r\kappa^\star}$ where $C$ is a large enough universal constant. For Objective~\eqref{eqn:symmetricobj}, we have for any matrix $U$ with $\grad f (U) = 0$, 
+\begin{equation*}
+\max_{i}\normtwo{U_i}^2 = O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n}\right).
+\end{equation*}
+\end{lemma}
+% where $(\frac{epsilon}{\lambda})^{\frac{2}{3}} \le \frac{\sqrt{\mu r} \cdot \sigs_1 }{\lambda} $
+
+\begin{proof}
+Recall that $U_i \in \R^{1 \times r}$ is the $i$-th row of $U \in \R^{n \times r}$ and $e_i \in \R^{r \times 1}$ is the $i$-th standard basis vector.
+
+%By Lemma 18 in \citep{GeJZ17}, 
+The gradient $\nabla f(U)$ is equal to $2(W*(M-\Ms))U + \nabla Q(U)$, where
+\[ \nabla Q(U) = 4\lambda \sum_{i=1}^n (\normtwo{U_i} - \alpha)_+^3 \frac{e_i U_i}{\normtwo{U_i}^2}. \]
+%\[ \nabla Q(U) = 4\lambda \sum_{i=1}^n (\|U_i\| - \alpha)_+^3 \frac{e_i (U_i)^\top}{\|U_i\|^2}. \]
+
+Let $i^\star$ be the row index with the maximum $\ell_2$-norm, if $\normtwo{U_{i^\star}} \le 2\alpha$ then we are done. On the other hand, if $\normtwo{U_{i^\star}} > 2\alpha$, we will consider the gradient along $e_{i^\star}U_{i^\star}$. % $e_{i^\star}(U_{i^\star})^\top$
+We have
+\begin{align*}
+0 & = \inner{\nabla f(U), e_{i^\star}U_{i^\star}} \\
+& = \inner{e_{i^\star}^\top[2(W*(UU^\top - \Ms))U + \nabla Q(U)], U_{i^\star}} \\
+& \ge 4\lambda (\normtwo{U_{i^\star}}-\alpha)_+^3\normtwo{U_{i^\star}} - 2\inner{e_{i^\star}^\top \Ms, e_{i^\star}^\top UU^\top}_W \\
+& \ge \frac{\lambda}{2}\normtwo{U_{i^\star}}^4 - 2n \maxnorm{\Ms} \maxnorm{UU^\top} \\
+& \ge \frac{\lambda}{2}\normtwo{U_{i^\star}}^4 - 2\mu r\sigs_1\normtwo{U_{i^\star}}^2.
+\end{align*}
+
+The third step removes the term $\inner{e_{i^\star}^\top U U^\top U, U_{i^\star}} = \fnorm{e_{i^\star}^\top U U^\top}^2 \ge 0$.
+The fourth step uses that $\normtwo{U_{i^\star}} > 2\alpha$ and $\norminf{W} \le n$ (every row of $W$ has $\ell_1$-norm at most $n$).
+The last step is due to $\maxnorm{UU^\top} = \normtwo{U_{i^\star}}^2$; and $\maxnorm{\Ms} = \max_{i,j} \inner{U_i, V_j} \le \max_{i,j} \normtwo{U_i} \normtwo{V_j} \le \frac{\sigs_1 \mu r}{n}$ because $\Ms$ is incoherent.
+As a result, we know that $\normtwo{U_{i^\star}}^2 \le \frac{4\mu r\sigs_1}{\lambda} = O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n}\right)$ by our choice of $\lambda$.
+\end{proof}
+
+Next, we will show that all local minima are close to the ground truth.
+
+\begin{lemma}
+Fix any error parameter $0 < \eps < 1$.
+For a weight matrix $W$ such that $\norminf{W} \le n$ and $\|W-J\| \le \frac{\eps cn}{\mu^2 r^2 (\kappa^\star)^2}$ for a small enough universal constant $c$, any local minimum $U$ of Objective~\eqref{eqn:symmetricobj} satisfies $\|UU^\top-\Ms\|_F^2 \le \epsilon \|\Ms\|_F^2$. 
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:gjzmain_sym}, we know that every local minimum of $f(U)$ satisfies
+\[
+\|\Delta\Delta^\top\|_W^2 - 3\|UU^\top - \Ms\|_W^2 + \left([\nabla^2 Q(U)](\Delta) - 4\inner{\nabla Q(U), \Delta}\right) \ge 0.
+\]
+
+We will bound these three terms. First, by Lemma~\ref{lem:symmetricnormbound}, we know $\normtwo{\Delta_i}^2 \le O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n}\right)$. 
+
+For the first term $\|\Delta\Delta^\top\|_W^2$, we can directly apply Lemma~\ref{lem:deterministc_main}:
+\begin{align*}
+\|\Delta\Delta^\top\|_W^2 & \le \|\Delta\Delta^\top\|_F^2 + \|W-J\|\|\Delta\|_F^2 \max_i \|\Delta_i\|^2 \\
+& \le \|\Delta\Delta^\top\|_F^2 + \|W-J\|\cdot O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n}\right)\cdot \|\Delta\|_F^2 \\
+& \le \|\Delta\Delta^\top\|_F^2 + 0.1\sigs_r \|\Delta\|_F^2.
+\end{align*}
+
+The last inequality uses the fact that $\|W-J\| \le \frac{cn}{\mu^2 r^2 (\kappa^\star)^2}$ for a small enough constant $c$. 
+
+For the second term $\|UU^\top - \Ms\|_W^2$, we invoke Lemma~\ref{lem:deterministc_main} with $X = (U, \Us)$ and $Y = (U, -\Us)$.
+Notice that $X Y^\top = UU^\top - \Ms$.
+Moreover, we know that $\fnorm{X} \le \|U\|_F + \|\Us\|_F \le 2\|\Us\|_F + \|\Delta\|_F$. Similarly, the row norms of $X$ is still upper bounded by $O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n}\right)$. Therefore,
+\begin{align*}
+\|UU^\top - \Ms\|_W^2 & \ge \|UU^\top - \Ms\|_F^2 - \|W-J\|\|(U,\Us)\|_F^2 \max_i \normtwo{(U,\Us)_i}^2 \\
+& \ge \|UU^\top - \Ms\|_F^2 - \|W-J\|\cdot O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n}\right)\cdot (2\|\Us\|_F + \|\Delta\|_F)^2 \\
+& \ge \|UU^\top - \Ms\|_F^2 - 0.1 \epsilon\sigs_r \|\Us\|_F^2 -0.1\sigs_r \|\Delta\|_F^2.
+\end{align*}
+
+Again, the last step uses the fact that $\|W-J\| \le \frac{\eps cn}{\mu^2 r^2 (\kappa^\star)^2}$ for a small enough constant $c$. 
+
+Finally, the third term is bounded by $0.1\sigs_r\|\Delta\|_F^2$ by Lemma~\ref{lem:extra_bound_symmetric}. Combining all these terms,
+\begin{align*}
+0 & \le \|\Delta\Delta^\top\|_W^2 - 3\|UU^\top - \Ms\|_W^2 + \left([\nabla^2 Q(U)](\Delta) - 4\inner{\nabla Q(U), \Delta}\right) \\
+& \le \|\Delta\Delta^\top\|_F^2 + 0.2\sigs_r \|\Delta\|_F^2 - 3\left(\|UU^\top - \Ms\|_F^2 - 0.1 \epsilon\sigs_r \|\Us\|_F^2 -0.1\sigs_r \|\Delta\|_F^2\right)  \\
+% Too wide for COLT template
+%& \le \left(\|\Delta\Delta^\top\|_F^2 + 0.1\sigs_r \|\Delta\|_F^2\right) - 3\left(\|UU^\top - \Ms\|_F^2 - 0.1 \epsilon\sigs_r \|\Us\|_F^2 -0.1\sigs_r \|\Delta\|_F^2\right) + 0.1\sigs_r \|\Delta\|_F^2 \\
+& \le -\|UU^\top - \Ms\|_F^2 + 0.5 \sigs_r\|\Delta\|_F^2 + 0.3\epsilon \sigs_r \|\Us\|_F^2 \\
+& \le -0.3\|UU^\top - \Ms\|_F^2 + 0.3 \epsilon\sigs_r \|\Us\|_F^2.
+\end{align*}
+
+Here the calculations use the inequalities in Lemma~\ref{lem:normconnect}. 
+
+As a result, $\|UU^\top - \Ms\|_F^2 \le \epsilon \sigs_r \|\Us\|_F^2$.
+We conclude the proof by noting that $\sigs_r \|\Us\|_F^2 = \sigs_r \sum_{i=1}^r \sigs_i \le \sum_{i=1}^r (\sigs_i)^2 = \|\Ms\|_F^2$, because the singular values of $\Us$ are $\sqrt{\sigs_i}$'s.
+\end{proof}
+
+\subsection{Our Asymmetric Case: Proof of Theorem~\ref{thm:asymmetric_local}}
+\label{app:matrix-asymmetric}
+
+The proof for the asymmetric case (Objective~\eqref{eqn:asymmetricobj}) is very similar.
+Recall that $\Ms = \Us(\Vs)^\top$, where $\Us \in \R^{n_1\times r}$ and $\Vs = \R^{n_2\times r}$.
+We again start by bounding the row norms of $U$ and $V$.
+
+\begin{lemma} \label{lem:asymmetricnormbound}
+Suppose $\norminf{W} \le n_2$ and $\normone{W} \le n_1$. Choose $\alpha_1^2 = \frac{C\mu r\sigs_1}{n_1},\alpha_2^2 = \frac{C\mu r\sigs_1}{n_2}$ and $\lambda_1 = \frac{C^2 n_1}{\mu r\kappa^\star},\lambda_2 = \frac{C^2 n_1}{\mu r\kappa^\star}$ where $C$ is a large enough universal constant. For $f$ as in Objective~\eqref{eqn:asymmetricobj} and any matrix $Z = \begin{pmatrix}
+U \\ V
+\end{pmatrix}$ with $\grad f(Z) = 0$, we have
+\begin{equation*}
+\max_{i}\normtwo{U_i}^2 = O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{n_1}\right); \quad 
+\max_{i}\normtwo{V_i}^2 = O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{n_2}\right).
+\end{equation*}
+\end{lemma}
+
+\begin{proof}
+Without loss of generality, we assume $\sqrt{n_1}\max_i\normtwo{U_i} \ge \sqrt{n_2}\max_i\normtwo{V_i}$, so it is enough to upper bound $\max_i \normtwo{U_i}$. The gradient can be computed as follows.
+\begin{align*}
+\grad f(Z) & =
+4 \begin{pmatrix}
+[W*(M -\Ms)] V \\
+[W*(M -\Ms)]^\top U
+\end{pmatrix}
++
+2 \begin{pmatrix}
+ U(U^\top U - V^\top V) \\
+ V(V^\top V - U^\top U)
+\end{pmatrix}
++
+ \grad Q(Z),
+\end{align*}
+where %we have $\nabla Q(Z)$ as follows:
+\begin{equation*}
+\grad Q(Z) = 4\lambda_1 \sum_{i=1}^{n_1}(\normtwo{Z_i} - \alpha_1)^3_{+}\frac{e_i Z_i}{\normtwo{Z_i}^2} 
++ 4\lambda_2 \sum_{i=n_1+1}^{n_1+n_2}(\normtwo{Z_i} - \alpha_2)^3_{+}\frac{e_i Z_i}{\normtwo{Z_i}^2}.
+\end{equation*}
+
+First, we observe that $\inner{\nabla Q(Z), Z} \ge 0$, therefore,
+\begin{align*}
+0 & = \inner{\nabla f(Z), Z} \\
+& = 2 \|U^\top U - V^\top V\|_F^2 + 8 \inner{M - \Ms, M}_W + \inner{\nabla Q(Z),Z} \\
+& \ge 2 \|U^\top U - V^\top V\|_F^2 - 8 \inner{\Ms, M}_W \\
+& \ge 2 \|U^\top U - V^\top V\|_F^2 - 8n_1n_2 \maxnorm{\Ms} \maxnorm{M}. \\
+& \ge 2 \|U^\top U - V^\top V\|_F^2 - 8\sqrt{n_1n_2}\mu r\sigs_1 \maxnorm{M}.
+\end{align*}
+
+Let $i^\star = \arg\max_i \normtwo{U_i}$, if $\normtwo{U_{i^\star}} \le 2 \alpha_1$ then we are done. On the other hand, if $\normtwo{U_{i^\star}} > 2\alpha_1$, we know $\maxnorm{M} \le \max_{i,j} \normtwo{U_i}\normtwo{V_j} \le \sqrt{n_1/n_2} \normtwo{U_{i^\star}}^2$. 
+As a result, we know 
+\[
+\|U^\top U - V^\top V\|_F^2 \le 4\sqrt{n_1n_2}\mu r\sigs_1\|M\|_\infty \le 4n_1\mu r \sigs_1\normtwo{U_{i^\star}}^2.
+\]
+
+Let $Q(Z) = Q(U,V) = Q_1(U)+Q_2(V)$.
+Consider the gradient of $f(Z)$ along the direction $e_{i^\star} Z_{i^\star}$, we have
+\begin{align*}
+0 & = \inner{\nabla f(Z), e_{i^\star} Z_{i^\star}} = \inner{e_{i^\star}^\top\nabla f(Z), Z_{i^\star}} \\
+& = \inner{e_{i^\star}^\top\left[4(W*(M-\Ms))V + 2 U(U^\top U-V^\top V) + \nabla Q_1(U)\right], U_{i^\star}} \\
+& \ge 4\lambda_1(\normtwo{U_{i^\star}}-\alpha_1)_+^3\normtwo{U_{i^\star}} - 4\inner{e_{i^\star}^\top \Ms, e_{i^\star}^\top M}_W - 2 \|U^\top U-V^\top V\|_F \normtwo{U_{i^\star}}^2 \\
+& \ge \frac{\lambda_1}{2}\normtwo{U_{i^\star}}^4 - 4n_2 \maxnorm{\Ms} \maxnorm{M} - 2 \|U^\top U-V^\top V\|_F \normtwo{U_{i^\star}}^2. \\
+& \ge \frac{\lambda_1}{2}\normtwo{U_{i^\star}}^4 - 4\mu r\sigs_1\normtwo{U_{i^\star}}^2 - 4\sqrt{n_1\mu r \sigs_1}\normtwo{U_{i^\star}}^3. 
+\end{align*}
+
+This implies 
+\[
+\frac{\lambda_1}{2}\normtwo{U_{i^\star}}^2 \le 4\mu r\sigs_1 + 4\sqrt{n_1\mu r \sigs_1}\normtwo{U_{i^\star}}.
+\]
+Therefore, $\normtwo{U_{i^\star}}^2 = O\bigl(\max\{\frac{\mu r\sigs_1}{\lambda_1}, \frac{n_1\mu r \sigs_1}{\lambda_1^2}\}\bigr) = O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{n_1}\right)$ by our choices of $\alpha$'s and $\lambda$'s. 
+\end{proof}
+
+Next, we will prove that all local minima are close to the ground truth.
+
+\begin{lemma}
+Fix any error parameter $0 < \eps < 1$.
+Suppose the weight matrix $W$ satisfies that $\norminf{W} \le n_2$, $\normone{W} \le n_1$, and $\|W-J\| \le \frac{\eps c\sqrt{n_1n_2}}{\mu^3 r^3 (\kappa^\star)^3}$ for a small enough universal constant $c$. Then, any local minimum $(U, V)$ of Objective~\eqref{eqn:asymmetricobj} has $\|UV^\top-\Ms\|_F^2 \le \epsilon \|\Ms\|_F^2$. 
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:gjzmain_asym} we know for every local minimum of $f(U,V)$ satisfies
+\[
+\|\Delta\Delta^\top\|_{\bar{W}}^2 - 3\|N - N^\star\|_{\bar{W}}^2 + \left([\nabla^2 Q(Z)](\Delta) - 4\inner{\nabla Q(Z), \Delta}\right) \ge 0.
+\]
+
+We will bound these three terms. First, by Lemma~\ref{lem:asymmetricnormbound} we know the rows of $\Delta_U$ have squared $\ell_2$-norm at most $ O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{n_1}\right)$, and the rows of $\Delta_V$ have squared $\ell_2$-norm at most $ O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{n_2}\right)$.
+
+For the first term $\|\Delta\Delta^\top\|_{\bar{W}}^2$, by the definition of $\bar W$,
+\begin{align*}
+\norm{\Delta \Delta^\top}_{\bar W}^2 & = \norm{\Delta_U \Delta_U^\top}_F^2 + \norm{\Delta_V \Delta_V^\top}_F^2 - 2 \norm{\Delta_U \Delta_V^\top}_F^2 + 4 \norm{\Delta_U \Delta_V^\top}_W^2 \\
+  & = \norm{\Delta \Delta^\top}_{F}^2 + 4(\norm{\Delta_U \Delta_V^\top}_W^2 - \norm{\Delta_U \Delta_V^\top}_F^2).
+\end{align*}
+%This is close to $\norm{\Delta \Delta^\top}_{F}^2$ if we can show $\norm{\Delta_U \Delta_V^\top}_W^2 \approx \|\Delta_U\Delta_V^\top\|_F^2$.
+We can directly apply Lemma~\ref{lem:deterministc_main} to $\norm{\Delta_U \Delta_V^\top}_W^2$.
+\begin{align*}
+\|\Delta_U\Delta_V^\top\|_W^2 & \le \|\Delta_U\Delta_V^\top\|_F^2 + \|W-J\| \cdot \|\Delta_U\|_F \cdot \|\Delta_V\|_F \cdot \max_{i=1}^{n_1} \normtwo{\Delta_i} \cdot \max_{j=n_1+1}^{n_1+n_2} \normtwo{\Delta_j} \\
+& \le \|\Delta_U\Delta_V^\top\|_F^2 + \|W-J\|\cdot O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{\sqrt{n_1n_2}}\right)\cdot \|\Delta\|_F^2 \\
+& \le \|\Delta_U\Delta_V^\top\|_F^2 + 0.01\sigs_r \|\Delta\|_F^2.
+\end{align*}
+
+Here the last inequality uses the fact that $\|W-J\| \le \frac{c\sqrt{n_1n_2}}{\mu^3 r^3 (\kappa^\star)^3}$ for a small enough constant $c$. 
+
+For the second term, we can relate $\bar W$-norm to $W$-norm similarly, which allows us to focus on the $W$-norm of the off-diagonal blocks, $\|UV^\top - \Ms\|_W^2$.
+We then invoke Lemma~\ref{lem:deterministc_main} with $X = (U, \Us)$ and $Y = (V, -\Us)$.
+We know $X Y^\top = U V^\top - \Ms$ and $\|X\|_F \le \|U\|_F + \|\Us\|_F \le 2\|\Us\|_F + \|\Delta\|_F$ (the same upper bound holds for $\|Y\|_F$ because $\|\Us\|_F = \|\Vs\|_F$). The row norms of $X$ is still bounded by $O\left(\frac{\mu^2 r^2 \kappa^\star \sigs_1}{n_1}\right)$ (and similarly for $Y$ except the denominator is $n_2$).
+%As a result,
+\begin{align*}
+& \|UV^\top - \Ms\|_W^2 \\
+& \ge \|UV^\top - \Ms\|_F^2 - \|W-J\| \cdot \|(U,\Us)\|_F \|(V,-\Vs)\|_F \cdot \max_i \normtwo{(U,\Us)_i} \cdot \max_j \normtwo{(V,\Vs)_j} \\
+& \ge \|UV^\top - \Ms\|_F^2 - \|W-J\| \cdot O\left(\frac{\mu^3 r^3 (\kappa^\star)^2 \sigs_1}{\sqrt{n_1n_2}}\right)\cdot (2\|\Us\|_F + \|\Delta\|_F)^2 \\
+& \ge \|UV^\top - \Ms\|_F^2 - 0.05 \epsilon\sigs_r \|\Us\|_F^2 -0.01\sigs_r \|\Delta\|_F^2.
+\end{align*}
+
+Again, the last step uses the fact that $\|W-J\| \le \frac{\eps cn}{\mu^3 r^3 (\kappa^\star)^3}$ for a small enough constant $c$. 
+
+Finally, the third term is bounded by $0.1\sigs_r\|\Delta\|_F^2$ by Lemma~\ref{lem:extra_bound_asymmetric}. We combine all these terms and apply Lemma~\ref{lem:normconnect},
+\begin{align*}
+0 &\le \|\Delta\Delta^\top\|_{\bar{W}}^2 - 3\|N- N^\star\|_{\bar{W}}^2 + \left([\nabla^2 Q(Z)](\Delta) - 4\inner{\nabla Q(Z), \Delta}\right) \\
+& \le \|\Delta\Delta^\top\|_F^2 + 0.14\sigs_r \|\Delta\|_F^2 - 3\left(\|N- N^\star\|_F^2 - 0.2 \epsilon\sigs_r \|\Us\|_F^2 -0.01\sigs_r \|\Delta\|_F^2\right) \\
+% Too wide for COLT template
+%& \le \left(\|\Delta\Delta^\top\|_F^2 + 0.04\sigs_r \|\Delta\|_F^2\right) - 3\left(\|N- N^\star\|_F^2 - 0.2 \epsilon\sigs_r \|\Us\|_F^2 -0.01\sigs_r \|\Delta\|_F^2\right) + 0.1\sigs_r \|\Delta\|_F^2 \\
+& \le -\|N- N^\star\|_F^2 + 0.17 \sigs_r\|\Delta\|_F^2 + 0.6 \epsilon \sigs_r \|\Us\|_F^2 \\
+& \le -0.6\|N- N^\star\|_F^2 + 0.6 \epsilon\sigs_r \|\Us\|_F^2.
+\end{align*}
+
+As a result, $\|M-\Ms\|_F^2 \le \|N-N^\star\|_F^2 \le \epsilon \sigs_r \|\Us\|_F^2 \le \epsilon \|\Ms\|_F^2$. %This finishes the proof.
+\end{proof}

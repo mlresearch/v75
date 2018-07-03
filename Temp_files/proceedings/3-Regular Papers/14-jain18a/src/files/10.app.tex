@@ -1,0 +1,258 @@
+\section{Appendix setup}
+\label{sec:setup}
+We will first provide a note on the organization of the appendix and follow that up with introducing the notations.
+
+\subsection{Organization}
+\label{ssec:org}
+\begin{itemize}
+\item In subsection~\ref{ssec:notations}, we will recall notation from the main paper and introduce some new notation that will be used across the appendix.
+\item In section~\ref{sec:tailAverageIterateCovariance}, we will write out expressions that characterize the generalization error of the proposed accelerated SGD method. In order to bound the generalization error, we require developing an understanding of two terms namely the bias error and the variance error.
+\item In section~\ref{sec:commonLemmas}, we prove lemmas that will be used in subsequent sections to prove bounds on the bias and variance error.
+\item In section~\ref{sec:biasContraction}, we will bound the bias error of the proposed accelerated stochastic gradient method. In particular, lemma~\ref{lem:main-bias} is the key lemma that provides a new potential function with which this paper achieves acceleration. Further, lemma~\ref{lem:bound-bias} is the lemma that bounds all the terms of the bias error.
+\item In section~\ref{sec:varianceContraction}, we will bound the variance error of the proposed accelerated stochastic gradient method. In particular, lemma~\ref{lem:main-variance} is the key lemma that considers a stochastic process view of the proposed accelerated stochastic gradient method and provides a sharp bound on the covariance of the stationary distribution of the iterates. Furthermore, lemma~\ref{lem:bound-variance} bounds all terms of the variance error.
+\item Section~\ref{sec:proofMainTheorem} presents the proof of Theorem~\ref{thm:main}. In particular, this section aggregates the result of lemma~\ref{lem:bound-bias} (which bounds all terms of the bias error) and lemma~\ref{lem:bound-variance} (which bounds all terms of the variance error) to present the guarantees of Algorithm~\ref{algo:TAASGD}.
+\end{itemize}
+
+\subsection{Notations}
+\label{ssec:notations}
+
+We begin by introducing $\M$, which is the fourth moment tensor of the input $\a\sim\D$, i.e.:
+\begin{align*}
+\M\defeq\Eover{\distr}{\a\otimes\a\otimes\a\otimes\a}
+\end{align*}
+Applying the fourth moment tensor $\M$ to any matrix $\S\in\R^{d\times d}$ produces another matrix in $\R^{d\times d}$ that is expressed as: 
+\begin{align*}
+\M\S \defeq \E{(\a\T\S\a)\a\a\T}. 
+\end{align*}
+With this definition in place, we recall $\infbound$ as the smallest number, such that $\M$ applied to the identity matrix $\eye$ satisfies:
+\begin{align*}
+\M\eye=\E{\twonorm{\a}^2\a\a\T}\preceq\infbound\ \Cov
+\end{align*}
+%This in particular implies $\E{\twonorm{\a}^2}\leq\infbound$. \praneeth{The above statement is not true. The implication is in the other direction.}
+Moreover, we recall that the condition number of the distribution $\cnH = \infbound/\mu$, where $\mu$ is the smallest eigenvalue of $\Cov$. Furthermore, the definition of the statistical condition number $\cnS$ of the distribution follows by applying the fourth moment tensor $\M$ to $\Covinv$, i.e.:
+\begin{align*}
+\M\Covinv&=\E{(\a\T\Covinv\a)\cdot\a\a\T}\preceq\cnS\ \H
+\end{align*}
+
+We denote by $\tensor{A}_{\mathcal{L}}$ and $\tensor{A}_{\mathcal{R}}$ the left and right multiplication operator of any matrix $\A\in\R^{d\times d}$, i.e. for any matrix $\S\in\R^{d\times d}$, $\tensor{A}_{\mathcal{L}}\S=\A\S$ and $\tensor{A}_{\mathcal{R}}\S=\S\A$.
+
+\underline{\bf Parameter choices:} In all of appendix we choose the parameters in Algorithm~\ref{algo:TAASGD} as
+\begin{align*}
+\alpha = \frac{\sqrt{\cnH\cnHh}}{\ctwo\sqrt{2\cone-\cone^2}+\sqrt{\cnH\cnHh}},\ \  \beta = \cthree\frac{\ctwo\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnHh}},\ \  \gamma = \ctwo\frac{\sqrt{2\cone-\cone^2}}{\mu\sqrt{\cnH\cnHh}}, \ \ \delta=\frac{\cone}{\infbound}
+\end{align*}
+%where $\cone$ is an arbitrary constant satisfying $0 < \cone < \frac{1}{2}$. Note that we recover Theorems~\ref{thm:main} and~\ref{thm:par} by choosing $\cone = \frac{1}{8}$.
+where $\cone$ is an arbitrary constant satisfying $0 < \cone < \frac{1}{2}$. Furthermore, we note that $\cthree=\frac{\ctwo\sqrt{2\cone-\cone^2}}{\cone}$, $\ctwo^2=\frac{\cfour}{2-\cone}$ and $\cfour< 1/6$. 
+Note that we recover Theorem~\ref{thm:main} by choosing $\cone = 1/5, \ctwo = \sqrt{5}/9, \cthree=\sqrt{5}/3, \cfour = 1/9$. We denote 
+\begin{align*}
+c\defeq\alpha(1-\beta) \text{ and, } \g\defeq\alpha\delta+(1-\alpha)\gamma.
+\end{align*}
+
+Recall that $\xs$ denotes unique minimizer of $P(\x)$, i.e. $\xs=\arg\min_{\x \in \R^d} \Eover{\distr}{(b-\iprod{\x}{\a})^2}$. We track $\thetav_k=\begin{bmatrix}\x_k-\xs\\ \yt[k]-\xs\end{bmatrix}$. The following equation captures the updates of Algorithm~\ref{algo:TAASGD}:
+\begin{align}
+\label{eq:mainRec}
+\thetav_{k+1}&=\begin{bmatrix}0&\eye-\delta\widehat{\H}_{k+1}\\-c\cdot\eye&(1+c)\cdot\eye-\g\cdot\widehat{\H}_{k+1}\end{bmatrix}\thetav_k
++\begin{bmatrix}\delta\cdot\epsilon_{k+1}\av_{k+1}\\\g\cdot\epsilon_{k+1}\av_{k+1}\end{bmatrix}\nonumber\\
+&\defeq\Ah_{k+1}\thetav_{k}+\zetav_{k+1},
+\end{align}
+where, $\widehat{\H}_{k+1} \defeq \av_{k+1} \av_{k+1}^\top$, $\widehat{\A}_{k+1} \defeq \begin{bmatrix}0&\eye-\delta\widehat{\H}_{k+1}\\-c\cdot\eye&(1+c)\cdot\eye-\g\cdot\widehat{\H}_{k+1}\end{bmatrix}$ 
+and $\zetav_{k+1} \defeq \begin{bmatrix}\delta\cdot\epsilon_{k+1}\av_{k+1}\\\g\cdot\epsilon_{k+1}\av_{k+1}\end{bmatrix}$.
+
+\noindent Furthermore, we denote by $\phiv_k$ the expected covariance of $\thetav_k$, i.e.:
+\begin{align*}
+\phiv_k\defeq\E{\thetav_k\otimes\thetav_k}.
+\end{align*}
+Next, let $\mathcal{F}_k$ denote the filtration generated by samples $\{(\a_1,b_1),\cdots, (\a_k,b_k)\}$. Then,
+\begin{align*}
+\A&\eqdef \E{\Ah_{k+1}|\mathcal{F}_{k}}=\begin{bmatrix}
+\zero & \eye - \delta \Cov \\ -c\eye & (1+c)\eye - \g\Cov
+\end{bmatrix}.
+\end{align*}
+By iterated conditioning, we also have
+\begin{align}\label{eqn:theta-det}
+	\E{\thetav_{k+1}\middle \vert \mathcal{F}_{k}} = \A \thetav_k.
+\end{align}
+Without loss of generality, we assume that $\Cov$ is a diagonal matrix. We now note that we can rearrange the coordinates through an eigenvalue decomposition so that $\A$ becomes a block-diagonal matrix with $2\times2$ blocks. We denote the $j^{\textrm{th}}$ block by $\A_j$:
+\begin{align*}
+\A_j \eqdef \begin{bmatrix}
+0 & 1 - \delta \lambda_j \\ -c & 1+c - \g \lambda_j
+\end{bmatrix},
+\end{align*}
+where $\lambda_j$ denotes the $j^{\textrm{th}}$ eigenvalue of $\Cov$.
+Next, 
+\begin{align*}
+\BT&\eqdef \E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_{k}}, \mbox{ and }\\
+\Sigh&\eqdef \E{\zetav_{k+1}\otimes\zetav_{k+1}|\mathcal{F}_k} = \begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\Sig\preceq\sigma^2\cdot\begin{bmatrix}\delta^2&\delta\cdot \g\\\delta\cdot \g&\g^2\end{bmatrix}\otimes\H.
+\end{align*}
+Finally, we observe the following:
+\begin{align*}
+\E{(\A-\Ah_{k+1})\otimes(\A-\Ah_{k+1})|\mathcal{F}_k}&=\A\otimes\A-\E{\Ah_{k+1}\otimes\A|\mathcal{F}_k}\\&\quad\quad-\E{\Ah_{k+1}\otimes\A|\mathcal{F}_k}+\E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_k}\\
+&=-\A\otimes\A+\E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_k}\\
+\implies \E{\Ah_{k+1}\otimes\Ah_{k+1}|\mathcal{F}_k}&=\E{(\A-\Ah_{k+1})\otimes(\A-\Ah_{k+1})|\mathcal{F}_k}+\A\otimes\A
+\end{align*}
+We now define:
+\begin{align*}
+\RT&\defeq\E{(\A-\Ah_{k+1})\otimes(\A-\Ah_{k+1})|\mathcal{F}_k}, \mbox{ and }\\
+\DT&\defeq\A\otimes\A.
+\end{align*}
+Thus implying the following relation between the operators $\BT,\DT$ and $\RT$:
+\begin{align*}
+\BT=\DT+\RT.
+\end{align*}
+
+
+\section{The Tail-Average Iterate: Covariance and bias-variance decomposition}
+\label{sec:tailAverageIterateCovariance}
+%\begin{proof}[Proof of Lemma~\ref{lem:average-covar}]
+\input{files/10.1.tail-average-iterate-covariance.tex}
+%\end{proof}
+
+
+\section{Useful lemmas}
+\label{sec:commonLemmas}
+In this section, we will state and prove some useful lemmas that will be helpful in the later sections.
+\input{files/10.2.usefulLemmas.tex}
+
+\section{Lemmas and proofs for bias contraction}
+\label{sec:biasContraction}
+\input{files/10.3.biasBounds.tex}
+\input{files/10.4.biasLemmas.tex}
+
+The following lemma bounds the total error of $\thetavb^{\textrm{bias}}$.
+\begin{lemma}\label{lem:bound-bias}
+\iffalse
+	\begin{align*}
+	&\iprod{\begin{bmatrix}
+			\Cov & \zero \\ \zero & \zero
+		\end{bmatrix}}{\E{\thetavb^{\textrm{bias}} \otimes \thetavb^{\text{bias}}}} \\ &\leq \frac{1792}{(n-t)^2(\cone\cfour)^{5/4}}\cdot\frac{(\cnH\cnS)^{9/4}d}{\delta\cfour}\cdot\exp\bigg(-(t+1)\frac{\ctwo\cthree\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnS}}\bigg)\norm{\thetat[0]}^2 +\\&\qquad\qquad \frac{5376}{(\cone\cfour)^{1/4}}\frac{(\cnH\cnS)^{5/4}d}{\delta\cfour}\exp\left(\frac{-n \ctwo \cthree \sqrt{2\cone-\cone^2} }{\sqrt{\cnH\cnS}}\right) \cdot \norm{\thetat[0]}^2.
+	\end{align*}
+	\fi
+	\iffalse
+	\begin{align*}
+		&\iprod{\begin{bmatrix}
+			\Cov & \zero \\ \zero & \zero
+			\end{bmatrix} }{\E{\thetavb^{\textrm{bias}} \otimes \thetavb^{\text{bias}}}} \leq			\UC\cdot\frac{(\cnH\cnS)^{9/4}d}{\delta}\cdot\exp\bigg(-(t+1)\frac{\ctwo\cthree\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnS}}\bigg)\norm{\thetat[0]}^2 \nonumber\\&\qquad\qquad\qquad+  \UC\cdot\frac{(\cnH\cnS)^{5/4}d}{\delta}(n-t)\exp\left(\frac{-n \ctwo \cthree \sqrt{2\cone-\cone^2} }{\sqrt{\cnH\cnS}}\right) \cdot \norm{\thetat[0]}^2
+			\end{align*}	
+			\fi
+	\begin{align*}
+		&\iprod{\begin{bmatrix}
+			\Cov & \zero \\ \zero & \zero
+			\end{bmatrix} }{\E{\thetavb^{\textrm{bias}} \otimes \thetavb^{\text{bias}}}} \leq		\UC\cdot\frac{(\cnH\cnS)^{9/4}d\cnH}{(n-t)^2}\cdot\exp\bigg(-(t+1)\frac{\ctwo\cthree\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnS}}\bigg)\cdot \big(P(\x_0)-P(\xs)\big) \nonumber\\&\qquad\qquad\qquad+  \UC\cdot(\cnH\cnS)^{5/4}d\cnH\cdot\exp\left(\frac{-n \ctwo \cthree \sqrt{2\cone-\cone^2} }{\sqrt{\cnH\cnS}}\right) \cdot \big(P(\x_0)-P(\xs)\big)
+			\end{align*}	
+			Where, $\UC$ is a universal constant.
+\end{lemma}
+\begin{proof}
+\input{files/10.5.biasActBound.tex}
+\end{proof}
+
+\section{Lemmas and proofs for Bounding variance error}
+\label{sec:varianceContraction}
+%\begin{proof}[Proof of Lemma~\ref{lem:main-variance}]
+\input{files/10.6.varianceBounds.tex}
+%\end{proof}
+%\praneeth{Update the statements and proofs below.}
+\input{files/10.7.varianceLemmas.tex}
+%\rahul{Update proofs below based on step sizes.}
+\begin{lemma}
+\label{lem:var1N2bound}
+\iffalse
+\begin{align*}
+&\bigg\vert\iprod{\begin{bmatrix}\Cov&0\\0&0\end{bmatrix}}{ \bigg((\eyeT-\AL)^{-2}\AL+(\eyeT-\AR\T)^{-2}\AR\T\bigg)\phiv_{\infty}}\bigg\vert\\&\leq4\sigma^2 \cdot d \cdot\bigg(\ \frac{2}{\cfour}\cdot\bigg(1+\big(\frac{1+\sqrt{\cone\cfour}}{1-\cfour}\big)^2\bigg) + 3 \cdot \frac{1+\sqrt{\cone\cfour}}{1-\cfour} \cdot \frac{1+\sqrt{2}+\sqrt{\cfour/\cone}}{\cfour} \cdot (\sqrt{2}+\sqrt{\cfour/\cone}) \ \bigg)\sqrt{\cnH\cnS}
+\end{align*}
+\fi
+\begin{align*}
+&\bigg\vert\iprod{\begin{bmatrix}\Cov&0\\0&0\end{bmatrix}}{ \bigg((\eyeT-\AL)^{-2}\AL+(\eyeT-\AR\T)^{-2}\AR\T\bigg)\phiv_{\infty}}\bigg\vert\leq\UC\cdot\sigma^2 d\sqrt{\cnH\cnS}
+\end{align*}
+Where, $\UC$ is a universal constant.
+\end{lemma}
+\begin{proof}
+\input{files/10.8.lowerOrderTermProof.tex}
+\end{proof}
+
+\begin{lemma}\label{lem:bound-variance}
+\iffalse
+	\begin{align*}
+	&\iprod{\begin{bmatrix}
+		\Cov & \zero \\ \zero & \zero
+		\end{bmatrix}}{\E{\thetavb^{\textrm{variance}} \otimes \thetavb^{\text{variance}}}}\leq 5\frac{\sigma^2d}{n-t} + 6912\cdot\sigma^2d\cdot\frac{(\cnH\cnS)^{7/4}}{\cthree\cfour(\cone\cthree)^{3/2}}\exp^{-(n+1)\cdot\frac{\ctwo\cthree\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnS}}}\\ &+ 4\cdot\frac{\sigma^2 d}{(n-t)^2} \cdot\bigg(\ \frac{2}{\cfour}\cdot\bigg(1+\big(\frac{1+\sqrt{\cone\cfour}}{1-\cfour}\big)^2\bigg) + 3 \cdot \frac{1+\sqrt{\cone\cfour}}{1-\cfour} \cdot \frac{1+\sqrt{2}+\sqrt{\cfour/\cone}}{\cfour} \cdot (\sqrt{2}+\sqrt{\cfour/\cone}) \ \bigg)\sqrt{\cnH\cnS} \\ &+ 41472\frac{\sigma^2d}{n-t}(\cnH\cnS)^{11/4}\alpha^{(n-t-1)/2}\frac{1}{\cthree\cfour^2(\cone\cthree)^{3/2}} + 41472\cdot\frac{\sigma^2d}{(n-t)^2}\cdot\frac{1}{\cfour^2(\cone\cthree^2)^3}\cdot\exp\bigg({-(n+1)\frac{\cone\cthree^2}{\sqrt{\cnH\cnS}}}\bigg)\cdot(\cnH\cnS)^{7/2}\cnS
+	\end{align*}
+	\fi
+		\begin{align*}
+	&\iprod{\begin{bmatrix}
+		\Cov & \zero \\ \zero & \zero
+		\end{bmatrix}}{\E{\thetavb^{\textrm{variance}} \otimes \thetavb^{\text{variance}}}}\leq 5\frac{\sigma^2d}{n-t} +\UC\cdot\frac{\sigma^2 d}{(n-t)^2} \cdot\sqrt{\cnH\cnS}  \\ &+  \UC\cdot\frac{\sigma^2d}{n-t}(\cnH\cnS)^{11/4}\exp\bigg(-\frac{(n-t-1)\ctwo\sqrt{2\cone-\cone^2}}{4\sqrt{\cnH\cnS}}\bigg) \\&+ \UC\cdot\frac{\sigma^2d}{(n-t)^2}\cdot\exp\bigg({-(n+1)\frac{\cone\cthree^2}{\sqrt{\cnH\cnS}}}\bigg)\cdot(\cnH\cnS)^{7/2}\cnS+\UC\cdot\sigma^2d\cdot(\cnH\cnS)^{7/4}\exp\bigg({-(n+1)\cdot\frac{\ctwo\cthree\sqrt{2\cone-\cone^2}}{\sqrt{\cnH\cnS}}}\bigg)%\UC\cdot\frac{\sigma^2d}{n-t}(\cnH\cnS)^{11/4}\alpha^{(n-t-1)/2}
+	\end{align*}
+	where, $\UC$ is a universal constant.
+\end{lemma}
+\begin{proof}
+\input{files/10.9.varianceActBound.tex}
+\end{proof}
+
+
+\section{Proof of Theorem~\ref{thm:main}}\label{sec:proofMainTheorem}
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+	The proof of the theorem follows through various lemmas that have been proven in the appendix:
+	\begin{itemize}
+	\item Section~\ref{sec:tailAverageIterateCovariance} provides the bias-variance decomposition and provides an exact tensor expression governing the covariance of the bias error (through lemma~\ref{lem:average-covar-bias})and the variance error (lemma~\ref{lem:average-covar-var}).
+	\item Section~\ref{sec:biasContraction} provides a scalar bound of the bias error through lemma~\ref{lem:bound-bias}. The technical contribution of this section (which introduces a new potential function) is in lemma~\ref{lem:main-bias}. 
+	\item Section~\ref{sec:varianceContraction} provides a scalar bound of the variance error through lemma~\ref{lem:bound-variance}. The key technical contribution of this section is in the introduction of a stochastic process viewpoint of the proposed accelerated stochastic gradient method through lemmas~\ref{lem:main-variance},~\ref{lem:var-main-1}. These lemmas provide a tight characterization of the stationary distribution of the covariance of the iterates of the accelerated method. Lemma~\ref{lem:var1N2bound} is necessary to show the sharp burn-in (up to log factors), beyond which the leading order term of the error is up to constants the statistically optimal error rate $\mathcal{O}(\sigma^2 d/n)$.
+	\end{itemize}
+	Combining the results of these lemmas, we obtain the following guarantee of algorithm~\ref{algo:TAASGD}:
+	
+%	In particular, Lemma~\ref{lem:average-covar} gives the covariance matrix of the tail-averaged iterate. Combining this expression with the error estimates given by Lemma~\ref{lem:bias-bound} and Corollary~\ref{cor:bias-tail1} for bias, and Lemmas~\ref{lem:var-main-1},~\ref{lem:variance-main-1},~\ref{lem:variance-tail-1} and~\ref{lem:var1N2bound} for variance tell us that
+\iffalse
+	\begin{align*}
+		\E{P(\xtilde)}-P(\xs) &\leq 10^7\cdot\frac{(\cnH\cnS)^{9/4}d}{(n-t)^2\delta}\cdot\exp\bigg(-\frac{t+1}{9\sqrt{\cnH\cnS}}\bigg)\norm{\thetat[0]}^2 +10^6\cdot\frac{(\cnH\cnS)^{5/4}d}{\delta}\exp\left(\frac{-n }{9\sqrt{\cnH\cnS}}\right) \cdot \norm{\thetat[0]}^2 + \\&5\frac{\sigma^2d}{n-t}+ 1360\cdot\frac{\sigma^2 d}{(n-t)^2} \sqrt{\cnH\cnS} + 10^6\cdot\sigma^2d\cdot(\cnH\cnS)^{7/4}\cdot\exp\bigg(\frac{-(n+1)}{9\sqrt{\cnH\cnS}}\bigg) \\ &+ 10^8\cdot\frac{\sigma^2d}{n-t}(\cnH\cnS)^{11/4}\alpha^{(n-t-1)/2} +10^{10}\cdot\frac{\sigma^2d}{(n-t)^2}\cdot\exp\bigg({-\frac{(n+1)}{9\sqrt{\cnH\cnS}}}\bigg)\cdot(\cnH\cnS)^{7/2}\cnS
+	\end{align*}
+	\fi
+	\begin{align*}
+		\E{P(\bar{\x}_{t,n})}-P(\xs) &\leq \UC\cdot\frac{(\cnH\cnS)^{9/4}d\cnH}{(n-t)^2}\cdot\exp\bigg(-\frac{t+1}{9\sqrt{\cnH\cnS}}\bigg)\cdot\big(P(\x_0)-P(\xs)\big) \\&+\UC\cdot(\cnH\cnS)^{5/4}d\cnH\cdot\exp\left(\frac{-n }{9\sqrt{\cnH\cnS}}\right) \cdot \big(P(\x_0)-P(\xs)\big) + 5\frac{\sigma^2d}{n-t}\\&+ \UC\cdot\frac{\sigma^2 d}{(n-t)^2} \sqrt{\cnH\cnS} + \UC\cdot\sigma^2d\cdot(\cnH\cnS)^{7/4}\cdot\exp\bigg(\frac{-(n+1)}{9\sqrt{\cnH\cnS}}\bigg) \\ &+ \UC\cdot\frac{\sigma^2d}{n-t}(\cnH\cnS)^{11/4}\exp\bigg(-\frac{(n-t-1)}{30\sqrt{\cnH\cnS}}\bigg) \\&+\UC\cdot\frac{\sigma^2d}{(n-t)^2}\cdot\exp\bigg({-\frac{(n+1)}{9\sqrt{\cnH\cnS}}}\bigg)\cdot(\cnH\cnS)^{7/2}\cnS
+	\end{align*}	
+	Where, $\UC$ is a universal constant.
+
+%	proving the theorem.
+\end{proof}
+
+\input{files/08.simulations.tex}
+
+
+\iffalse
+\section{Proof of Theorem~\ref{thm:par}}\label{sec:thm-par}
+\begin{algorithm}[t]
+	\caption{ cde}%$\MTASGD(\set{(\ai[1],\bi[1]),\cdots,(\ai[n],\bi[n])},$ $\xt[0], m, t, \alpha, \beta, \gamma, \delta )$ \\ Mini-batched, tail-averaged accelerated stochastic gradient descent. Here $\widehat{\nabla}_k P(\x)$ denotes the gradient at $\x$ due to the $k^{\textrm{th}}$ sample $(\ai[k],\bi[k])$ i.e., $\widehat{\nabla}_k P(\x) \eqdef \left(\iprod{\ai[k]}{\x} - \bi[k]\right)\ai[k]$. }\label{algo:MBTAASGD}
+	\begin{algorithmic}[1]
+		\INPUT Samples $(\ai[1],\bi[1]),\cdots,(\ai[n],\bi[n])$, Initial point $\xt[0]$, Mini-batch size $m$, Non-averaging phase $t$, Parameters $\alpha, \beta, \gamma, \delta$
+		\STATE $\vt[0] = \xt[0]$
+		\FOR{$j = 1, \cdots n/m$}
+		\STATE $\yt[j-1] \leftarrow \alpha \xt[j] + (1-\alpha) \vt[j]$
+		\STATE $\zt[j-1] \leftarrow \beta \yt[j] + (1-\beta) \vt[j]$
+		\STATE $\xt[j] \leftarrow \yt[j-1] - \delta \frac{1}{m} \sum_{k=(j-1)*m+1}^{j*m} \widehat{\nabla}_k P(\x)$
+		\STATE $\vt[j] \leftarrow \zt[j-1] - \gamma \frac{1}{m} \sum_{k=(j-1)*m+1}^{j*m} \widehat{\nabla}_k P(\x)$
+		\ENDFOR
+		\OUTPUT $\frac{1}{n-t}\sum_{j=t+1}^{n} \xt[j]$
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{proof}[Proof of Theorem~\ref{thm:par}]
+	The proof follows easily by combining Theorem~\ref{thm:main} with the ideas of~\cite{JainKKNS16}. The analysis can be broken down into three parts.
+	
+	\textbf{Initial phase}: In this phase, Algorithm~\ref{algo:PASGD} runs Algorithm~\ref{algo:MBTAASGD} with a mini-batch size of $m = \max\left(\frac{\infbound}{\twonorm{\Cov}}, \cnS\right)$. For this mini-batch size, recall that we have condition number $\cnH_m \leq \frac{m-1}{m}\kappa(\Cov) + \frac{1}{m} \cnH \leq 2 \kappa(\Cov)$, statistical condition number $\cnS_m \leq \frac{m-1}{m} + \frac{1}{m} \cnS \leq 2$ and noise level $\sigma_m^2 = \sigma^2 / m$. Applying Theorem~\ref{thm:main} for this setting tells us that after every invocation of Algorithm~\ref{algo:MBTAASGD}, the initial error decays by a factor of $2$. So the error of the iterate $\xt[j]$ at the end of the initial phase is at most $L(\xt[j]) \leq 8 \sigma^2 d/m$. If $n < 2qm \log \frac{E_0 m}{\sigma^2}$, note that the iterate after initial phase already satisfies the theorem's guarantee.
+	
+	\textbf{Middle phase}: In this phase, again the condition number and statistical condition numbers are bounded by $2\kappa(\Cov)$ and $2$ respectively. We show that in every iteration $j$, after the function call to Algorithm~\ref{algo:MBTAASGD}, the following invariant is maintained:
+	\begin{align}
+		L(\xt[j]) \leq \frac{8 \sigma^2 d}{m_0*2^{j-1}},\label{eqn:geomdecay}
+	\end{align}
+	where $m_0$ is the initial mini-batch size.
+	The base case for $j=1$ holds by the guarantee from the initial phase. Suppose now that the above condition holds for some $j$ and we wish to establish it for $j+1$. From Theorem~\ref{thm:main}, we see that:
+	\begin{align*}
+		L(\xt[j+1]) &\leq \exp\left(\frac{-\sqrt{7}q}{4\sqrt{\kappa(\Cov)}}\right) L(\xt[j]) + \frac{4 \sigma^2 d}{m_0 2^{j}},
+	\end{align*}
+	where we used the fact that the variance with a mini-batch size of $m_0*2^j$ in $j+1^{\textrm{th}}$ iteration is $\frac{\sigma^2}{m_0 2^j}$ Substituting the value of number of iterations $q$ and the hypothesis on $L(\xt[j])$ finish the induction step.
+	
+	\textbf{Final phase}: In the final phase, we again directly apply Theorem~\ref{thm:main} to conclude that the loss of output $\x$ can be bounded by
+	\begin{align*}
+		L(\x) \leq \exp\left(\frac{-\sqrt{7}q}{4\sqrt{\kappa(\Cov)}}\right) L(\xt[j]) + \frac{4 \sigma^2 d}{n/2} \leq \frac{9 \sigma^2 d}{n} \leq \exp\left(-n/qm\right) L(\xt[0]) + \frac{9 \sigma^2 d}{n},
+	\end{align*}
+	where we used~\eqref{eqn:geomdecay} in the second last step.
+	This proves the theorem.
+\end{proof}
+\fi

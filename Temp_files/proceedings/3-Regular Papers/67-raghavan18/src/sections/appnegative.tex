@@ -1,0 +1,227 @@
+\section{Proof of Theorem~\ref{thm:twobridgelinucb} in Section~\ref{sec:negative}}
+
+In this section, we prove that LinUCB achieves constant expected
+minority regret when run on the minority alone with
+$\theta = \thetazero$. The analysis of the expected minority regret of
+LinUCB on the full population for $\theta = \thetaone$ is completely
+analogous. We omit formal proofs of the $\Omega(\sqrt{T})$ lower
+bounds, which follow a similar structure to the one used in the proof
+of the general impossibility result in
+Section~\ref{sec:impossibility}, and in fact would follow immediately
+as a corollary of this result.
+
+The proof makes use of the following concentration bound:
+
+
+\begin{lemma} \label{lem:badrounds}
+Let $C_t$ be the number of $C$ rounds observed in the first $t$ minority rounds
+in the two-bridge instance. For any $\delta \in (0, 1)$,
+with probability at least $1-\delta$, $C_t \ge 0.9t$ for all $t \ge 760 \log
+(T/\delta)$.
+\end{lemma}
+\begin{proof}
+We apply the following form of the Chernoff bound:
+\[
+  \Pr\b{C_t \le (1-\gamma) \E{C_t}} \le \exp\p{-\frac{\gamma^2}{2} \E{C_t}}.
+\]
+Setting $\gamma = 1/19$, we get
+\begin{align*}
+  \Pr\b{C_t \le \frac{9}{10}t} &=
+  \Pr\b{C_t \le \p{1 - \frac{1}{19}} \frac{19}{20}t}
+  \le \exp\p{-\frac{(1/19)^2}{2} \frac{19}{20} t}
+  = \exp\p{-\frac{t}{760}}
+  \le \frac{\delta}{T}
+\end{align*}
+for $t \ge 760 \log (T/\delta)$. Applying a union bound over all $T$ rounds, we have $C_t
+\ge 0.9t$ for all $t \ge 760 \log(T/\delta)$ with probability at least
+$1-\delta$.
+\end{proof}
+
+Now, consider LinUCB run on the minority population alone on the
+two-bridge instance with $\theta = \thetazero$. Since we are
+considering running LinUCB on the minority only, majority rounds are
+irrelevant, so throughout this proof we abuse notation and use
+$t \in \{1, \cdots, T_0\}$ for some $T_0 \leq T$ to index minority
+rounds. $T$ is still the total number of (minority plus majority)
+rounds.
+
+  This proof heavily exploits the special structure of the two-bridge
+  instance to simplify the analysis of LinUCB.  In particular, we
+  exploit the fact that the only contexts ever available are the basis
+  vectors $[1 ~ 0]\tran$ and $[0 ~ 1]\tran$.  This implies that the
+  covariance matrix $Z_t$ is always diagonal, which greatly simplifies
+  the expression for the chosen action in
+  Equation~\eqref{eq:linucb_def}.  The optimistic estimate of the
+  reward for choosing the $i$th basis vector is simply
+  \begin{align}
+    UCB_i^t := (\thetahatt)_i + f(t)/\sqrt{(Z_t)_{ii}} .
+    \label{eq:ucbdef}
+  \end{align}
+  Additionally, in this special case,  $(Z_t)_{ii}$ is simply the
+  number of times that the $i$th basis vector was chosen over the
+  first $t$ minority rounds, and $(\thetahatt)_i$ is the average reward
+  observed over the $(Z_t)_{ii}$ rounds on which it was chosen.
+
+  Using this fact, we can apply concentration bounds to bound the
+  difference between each $(\thetahatt)_i$ and $\theta_i$. Since rewards
+  were assumed to be $1$-subgaussian,
+  Lemma~\ref{lem:hoeffding} and a union bound give us that for any
+  $\delta_1$, for any $t$, with probability at least $1-4\delta_1$, for all $i
+  \in \{1,2\}$,
+  \begin{align}
+    \left\vert \theta_i - \thetahatti \right\vert \le
+        \sqrt{2 \log (\tfrac{1}{\delta_1})/(Z_t)_{ii}}
+  \label{eq:ucbbound}
+\end{align}
+
+Let $B_t$ and $C_t$ be the number of $B$ and $C$ rounds respectively
+before round $t$. By Lemma~\ref{lem:badrounds}, for any $\delta_2$,
+with probability $1-\delta_2$, $C_t \ge 9 B_t$ when
+$t \ge 760 \log(T/\delta_2)$.  Suppose this is the case.  Since it is
+only possible to choose $[1 ~ 0]$ on $B$ rounds, we have
+$(Z_t)_{11} \leq B_T$. Similarly, since the algorithm can only choose
+$[0 ~ 1]$ on every $C$ round, $(Z_t)_{22} \geq C_T \geq 9 B_T$.
+Fixing $\delta_1 = 1/\sqrt{T}$ and using the assumption that
+$f(t) \geq 2\sqrt{\log(T)}$, Equations~\eqref{eq:ucbdef}
+and~\eqref{eq:ucbbound} then imply that for any $t \geq 760
+\log(T/\delta_2)$, with probability at least $1-2\delta_1 = 1 -2\sqrt{T}$,
+\begin{align*}
+  UCB_1^{t}
+  &\ge \theta_1 - \sqrt{\frac{2 \log (\sqrt T)}{(Z_t)_{11}}}+
+  \frac{f(t)}{\sqrt{(Z_t)_{11}}}
+  \ge \frac{1}{2} + \frac{1}{2}\frac{f(t)}{\sqrt{B_t}} ,
+\end{align*}
+and similarly,
+\begin{align*}
+  UCB_2^{t}
+  &\le \theta_2 + \sqrt{\frac{2 \log (\sqrt{T})}{(Z_t)_{22}}} +
+  \frac{f(t)}{\sqrt{(Z_t)_{22}}}
+ \le \frac{1}{2} - \varepsilon   +\frac{3}{2}\frac{f(t)}{\sqrt{C_T}}
+\le  \frac{1}{2} +\frac{1}{2}\frac{f(t)}{\sqrt{B_T}} \leq UCB_1^{t}.
+\end{align*}
+
+
+This shows that with probability at least $1-\delta_2$, after the
+first $760 \log (T/\delta_2)$ rounds, LinUCB picks $[1 ~ 0]\tran$ on
+each $B$ round with probability at least $1-2\delta_1$, leading to
+zero regret on that round.  To turn this into a bound on expected
+regret, first note that with at most $\delta_2$ probability, the
+argument above fails to hold, in which case the minority regret is
+still bounded by $\varepsilon B_T \leq \varepsilon T$.  When the argument
+above holds, LinUCB may suffer up to $\varepsilon$ regret on each of the
+first $760 \log (T/\delta_2)$ minority rounds.  On each additional
+round, there is a failure probability of $2\delta_1$, and in this case
+LinUCB again suffers regret of at most $\varepsilon$.  Putting this
+together and setting $\delta_2 = 1/\sqrt{T}$, we get that the expected
+regret is bounded by
+$\delta_2 \varepsilon T
++ 760 \log(T/\delta_2) \varepsilon
++ 4\delta_1 \varepsilon T
+= O(1)$.
+
+\section{Proof of Theorem~\ref{thm:indistinguishability} in Section~\ref{sec:negative}}
+
+  Fix any algorithm $\mathcal{A}$. We will first derive an
+  $\Omega(\sqrt{T})$ lower bound on the expected regret of
+  $\mathcal{A}$ conditioned on the number of
+  $B$ rounds, $B_T$, being large. To complete the proof, we then show
+  that $B_T$ is large
+  with high probability.
+
+  Let $h_t = \{(x_{1,\tau}, x_{2,\tau}, a_\tau, r_\tau)\}_{\tau=1}^t$ be a
+  history of all context vectors, chosen actions, and rewards up to
+  round $t$, with $h_0 = \emptyset$. Running $\mathcal{A}$ on the
+  two-bridge instance with $\theta = \thetazero$ induces a
+  distribution over histories $h_T$. Let $P$ denote the conditional
+  distribution of these histories, conditioned on the event that $B_T
+  \geq T/800$.  That is, we define
+\[
+P(h_T) := \Pr\left[h_T \left\vert \theta = \thetazero, B_T \geq
+    T/800 \right.\right].
+\]
+  Similarly, we define
+\[
+Q(h_T) := \Pr\left[h_T \left\vert \theta = \thetaone, B_T \geq
+    T/800 \right.\right].
+\]
+
+We first show that $\kl{P(h_T)}{Q(h_T)}$ is upper bounded a constant
+that does not depend on $T$.
+By the
+  chain rule for KL divergences, since $r_t$ is independent of any
+  previous contexts, actions, or rewards conditioned on $x_t$,
+\begin{align*}
+  \kl{P(h_T)}{Q(h_T)}
+   =
+  & \sum_{t=1}^T \Exp_{h_{t-1} \sim P}[\kl{P((x_{1,t}, x_{2,t}, a_t) \given
+    h_{t-1})}{Q((x_{1,t}, x_{2,t}, a_t) \given h_{t-1})}] \\
+  & + \sum_{t=1}^T \Exp_{(x_{1,t}, x_{2,t}, a_t) \sim P} [\kl{P(r_t \given x_{1,t}, x_{2,t}, a_t)}{Q(r_t
+    \given (x_{1,t}, x_{2,t}, a_t))}] .
+\end{align*}
+Since the choice of context vectors available at time $t$ is
+independent of the value of the parameter $\theta$ and $\mathcal{A}$
+may only base its choices on the observed history and current choice
+of contexts, it is always the case that
+$P((x_{1,t}, x_{2,t}, a_t) \given h_{t-1}) = Q((x_{1,t}, x_{2,t}, a_t)
+\given h_{t-1})$, so the first sum in this expression is equal to 0.
+
+To bound the second sum, we make use of the assumption that
+$r_t \in \{0,1\}$ for all $t$.\footnote{If we instead assumed rewards
+  had Gaussian noise with variance $\sigma^2$, we would have
+  $\kl{P_t(r_t \given x_{1,t}, x_{2,t}, a_t)}{Q_t(r_t \given x_{1,t}, x_{2,t}, a_t)} =
+  \varepsilon^2/(2\sigma^2)$, and the proof would
+  still go through.} Lemma~\ref{lem:bern_kl} then tells us that for
+any round $t$,
+$\kl{P(r_t \given x_{1,t}, x_{2,t}, a_t)}{Q(r_t \given x_{1,t}, x_{2,t}, a_t)} \le 7 \varepsilon^2/2$
+since the probability of getting reward 1 conditioned on a chosen
+context is always either $1/2$ or $1/2 - \varepsilon$. Putting this
+together, we get that \[
+  \kl{P(h_T)}{Q(h_T)} \le \frac{7\varepsilon^2 T}{2} = \frac{7}{2}.
+\]
+
+Now, let $E$ be the event that the algorithm $\mathcal{A}$ chooses arm
+2 on at least half of the $B$ rounds, conditioned on $B_T \ge T/800$. If $E$ occurs when
+$\theta = \thetazero$, the regret of $\mathcal{A}$ is at least
+$B_T \varepsilon / 2$, which is on the order of $\sqrt{T}$ when
+$B_T \geq T /800$. If $E$ does not occur (i.e., $\overline{E}$ occurs)
+when $\theta = \thetaone$, $\mathcal{A}$ again has regret at least
+$B_T \varepsilon / 2$. We will use the bound on KL
+divergence to show that one of these bad cases happens with high
+probability.
+
+By Lemma~\ref{lem:pinkser},
+\[
+  P(E) + Q(\overline{E}) \ge \frac{1}{2} e^{-\kl{P(h_T)}{Q(h_T)}} \geq
+  \frac{1}{2} e^{-7/2}.
+\]
+
+Let $R$ be the regret of $\mathcal{A}$.  We then have that
+\begin{align*}
+\Exp\left[R \left\vert B_T \geq \frac{T}{800}\right. \right] &= \frac{1}{2} \Exp\left[R \left\vert \theta = \thetazero, B_T \geq \frac{T}{800}\right. \right]
++ \frac{1}{2} \Exp\left[R \left\vert \theta = \thetaone, B_T \geq \frac{T}{800}\right. \right] \\
+&\geq \frac{1}{2} \Pr\left[E \left\vert \theta = \thetazero, B_T \geq \frac{T}{800}\right. \right]
+  \Exp\left[R \left\vert E, \theta = \thetazero, B_T \geq \frac{T}{800}\right. \right] \\
+& \quad + \frac{1}{2} \Pr\left[\overline{E} \left\vert \theta = \thetaone, B_T \geq \frac{T}{800}\right. \right]
+  \Exp\left[R \left\vert \overline{E}, \theta = \thetazero, B_T \geq \frac{T}{800}\right. \right] \\
+&\geq \frac{1}{2} \left(P(E) + Q(\overline{E})\right) \frac{\sqrt{T}}{1600} \\
+&\geq \frac{\sqrt T e^{-\frac{7}{2}}}{6400}.
+\end{align*}
+
+It remains to bound the probability that $B_T \geq T/800$. By a Chernoff bound,
+\[
+  \Pr\b{B_T \le \frac{T}{800}} = \Pr\b{B_T \le \frac{\E{B_T}}{2}} \le
+  \exp\p{-\frac{\E{B_T}}{8}} = \exp\p{-\frac{T}{3200}}.
+\]
+Thus, for any $\delta \in (0,1)$, if $T \ge 3200 \log(1/\delta)$, then with probability at least $1-\delta$, $B_T \ge
+T/800$.  In particular, let $\delta = 1/2$.  Then if
+$T \geq 3200 \log 2$, we have
+\begin{align*}
+\Exp[R]
+&\geq
+\Pr\left[B_T \geq \frac{T}{800} \right]
+\Exp\left[R \left\vert B_T \geq \frac{T}{800}\right. \right]
+\geq \left(\frac{1}{2}\right) \left(\frac{\sqrt T e^{-\frac{7}{2}}}{6400}\right).
+\end{align*}
+This completes the proof that the regret of $\mathcal{A}$ is
+$\Omega(\sqrt{T})$ on this problem instance.
+

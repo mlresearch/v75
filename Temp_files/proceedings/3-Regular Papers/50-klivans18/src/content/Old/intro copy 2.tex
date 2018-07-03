@@ -1,0 +1,212 @@
+%!TEX root = ../main.tex
+\section{Introduction}
+
+Recent work on developing {\em robust} learning algorithms--
+algorithms that succeed with respect to a data set that has been
+corrupted in some arbitrary fashion-- has led to important
+achievements in unsupervised learning (robust mean estimation of
+Gaussians) and classification (learning halfspaces with respect to
+malicious or ``nasty noise.'').  In this paper we give the first
+efficient algorithms for performing outlier-robust {\em regression}.  That is,
+given a training set drawn from distribution ${\cal D}$ such that some
+fraction of its points (both labels and/or locations) have been
+arbitrarily corrupted, we can find a linear function (or polynomial in
+the case of polynomial regression) whose loss is competitive with the
+best fitting linear function for ${\cal D}$.
+
+In this paper we focus on distributions whose marginals on inputs are {\em hypercontractive} (a now well-studied condition on the distribution's moments).  Many natural distributions such as Gaussians, log-concave distributions, uniform distribution on the hypercube, fall into this category.  We give simple examples showing that unlike classical regression, achieving any non-trivial guarantee for robust regression is information-theoretically impossible without making assumptions on the distribution $\cD$. Additionally, we show that for the class of hypercontractive distributions, the bounds on the loss of the linear function output by our algorithm is optimal in its dependence on $\eta$ upto multiplicative constants.
+
+\subsection{Outlier-Robust Regression}
+We formally define the problem next by focusing on linear regression with squared-loss for the introduction. In the following, we will use the following notations for brevity: For a distribution $\cD$ on $\R^d \times \R$ and for a vector $\ell \in \R^d$, let $\err_\cD(\ell) = \E_{(x,y) \sim \cD}[ (\iprod{\ell,x} - y)^2]$ and let $\opt(\cD) = \min_{\ell \in \R^d} \err_{\cD}(\ell)$ be the least error achievable. 
+
+Let us briefly recall the setup of the classical least-squares linear regression problem. We are given access to samples from a distribution $\cD$ over $\R^d \times \R$ and our goal is to find a linear function $\ell:\R^d \to \R$ whose squared-error---$\err_{\cD}(\ell)$---is close to the best possible, $\opt_\cD$. Our goal is similar however, we are not given access to samples from the distribution $\cD$ but only samples where a fixed fraction of samples are arbitrarily corrupted:
+
+\begin{definition}
+Let $\cD$ be a distribution on $\R^d \times \R$. We say that a set $S \subseteq \R^d \times \R$ is an $\eta$-corrupted training set drawn from $\cD$ if it is formed in the
+following fashion: a set $T$ of i.i.d samples from ${\cal D}$ is generated and then replaced by a set $S$ of equal size with the only caveat that
+$\frac{|S \cap T|}{|T|} \geq 1 - \eta$.
+\end{definition}
+
+Our goal---which we term \emph{outlier-robust regression}---now is as follows: Given access to a $\eta$-corrupted training set drawn from $\cD$, can we efficiently find a linear function $\ell$ whose error $\err_{\cD}(\ell)$ under the true distribution $\cD$ is small. 
+\ignore{
+\begin{definition}[$\epsilon$-corruption]
+Let $Z = \{(x_i, y_i): 1 \leq i \leq n\}$ be an i.i.d. sample drawn from the distribution $\cD$. An $\epsilon$-corruption of $Z$ is an arbitrary subset $Z' = \{ (x_i',y_i') : 1 \leq i \leq n\} \subseteq \R^d\times \R$ such that $|Z' \cap Z| \geq (1-\epsilon)n.$
+\end{definition}
+
+We are now ready to define the robust polynomial regression problem for a distribution $\cD$. 
+\begin{problem}
+Let $D$ be any distribution on $\R^d \times \R.$ In the degree $t$ outlier-robust polynomial regression problem, we are given an $\epsilon > 0$ and a sample $Z'$ of size $n$ that is produced by an $\epsilon$ corruption of an i.i.d. sample of a distribution $\cD'$ whose marginal on the first $d$ coordinates equals $D.$ The goal is to output a polynomial $p$ such that:
+\[
+\E_{(x,y) \sim \cD}[ |p(x)-y|^2] < \min_{q: \text{ deg t polynomial } } \E_{(x,y) \sim \cD} [ |q(x)-y|^2] + \delta,
+\]
+\ignore{
+\[
+\E_{(x,y) \sim \cD'}[ |p(x)-y|] < \min_{q: \text{ deg t polynomial } } \E_{(x,y) \sim \cD'} [ |q(x)-y|] + \delta,
+\]}
+for as small a $\delta$ as possible.
+\end{problem}}
+
+
+
+\subsection{Statement of Results}
+We obtain several results depending on the type of assumption we take
+on the marginal distribution and on the choice of loss function. Our main results are for hypercontractive distributions and squared-loss. One such class of distributions is as follows:
+\begin{definition}[$4$-Hypercontractivity]
+A distribution $D$ on $\R^d$ is $(C,4)$-hypercontractive if for all $\ell \in \R^d$, $\E_{x \sim D}[\iprod{x,\ell}^4] \leq C^2 \cdot \E_{x \sim D}[\iprod{x,\ell}^2]^2$. 
+
+In addition we say that $D$ is \emph{certifiably} $(C,4)$-hypercontractive if there is a degree $4$ sum-of-squares proof of the above inequality.
+\end{definition}
+
+We will elaborate on the notion of \emph{certifiability} later on (once we have the appropriate preliminaries). For the time being, we note that many well-studied distributions including (potentially non-spherical) Gaussians, log-concave distributions, the uniform distribution on the Boolean hypercube, and more generally, product distributions on bounded domains satisfy this condition with $C$ a fixed constant. 
+
+One of our main results is an efficient algorithm for outlier-robust regression when the marginal distribution on examples is $4$-hypercontractive:
+
+\begin{theorem}\label{th:intro4}[Informal]
+Let ${\cal D}$ be a distribution on $\R^{d} \times [-L,L]$ and let ${\cal D_{X}}$ be its
+marginal distribution on $\R^d$ which is certifiably $(C,4)$-hypercontractive. Let $\ell^* = \arg\min_{\ell} \err_{\cD}(\ell)$. Then for all $\epsilon > 0$ and $\eta < c/C^2$ for a universal constant $c > 0$,  there exists an algorithm $\cA$ with run-time $\poly(d,1/\eta,1/\epsilon,L)$ that given a polynomial-size $\eta$-corrupted training set $S$, outputs a linear function $\ell$ such that with probability at least  $1-\delta$, 
+$$\err_{\cD}(\ell) \leq (1 + O(\sqrt{\eta})) \cdot \opt(\cD)  + O(\sqrt{\eta}) \E_{(x,y) \sim \cD}[(y - \iprod{\ell^*,x})^4] + \delta.$$
+
+%$$ \E_{(x,y) \sim {\cal D}}[(y - \ell'(x))^2] \leq (1 + O(\sqrt{\eta}))\mathsf{opt} + O(\sqrt{\eta}). $$
+\end{theorem}
+
+The above statement assumes that the marginal distribution is
+hypercontractive with respect to its fourth moments.  Our results improve if we assume hypercontractivity for higher moments; see Theorem \ref{thm:analysis-L2-linear-regression} for details. 
+
+We also show (by a simple argument) that the above is optimal in its dependence on $\eta$ upto the $O(1)$ factors: even for distributions supported on $\R^d \times [-1,1]$, it is statistically impossible to achieve an error bound of $(1 + o(\sqrt{\eta})) \mathsf{opt} + o(\sqrt{\eta})$ under the same assumptions. 
+
+In the \emph{realizable case} where $(x,y) \sim \cD$ satisfies $y = \iprod{\ell^*,x}$ for some $\ell^*$, the guarantee of Theorem \ref{th:intro4} becomes $\err_\cD(\ell) \leq \delta$; in particular, the error approaches zero at polynomial rate in the number of samples as in classical regression. 
+
+We also get analogous results for outlier-robust polynomial regression. See Theorem \ref{thm:polyregression}.
+
+ \paragraph{Application to Learning Boolean Functions under Nasty Noise}  Our work also has immediate applications for learning Boolean functions in the {\em nasty noise} model, where the learner is presented with an $\eta$-corrupted training set that is derived from an uncorrupted training set of the form $(x,f(x))$ with $x$ drawn from ${\cal D}$ on $\{0,1\}^n$ and $f$ an unknown Boolean function.  The goal is to output a hypothesis $h$ with $\Pr_{x}[h(x) \neq f(x)]$ as small as possible. The nasty noise model is considered the most challenging noise model for classification problems in computational learning theory. 
+
+Applying a result due to Kalai et al. (\cite{KKMS}; c.f. Theorem 5) for learning with respect to adversarial {\em label noise only} (agnostic learning) and a generalization of Theorem \ref{th:intro4} to higher degree polynomials (see Theorem XXX) we obtain the following:
+
+%THE BELOW NEEDS A VERSION OF Thorem \ref{th:intro4} but for polynomials. 
+\begin{corollary} \label{cor:nasty}
+Let ${\cal C}$ be a class of Boolean functions on $n$ variables such that for every $c \in {\cal C}$ there exists a (multivariate) polynomial $p$ of degree $d(\eps)$ with $\E_{x \sim D}[(p(x) - c(x))^2] \leq \epsilon$.  Assume that $d(\eps)$ is a constant for any $\eps = O(1)$ and that ${\cal D}$ is $(C,4)$ hypercontractive for polynomials of degree $d(\eps^2)$.  Then ${\cal C}$ can be learned in the nasty noise model in time $n^{O(d(\eps^2))}$ via an output hypothesis $h$ such that $\Pr_{x \sim {\cal D}}[h(x) \neq c(x)] \leq O(\sqrt{\eta}) \E_{x \sim D}[(p(x) - c(x))^4] + \epsilon$.  
+\end{corollary}
+
+One of the main conclusions of work due to Kalai et al. \cite{KKMS} is that the existence of low-degree polynomial approximators for a concept class ${\cal C}$ implies learnability for ${\cal C}$ in the agnostic setting.  Corollary \ref{cor:nasty} shows that low-degree polynomial approximators {\em and} hypercontractivity of ${\cal D}$ implies learnability in the nasty noise model. 
+
+We note that Corollary \ref{cor:nasty} gives an incomparable set of results in comparison to recent work of \cite{nasty} for learning polynomial threshold functions in the nasty noise model.  %Their focus is on polynomial-time algorithms for learning polynomial threshold functions and intersections of halfspaces using robust estimates of the Chow parameters.  
+
+\subsection{Part One of Our Approach: Certifying that a Linear
+  Function has Small Loss}
+
+
+Given an $\eta$-corrupted training set $S$, it is non-trivial to solve
+our problem even if we allow the learner unbounded computational
+resources.  It is tempting to think that the following naive strategy
+will work: brute-force search over all subsets $T$ of $S$ of size
+$(1 - \eta) |S|$ and perform least-squares regression to obtain linear
+function $\ell_T$ with empirical loss $\epsilon_T$.  Then,
+output $\ell_T$ with minimal empirical loss $\epsilon_T$ over all
+subsets $T$.  
+
+Although it is true that some subset $T^{*}$ will correspond to the
+uncorrupted sample, it may be the case that $\ell_R$ for some other
+subset $R$ will have empirical loss that is {\em smaller} than
+$\ell_{T^{*}}$.  Further, since $\ell_R$ is derived from a corrupted sample, it is unclear if the small empirical loss of $\ell_R$ will
+transfer to $\ell_R$ having small loss for the original distribution ${\cal D}$.
+
+This leads to the following interesting question on \emph{certifying the loss of a hypothesis}: given a linear function $\ell$ that has small empirical loss with respect to an $\eta$-corrupted training set $S$, how can we {\em
+  certify} that its {\em true} loss with respect to ${\cal D}$ is also
+small?
+
+To answer this question, we give an elementary proof of the following
+\emph{robust certification lemma}: given distributions ${\cal D}_1$ and ${\cal D}_2$ that
+are close in statistical distance, if ${\cal D}_1$ is
+hypercontractive, then any linear function with small loss with
+respect to ${\cal D}_2$ will also have small loss with respect to
+${\cal D}_1$ (the loss with respect to ${\cal D}_1$ increases as a
+function of the statistical distance and the degree of hypercontractivity).
+
+Roughly, to apply this statement in our setting, we will let
+${\cal D}_1$ be the uniform distribution over an uncorrupted sample
+$T$ drawn from ${\cal D}$ and ${\cal D}_2$ will be a {\em
+  near-uniform} distribution over $S$, its $\eta$-corrupted
+counterpart, so that the statistical distance between $\cD_1, \cD_2$ is small.  Applying our certification lemma, it suffices to find a
+linear function with small loss with respect to ${\cal D}_2$.
+  
+%We remark that taking some distributional assumption on ${\cal D}$ is necessary, as we discuss in Section (LOWER BOUND SECTION).
+
+\subsection{Part Two of Our Approach: Enter SoS}
+For concreteness in this high-level description, we suppose that for $(x,y) \sim \cD$, the distribution on $x$ is $(C,4)$-hypercontractive for a fixed constant $C$ and $\E[y^4] = O(1)$. 
+
+Now suppose we are given an $\eta$-corrupted training set $S = \{(x_1,y_1),\ldots,(x_n, y_n)\}$ of size $n$ drawn from the distribution $\cD$. Just for analysis, let $T$ be the underlying uncorrupted training set from which $S$ is obtained. Let $\hat{\cD}$ be the uniform distribution on $T$\footnote{We use superscript $\hat{\;}$ to denote empirical quantities and superscript $\tilde{\;}$ to denote quantities on corrupted samples.}. If we can find a linear function $\ell$ with small error under $\hat{\cD}$, then standard generalization arguments would imply that the loss of $\ell$ with respect to $\cD$ is small for $n$ sufficiently big. Further, it can also be shown that for $n \gg d$, with high probability, $\hat{\cD}$ is also $(O(1), 4)$-hypercontractive. 
+
+Thus, given the certification lemma, the problem reduces to finding a near-uniform distribution $\widetilde{\cD}$ on $S$ and a linear function $\ell$ such that the loss of $\ell$ with respect to $\widetilde{\cD}$ is small. Concretely, suppose $\widetilde{\cD}$ be defined as follows: choose \emph{weights} $w_1,\ldots,w_n \in \{0,1\}$ with $\sum_i w_i \geq (1-\eta) n$ and let $\widetilde{\cD}$ be distribution of random variable sampled as follows: Output $(x_i,y_i)$ with probability proportional to $w_i$. Clearly, the statistical distance between $\hat{\cD}$ and $\widetilde{\cD}$ is at most $2 \eta$. 
+
+Thus, the problem reduces to finding weights $w$ as above and a linear function $\ell$ such that the loss of $\ell$ with respect to the corresponding distribution $\widetilde{\cD}$ is small. Such a $w$ clearly exists: we could give zero weight to the corrupted points in $S$. 
+
+More specifically, let 
+$$\cA = \left\{ (w,\ell) : w_i^2 = w_i, \forall i =1,\ldots,n, \; \sum_{i=1}^n w_i \geq (1-\eta) n\right\}.$$
+Then, our robust certifiability lemma implies that for any $(w,\ell) \in \cA$, 
+\begin{equation}\label{eq:intro1}
+\err_{\hat{\cD}}(\ell) \leq (1 + O(\sqrt{\eta})) \cdot \left(\frac{1}{n}\sum_{i=1}^n w_i (y_i - \iprod{\ell,x_i})^2\right) + O(\eta) .
+\end{equation}
+
+Further, $\min_{w,\ell \in \cA} \sum_{i=1}^n w_i (y_i - \iprod{\ell,x_i})^2 \approx \opt(\cD)$ (up to standard generalization error) as can be achieved by giving zero weight to the corrupted points in $S$. 
+
+As such, we could write the following optimization progam to
+find $w$ and $\ell$:
+\begin{align}\label{eq:programintro}
+&\min_{w,\ell \in \cA}\;\;\frac{1}{n} \sum_{i=1}^n w_i (y_i - \iprod{\ell,x_i})^2&\\
+& \cA = \left\{ (w,\ell) : w_i^2 = w_i, \forall i =1,\ldots,n, \; \sum_{i=1}^n w_i \geq (1-\eta) n\right\}&\nonumber
+\end{align}
+
+By the above arguments, solutions to the above program satisfy what we want: $\err_{\hat{\cD}}(\ell) \approx (1+ O(\sqrt{\eta})) \opt(\cD) + O(\sqrt{\eta})$ - the bound stated in Theorem \ref{th:intro4}. Unfortunately, it is NP-hard to solve optimization problems as above in general. We get around this hurdle by considering the sum of squares (SOS) relaxation of the program and arguing that the relaxation gives us a $\ell$ such that $\err_{\hat{\cD}}(\ell)$ is similarly small. 
+
+\subsection{Parth Three of Our Approach: Exploiting SOS Proofs of Robust Certifiability}
+\mnote{Any reason we work with pseudo-densities instead of pseudo-distributions?} \Pnote{what's the difference?}
+Suppose that in lieu of solving the program on Equation \ref{eq:programintro}, we have access to a density $\mu$ on $(w,\ell) \in \cA$. Let $\opt_\mu = \E_{(w,\ell) \sim \mu}[ (1/n) \sum_i w_i (y_i - \iprod{\ell,x_i})^2]$ be the expected output of the optimization program under the distribution $\mu$. Then, as Equation \ref{eq:intro1} holds for all $(w,\ell)$, it also follows that
+$$\E_{(w,\ell) \sim \mu}[ \err_{\hat{\cD}}(\ell)] \leq (1 + O(\sqrt{\eta})) \opt_\mu + O(\sqrt{\eta}).$$
+
+All of the above does not really help us in solving program \ref{eq:programintro} as if we had access to a density $\mu$ as above with $\opt_\mu \approx \opt(\cD)$, we could have just sampled from it in the first place. Nevertheless, the above view is useful because of the following simple fact: owing to convexity of squared-loss, the above inequality also implies that 
+$$\err_{\hat{\cD}}\left(\E_\mu[\ell]\right) \leq \E_{(w,\ell) \sim \mu}[ \err_{\hat{\cD}}(\ell)] \leq (1 + O(\sqrt{\eta})) \opt_\mu + O(\sqrt{\eta}).$$
+
+Thus, at the very least, instead of sampling access to $\mu$, it suffices to know the \emph{first moments} of $\ell$ under the distribution $\mu$. Unfortunately, even this seems computationally intractable. 
+
+Fortunately, we can replicate the above approach efficiently by working with the SOS hierarchy and in particular letting $\widetilde{\mu}$ be a \emph{pseudo-density} on $\cA$ (instead of a density on $\cA$) and working with \emph{pseudo-expectations} under $\widetilde{\mu}$ (instead of expectations under $\mu$). We could then potentially use the pseudo-expectation of $\ell$ as our final candidate hypothesis. 
+
+To analyze this approach we show that our robust certifiabilty lemma as well as the convexity-argument mentioned above can be captured in the SOS proof system (with the latter being immediate). Given this, we can finish the analysis of our algorithm by utilizing known properties of the SOS hierarchy.  
+
+\ignore{
+\Pnote{for intuition, it might be good to start with the following dream version: find a distribution on $(\ell,D')$ where $D'$ is a high entropy distribution and $\ell$ is a good regression w.r.t. $D'$. Then it's easy to argue that $\E \ell$ will be good hypothesis by convexity. 
+
+We then say that SoS essentially allows us to replicate this approach efficiently. We start by observing that the "test" that we do on the certificate $X'$ for checking $\ell$ is a good hypothesis can be captured by polynomial equations. And since the certifiability has an SoS proof, replacing distributions by pseudo-distribution continues as is.}
+
+
+We defer the formal details of the SOS hierarchy to Section \ref{sec:sos} and assume familiarity with the notion of \emph{pseduo-densities} and \emph{pseudo-expectations} for this high-level description. Our analysis exploits the following abstract property of SOS and pseudo-densities: If $\cB = \{y: p_i(y) \geq 1 \leq i \leq r\}$ is a set defined by polynomial inequalities (i.e., $p_i$ are polynomials) such that these inequalities SOS-imply another polynomial inequality $q(y) > 0$, then for any pseudo-density $\mu$ supported on $\cB$, the corresponding pseudo-density $\pE_\mu$ also satisfies $q$, meaning $\pE_\mu[q] > 0$. 
+
+Now, note that the set $\cA$ is defined by degree two polynomial inequalities. We show that our robust certifiability lemma has a SOS proof; that is, viewing Equation \ref{eq:intro1} as a polynomial inequality in variables $w,\ell$, this inequality is SOS implied by $\cA$. Thus, by the above observation, any pseudo-density $\mu$ with sufficiently high degree on $\cA$ also satisfies an analogue of  Equation \ref{eq:intro1}:
+\begin{equation}\label{eq:introps1}
+\pE_\mu[\err_{\hat{\cD}}(\ell)] \leq (1 + O(\sqrt{\eta})) \cdot \pE_\mu\left[\left(\sum_{i=1}^n w_i (y_i - \iprod{\ell,x_i})^2\right)\right] + O(\eta) .
+\end{equation}
+Thus, if we optimize over pseudo-densities $\mu$ on $\cA$ and minimize $\pE_\mu\left[\left(\sum_{i=1}^n w_i (y_i - \iprod{\ell,x_i})^2\right)\right]$, then we get a pseudo-density $\mu^*$ such that 
+$$\pE_{\mu^*}[\err_{\hat{\cD}}(\ell)] \approx (1 + O(\sqrt{\eta})) \opt(\cD) + O(\eta).$$
+
+As it stands, the above inequality is not very useful for us as it does not tell us which $\ell$ to choose. We next exploit the convexity of the loss function $\err_{\hat{\cD}}(\;\;)$ to show that for $\tilde{\ell} = \pE_{\mu^*}[\ell]$, 
+$$\err_{\hat{\cD}}(\tilde{\ell}) = \err_{\hat{\cD}}(\pE_{\mu^*}[\ell]) \leq \pE_{\mu^*}[\err_{\hat{\cD}}(\ell)] \approx (1 + O(\sqrt{\eta})) \opt(\cD) + O(\eta),$$
+finishing the argument.}
+\subsection{Related Work}
+
+\begin{itemize}
+
+\item Regression with respect to pure label noise; Lasso; Prateek Jain
+  has a recent paper on this. 
+
+\item ``Computationally efficient robust estimation of sparse
+  functionals'' -- This paper seems to have results similar to Ilias
+  robust mean estimation papers (unsupervised learning).  Then it also
+  includes results on sparse linear regression, but the results for
+  sparse linear regression don't seem to be robust in any way. Sort of
+  weird they include it in the paper.
+
+\item Might want to mention the paper ``Robust Regression and Lasso''
+  where they discuss something they call Robust Linear Regression
+  (though it seems to not handle label noise). 
+
+\end{itemize}
+

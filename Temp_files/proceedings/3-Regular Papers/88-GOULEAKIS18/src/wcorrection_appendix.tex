@@ -1,0 +1,59 @@
+% !TeX root = main.tex
+\section{Proof of Theorem~\ref{thm:reduction}}\label{app:weak}
+
+We will first provide a simple analysis when the function $f$ is \emph{increasing} with record values and later extend to the general case.
+
+\begin{proof}[Proof of Theorem \ref{thm:reduction} for increasing functions]
+  Our weak correction scheme works by repeating the certification process enough times so that the number of times it failed is less than the number of
+times it succeeded. In particular, we model this procedure as a random walk on the integers starting from point C and ending once it reaches 0. We move
+to the right whenever the round of verifications (i.e an execution of the certification scheme) reveals some invalid record, and we move to the left
+otherwise.
+
+  The random walk is guaranteed to return to the origin eventually since if all invalid records are removed the certification scheme will not be able to
+find any additional invalid record. The only case that the weak correction scheme fails is if it returns early without removing enough invalid records
+having a value larger than $f(\xt)/(1-\eps)$. In such a case, at all points of the random walk the estimate was always larger than $f(\xt)/(1-\eps)$ which
+means that the random walk was biased with probability at least $2/3$ to the right. The probability that such a biased random walk reaches the origin is
+at most $\left( \frac {1/3} {2/3} \right)^C = 2^{-C}$. Setting $C = \log(1/\delta)$ times guarantees a probability of error $\delta$.
+The number of verifications performed if $k$ invalid records are found is $(C + 2 k) q(n,\eps)$, thus the total verification complexity is
+$O(q(n,\eps) \log(1/\delta))$.
+\end{proof}
+
+We will now remove the assumption that the function $f$ is increasing.
+We again use the same random walk that starts at $C$ and ends at 0 as before. However, instead of outputting the result of the function $f$ on the final subset of records (after all deletions), we will consider every possible intermediate subset of records during the random walk as a candidate for producing an $(1+\varepsilon)$-approximate solution. Note that, at each step $i$ of the random walk, we run a certification scheme on some set $S_i\subseteq \Workers$. We define a subset $S\subseteq\Workers$ to be ``bad'' if $\frac{f(\vec{x}_{\Truth})}{f(\vec{x}_S)} \not\in \left[ 1 - \eps, \frac{1}{1 - \eps} \right]$ and to be ``good'' otherwise.
+
+By the definition of the certification scheme, if the set $S$ is ``bad'', then an invalid record is found with probability at least $2/3$, in which case the random walk moves to the right. Otherwise, we do not have any guarantee on how the random walk will behave.
+
+However, if at all steps the probability of finding an invalid record is more than $3/5$, then the probability that the random walk reaches 0 is less than $(\frac {2/5} {3/5})^C = (\frac 2 3)^C < \delta/2$ for $C=O(\log(1/\delta))$. Thus given that we returned, with high probability, there must be some set $S_i$ for which the correction scheme accepts with probability more than $2/5$. Note that, this can only be true if the set $S_i$ is good since $2/5 > 1/3$.
+
+At this point, given a list of these subsets, our goal is to find a ``good'' subset for which the certification scheme accepts with probability more than $1/3$. We know that a ``good'' subset exists for which the acceptance probability is more than $2/5$. We view the certification process for a subset $S$ as sampling from a Bernoulli random variable. We say that a set $S$ has probability $p$ if the certification process on the set $S$ does not find an invalid record with probability $p$.
+
+Let $Test(S,\gamma)$ be a test that accepts if the probability of a set $S$ is more than $2/5$ (call such a set ``very good'') and rejects if it is less than $1/3$. Such a test fails with probability $\gamma$ requiring $O(\log(1/\gamma))$ samples.
+
+The main idea behing this algorithm is to iteratively run $Test(S,\gamma)$ for all candidate subsets $S$ with varying error probabilities $\gamma$ to throw out the failing ones until a significant fraction of the subsets in our pool is ``good''.  When this happens, we pick a subset at random and check if it is actually ``good'' by running $Test(S,\gamma)$ with small $\gamma$. We repeat this until we actually find a good subset and output the value on the function $f$ on that subset. To ensure that this will eventually happen, we choose parameters appropriately, so that a constant fraction of the ``bad'' subsets fail while the ``good'' subsets pass the certifications with high enough probability.
+
+
+Let $K$ be the number of candidate subsets $S_i$. We have that $K$ is equal to the number of invalid records found during the random walk process.
+
+Our algorithm proceeds in rounds until there are at most $K / \log K$ sets remaining. In the $t$-th round:
+\begin{itemize}
+  \item The algorithm runs $Test(S_i,10^{-t})$ for every set $S_i$ and discards all sets that fail.
+  \item If the number of remaining sets is did not drop by a factor of 2 the algorithm stops and returns a set $S_i$ uniformly at random from the remaining sets.
+\end{itemize}
+If the algorithm has not returned after $\log \log K$ steps, then it runs $Test(S_i,1/K^2)$ for every remaining set $S_i$ and returns one that passes the test.
+
+The proposed algorithm returns a ``good'' set with probability more than $3/5 - o(1)$.
+First, notice that a ``very good'' set will be discarded in the first $\log \log K$ rounds with probability at most $\sum_t 10^{-t} \le \frac {1/10} {1 - 1/10} = 1/9$.
+Hence, if the algorithm did not return after $\log \log K$ rounds, the last step returns a ``good'' set with high probability.
+
+Now, suppose the algorithm returns at some round $t$. Let $K_{t-1}$ be the total remaining sets before round $t$. The probability that the number $B_t$ of ``bad'' sets remaining after round $t$ to be more than $K_{t-1}/5$ is at most:
+$$\Prob\left(B_t > K_{t-1}/5\right) \le \exp(-B_{t-1}/10) \le \exp(-K_{t-1}/50) \le \exp(-K/(50 \log K))$$
+This is an exponentially small probability and by a union bound over all $\log \log K$ rounds it is still negligible.
+
+Thus, assuming that $B_t < K_{t-1}/5$ and $K_t > K_{t-1}/2$, a set chosen uniformly at random is ``bad'' with probability $B_t/K_t \le 2/5$.
+
+Therefore, a good set is chosen with probability at least $3/5 - o(1)$ and thus by repeating $O(\log(1/\delta))$ times and choosing the median of the values $f(\vec{x}_S)$, we have that with probability $1 - \delta/2$, $\frac{f(\vec{x}_{\Truth})}{f(\vec{x}_S)} \in \left[ 1 - \eps, \frac{1}{1 - \eps} \right]$.
+
+
+The total number times the certification scheme is called is $O(\log(1/\delta) ) \sum_t O(2^{-t} K \log 10^{t}) = O( K \log(1/\delta) )$.
+
+Thus, the verification complexity of the weak correction scheme is equal to $O(q(n,\eps) \log(1/\delta))$ and the Theorem follows.

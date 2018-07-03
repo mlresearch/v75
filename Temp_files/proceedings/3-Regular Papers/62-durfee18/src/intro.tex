@@ -1,0 +1,209 @@
+\section{Introduction}\label{sec:intro}
+
+
+%In recent years, much emphasis is being given to algorithms for machine learning
+%especially those which require learning from large amounts of data.
+
+
+Stochastic gradient descent (SGD) is one of the most widely-used practical algorithms for optimization problems due to its simplicity and practical efficiency
+\citep{NesterovV08, NemirovskiJLS09}. We consider SGD methods to solve the unconstrained overdetermined $\ell_1$ regression problem,
+commonly known as the Least Absolute Deviations problem,
+which is defined as follows:
+
+\begin{align}
+\min_{\xx \in \mathbb{R}^d}  \norm{\AA \xx - \bb}_1,\label{eq:l1}
+\end{align}
+where $\AA \in \mathbb{R}^{n \times d}$, $\bb \in \mathbb{R}^{n}$ and $n \gg d$. Compared to Least Squares ($\ell_2$) regression, the $\ell_1$ regression problem is more robust and is thus useful when outliers are present in the data. Moreover, many important combinatorial problems, such as minimum cut or shortest path,
+can be formulated as $\ell_1$ regression problems \citep{CMMP13}, and high accuracy $\ell_1$ regression can be used to solve general linear programs.\footnote{For instance, one can determine if $\{\xx|\AA \xx - \bb, \xx \ge 0\}$ is feasible by writing an objective of the form $\alpha(\norm{\AA \xx - \bb}_1 + \norm{\xx}_1 + \norm{\xx - \beta \ones}_1)$ where $\alpha$ and $\beta$ are sufficiently large polynomials in the input size.} Since \cref{eq:l1} can be formulated as a linear program \citep{PortnoyK97, ChenDS01}, generic methods for solving linear programs, such as the interior-point method (IPM), can be used to solve it \citep{PortnoyK97, Portnoy97, MengM13mapreduce, LeeS15}.
+
+SGD algorithms are popular in practice for $\ell_1$ and other regression problems because they are simple, scalable, and efficient. State-of-the-art algorithms for solving \cref{eq:l1} utilize sketching techniques from randomized linear algebra to achieve $\text{poly}(d,\epsilon^{-1})$ running times, whereas a naive extension of Nesterov acceleration \citep{Nesterov83} to certain classes of non-smooth functions \citep{Nesterov05smooth, Nesterov05gap, Nesterov07, AllenZhuH16} takes $\text{poly}(n,\epsilon^{-1})$ time. This difference is significant because $n \gg d$ in the overdetermined setting. Ideally, the only dependence on $n$ in the running time will be implicitly in an additive $nnz(\AA)$ term.  
+
+Sketching techniques from randomized numerical linear algebra look to find a low-distortion embedding of $\AA$ into a smaller subspace, after which popular techniques for $\ell_1$ regression can be applied on the reduced matrix. Efforts to build these sampled matrices or ``coresets"
+have been made using random sampling \citep{Clarkson05},
+fast matrix multiplication \citep{SohlerW11},
+and ellipsoidal rounding \citep{DasguptaDHKM09, ClarksonDMMMW13}.
+All of these methods produce coresets of size 
+$\text{poly}(d,\epsilon^{-1}) \times d$ in time $O(n \cdot \text{poly}(d))$.
+\cite{MengM13embedding} and \cite{WoodruffZ13} improve these
+techniques to produce similar coresets in $O \left( nnz(\AA)+\text{poly}(d) \right)$ time.
+
+%On the other hand, there have been several efforts towards
+%finding an optimal $\ell_1$ regression algorithm,
+%which, in the case of gradient descent techniques, can
+%then be applied on these smaller matrices.
+%Gradient descent methods \cite{Clarkson05, Nesterov09, YangCRM16}
+%are some of the most widely used and well studied algorithms
+%in this direction.
+%For high accuracy solutions, however, interior point methods
+%\cite{MengM13mapreduce, LeeS15} still perform significantly faster
+%in comparison.
+
+In addition to using sketching as a preprocessing step, one can also apply \emph{preconditioners}. Preconditioners transform the input matrix into one with additional desirable properties, such as good condition number, that speed up subsequent computation. For our setting, we will use the term ``preconditioning'' to refer to dimensionality reduction followed by additional processing of the matrix. Of particular interest for our setting is the preconditioning technique of \cite{cohenpeng}, which utilizes a Lewis change of density \citep{Lewis78} to sample rows of $\AA$ with probability proportional to their Lewis weights such that the sampled matrix $\tilde{\AA}$ approximately preserves $\ell_1$ distances, which is to say that $\norm{\AA \xx}_1 \approx ||\tilde{\AA}\xx||_1$ for any vector $\xx$. Lewis weights are in essence the ``correct'' sampling weights for dimensionality reduction in $\ell_1$ regression, and they are used by the previous best SGD-based methods for solving \cref{eq:l1} \citep{YangCRM16}. As it turns out, Lewis weights also lead to nice $\ell_2$ conditions for the sampled matrix. One of the key insights of this paper is to leverage these additional guarantees to obtain significantly faster running times for SGD after Lewis weight preconditioning.
+%\kl{Could state more about our results here, but possibly unnecessary} 
+
+\paragraph{Techniques} \label{subsec:results}
+
+Our techniques for solving the $\ell_1$ regression problem follow the popular paradigm of preconditioning and then using gradient descent methods on the resulting problem. Typically, the preconditioner is a black-box combination of a sketching method with a matrix rotation, which yields a well-conditioned low-dimensional matrix. The crucial idea in this paper is that the sketch can give us some strong properties in addition to the low-dimensional embedding. By more tightly integrating the components of the preconditioner, we obtain faster running times for $\ell_1$ regression.
+
+
+In particular, preconditioning the given matrix-vector pair $[\AA\;\bb]$ using Lewis weights \citep{cohenpeng}
+achieves a low-dimensional $[\tilde{\AA}\;\tilde{\bb}]$ such that
+$\norm{\AA \xx - \bb}_1 \approx \|\tilde{\AA} \xx - \tilde{\bb}\|_1$
+for every $\xx \in \mathbb{R}^{d}$. 
+It is then possible to apply the low-dimensional embedding properties of Lewis weights in a black-box manner to $\ell_1$ regression algorithms, using the fact that this embedding reduces the row-dimension from $n$ to $O(d \epsilon^{-2}\log n)$ and then plugging these new parameters into the runtime guarantees.
+Our critical observation will be that sampling by Lewis weights also has the important property that all leverage scores of the new matrix are approximately equal.
+%In particular, preconditioning the given matrix-vector pair $[\AA\;\bb]$ using Lewis weights \cite{cohenpeng}
+%to get $[\tilde{\AA}\;\tilde{\bb}]$ has the critical property that all the leverage scores of the new matrix are approximately equal, in addition to the fact that
+%$\norm{\AA \xx - \bb}_1 \approx \|\tilde{\AA} \xx - \tilde{\bb}\|_1$
+%for every $\xx \in \mathbb{R}^{d}$. 
+Since rotations of a matrix do not change its leverage scores, we are free to rotate $\tilde{\AA}$ to place it into isotropic position, in which case the leverage score condition implies that the row norms are tightly bounded.
+%\kl{maybe mention lev scores imply this}
+
+The isotropic and row norm conditions yield two essential phenomena. First, a careful choice of initial vector can be shown to be close to optimal. Second, we get strong bounds on the gradient of any row. Using these properties, it is almost immediately implied that standard SGD only requires $O(d^2\epsilon^{-2})$ iterations to arrive at a solution $\hat{x}$  with relative error\footnote{Relative error $\epsilon$ means that $f(\hat{\xx}) - f(\xx^*) \le \epsilon f(\xx^*)$, where $f(\xx) = \AA \xx - \bb$ and $\xx^* = \arg\min_{\xx} f(\xx)$.} $\epsilon$, leading to a total running time of $\Otil(nnz(\AA) + d^3 \epsilon^{-2})$.
+These properties can be further applied to smoothing reductions by \cite{AllenZhuH16} and accelerated SGD
+algorithms by \cite{AllenZhu17} to improve the runtime to
+$\Otil(nnz(\AA) + nd^{\omega - 1} + \sqrt{n}d^{1.5} \epsilon^{-1})$. As previously mentioned, sampling by Lewis weights guarantees that $n \le O(d\epsilon^{-2}\log{n})$, so we also obtain a running time of $\Otil(nnz(\AA) + d^{2.5} \epsilon^{-2})$.
+\Cref{fig:mainAlgo} gives the basic framework of our $\ell_1$ solver.
+
+\begin{algorithm2e}[h]
+	\caption{General structure of our algorithm \label{fig:mainAlgo}}
+	\KwIn{Matrix $\AA \in \R^{n\times d}$, and vector $\bb \in \R^{n}$, along with error parameter $\epsilon > 0$.}
+		%\vspace{4pt}
+	\begin{enumerate*}
+		\item Precondition $[\AA\;\bb]$ by Lewis weight sampling as in \cite{cohenpeng}, along with a matrix rotation.
+		\item Initialize $\xx_0$ as the exact or approximate  $\ell_2$ minimizer of the preconditioned problem.
+		\item Run a stochastic gradient descent algorithm on the preconditioned problem with starting point $\xx_0$.
+	\end{enumerate*}
+\end{algorithm2e}
+
+\paragraph{Our Results}
+Our first main theorem uses smoothing reductions from \cite{AllenZhuH16} with the accelerated SGD algorithm of \cite{AllenZhu17}:
+\begin{restatable}[]{theorem}{applyKatyusha}
+  \label{thm:applyKatyusha}
+  Given $\AA \in \R^{n\times d}$, $\bb \in \R^n$, assume $\min_{\xx} \norme{\AA \xx - \bb}$ is either 0 or bounded below by $n^{-c}$ for some constant $c>0$. Then for any $\epsilon > 0$, there is a routine that outputs $\tilde{\xx}$ such that with high probability,\footnote{Throughout this paper, we let ``with high probability" mean that $\xi$ is the failure probability and our runtime has dependence on $\log(1/\xi)$, which we ignore for ease of notation.} \[
+  \norm{\AA\tilde{\xx} - \bb}_1 \leq (1 + \epsilon)\min_{\xx} \norm{\AA\xx - \bb}_1
+  \] 
+  with a runtime of $O\left(nnz(\AA)\log^2{n} + d^{2.5}\epsilon^{-2}\log^{1.5}{n}\right)$ whenever $n \geq d\epsilon^{-2}\log{n}$,
+  and a runtime of
+  $O\left( \sqrt{n}d^2 \epsilon^{-1}\log{n}  + nd^{\omega - 1}\log{n}\right)$ when $n \leq d\epsilon^{-2}\log{n}$.
+\end{restatable}
+\noindent Achieving the bounds when $n\le d\epsilon^{-2}\log n$ requires some additional technical work. \Cref{thm:applyKatyusha} is proved in \Cref{sec:SGDforl1}, where we also show our $\Otil(nnz(\AA) + d^3\epsilon^{-2})$ running time for standard SGD.
+
+
+%Note that while most papers choose to either look at
+%ways to improve the preconditioning, or alternatively,
+%faster algorithms for $\ell_1$ regression, in some sense, we show
+%that improvements in the two are not independent of one another.
+%The crucial idea in this paper is that preprocessing techniques
+%can give us some strong properties in addition to the embedding,
+%and we are able to effectively leverage this into faster running times
+%for $\ell_1$ regression.
+
+Our second main theorem is motivated by the fact that the theoretical running time bounds of fast matrix multiplication
+are difficult to achieve in practice, and most implementations of algorithms actually use naive matrix multiplication. Thus, it would be ideal for an algorithm's running time to be independent of fast matrix multiplication. It turns out that our only dependence on fast matrix multiplication is during the preconditioning stage. 
+Accordingly, if we are given a matrix which is already approximately isotropic with all row norms approximately equal, then we can eliminate the usage
+of fast matrix multiplication and still prove the same time bound. Moreover, this method preserves the row-sparsity of $\AA$. The primary difficulty of this approach is in computing an appropriate initialization when $\AA$ is only approximately isotropic. To resolve this issue, we use efficient $\ell_2$ regression solvers that do not rely on fast matrix multiplication.
+
+\begin{restatable}[]{theorem}{noFastMatrixMult}
+  \label{thm:noFastMatrixMult}
+  Let $\AA \in \R^{n\times d}$ and $\bb \in \R^{n}$ be such that the matrix-vector pair $[\AA\;\bb]$ satisfies $[\AA\;\bb]^T [\AA\;\bb]\approx_{O(1)}\II$ \footnote{As defined in the notation section, we say that $\AA \approx_{\kappa} \BB$ if and only if
+  $	\dfrac{1}{\kappa} \BB \preceq \AA \preceq \kappa \BB$.} and for each row $i$ of $[\AA\;\bb]$, $\norme{[\AA\;\bb]_{i,:}}^2 \approx_{O(1)} d/n$. Assume $\norme{\bb}\le n^c$ and $\min_{\xx} \norme{\AA \xx - \bb}$ is either 0 or bounded below by $n^{-c}$ for some constant $c > 0$. Then for any $\epsilon > 0$, there is a routine that computes $\tilde{\xx}$ such that with high probability,
+  \[
+  \norm{\AA\tilde{\xx} - \bb}_1 \leq (1 + \epsilon)\min_{\xx}\norm{\AA\xx - \bb}_1
+  \]
+  with a runtime of $O\left(nnz(\AA)\log^2{n} + s \cdot d^{1.5}\epsilon^{-2} \log^{1.5}{n} + d^2 \epsilon^{-2} \log^2{n} \right)$, where $s$ is the maximum number of entries in any row of $\AA$.  
+\end{restatable}
+
+\noindent The added assumption on $\norme{b}$ in \Cref{thm:noFastMatrixMult} comes from the bounds of the $\ell_2$ solvers. We prove \Cref{thm:noFastMatrixMult} in \Cref{sec:sparsitypreserve}. 
+
+%Thm 1.2 is significant because real world data are IRB \kl{We need to substantiate this claim}
+
+\paragraph{Comparison of our results with previous work}
+
+Our algorithms are significantly faster than the previous best SGD-based results for $\ell_1$ regression, which took $O(nnz(\AA)\log n+ d^{4.5}\epsilon^{-2}\sqrt{\log d})$ time \citep{YangCRM16}. Furthermore, our standard SGD bounds are especially likely to be achievable in practice. \Cref{table:regression} compares the running time of our algorithm to the fastest gradient descent methods \citep{Clarkson05, Nesterov09, YangCRM16}, interior point methods \citep{MengM13mapreduce, LeeS15}, and multiplicative weights update methods \citep{CMMP13}. Since we can apply sampling by Lewis weights prior to any algorithm\footnote{Sampling $\AA$ by Lewis weights creates a dense $(d\epsilon^{-2}\log n) \times d$ matrix $\tilde{\AA}$}, we can replace $n$ with $O(d\epsilon^{-2} \log n)$ and $nnz(\AA)$ with $O(d^2 \epsilon^{-2} \log n)$ at the cost of an additive $\Otil(nnz(\AA) + d^\omega)$ overhead for any running time bound in \Cref{table:regression}, where $d^\omega$ is time to multiply two $d\times d$ matrices.\footnote{The current best value for $\omega$ is approximately $2.373$ \citep{Williams12, DavieS13, LeGall14}.}
+
+Note that we match the theoretical performance of the current best IPM \citep{LeeS15} in several regimes. In low to medium-precision ranges, for example $\epsilon \ge 10^{-3}$, both the best IPM and our algorithm have a running time of $\Otil(nnz(\AA) + d^{2.5})$. If all of the algorithms are implemented with naive matrix multiplication, \cite{LeeS15} takes $\Otil(nnz(\AA) + d^3)$ time, while we prove an identical running time for standard non-accelerated SGD with Lewis weights preconditioning. For general $\epsilon$, if $nnz(\AA) \ge d^2 \epsilon^{-2} \log n$, then \cite{LeeS15} will use Lewis weights sampling and both their algorithm and our algorithm will achieve a running time of $\Otil(nnz(\AA) + d^{2.5}\epsilon^{-2})$. This is significant because our SGD-based algorithms are likely to be far more practical\footnote{Lewis weights preconditioning is also fast in practice}. Finally, we also note that in the setting where $\AA$ is approximately isotropic with approximately equal row norms and $\AA$ is row-sparse, with at most $s$ non-zeros per row, our algorithm in \Cref{thm:noFastMatrixMult} has the best dimensional-dependence out of any existing algorithm for $s < d$. In particular, we beat \cite{LeeS15} whenever $s < d\epsilon^{2}$ or whenever $s<d$ and $nnz(\AA) \ge d^2 \epsilon^{-2} \log n$.
+
+\renewcommand{\arraystretch}{1.3} % make the table not cut into Otils
+
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{| l | l |}
+		\hline
+		\multicolumn{1}{|c|}{\bfseries Solver} & \multicolumn{1}{c|}{\bfseries Running time \tablefootnote{$\Otil$ hides terms polylogarithmic in $d$ and $n$.} } \\
+		\hline      
+		Subgradient descent \cite{Clarkson05} & $\Otil \left(nd^5 \epsilon^{-2} \log (1/\epsilon) \right)$ \\
+		\hline      
+		Smoothing and gradient descent \cite{Nesterov09} & $\Otil \left(n^{1.5}d \epsilon^{-1} \right)$  \\
+		\hline      
+		Randomized IPCPM\tablefootnote{Interior Point Cutting Plane Methods} \cite{MengM13mapreduce} & $\Otil \left(nd^{\omega-1} +  \left( nnz(\AA) +  \text{poly}(d) \right)d \log \left( 1 /\epsilon \right) \right)$ \\
+		\hline
+		Multiplicative weights \cite{CMMP13} & $\Otil(n^{1/3}(nnz(\AA) + d^2)\epsilon^{-8/3})$\\
+		\hline
+		IPM and fast inverse maintenance \cite{LeeS15} & $\Otil ( ( nnz(\AA) + d^2 ) \sqrt{d} \log ( 1/\epsilon ) )$\\
+		\hline      
+		Weighted SGD \cite{YangCRM16} & $\Otil(nnz(\AA) + d^{4.5} \epsilon^{-2})$ \\
+		\hline      
+		Lewis weights and SGD (this work) & $\Otil \left( nnz(\AA) + d^3 \epsilon^{-2} \right)$ \\
+		\hline      
+		Lewis weights and accelerated SGD (this work)\tablefootnote{This running time only assumes that $\omega \leq 2.5$} & $\Otil\left( nnz(\AA) + d^{2.5}\epsilon^{-2} \right)$
+		\\
+		\hline  
+	\end{tabular}
+	\caption{Running time of several iterative $\ell_1$ regression algorithms.
+		All running times are to find a solution with
+		$\epsilon$ relative error, with constant failure probability.
+		Note that the first three algorithms in the table could also be sped up
+		using the preconditioning method we use, i.e.,
+		Lewis weights row sampling \citep{cohenpeng}.
+		Doing this would need a preconditioning time of $\Otil(nnz(\AA) + d^{\omega})$,
+		and enable us to use the fact that $n \le O(d \epsilon^{-2} \log{n} )$ after preconditioning.
+		However, this still does not make them faster than later algorithms.
+		\label{table:regression}}
+\end{table}
+
+Another related work by \cite{BubeckCLL17:arxiv} gives algorithms for $\ell_p$ regression for $p \in (1,\infty)$ that run in time $\Otil(nnz(\AA) \cdot n^{|1/2 - 1/p|} \log(1 / \epsilon) )$ and $\Otil(nnz(\AA) n^{|1/2 - 1/p| - 1/2} d^{1/2} + n^{|1 /2  - 1/p|} d^{2} + d^{\omega}) \log(1 / \epsilon) )$. They also use preconditioning and accelerated stochastic gradient descent techniques as a subroutine. However, they don't give bounds for $\ell_1$ regression. Also, for $p$ close to 1, these bounds are worse than ours. In contrast to \cite{BubeckCLL17:arxiv}, our algorithms are specific to the $\ell_1$ setting. We use the fact that the gradients are bounded for $\ell_1$ regression, which doesn't hold for general $\ell_p$ regression. Moreover, our initialization using an $\ell_2$ minimizer doesn't give good bounds for general $\ell_p$ regression. In this sense, our algorithms really leverage the special structure of the $\ell_1$ problem.
+
+
+
+%\begin{algorithm}[h]    
+%  \caption{$\textsc{MainAlgo}(A,b,\epsilon):$ Takes $\AA \in \R^{n \times d}$, $\bb \in \R^{n}$, and error parameter $\epsilon$ as input and outputs $\tilde{\xx} \in \R^d$.}
+%  \label{alg:mainAlgo}
+%  \SetAlgoVlined
+%  \SetKwProg{myproc}{Procedure}{}{}
+%  
+%  \KwIn{$\AA \in \R^{n \times d}$, $\bb \in \R^{n}$, and error parameter $\epsilon$}
+%  \KwOut{$\tilde{\xx} \in \R^d$ that approximately minimizes $||\AA \xx - \bb||_1$}
+%  $[\tilde{\AA} \;\tilde{\bb}] \gets \textsc{LewisWeights}([\AA \;\bb])$;\\
+%  $\xx_0 \gets \textsc{Initialize}(\tilde{\AA},\tilde{\bb})$;\\
+%  $\tilde{\xx} \gets \textsc{L1Minimizer}(\tilde{\AA},\tilde{\bb},\xx_0,\epsilon)$;\\
+%  Output $\tilde{\xx}$;
+%\end{algorithm}
+
+
+
+
+\subsection{Organization}
+The paper is organized as follows.
+\Cref{sec:prelims} contains definitions and basic lemmas
+which we will use throughout the paper.
+\Cref{sec:SGDforl1} contains our main contribution, i.e.,
+once we are given a suitably preconditioned matrix,
+it shows how we arrive at an approximate $\ell_1$
+minimizer within the claimed time bounds,
+for both non-accelerated and accelerated versions
+of stochastic gradient descent.
+\Cref{sec:sparsitypreserve} shows that
+if we restrict our input to slightly weaker
+preconditions, then we can eliminate the need for
+fast matrix multiplication to achieve the same time bounds.
+\Cref{sec:katyushaproof} contains the primary proof details
+for our main result in \Cref{sec:SGDforl1}.
+In \Cref{sec:lewis}, we show that row sampling using
+Lewis weights \cite{cohenpeng},
+along with matrix rotation, suffices to give us
+a matrix satisfying our precondition requirements.
+\Cref{sec:sec4proofs} contains proof
+details from \Cref{sec:sparsitypreserve}.
+Finally, \Cref{sec:minor_details} will give secondary and straightforward technical details for our main results that we include for completeness.
