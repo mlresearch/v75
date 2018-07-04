@@ -2,9 +2,9 @@
 title: Exponential Convergence of Testing Error for Stochastic Gradient Methods
 abstract: We consider binary classification problems with positive definite kernels
   and square loss, and study the convergence rates of stochastic gradient methods.
-  We show that while the excess testing \emph{loss} (squared loss) converges slowly
+  We show that while the excess testing \emphloss (squared loss) converges slowly
   to zero as the number of observations (and thus iterations) goes to infinity, the
-  testing \emph{error} (classification error) converges exponentially fast if low-noise
+  testing \empherror (classification error) converges exponentially fast if low-noise
   conditions are assumed. To achieve these rates of convergence we show sharper high-probability
   bounds with respect to the number of observations for stochastic gradient descent.
 section: Regular Papers

@@ -1,9 +1,9 @@
 ---
-title: Averaging {S}tochastic {G}radient {D}escent on {R}iemannian {M}anifolds
+title: Averaging Stochastic Gradient Descent on Riemannian Manifolds
 abstract: We consider the minimization of a function defined on a Riemannian manifold
-  $\mathcal{M}$ accessible only through unbiased estimates of its gradients. We develop
+  $\mathcalM$ accessible only through unbiased estimates of its gradients. We develop
   a geometric framework to transform a sequence of slowly converging iterates generated
-  from stochastic gradient descent (SGD) on $\mathcal{M}$ to an averaged iterate sequence
+  from stochastic gradient descent (SGD) on $\mathcalM$ to an averaged iterate sequence
   with a robust and fast $O(1/n)$ convergence rate. We then present an application
   of our framework to geodesically-strongly-convex (and possibly Euclidean non-convex)
   problems.  Finally, we demonstrate how these ideas apply to the case of streaming

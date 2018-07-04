@@ -6,7 +6,7 @@ abstract: 'We prove that the ordinary least-squares (OLS) estimator attains near
   small-ball method to dependent data, eschewing the use of standard mixing-time arguments.
   Our lower bounds reveal that these upper bounds match up to logarithmic factors.
   In particular, we capture the correct signal-to-noise behavior of the problem, showing
-  that \emph{more unstable} linear systems are \emph{easier} to estimate. This behavior
+  that \emphmore unstable linear systems are \empheasier to estimate. This behavior
   is qualitatively different from arguments which rely on mixing-time calculations
   that suggest that unstable systems are more difficult to estimate. We generalize
   our technique to provide bounds for a more general class of linear response time-series. '
