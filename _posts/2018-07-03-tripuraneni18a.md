@@ -1,9 +1,9 @@
 ---
 title: Averaging Stochastic Gradient Descent on Riemannian Manifolds
 abstract: We consider the minimization of a function defined on a Riemannian manifold
-  $\mathcalM$ accessible only through unbiased estimates of its gradients. We develop
+  $\mathcal{M}$ accessible only through unbiased estimates of its gradients. We develop
   a geometric framework to transform a sequence of slowly converging iterates generated
-  from stochastic gradient descent (SGD) on $\mathcalM$ to an averaged iterate sequence
+  from stochastic gradient descent (SGD) on $\mathcal{M}$ to an averaged iterate sequence
   with a robust and fast $O(1/n)$ convergence rate. We then present an application
   of our framework to geodesically-strongly-convex (and possibly Euclidean non-convex)
   problems.  Finally, we demonstrate how these ideas apply to the case of streaming
@@ -15,14 +15,14 @@ layout: inproceedings
 series: Proceedings of Machine Learning Research
 id: tripuraneni18a
 month: 0
-tex_title: Averaging Stochastic Gradient Descent on {R}iemannian Manifolds
+tex_title: Averaging {S}tochastic {G}radient {D}escent on {R}iemannian {M}anifolds
 firstpage: 650
 lastpage: 687
 page: 650-687
 order: 650
 cycles: false
 bibtex_author: Tripuraneni, Nilesh and Flammarion, Nicolas and Bach, Francis and Jordan,
-  Michael I.
+  Michael
 author:
 - given: Nilesh
   family: Tripuraneni
@@ -30,7 +30,7 @@ author:
   family: Flammarion
 - given: Francis
   family: Bach
-- given: Michael I.
+- given: Michael
   family: Jordan
 date: 2018-07-03
 address: 

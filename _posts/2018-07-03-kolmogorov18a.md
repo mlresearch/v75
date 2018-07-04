@@ -6,13 +6,13 @@ abstract: " We consider the problem of estimating the partition function $Z(β)=
   approximate $q$ with high probability assuming the existence of an oracle that produces
   samples from the Gibbs distribution for a given parameter value in $[0,β]$. The
   current best known approach due to Huber (2015) uses $O(q\\ln n⋅[\\ln q + \\ln \\ln
-  n+\\varepsilon^-2])$  oracle calls on average where $\\varepsilon$ is the desired
-  accuracy of approximation and $H(⋅)$ is assumed to lie in ${0}∪[1,n]$. We improve
-  the complexity to $O(q\\ln n⋅\\varepsilon^-2)$ oracle calls. We also show that the
-  same complexity can be achieved if exact oracles are replaced with approximate sampling
-  oracles that are within $O(\\frac\\varepsilon^2q\\ln n)$ variation distance from
-  exact oracles. Finally, we prove a lower bound of $Ω(q⋅\\varepsilon^-2)$ oracle
-  calls under a natural model of computation. "
+  n+\\varepsilon^{-2}])$  oracle calls on average where $\\varepsilon$ is the desired
+  accuracy of approximation and $H(⋅)$ is assumed to lie in $\\{0\\}∪[1,n]$. We improve
+  the complexity to $O(q\\ln n⋅\\varepsilon^{-2})$ oracle calls. We also show that
+  the same complexity can be achieved if exact oracles are replaced with approximate
+  sampling oracles that are within $O(\\frac{\\varepsilon^2}{q\\ln n})$ variation
+  distance from exact oracles. Finally, we prove a lower bound of $Ω(q⋅\\varepsilon^{-2})$
+  oracle calls under a natural model of computation. "
 section: Regular Papers
 layout: inproceedings
 series: Proceedings of Machine Learning Research
