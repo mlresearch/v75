@@ -15,14 +15,14 @@ layout: inproceedings
 series: Proceedings of Machine Learning Research
 id: tripuraneni18a
 month: 0
-tex_title: Averaging {S}tochastic {G}radient {D}escent on {R}iemannian {M}anifolds
+tex_title: Averaging Stochastic Gradient Descent on {R}iemannian Manifolds
 firstpage: 650
 lastpage: 687
 page: 650-687
 order: 650
 cycles: false
 bibtex_author: Tripuraneni, Nilesh and Flammarion, Nicolas and Bach, Francis and Jordan,
-  Michael
+  Michael I.
 author:
 - given: Nilesh
   family: Tripuraneni
@@ -30,7 +30,7 @@ author:
   family: Flammarion
 - given: Francis
   family: Bach
-- given: Michael
+- given: Michael I.
   family: Jordan
 date: 2018-07-03
 address: 
