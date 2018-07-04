@@ -2,8 +2,8 @@
 title: Hardness of Learning Noisy Halfspaces using Polynomial Thresholds
 abstract: 'We prove the hardness of weakly learning halfspaces in the presence of
   adversarial noise using polynomial threshold functions (PTFs). In particular, we
-  prove that for any constants $d ∈\mathbb{Z}^+$ and $\eps > 0$, it is NP-hard to
-  decide: given a set of $\{-1,1\}$-labeled points in $\mathbb{R}^n$  whether (YES
+  prove that for any constants $d \in \mathbb{Z}^+$ and $\eps > 0$, it is NP-hard
+  to decide: given a set of $\{-1,1\}$-labeled points in $\mathbb{R}^n$  whether (YES
   Case) there exists a halfspace that classifies $(1-\eps)$-fraction of the points
   correctly, or (NO Case) any degree-$d$ PTF classifies at most $(1/2 + \eps)$-fraction
   of the points correctly. This strengthens to all constant degrees the previous NP-hardness
