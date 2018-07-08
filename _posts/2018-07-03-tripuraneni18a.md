@@ -30,7 +30,7 @@ author:
   family: Flammarion
 - given: Francis
   family: Bach
-- given: Michael
+- given: Michael I.
   family: Jordan
 date: 2018-07-03
 address: 
