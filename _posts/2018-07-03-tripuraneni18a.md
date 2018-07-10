@@ -7,7 +7,7 @@ abstract: We consider the minimization of a function defined on a Riemannian man
   with a robust and fast $O(1/n)$ convergence rate. We then present an application
   of our framework to geodesically-strongly-convex (and possibly Euclidean non-convex)
   problems.  Finally, we demonstrate how these ideas apply to the case of streaming
-  $k$-PCA, where we show how to accelerate the slow rate of the randomized power method  (without
+  $k$-PCA, where we show how to accelerate the slow rate of the randomized power method (without
   requiring knowledge of the eigengap) into a robust algorithm achieving the optimal
   rate of convergence.
 section: Regular Papers
@@ -15,7 +15,7 @@ layout: inproceedings
 series: Proceedings of Machine Learning Research
 id: tripuraneni18a
 month: 0
-tex_title: Averaging {S}tochastic {G}radient {D}escent on {R}iemannian {M}anifolds
+tex_title: Averaging Stochastic Gradient Descent on {R}iemannian Manifolds
 firstpage: 650
 lastpage: 687
 page: 650-687
@@ -30,7 +30,7 @@ author:
   family: Flammarion
 - given: Francis
   family: Bach
-- given: Michael
+- given: Michael I.
   family: Jordan
 date: 2018-07-03
 address: 
