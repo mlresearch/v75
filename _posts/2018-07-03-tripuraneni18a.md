@@ -22,7 +22,7 @@ page: 650-687
 order: 650
 cycles: false
 bibtex_author: Tripuraneni, Nilesh and Flammarion, Nicolas and Bach, Francis and Jordan,
-  Michael
+  Michael I.
 author:
 - given: Nilesh
   family: Tripuraneni
